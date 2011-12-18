@@ -43,3 +43,6 @@ _ReSharper*/
 
 #NuGet
 packages/
+
+#Target build folder
+Target/
