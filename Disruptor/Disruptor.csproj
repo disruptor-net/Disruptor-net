@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{37FBDBE1-8524-4489-B082-CC109B0F5EA3}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Disruptor</RootNamespace>
+    <AssemblyName>Disruptor</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Target\Bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\Target\Bin\Disruptor.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\Target\Bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\Target\Bin\Disruptor.XML</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Version.cs">
+      <Link>Version.cs</Link>
+    </Compile>
+    <Compile Include="Affinity\ProcessorAffinity.cs" />
+    <Compile Include="AggregateEventHandler.cs" />
+    <Compile Include="AlertException.cs" />
+    <Compile Include="Atomic\AtomicBool.cs" />
+    <Compile Include="Atomic\AtomicReference.cs" />
+    <Compile Include="BlockingWaitStrategy.cs" />
+    <Compile Include="BusySpinWaitStrategy.cs" />
+    <Compile Include="Dsl\Disruptor.cs" />
+    <Compile Include="Dsl\ExceptionHandlerSetting.cs" />
+    <Compile Include="EventPublisher.cs" />
+    <Compile Include="FatalExceptionHandler.cs" />
+    <Compile Include="IEventTranslator.cs" />
+    <Compile Include="IExceptionHandler.cs" />
+    <Compile Include="IgnoreExceptionHandler.cs" />
+    <Compile Include="IWorkHandler.cs" />
+    <Compile Include="MultiThreadedClaimStrategy.cs" />
+    <Compile Include="ProcessingSequenceBarrier.cs" />
+    <Compile Include="BatchEventProcessor.cs" />
+    <Compile Include="Collections\Histogram.cs" />
+    <Compile Include="MemoryLayout\PaddedAtomicLong.cs" />
+    <Compile Include="MemoryLayout\PaddedLong.cs" />
+    <Compile Include="Dsl\EventHandlerGroup.cs" />
+    <Compile Include="Dsl\EventProcessorInfo.cs" />
+    <Compile Include="Dsl\EventProcessorRepository.cs" />
+    <Compile Include="IEventHandlerGroup.cs" />
+    <Compile Include="ILifecycleAware.cs" />
+    <Compile Include="MemoryLayout\CacheLine.cs" />
+    <Compile Include="IEventHandler.cs" />
+    <Compile Include="IClaimStrategy.cs" />
+    <Compile Include="IEventProcessor.cs" />
+    <Compile Include="ISequenceBarrier.cs" />
+    <Compile Include="IWaitStrategy.cs" />
+    <Compile Include="NoOpEventProcessor.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RingBuffer.cs" />
+    <Compile Include="Sequence.cs" />
+    <Compile Include="BatchDescriptor.cs" />
+    <Compile Include="SequenceGroup.cs" />
+    <Compile Include="Sequencer.cs" />
+    <Compile Include="SequenceReportingEventHandler.cs" />
+    <Compile Include="SingleThreadedClaimStrategy.cs" />
+    <Compile Include="Util.cs" />
+    <Compile Include="SleepingWaitStrategy.cs" />
+    <Compile Include="WorkerPool.cs" />
+    <Compile Include="WorkProcessor.cs" />
+    <Compile Include="YieldingWaitStrategy.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

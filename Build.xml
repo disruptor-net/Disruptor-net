@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <MSBuildCommunityTasksPath>$(MSBuildProjectDirectory)\Lib\MSBuild.Community\</MSBuildCommunityTasksPath>
+    <SourceDir>$(MSBuildProjectDirectory)</SourceDir>
+    <NUnitToolPath>$(MSBuildProjectDirectory)\Lib\NUnit\</NUnitToolPath>
+    <TargetDir>$(MsBuildProjectDirectory)\Target\</TargetDir>
+    <ReportDir>$(TargetDir)Report\</ReportDir>
+    <PerfReportDir>$(ReportDir)Perf\</PerfReportDir>
+    <UnitReportDir>$(ReportDir)Unit\</UnitReportDir>
+    <DocDir>$(TargetDir)Doc\</DocDir>
+    <DistDir>$(TargetDir)Dist\</DistDir>
+    <BinDir>$(TargetDir)Bin\</BinDir>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.Targets" />
+
+  <Target Name="Clean">
+    <RemoveDir Directories="$(TargetDir)" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor\bin" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor\obj" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.PerfTestRunner\bin" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.PerfTestRunner\obj" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.PerfTests\bin" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.PerfTests\obj" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.Tests\bin" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.Tests\obj" />
+  </Target>
+
+  <Target Name="PreBuild" DependsOnTargets="Clean">
+    <MakeDir Directories="$(TargetDir)" />
+    <MakeDir Directories="$(ReportDir)" />
+    <MakeDir Directories="$(DocDir)" />
+    <MakeDir Directories="$(DistDir)" />
+    <MakeDir Directories="$(PerfReportDir)" />
+    <MakeDir Directories="$(UnitReportDir)" />
+    <MakeDir Directories="$(BinDir)" />
+  </Target>
+  
+  <!-- Compiles the VS solution -->
+  <Target Name="Build" DependsOnTargets="PreBuild">
+    <MSBuild
+		  Projects="NDisruptor.sln"
+		  Properties="Configuration=Release;OutputPath=$(BinDir);Optimize=true"
+		  StopOnFirstFailure="true"
+		  ContinueOnError="false"
+		/>
+  </Target>
+  
+  <!-- Run Unit tests (Using MSBuild.Community) -->
+  <Target Name="Test" DependsOnTargets="Build">
+    <NUnit 
+      Assemblies="$(BinDir)\Disruptor.Tests.dll"
+      ToolPath="$(NUnitToolPath)"
+      OutputXmlFile="$(UnitReportDir)\UnitTests.xml"
+      />
+  </Target>
+
+  <!-- Run performance tests (Using MSBuild.Community) -->
+  <Target Name="Perf" DependsOnTargets="Build">
+    <NUnit
+      Assemblies="$(BinDir)\Disruptor.PerfTests.dll"
+      ToolPath="$(NUnitToolPath)"
+      OutputXmlFile="$(UnitReportDir)\UnitTests.xml"
+      />
+  </Target>
+
+  <Target Name="UpdateVersion">
+    <AssemblyInfo CodeLanguage="CS"
+      OutputFile="$(MsBuildProjectDirectory)\Version.cs"
+      AssemblyCompany="http://code.google.com/p/disruptor-net/"
+      AssemblyProduct="Disruptor"
+      AssemblyCopyright="Copyright © disruptor-net"
+      AssemblyVersion="$(DisruptorVersion)"
+      AssemblyFileVersion="$(DisruptorVersion)" />
+  </Target>
+
+  <Target Name="Package">
+    <ItemGroup>
+      <DisruptorZip Include="$(BinDir)Disruptor.dll" />
+      <DisruptorZip Include="$(BinDir)Disruptor.pdb" />
+      <DisruptorZip Include="$(BinDir)Disruptor.XML" />
+    </ItemGroup>
+    <Zip Files="@(DisruptorZip)" WorkingDirectory="$(BinDir)" ZipFileName="Target\Dist\Disruptor-binaries-$(DisruptorVersion).zip" ZipLevel="9" />
+
+    <ItemGroup>
+      <DisruptorPerfZip Include="$(BinDir)Disruptor.dll" />
+      <DisruptorPerfZip Include="$(BinDir)Disruptor.pdb" />
+      <DisruptorPerfZip Include="$(BinDir)Disruptor.XML" />
+      <DisruptorPerfZip Include="$(BinDir)Disruptor.PerfTests.exe" />
+      <DisruptorPerfZip Include="$(BinDir)Disruptor.PerfTests.pdb" />
+      <DisruptorPerfZip Include="$(BinDir)nunit.framework.dll" />
+      <DisruptorPerfZip Include="$(BinDir)System.Threading.Tasks.Dataflow.dll" />
+    </ItemGroup>
+    <Zip Files="@(DisruptorPerfZip)" WorkingDirectory="$(BinDir)" ZipFileName="Target\Dist\Disruptor-perfRunner-$(DisruptorVersion).zip" ZipLevel="9" />
+
+    <ItemGroup>
+      <DisruptorSourceZipExclude Include="$(SourceDir)\**\.svn\**" />
+      <DisruptorSourceZipExclude Include="$(SourceDir)\**\obj\**" />
+      <DisruptorSourceZipExclude Include="$(SourceDir)\_ReSharper.NDisruptor\**" />
+      <DisruptorSourceZipExclude Include="$(SourceDir)\Doc\**" />
+      <DisruptorSourceZipExclude Include="$(SourceDir)\Target\**" />
+      <DisruptorSourceZipExclude Include="$(SourceDir)\Tools\**" />
+      <DisruptorSourceZipExclude Include="$(SourceDir)\Backlog.txt" />
+      <DisruptorSourceZipExclude Include="$(SourceDir)\NDisruptor.5.1.ReSharper.user" />
+      <DisruptorSourceZipExclude Include="$(SourceDir)\NDisruptor.6.5.TeamCity.user" />
+      <DisruptorSourceZipExclude Include="$(SourceDir)\NDisruptor.suo" />
+      <DisruptorSourceZipExclude Include="$(SourceDir)\perfMonitor.bat" />
+
+      <DisruptorSourceZipInclude Include="$(SourceDir)\**\*.*" Exclude="@(DisruptorSourceZipExclude)" />
+    </ItemGroup>
+    <Zip Files="@(DisruptorSourceZipInclude)" WorkingDirectory="$(SourceDir)" ZipFileName="Target\Dist\Disruptor-source-$(DisruptorVersion).zip" ZipLevel="9" />
+
+    <ItemGroup>
+      <Zips Include="Target\Dist\Disruptor-binaries-$(DisruptorVersion).zip" />
+      <Zips Include="Target\Dist\Disruptor-perfRunner-$(DisruptorVersion).zip" />
+      <Zips Include="Target\Dist\Disruptor-source-$(DisruptorVersion).zip" />
+    </ItemGroup>
+
+    <Copy
+       SourceFiles="@(Zips)"
+       DestinationFolder="C:\Disruptor-release"
+    />
+  </Target>
+</Project>

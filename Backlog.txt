@@ -1,0 +1,10 @@
+- add test coverage (NCover? DotCover?)
+- generate API documentation in the build process
+- add proper documentation in the wiki
+
+- port experimentals
+- port OnePublisherToOneProcessorUniCastRawThroughputTest
+- port OnePublisherToThreeWorkerPoolThroughputTest
+- find a more flexible way to start threads (Disruptor.Start and WorkerPool.Start)
+- find an equivalent for LockSupport.parkNanos(1L); (Search TODOs)
+- port the DSL Tests
