@@ -46,3 +46,12 @@ packages/
 
 #Target build folder
 Target/
+Disruptor.PerfTests/Disruptor.PerfTests.pidb
+
+Disruptor.Tests/Disruptor.Tests.pidb
+
+Disruptor/Disruptor.pidb
+
+NDisruptor.userprefs
+
+Disruptor.Tests/test-results/*

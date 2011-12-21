@@ -9,3 +9,8 @@
 - find an equivalent for LockSupport.parkNanos(1L); (Search TODOs)
 - port the DSL Tests
 - port changes from r495
+
+- Get Mono to build and run the performance tests
+  - Involves porting some of the System.Management.ManagementObjectSearcher stuff
+  - Run code through MoMA to find any other Mono-specific problems
+  - Run code through Gendarme to find any other Mono-specific problems

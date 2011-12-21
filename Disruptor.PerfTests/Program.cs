@@ -23,7 +23,9 @@ namespace Disruptor.PerfTests
                 return;
             }
             
-            Console.WriteLine(new ComputerSpecifications().ToString());
+			var specs = ComputerSpecifications.GetSpecificationsForPlatform();
+			
+            Console.WriteLine(specs.ToString());
 
             var session = new PerformanceTestSession(scenarioType, implementationType, runs);
 
