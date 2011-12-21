@@ -20,7 +20,7 @@ namespace Disruptor.PerfTests.Runner
             _scenarioType = scenarioType;
             _implementationType = implementationType;
             _runs = runs;
-            _computerSpecifications = new ComputerSpecifications();
+            _computerSpecifications = ComputerSpecifications.GetSpecificationsForPlatform();
             Console.WriteLine("Scenario={0}, Implementation={1}, Runs={2}", scenarioType, implementationType, runs);
 
             if (scenarioType == ScenarioType.All)
