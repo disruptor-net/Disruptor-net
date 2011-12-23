@@ -36,11 +36,13 @@ namespace Disruptor
 
         /// <summary>
         /// Construct a RingBuffer with default strategies of:
-        /// <see cref="MultiThreadedClaimStrategy"/> and <see cref="BlockingWaitStrategy"/></summary>
+        /// <see cref="MultiThreadedLowContentionClaimStrategy"/> and <see cref="BlockingWaitStrategy"/></summary>
         /// <param name="eventFactory"> eventFactory to create entries for filling the RingBuffer</param>
         /// <param name="bufferSize"></param>
         public RingBuffer(Func<T> eventFactory, int bufferSize)
-            : this(eventFactory, new MultiThreadedClaimStrategy(bufferSize), new BlockingWaitStrategy())
+            : this(eventFactory, 
+                   new MultiThreadedClaimStrategy(bufferSize), 
+                   new BlockingWaitStrategy())
         {
         }
 

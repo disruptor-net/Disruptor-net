@@ -20,7 +20,7 @@ namespace Disruptor.PerfTests.Sequencer3P1C
             : base(20 * Million)
         {
             _disruptor = new Disruptor<ValueEvent>(()=>new ValueEvent(), 
-                                                   new MultiThreadedClaimStrategy(Size),
+                                                   new MultiThreadedLowContentionClaimStrategy(Size),
                                                    new YieldingWaitStrategy());
             _mru = new ManualResetEvent(false);
             _eventHandler = new ValueAdditionEventHandler(Iterations * NumProducers, _mru);

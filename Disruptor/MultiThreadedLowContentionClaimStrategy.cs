@@ -1,46 +1,27 @@
-using System;
-using System.Threading;
-using Disruptor.Atomic;
+﻿using System.Threading;
 using Disruptor.MemoryLayout;
 
 namespace Disruptor
 {
     /// <summary>
-    /// Strategy to be used when there are multiple publisher threads claiming sequences.
+    /// Strategy to be used when there are multiple producer threads claiming sequences.
     /// 
-    /// This strategy is reasonably forgiving when the multiple publisher threads are highly contended or working in an
-    /// environment where there is insufficient CPUs to handle multiple publisher threads.  It requires 2 CAS operations
-    /// for a single publisher, compared to the MultithreadedLowContention strategy which needs only a single CAS and a
-    /// lazySet per publication.
+    /// This strategy requires sufficient cores to allow multiple publishers to be concurrently claiming sequences.
     /// </summary>
-    [Obsolete("Just ported Mike's algorithm but I've seen it dealocking - wait for a fix on my side or their side")]
-    public class MultiThreadedClaimStrategy : IClaimStrategy
+    public sealed class MultiThreadedLowContentionClaimStrategy : IClaimStrategy
     {
-        private const int Retries = 1000;
         private readonly int _bufferSize;
         private PaddedAtomicLong _claimSequence = new PaddedAtomicLong(Sequencer.InitialCursorValue);
-        private readonly AtomicLongArray _pendingPublication;
-        private readonly int _pendingMask;
-        private readonly ThreadLocal<MutableLong> _minGatingSequenceThreadLocal = new ThreadLocal<MutableLong>(() => new MutableLong(Sequencer.InitialCursorValue));
+        private readonly ThreadLocal<MutableLong> _minGatingSequenceThreadLocal;
 
         /// <summary>
         /// Construct a new multi-threaded publisher <see cref="IClaimStrategy"/> for a given buffer size.
         /// </summary>
         /// <param name="bufferSize">bufferSize for the underlying data structure.</param>
-        /// <param name="pendingBufferSize"></param>
-        public MultiThreadedClaimStrategy(int bufferSize, int pendingBufferSize)
+        public MultiThreadedLowContentionClaimStrategy(int bufferSize)
         {
             _bufferSize = bufferSize;
-            _pendingPublication = new AtomicLongArray(pendingBufferSize);
-            _pendingMask = pendingBufferSize - 1;
-        }
-        
-        /// <summary>
-        /// Construct a new multi-threaded publisher <see cref="IClaimStrategy"/> for a given buffer size.
-        /// </summary>
-        /// <param name="bufferSize">bufferSize for the underlying data structure.</param>
-        public MultiThreadedClaimStrategy(int bufferSize) : this(bufferSize, 1024)
-        {
+            _minGatingSequenceThreadLocal = new ThreadLocal<MutableLong>(() => new MutableLong(Sequencer.InitialCursorValue));
         }
 
         /// <summary>
@@ -68,7 +49,7 @@ namespace Disruptor
         public bool HasAvailableCapacity(int availableCapacity, Sequence[] dependentSequences)
         {
             long wrapPoint = (_claimSequence.Value + availableCapacity) - _bufferSize;
-            MutableLong minGatingSequence = _minGatingSequenceThreadLocal.Value;
+            var minGatingSequence = _minGatingSequenceThreadLocal.Value;
             if (wrapPoint > minGatingSequence.Value)
             {
                 long minSequence = Util.GetMinimumSequence(dependentSequences);
@@ -91,7 +72,7 @@ namespace Disruptor
         /// <returns>the index to be used for the publishing.</returns>
         public long IncrementAndGet(Sequence[] dependentSequences)
         {
-            MutableLong minGatingSequence = _minGatingSequenceThreadLocal.Value;
+            var minGatingSequence = _minGatingSequenceThreadLocal.Value;
             WaitForCapacity(dependentSequences, minGatingSequence);
 
             long nextSequence = _claimSequence.IncrementAndGet();
@@ -109,51 +90,39 @@ namespace Disruptor
         ///<returns>the result after incrementing.</returns>
         public long IncrementAndGet(int delta, Sequence[] dependentSequences)
         {
-            long nextSequence = _claimSequence.AddAndGet(delta);
+            long nextSequence = _claimSequence.IncrementAndGet(delta);
             WaitForFreeSlotAt(nextSequence, dependentSequences, _minGatingSequenceThreadLocal.Value);
 
             return nextSequence;
         }
 
+        /// <summary>
+        /// Set the current sequence value for claiming an event in the <see cref="Sequencer"/>
+        /// The caller should be held up until the claimed sequence is available by tracking the dependentSequences.
+        /// </summary>
+        /// <param name="sequence">sequence to be set as the current value.</param>
+        /// <param name="dependentSequences">dependentSequences to be checked for range.</param>
         public void SetSequence(long sequence, Sequence[] dependentSequences)
         {
             _claimSequence.LazySet(sequence);
             WaitForFreeSlotAt(sequence, dependentSequences, _minGatingSequenceThreadLocal.Value);
         }
 
+        ///<summary>
+        /// Serialise publishers in sequence and set cursor to latest available sequence.
+        ///</summary>
+        ///<param name="sequence">sequence to be applied</param>
+        ///<param name="cursor">cursor to serialise against.</param>
+        ///<param name="batchSize">batchSize of the sequence.</param>
         public void SerialisePublishing(long sequence, Sequence cursor, long batchSize)
         {
-            int counter = Retries;
-            while (sequence - cursor.Value > _pendingPublication.Length)
-            {
-                if (--counter == 0)
-                {
-                    Thread.Sleep(1);
-                    counter = Retries;
-                }
-            }
-
             long expectedSequence = sequence - batchSize;
-            for (long pendingSequence = expectedSequence + 1; pendingSequence <= sequence; pendingSequence++)
+            while (expectedSequence != cursor.Value)
             {
-                _pendingPublication[(int)pendingSequence & _pendingMask] = pendingSequence;
+                // busy spin
             }
 
-            if (cursor.Value != expectedSequence)
-            {
-                return;
-            }
-
-            long nextSequence = expectedSequence + 1;
-            while (cursor.CompareAndSet(expectedSequence, nextSequence))
-            {
-                expectedSequence = nextSequence;
-                nextSequence++;
-                if (_pendingPublication[(int)nextSequence & _pendingMask] != nextSequence)
-                {
-                    break;
-                }
-            }
+            cursor.LazySet(sequence);
         }
 
         private void WaitForCapacity(Sequence[] dependentSequences, MutableLong minGatingSequence)
@@ -164,7 +133,6 @@ namespace Disruptor
                 long minSequence;
                 while (wrapPoint > (minSequence = Util.GetMinimumSequence(dependentSequences)))
                 {
-                    Thread.Sleep(1);
                     //TODO LockSupport.parkNanos(1L);
                 }
 
@@ -180,13 +148,11 @@ namespace Disruptor
                 long minSequence;
                 while (wrapPoint > (minSequence = Util.GetMinimumSequence(dependentSequences)))
                 {
-                    Thread.Sleep(1);
-                    // LockSupport.parkNanos(1L);
+                    //TODO LockSupport.parkNanos(1L);
                 }
 
-                minGatingSequence.Value = minSequence;
+                minGatingSequence.Value =  minSequence;
             }
         }
-
     }
 }

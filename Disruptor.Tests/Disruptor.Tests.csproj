@@ -58,6 +58,7 @@
     <Compile Include="BatchEventProcessorTests.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MultiThreadedClaimStrategyTests.cs" />
     <Compile Include="SequenceBarrierTests.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -67,7 +68,7 @@
     <Compile Include="LifecycleAwareTests.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MultiTreadedClaimStrategyTests.cs" />
+    <Compile Include="MultiThreadedLowContentionClaimStrategyTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RingBufferTests.cs">
       <SubType>Code</SubType>

@@ -50,7 +50,7 @@ namespace Disruptor
         /// <param name="expectedSequence">the expected value for the sequence</param>
         /// <param name="nextSequence">the new value for the sequence</param>
         /// <returns>true if successful. False return indicates that the actual value was not equal to the expected value.</returns>
-        public bool CompareAndSet(long expectedSequence, long nextSequence)
+        public virtual bool CompareAndSet(long expectedSequence, long nextSequence)
         {
             return _value.CompareAndSet(expectedSequence, nextSequence);
         }

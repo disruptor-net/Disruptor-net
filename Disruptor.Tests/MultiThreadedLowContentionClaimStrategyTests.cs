@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class MultiTreadedClaimStrategyTests
+    public class MultiThreadedLowContentionClaimStrategyTests
     {
         private const int BufferSize = 8;
         private IClaimStrategy _claimStrategy;
@@ -15,7 +15,7 @@ namespace Disruptor.Tests
         [SetUp]
         public void SetUp()
         {
-            _claimStrategy = new MultiThreadedClaimStrategy(BufferSize);
+            _claimStrategy = new MultiThreadedLowContentionClaimStrategy(BufferSize);
         }
 
         [Test]

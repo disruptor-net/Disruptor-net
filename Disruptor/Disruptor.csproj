@@ -51,6 +51,7 @@
     <Compile Include="AggregateEventHandler.cs" />
     <Compile Include="AlertException.cs" />
     <Compile Include="Atomic\AtomicBool.cs" />
+    <Compile Include="Atomic\AtomicLongArray.cs" />
     <Compile Include="Atomic\AtomicReference.cs" />
     <Compile Include="BlockingWaitStrategy.cs" />
     <Compile Include="BusySpinWaitStrategy.cs" />
@@ -63,6 +64,8 @@
     <Compile Include="IgnoreExceptionHandler.cs" />
     <Compile Include="IWorkHandler.cs" />
     <Compile Include="MultiThreadedClaimStrategy.cs" />
+    <Compile Include="MultiThreadedLowContentionClaimStrategy.cs" />
+    <Compile Include="MutableLong.cs" />
     <Compile Include="ProcessingSequenceBarrier.cs" />
     <Compile Include="BatchEventProcessor.cs" />
     <Compile Include="Collections\Histogram.cs" />

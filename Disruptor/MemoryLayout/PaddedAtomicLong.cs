@@ -58,5 +58,10 @@ namespace Disruptor.MemoryLayout
         {
             return Interlocked.CompareExchange(ref _value, value, comparand) == comparand;
         }
+
+        public long AddAndGet(int delta)
+        {
+            return Interlocked.Add(ref _value, delta);
+        }
     }
 }
