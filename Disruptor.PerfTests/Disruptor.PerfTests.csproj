@@ -56,20 +56,24 @@
       <Link>Version.cs</Link>
     </Compile>
     <Compile Include="DiamondPath1P3C\AbstractDiamondPath1P3CPerfTest.cs" />
+    <Compile Include="DiamondPath1P3C\DiamondPath1P3CDisruptorWithAffinityPerfTest.cs" />
     <Compile Include="DiamondPath1P3C\DiamondPath1P3CBlockingCollectionPerfTest.cs" />
     <Compile Include="DiamondPath1P3C\DiamondPath1P3CDisruptorPerfTest.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="LatencyPerfTest.cs" />
+    <Compile Include="MultiCast1P3C\MultiCast1P3CDisruptorWithAffinityPerfTest.cs" />
     <Compile Include="MultiCast1P3C\MultiCast1P3CDisruptorPerfTest.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PerfTest.cs" />
     <Compile Include="Pipeline3StepLatency\AbstractPipeline3StepLatencyPerfTest.cs" />
+    <Compile Include="Pipeline3StepLatency\Pipeline3StepLatencyDisruptorWithAffinityPerfTest.cs" />
     <Compile Include="Pipeline3StepLatency\Pipeline3StepLatencyBlockingCollectionPerfTest.cs" />
     <Compile Include="Pipeline3StepLatency\Pipeline3StepLatencyDisruptorPerfTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Pipeline3Step\Pipeline3StepDisruptorWithAffinityPerfTest.cs" />
     <Compile Include="Pipeline3Step\Pipeline3StepDisruptorPerfTest.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -89,6 +93,7 @@
     <Compile Include="Runner\TestRun.cs" />
     <Compile Include="Runner\ThroughputTestRun.cs" />
     <Compile Include="Sequencer3P1C\AbstractSequencer3P1CPerfTest.cs" />
+    <Compile Include="Sequencer3P1C\Sequencer3P1CDisruptorWithAffinityPerfTest.cs" />
     <Compile Include="Sequencer3P1C\Sequencer3P1CBlockingCollectionPerfTest.cs" />
     <Compile Include="Sequencer3P1C\Sequencer3P1CDisruptorPerfTest.cs">
       <SubType>Code</SubType>
@@ -114,15 +119,21 @@
     <Compile Include="Support\ValueQueueProducer.cs" />
     <Compile Include="ThroughputPerfTest.cs" />
     <Compile Include="UniCast1P1CBatch\AbstractUniCast1P1CBatchPerfTest.cs" />
+    <Compile Include="UniCast1P1CBatch\UniCast1P1CBatchDisruptorWithAffinityPerfTest.cs" />
     <Compile Include="UniCast1P1CBatch\UniCast1P1CBatchBlockingCollectionPerfTest.cs" />
     <Compile Include="UniCast1P1CBatch\UniCast1P1CBatchDisruptorPerfTest.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="UniCast1P1C\AbstractUniCast1P1CPerfTest.cs" />
+    <Compile Include="UniCast1P1C\UniCast1P1CDisruptorWithAffinityPerfTest.cs" />
     <Compile Include="UniCast1P1C\UniCast1P1CBlockingCollectionPerfTest.cs" />
     <Compile Include="UniCast1P1C\UniCast1P1CDisruptorPerfTest.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Disruptor.Scheduler\Disruptor.Scheduler.csproj">
+      <Project>{7B1F3DC3-5DA8-4E36-A03B-837D90D2A51D}</Project>
+      <Name>Disruptor.Scheduler</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj">
       <Project>{37FBDBE1-8524-4489-B082-CC109B0F5EA3}</Project>
       <Name>Disruptor</Name>

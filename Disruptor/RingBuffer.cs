@@ -41,7 +41,7 @@ namespace Disruptor
         /// <param name="bufferSize"></param>
         public RingBuffer(Func<T> eventFactory, int bufferSize)
             : this(eventFactory, 
-                   new MultiThreadedClaimStrategy(bufferSize), 
+                   new MultiThreadedLowContentionClaimStrategy(bufferSize), 
                    new BlockingWaitStrategy())
         {
         }

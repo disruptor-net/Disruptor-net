@@ -3,12 +3,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
+using Disruptor.Scheduler;
 using NUnit.Framework;
 
 namespace Disruptor.PerfTests.DiamondPath1P3C
 {
     [TestFixture]
-    public class DiamondPath1P3CDisruptorPerfTest:AbstractDiamondPath1P3CPerfTest
+    public class DiamondPath1P3CDisruptorWithAffinityPerfTest:AbstractDiamondPath1P3CPerfTest
     {
         private readonly RingBuffer<FizzBuzzEvent> _ringBuffer;
         private readonly FizzBuzzEventHandler _fizzEventHandler;
@@ -16,14 +17,16 @@ namespace Disruptor.PerfTests.DiamondPath1P3C
         private readonly FizzBuzzEventHandler _fizzBuzzEventHandler;
         private readonly ManualResetEvent _mru;
         private readonly Disruptor<FizzBuzzEvent> _disruptor;
+        private readonly RoundRobinThreadAffinedTaskScheduler _scheduler;
 
-        public DiamondPath1P3CDisruptorPerfTest()
+        public DiamondPath1P3CDisruptorWithAffinityPerfTest()
             : base(100 * Million)
         {
+            _scheduler = new RoundRobinThreadAffinedTaskScheduler(4);
             _disruptor = new Disruptor<FizzBuzzEvent>(() => new FizzBuzzEvent(),
                                                       new SingleThreadedClaimStrategy(Size),
                                                       new YieldingWaitStrategy(),
-                                                      TaskScheduler.Default);
+                                                      _scheduler);
 
             _mru = new ManualResetEvent(false);
             _fizzEventHandler = new FizzBuzzEventHandler(FizzBuzzStep.Fizz, Iterations, _mru);
@@ -41,12 +44,16 @@ namespace Disruptor.PerfTests.DiamondPath1P3C
 
             var sw = Stopwatch.StartNew();
 
-            for (long i = 0; i < Iterations; i++)
-            {
-                var sequence = _ringBuffer.Next();
-                _ringBuffer[sequence].Value = i;
-                _ringBuffer.Publish(sequence);
-            }
+            Task.Factory.StartNew(
+                () =>
+                    {
+                        for (long i = 0; i < Iterations; i++)
+                        {
+                            var sequence = _ringBuffer.Next();
+                            _ringBuffer[sequence].Value = i;
+                            _ringBuffer.Publish(sequence);
+                        }
+                    }, CancellationToken.None, TaskCreationOptions.None, _scheduler);
 
             _mru.WaitOne();
 

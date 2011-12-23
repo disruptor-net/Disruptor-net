@@ -2,12 +2,13 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
+using Disruptor.Scheduler;
 using NUnit.Framework;
 
 namespace Disruptor.PerfTests.Pipeline3StepLatency
 {
     [TestFixture]
-    public sealed class Pipeline3StepLatencyDisruptorPerfTest : AbstractPipeline3StepLatencyPerfTest
+    public sealed class Pipeline3StepLatencyDisruptorWithAffinityPerfTest : AbstractPipeline3StepLatencyPerfTest
     {
         private readonly RingBuffer<ValueEvent> _ringBuffer;
 
@@ -16,14 +17,17 @@ namespace Disruptor.PerfTests.Pipeline3StepLatency
         private readonly LatencyStepEventHandler _stepThreeFunctionEventHandler;
         private readonly Dsl.Disruptor<ValueEvent> _disruptor;
         private readonly ManualResetEvent _mru;
+        private readonly RoundRobinThreadAffinedTaskScheduler _scheduler;
 
-        public Pipeline3StepLatencyDisruptorPerfTest()
+        public Pipeline3StepLatencyDisruptorWithAffinityPerfTest()
             : base(2 * Million)
         {
+            _scheduler = new RoundRobinThreadAffinedTaskScheduler(4);            
+
             _disruptor = new Dsl.Disruptor<ValueEvent>(() => new ValueEvent(),
                                                    new SingleThreadedClaimStrategy(Size),
                                                    new YieldingWaitStrategy(),
-                                                   TaskScheduler.Default);
+                                                   _scheduler);
 
             _mru = new ManualResetEvent(false);
             _stepOneFunctionEventHandler = new LatencyStepEventHandler(FunctionStep.One, Histogram, StopwatchTimestampCostInNano, TicksToNanos, Iterations, _mru);
@@ -40,22 +44,27 @@ namespace Disruptor.PerfTests.Pipeline3StepLatency
         {
             _disruptor.Start();
 
-            for (long i = 0; i < Iterations; i++)
-            {
-                var sequence = _ringBuffer.Next();
-                _ringBuffer[sequence].Value = Stopwatch.GetTimestamp();
-                _ringBuffer.Publish(sequence);
-
-                var pauseStart = Stopwatch.GetTimestamp();
-                while (PauseNanos > (Stopwatch.GetTimestamp() - pauseStart) * TicksToNanos)
+            Task.Factory.StartNew(
+                () =>
                 {
-                    // busy spin
-                }
-            }
+                    for (long i = 0; i < Iterations; i++)
+                    {
+                        var sequence = _ringBuffer.Next();
+                        _ringBuffer[sequence].Value = Stopwatch.GetTimestamp();
+                        _ringBuffer.Publish(sequence);
+
+                        var pauseStart = Stopwatch.GetTimestamp();
+                        while (PauseNanos > (Stopwatch.GetTimestamp() - pauseStart) * TicksToNanos)
+                        {
+                            // busy spin
+                        }
+                    }
+                }, CancellationToken.None, TaskCreationOptions.None, _scheduler);
 
             _mru.WaitOne();
 
             _disruptor.Shutdown();
+            _scheduler.Dispose();
         }
 
         [Test]

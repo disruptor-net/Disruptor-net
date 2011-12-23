@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Atomic;
 
 namespace Disruptor
@@ -101,9 +102,8 @@ namespace Disruptor
         /// </summary>
         /// <returns>the <see cref="RingBuffer{T}"/> used for the work queue.</returns>
         /// <exception cref="InvalidOperationException">if the pool has already been started and not halted yet</exception>
-        public RingBuffer<T> Start()
+        public RingBuffer<T> Start(TaskScheduler taskScheduler)
         {
-            // TODO find a more flexible way to start threads (IScheduler or something like that)
             if (!_started.CompareAndSet(false, true))
             {
                 throw new InvalidOperationException("WorkerPool has already been started and cannot be restarted until halted.");
@@ -117,11 +117,7 @@ namespace Disruptor
                 var workProcessor = _workProcessors[i];
                 workProcessor.Sequence.Value = cursor;
 
-                var thread = new Thread(workProcessor.Run)
-                                 {
-                                     IsBackground = true, 
-                                 };
-                thread.Start();
+                Task.Factory.StartNew(workProcessor.Run, CancellationToken.None, TaskCreationOptions.None, taskScheduler);
             }
 
             return _ringBuffer;

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Atomic;
 
 namespace Disruptor.Dsl
@@ -12,6 +13,7 @@ namespace Disruptor.Dsl
     public class Disruptor<T> where T : class
     {
         private readonly RingBuffer<T> _ringBuffer;
+        private readonly TaskScheduler _taskScheduler;
         private readonly EventProcessorRepository<T> _eventProcessorRepository = new EventProcessorRepository<T>();
         private AtomicBool _started = new AtomicBool(false);
         private readonly EventPublisher<T> _eventPublisher;
@@ -22,7 +24,9 @@ namespace Disruptor.Dsl
         /// </summary>
         /// <param name="eventFactory">the factory to create events in the ring buffer.</param>
         /// <param name="ringBufferSize">the size of the ring buffer, must be a power of 2.</param>
-        public Disruptor(Func<T> eventFactory, int ringBufferSize) : this(new RingBuffer<T>(eventFactory, ringBufferSize))
+        /// <param name="taskScheduler">the <see cref="TaskScheduler"/> used to start <see cref="IEventProcessor"/>s.</param>
+        public Disruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler)
+            : this(new RingBuffer<T>(eventFactory, ringBufferSize), taskScheduler)
         {
         }
 
@@ -32,16 +36,21 @@ namespace Disruptor.Dsl
         /// <param name="eventFactory">the factory to create events in the ring buffer.</param>
         /// <param name="claimStrategy">the claim strategy to use for the ring buffer.</param>
         /// <param name="waitStrategy">the wait strategy to use for the ring buffer.</param>
+        /// <param name="taskScheduler">the <see cref="TaskScheduler"/> used to start <see cref="IEventProcessor"/>s.</param>
         public Disruptor(Func<T> eventFactory, 
                          IClaimStrategy claimStrategy,
-                         IWaitStrategy waitStrategy)
-            : this(new RingBuffer<T>(eventFactory, claimStrategy, waitStrategy))
+                         IWaitStrategy waitStrategy,
+                         TaskScheduler taskScheduler)
+            : this(new RingBuffer<T>(eventFactory, claimStrategy, waitStrategy), taskScheduler)
         {
         }
 
-        private Disruptor(RingBuffer<T> ringBuffer)
+        private Disruptor(RingBuffer<T> ringBuffer, TaskScheduler taskScheduler)
         {
+            if (taskScheduler == null) throw new ArgumentNullException("taskScheduler");
+
             _ringBuffer = ringBuffer;
+            _taskScheduler = taskScheduler;
             _eventPublisher = new EventPublisher<T>(ringBuffer);
         }
 
@@ -152,11 +161,8 @@ namespace Disruptor.Dsl
             foreach (var eventProcessorInfo in _eventProcessorRepository.EventProcessors)
             {
                 var eventProcessor = eventProcessorInfo.EventProcessor;
-                var thread = new Thread(eventProcessor.Run)
-                {
-                    IsBackground = true,
-                };
-                thread.Start();
+
+                Task.Factory.StartNew(eventProcessor.Run, CancellationToken.None, TaskCreationOptions.None, _taskScheduler);
             }
 
             return _ringBuffer;

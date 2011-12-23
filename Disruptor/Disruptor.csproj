@@ -47,7 +47,6 @@
     <Compile Include="..\Version.cs">
       <Link>Version.cs</Link>
     </Compile>
-    <Compile Include="Affinity\ProcessorAffinity.cs" />
     <Compile Include="AggregateEventHandler.cs" />
     <Compile Include="AlertException.cs" />
     <Compile Include="Atomic\AtomicBool.cs" />

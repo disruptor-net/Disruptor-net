@@ -2,12 +2,13 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
+using Disruptor.Scheduler;
 using NUnit.Framework;
 
 namespace Disruptor.PerfTests.MultiCast1P3C
 {
     [TestFixture]
-    public class MultiCast1P3CDisruptorPerfTest:AbstractMultiCast1P3CPerfTest
+    public class MultiCast1P3CDisruptorWithAffinityPerfTest:AbstractMultiCast1P3CPerfTest
     {
         private readonly RingBuffer<ValueEvent> _ringBuffer;
         private readonly ValueMutationEventHandler _handler1;
@@ -15,14 +16,16 @@ namespace Disruptor.PerfTests.MultiCast1P3C
         private readonly ValueMutationEventHandler _handler3;
         private readonly CountdownEvent _latch;
         private readonly Dsl.Disruptor<ValueEvent> _disruptor;
+        private readonly RoundRobinThreadAffinedTaskScheduler _scheduler;
 
-        public MultiCast1P3CDisruptorPerfTest()
+        public MultiCast1P3CDisruptorWithAffinityPerfTest()
             : base(100 * Million)
         {
+            _scheduler = new RoundRobinThreadAffinedTaskScheduler(4);
             _disruptor = new Dsl.Disruptor<ValueEvent>(() => new ValueEvent(),
                                                       new SingleThreadedClaimStrategy(Size),
                                                       new YieldingWaitStrategy(), 
-                                                      TaskScheduler.Default);
+                                                      _scheduler);
 
             _latch = new CountdownEvent(3);
 
@@ -40,18 +43,23 @@ namespace Disruptor.PerfTests.MultiCast1P3C
 
             var sw = Stopwatch.StartNew();
 
-            for (long i = 0; i < Iterations; i++)
-            {
-                var sequence = _ringBuffer.Next();
-                _ringBuffer[sequence].Value = i;
-                _ringBuffer.Publish(sequence);
-            }
-
+            Task.Factory.StartNew(
+                () =>
+                    {
+                        for (long i = 0; i < Iterations; i++)
+                        {
+                            var sequence = _ringBuffer.Next();
+                            _ringBuffer[sequence].Value = i;
+                            _ringBuffer.Publish(sequence);
+                        }
+                    }, CancellationToken.None, TaskCreationOptions.None, _scheduler);
+            
             _latch.Wait();
 
             var opsPerSecond = (Iterations * 1000L) / sw.ElapsedMilliseconds;
 
             _disruptor.Shutdown();
+            _scheduler.Dispose();
 
             Assert.AreEqual(ExpectedResults[0], _handler1.Value, "Addition");
             Assert.AreEqual(ExpectedResults[1], _handler2.Value, "Sub");

@@ -3,25 +3,28 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
+using Disruptor.Scheduler;
 using NUnit.Framework;
 
 namespace Disruptor.PerfTests.Pipeline3Step
 {
     [TestFixture]
-    public class Pipeline3StepDisruptorPerfTest : AbstractPipeline3StepPerfTest
+    public class Pipeline3StepDisruptorWithAffinityPerfTest : AbstractPipeline3StepPerfTest
     {
         private readonly RingBuffer<FunctionEvent> _ringBuffer;
         private readonly FunctionEventHandler _stepThreeFunctionEventHandler;
         private readonly Disruptor<FunctionEvent> _disruptor;
         private readonly ManualResetEvent _mru;
+        private readonly RoundRobinThreadAffinedTaskScheduler _scheduler;
 
-        public Pipeline3StepDisruptorPerfTest()
+        public Pipeline3StepDisruptorWithAffinityPerfTest()
             : base(100 * Million)
         {
+            _scheduler = new RoundRobinThreadAffinedTaskScheduler(4);
             _disruptor = new Disruptor<FunctionEvent>(() => new FunctionEvent(),
                                                       new SingleThreadedClaimStrategy(Size),
                                                       new YieldingWaitStrategy(),
-                                                      TaskScheduler.Default);
+                                                      _scheduler);
 
             _mru = new ManualResetEvent(false);
             _stepThreeFunctionEventHandler = new FunctionEventHandler(FunctionStep.Three, Iterations, _mru);
@@ -39,21 +42,26 @@ namespace Disruptor.PerfTests.Pipeline3Step
 
             var sw = Stopwatch.StartNew();
 
-            var operandTwo = OperandTwoInitialValue;
-            for (long i = 0; i < Iterations; i++)
-            {
-                var sequence = _ringBuffer.Next();
-                var evt = _ringBuffer[sequence];
-                evt.OperandOne = i;
-                evt.OperandTwo = operandTwo--;
-                _ringBuffer.Publish(sequence);
-            }
+            Task.Factory.StartNew(
+                ()=>
+                    {
+                        var operandTwo = OperandTwoInitialValue;
+                        for (long i = 0; i < Iterations; i++)
+                        {
+                            var sequence = _ringBuffer.Next();
+                            var evt = _ringBuffer[sequence];
+                            evt.OperandOne = i;
+                            evt.OperandTwo = operandTwo--;
+                            _ringBuffer.Publish(sequence);
+                        }
+                    }, CancellationToken.None, TaskCreationOptions.None, _scheduler);
 
             _mru.WaitOne();
 
             var opsPerSecond = (Iterations * 1000L) / sw.ElapsedMilliseconds;
 
             _disruptor.Shutdown();
+            _scheduler.Dispose();
 
             Assert.AreEqual(ExpectedResult, _stepThreeFunctionEventHandler.StepThreeCounter);
 

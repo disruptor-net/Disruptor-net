@@ -3,12 +3,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
+using Disruptor.Scheduler;
 using NUnit.Framework;
 
 namespace Disruptor.PerfTests.Sequencer3P1C
 {
     [TestFixture]
-    public class Sequencer3P1CDisruptorPerfTest : AbstractSequencer3P1CPerfTest
+    public class Sequencer3P1CDisruptorWithAffinityPerfTest : AbstractSequencer3P1CPerfTest
     {
         private readonly RingBuffer<ValueEvent> _ringBuffer;
         private readonly ValueAdditionEventHandler _eventHandler;
@@ -16,14 +17,17 @@ namespace Disruptor.PerfTests.Sequencer3P1C
         private readonly Barrier _testStartBarrier = new Barrier(NumProducers);
         private readonly Disruptor<ValueEvent> _disruptor;
         private readonly ManualResetEvent _mru;
+        private readonly RoundRobinThreadAffinedTaskScheduler _scheduler;
 
-        public Sequencer3P1CDisruptorPerfTest()
+        public Sequencer3P1CDisruptorWithAffinityPerfTest()
             : base(20 * Million)
         {
+            _scheduler = new RoundRobinThreadAffinedTaskScheduler(4);
             _disruptor = new Disruptor<ValueEvent>(()=>new ValueEvent(), 
                                                    new MultiThreadedLowContentionClaimStrategy(Size),
-                                                   new YieldingWaitStrategy(),
-                                                   TaskScheduler.Default);
+                                                   new YieldingWaitStrategy(), 
+                                                   _scheduler);
+
             _mru = new ManualResetEvent(false);
             _eventHandler = new ValueAdditionEventHandler(Iterations * NumProducers, _mru);
             _disruptor.HandleEventsWith(_eventHandler);
@@ -43,16 +47,17 @@ namespace Disruptor.PerfTests.Sequencer3P1C
 
             for (var i = 0; i < NumProducers - 1; i++)
             {
-                (new Thread(_valueProducers[i].Run) { Name = "Value producer " + i }).Start();
+                Task.Factory.StartNew(_valueProducers[i].Run, CancellationToken.None, TaskCreationOptions.None, _scheduler);
             }
             
             var sw = Stopwatch.StartNew();
-            _valueProducers[NumProducers - 1].Run();
+            Task.Factory.StartNew(_valueProducers[NumProducers - 1].Run, CancellationToken.None, TaskCreationOptions.None, _scheduler);
 
             _mru.WaitOne();
 
             var opsPerSecond = (NumProducers * Iterations * 1000L) / sw.ElapsedMilliseconds;
             _disruptor.Shutdown();
+            _scheduler.Dispose();
 
             return opsPerSecond;
         }
