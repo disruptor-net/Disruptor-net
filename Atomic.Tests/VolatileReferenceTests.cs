@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using Atomic.Tests.Support;
 using NUnit.Framework;
 
 namespace Atomic.Tests
@@ -6,14 +7,14 @@ namespace Atomic.Tests
     [TestFixture]
     public class VolatileReferenceTests
     {
-        private Volatile.Reference<RefStub> _volatile;
-        private readonly RefStub _initialValue = new RefStub();
-        private readonly RefStub _newValue = new RefStub();
+        private Volatile.Reference<ClassStub> _volatile;
+        private readonly ClassStub _initialValue = new ClassStub();
+        private readonly ClassStub _newValue = new ClassStub();
 
         [SetUp]
         public void SetUp()
         {
-            _volatile = new Volatile.Reference<RefStub>(_initialValue);
+            _volatile = new Volatile.Reference<ClassStub>(_initialValue);
         }
 
         [Test]
@@ -106,6 +107,4 @@ namespace Atomic.Tests
             Assert.AreEqual(_initialValue.ToString(), _volatile.ToString());
         }
     }
-
-    public class RefStub{}
 }
