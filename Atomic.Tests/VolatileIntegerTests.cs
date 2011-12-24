@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using NUnit.Framework;
 
@@ -18,10 +17,9 @@ namespace Atomic.Tests
         }
 
         [Test]
-        [ExpectedException(typeof(NotImplementedException))]
-        public void ReadAcquireFenceThrows()
+        public void ReadAcquireFenceReturnsInitialValue()
         {
-            _volatile.ReadAcquireFence();
+            Assert.AreEqual(InitialValue, _volatile.ReadAcquireFence());
         }
 
         [Test]
@@ -31,10 +29,9 @@ namespace Atomic.Tests
         }
 
         [Test]
-        [ExpectedException(typeof(NotImplementedException))]
-        public void ReadCompilerOnlyFenceThrows()
+        public void ReadCompilerOnlyFenceReturnsInitialValue()
         {
-            _volatile.ReadCompilerOnlyFence();
+            Assert.AreEqual(InitialValue, _volatile.ReadCompilerOnlyFence());
         }
 
         [Test]
@@ -44,10 +41,10 @@ namespace Atomic.Tests
         }
 
         [Test]
-        [ExpectedException(typeof(NotImplementedException))]
-        public void WriteReleaseFenceThrows()
+        public void WriteReleaseFenceChangesInitialValue()
         {
             _volatile.WriteReleaseFence(NewValue);
+            Assert.AreEqual(NewValue, _volatile.ReadUnfenced());
         }
 
         [Test]
@@ -58,10 +55,10 @@ namespace Atomic.Tests
         }
 
         [Test]
-        [ExpectedException(typeof(NotImplementedException))]
-        public void WriteCompilerOnlyFenceThrows()
+        public void WriteCompilerOnlyFenceChangesInitialValue()
         {
             _volatile.WriteCompilerOnlyFence(NewValue);
+            Assert.AreEqual(NewValue, _volatile.ReadUnfenced());
         }
 
         [Test]
@@ -144,5 +141,10 @@ namespace Atomic.Tests
             Assert.AreEqual(InitialValue - 1, _volatile.ReadUnfenced());
         }
 
+        [Test]
+        public void ToStringReturnsInitialValueAsString()
+        {
+            Assert.AreEqual(InitialValue.ToString(), _volatile.ToString());
+        }
     }
 }

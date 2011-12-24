@@ -1,4 +1,6 @@
-﻿namespace System.Threading
+﻿using System.Runtime.CompilerServices;
+
+namespace System.Threading
 {
     ///<summary>
     /// A small toolkit of classes that support lock-free thread-safe programming on single variables.
@@ -36,7 +38,9 @@
             /// <returns>The current value</returns>
             public int ReadAcquireFence()
             {
-                throw new NotImplementedException();
+                var value = _value;
+                Thread.MemoryBarrier();
+                return value;
             }
 
             /// <summary>
@@ -45,16 +49,19 @@
             /// <returns>The current value</returns>
             public int ReadFullFence()
             {
-                return Thread.VolatileRead(ref _value);
+                var value = _value;
+                Thread.MemoryBarrier();
+                return value;
             }
 
             /// <summary>
             /// Read the value applying a compiler only fence, no CPU fence is applied
             /// </summary>
             /// <returns>The current value</returns>
+            [MethodImpl(MethodImplOptions.NoOptimization)]
             public int ReadCompilerOnlyFence()
             {
-                throw new NotImplementedException();
+                return _value;
             }
 
             /// <summary>
@@ -63,7 +70,8 @@
             /// <param name="newValue">The new value</param>
             public void WriteReleaseFence(int newValue)
             {
-                throw new NotImplementedException();
+                _value = newValue;
+                Thread.MemoryBarrier();
             }
 
             /// <summary>
@@ -72,16 +80,18 @@
             /// <param name="newValue">The new value</param>
             public void WriteFullFence(int newValue)
             {
-                Thread.VolatileWrite(ref _value, newValue);
+                _value = newValue;
+                Thread.MemoryBarrier();
             }
 
             /// <summary>
             /// Write the value applying a compiler fence only, no CPU fence is applied
             /// </summary>
             /// <param name="newValue">The new value</param>
+            [MethodImpl(MethodImplOptions.NoOptimization)]
             public void WriteCompilerOnlyFence(int newValue)
             {
-                throw new NotImplementedException();
+                _value = newValue;
             }
 
             /// <summary>
@@ -184,7 +194,9 @@
             /// <returns>The current value</returns>
             public long ReadAcquireFence()
             {
-                throw new NotImplementedException();
+                var value = _value;
+                Thread.MemoryBarrier();
+                return value;
             }
 
             /// <summary>
@@ -193,16 +205,18 @@
             /// <returns>The current value</returns>
             public long ReadFullFence()
             {
-                return Thread.VolatileRead(ref _value);
+                Thread.MemoryBarrier();
+                return _value;
             }
 
             /// <summary>
             /// Read the value applying a compiler only fence, no CPU fence is applied
             /// </summary>
             /// <returns>The current value</returns>
+            [MethodImpl(MethodImplOptions.NoOptimization)]
             public long ReadCompilerOnlyFence()
             {
-                throw new NotImplementedException();
+                return _value;
             }
 
             /// <summary>
@@ -211,7 +225,8 @@
             /// <param name="newValue">The new value</param>
             public void WriteReleaseFence(long newValue)
             {
-                throw new NotImplementedException();
+                Thread.MemoryBarrier();
+                _value = newValue;
             }
 
             /// <summary>
@@ -220,16 +235,18 @@
             /// <param name="newValue">The new value</param>
             public void WriteFullFence(long newValue)
             {
-                Thread.VolatileWrite(ref _value, newValue);
+                Thread.MemoryBarrier();
+                _value = newValue;
             }
 
             /// <summary>
             /// Write the value applying a compiler fence only, no CPU fence is applied
             /// </summary>
             /// <param name="newValue">The new value</param>
+            [MethodImpl(MethodImplOptions.NoOptimization)]
             public void WriteCompilerOnlyFence(long newValue)
             {
-                throw new NotImplementedException();
+                _value = newValue;
             }
 
             /// <summary>
@@ -288,6 +305,288 @@
             public long AtomicDecrementAndGet()
             {
                 return Interlocked.Decrement(ref _value);
+            }
+
+            /// <summary>
+            /// Returns the string representation of the current value.
+            /// </summary>
+            /// <returns>the string representation of the current value.</returns>
+            public override string ToString()
+            {
+                var value = ReadFullFence();
+                return value.ToString();
+            }
+        }
+
+        /// <summary>
+        /// A boolean value that may be updated atomically
+        /// </summary>
+        public struct Boolean
+        {
+            // bool stored as an int, CAS not available on bool
+            private int _value;
+            private const int False = 0;
+            private const int True = 1;
+
+            /// <summary>
+            /// Create a new <see cref="Boolean"/> with the given initial value.
+            /// </summary>
+            /// <param name="value">Initial value</param>
+            public Boolean(bool value)
+            {
+                _value = value ? True : False;
+            }
+
+            /// <summary>
+            /// Read the value without applying any fence
+            /// </summary>
+            /// <returns>The current value</returns>
+            public bool ReadUnfenced()
+            {
+                return ToBool(_value);
+            }
+
+            /// <summary>
+            /// Read the value applying acquire fence semantic
+            /// </summary>
+            /// <returns>The current value</returns>
+            public bool ReadAcquireFence()
+            {
+                var value = ToBool(_value);
+                Thread.MemoryBarrier();
+                return value;
+            }
+
+            /// <summary>
+            /// Read the value applying full fence semantic
+            /// </summary>
+            /// <returns>The current value</returns>
+            public bool ReadFullFence()
+            {
+                var value = ToBool(_value);
+                Thread.MemoryBarrier();
+                return value;
+            }
+
+            /// <summary>
+            /// Read the value applying a compiler only fence, no CPU fence is applied
+            /// </summary>
+            /// <returns>The current value</returns>
+            [MethodImpl(MethodImplOptions.NoOptimization)]
+            public bool ReadCompilerOnlyFence()
+            {
+                return ToBool(_value);
+            }
+
+            /// <summary>
+            /// Write the value applying release fence semantic
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            public void WriteReleaseFence(bool newValue)
+            {
+                var newValueInt = ToInt(newValue);
+                Thread.MemoryBarrier();
+                _value = newValueInt;
+            }
+
+            /// <summary>
+            /// Write the value applying full fence semantic
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            public void WriteFullFence(bool newValue)
+            {
+                var newValueInt = ToInt(newValue);
+                Thread.MemoryBarrier();
+                _value = newValueInt;
+            }
+
+            /// <summary>
+            /// Write the value applying a compiler fence only, no CPU fence is applied
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            [MethodImpl(MethodImplOptions.NoOptimization)]
+            public void WriteCompilerOnlyFence(bool newValue)
+            {
+                _value = ToInt(newValue);
+            }
+
+            /// <summary>
+            /// Write without applying any fence
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            public void WriteUnfenced(bool newValue)
+            {
+                _value = ToInt(newValue);
+            }
+
+            /// <summary>
+            /// Atomically set the value to the given updated value if the current value equals the comparand
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            /// <param name="comparand">The comparand (expected value)</param>
+            /// <returns></returns>
+            public bool AtomicCompareExchange(bool newValue, bool comparand)
+            {
+                var newValueInt = ToInt(newValue);
+                var comparandInt = ToInt(comparand);
+
+                return Interlocked.CompareExchange(ref _value, newValueInt, comparandInt) == comparandInt;
+            }
+
+            /// <summary>
+            /// Atomically set the value to the given updated value
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            /// <returns>The original value</returns>
+            public bool AtomicExchange(bool newValue)
+            {
+                var newValueInt = ToInt(newValue);
+                var originalValue = Interlocked.Exchange(ref _value, newValueInt);
+                return ToBool(originalValue);
+            }
+
+            /// <summary>
+            /// Returns the string representation of the current value.
+            /// </summary>
+            /// <returns>the string representation of the current value.</returns>
+            public override string ToString()
+            {
+                var value = ReadFullFence();
+                return value.ToString();
+            }
+
+            private static bool ToBool(int value)
+            {
+                if (value != False && value != True)
+                {
+                    throw new ArgumentOutOfRangeException("value");
+                }
+
+                return value == True;
+            }
+
+            private static int ToInt(bool value)
+            {
+                return value ? True : False;
+            }
+        }
+
+        /// <summary>
+        /// A reference that may be updated atomically
+        /// </summary>
+        public struct Reference<T> where T : class
+        {
+            private T _value;
+
+            /// <summary>
+            /// Create a new <see cref="Reference{T}"/> with the given initial value.
+            /// </summary>
+            /// <param name="value">Initial value</param>
+            public Reference(T value)
+            {
+                _value = value;
+            }
+
+            /// <summary>
+            /// Read the value without applying any fence
+            /// </summary>
+            /// <returns>The current value</returns>
+            public T ReadUnfenced()
+            {
+                return _value;
+            }
+
+            /// <summary>
+            /// Read the value applying acquire fence semantic
+            /// </summary>
+            /// <returns>The current value</returns>
+            public T ReadAcquireFence()
+            {
+                var value = _value;
+                Thread.MemoryBarrier();
+                return value;
+            }
+
+            /// <summary>
+            /// Read the value applying full fence semantic
+            /// </summary>
+            /// <returns>The current value</returns>
+            public T ReadFullFence()
+            {
+                T value = _value;
+                Thread.MemoryBarrier();
+                return value;
+            }
+
+            /// <summary>
+            /// Read the value applying a compiler only fence, no CPU fence is applied
+            /// </summary>
+            /// <returns>The current value</returns>
+            [MethodImpl(MethodImplOptions.NoOptimization)]
+            public T ReadCompilerOnlyFence()
+            {
+                return _value;
+            }
+
+            /// <summary>
+            /// Write the value applying release fence semantic
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            public void WriteReleaseFence(T newValue)
+            {
+                Thread.MemoryBarrier();
+                _value = newValue;
+            }
+
+            /// <summary>
+            /// Write the value applying full fence semantic
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            public void WriteFullFence(T newValue)
+            {
+                Thread.MemoryBarrier();
+                _value = newValue;
+            }
+
+            /// <summary>
+            /// Write the value applying a compiler fence only, no CPU fence is applied
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            
+            [MethodImpl(MethodImplOptions.NoOptimization)]
+            public void WriteCompilerOnlyFence(T newValue)
+            {
+                _value = newValue;
+            }
+
+            /// <summary>
+            /// Write without applying any fence
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            public void WriteUnfenced(T newValue)
+            {
+                _value = newValue;
+            }
+
+            /// <summary>
+            /// Atomically set the value to the given updated value if the current value equals the comparand
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            /// <param name="comparand">The comparand (expected value)</param>
+            /// <returns></returns>
+            public bool AtomicCompareExchange(T newValue, T comparand)
+            {
+                return Interlocked.CompareExchange(ref _value, newValue, comparand) == comparand;
+            }
+
+            /// <summary>
+            /// Atomically set the value to the given updated value
+            /// </summary>
+            /// <param name="newValue">The new value</param>
+            /// <returns>The original value</returns>
+            public T AtomicExchange(T newValue)
+            {
+                return Interlocked.Exchange(ref _value, newValue);
             }
 
             /// <summary>

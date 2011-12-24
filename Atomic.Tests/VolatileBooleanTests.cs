@@ -4,16 +4,16 @@ using NUnit.Framework;
 namespace Atomic.Tests
 {
     [TestFixture]
-    public class VolatileLongTests
+    public class VolatileBooleanTests
     {
-        private Volatile.Long _volatile;
-        private const long InitialValue = 2;
-        private const long NewValue = 3;
+        private Volatile.Boolean _volatile;
+        private const bool InitialValue = false;
+        private const bool NewValue = true;
 
         [SetUp]
         public void SetUp()
         {
-            _volatile = new Volatile.Long(InitialValue);
+            _volatile = new Volatile.Boolean(InitialValue);
         }
 
         [Test]
@@ -84,7 +84,7 @@ namespace Atomic.Tests
         [Test]
         public void AtomicCompareExchangeReturnsFalseIfComparandDifferentFromCurrentValue()
         {
-            Assert.IsFalse(_volatile.AtomicCompareExchange(NewValue, InitialValue + 1));
+            Assert.IsFalse(_volatile.AtomicCompareExchange(NewValue, NewValue));
         }
 
         [Test]
@@ -98,47 +98,6 @@ namespace Atomic.Tests
         {
             _volatile.AtomicExchange(NewValue);
             Assert.AreEqual(NewValue, _volatile.ReadUnfenced());
-        }
-
-        [Test]
-        public void AtomicAddAndGetReturnsNewValue()
-        {
-            const long delta = 5L;
-            Assert.AreEqual(InitialValue + delta, _volatile.AtomicAddAndGet(delta));
-        }
-
-        [Test]
-        public void AtomicAddAndGetMutatesValue()
-        {
-            const long delta = 5L;
-            _volatile.AtomicAddAndGet(delta);
-            Assert.AreEqual(InitialValue + delta, _volatile.ReadUnfenced());
-        }
-
-        [Test]
-        public void AtomicIncrementAndGetReturnsNewValue()
-        {
-            Assert.AreEqual(InitialValue + 1L, _volatile.AtomicIncrementAndGet());
-        }
-
-        [Test]
-        public void AtomicIncrementAndGetMutatesValue()
-        {
-            _volatile.AtomicIncrementAndGet();
-            Assert.AreEqual(InitialValue + 1L, _volatile.ReadUnfenced());
-        }
-
-        [Test]
-        public void AtomicDecrementAndGetReturnsNewValue()
-        {
-            Assert.AreEqual(InitialValue - 1L, _volatile.AtomicDecrementAndGet());
-        }
-
-        [Test]
-        public void AtomicDecrementAndGetMutatesValue()
-        {
-            _volatile.AtomicDecrementAndGet();
-            Assert.AreEqual(InitialValue - 1L, _volatile.ReadUnfenced());
         }
 
         [Test]
