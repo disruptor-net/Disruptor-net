@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="VolatileIntegerArrayTests.cs" />
     <Compile Include="VolatileBooleanTests.cs" />
     <Compile Include="VolatileLongTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
