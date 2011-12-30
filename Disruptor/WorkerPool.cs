@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Disruptor.Atomic;
 
 namespace Disruptor
 {
@@ -12,7 +11,10 @@ namespace Disruptor
     /// <typeparam name="T"></typeparam>
     public sealed class WorkerPool<T> where T : class 
     {
-        private AtomicBool _started = new AtomicBool(false);
+        private const bool Running = true;
+        private const bool Stopped = false;
+
+        private Volatile.Boolean _running = new Volatile.Boolean(Stopped);
         private readonly Sequence _workSequence = new Sequence(Sequencer.InitialCursorValue);
         private readonly RingBuffer<T> _ringBuffer;
         private readonly WorkProcessor<T>[] _workProcessors;
@@ -104,7 +106,7 @@ namespace Disruptor
         /// <exception cref="InvalidOperationException">if the pool has already been started and not halted yet</exception>
         public RingBuffer<T> Start(TaskScheduler taskScheduler)
         {
-            if (!_started.CompareAndSet(false, true))
+            if (! _running.AtomicCompareExchange(Running, Stopped))
             {
                 throw new InvalidOperationException("WorkerPool has already been started and cannot be restarted until halted.");
             }
@@ -134,13 +136,13 @@ namespace Disruptor
                 Thread.Sleep(0);
             }
 
-           for (int i = 0; i < _workProcessors.Length; i++)
-           {
-               var workProcessor = _workProcessors[i];
-               workProcessor.Halt();
-           }
+            for (int i = 0; i < _workProcessors.Length; i++)
+            {
+                var workProcessor = _workProcessors[i];
+                workProcessor.Halt();
+            }
 
-           _started.Value = false;
+            _running.WriteFullFence(Stopped);
         }
 
         /// <summary>
@@ -154,7 +156,7 @@ namespace Disruptor
                 workProcessor.Halt();
             }
 
-            _started.Value = false;
+            _running.WriteFullFence(Stopped);
         }
     }
 }

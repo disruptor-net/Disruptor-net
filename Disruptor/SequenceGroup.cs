@@ -1,5 +1,5 @@
 using System;
-using Disruptor.Atomic;
+using System.Threading;
 
 namespace Disruptor
 {
@@ -12,17 +12,17 @@ namespace Disruptor
     /// </summary>
     public class SequenceGroup : Sequence
     {
-        private AtomicReference<Sequence[]> _sequencesRef = new AtomicReference<Sequence[]>(new Sequence[0]);
+        private Volatile.Reference<Sequence[]> _sequencesRef = new Volatile.Reference<Sequence[]>(new Sequence[0]);
 
         /// <summary>
         /// Current sequence number
         /// </summary>
         public override long Value
         {
-            get { return Util.GetMinimumSequence(_sequencesRef.Value); }
+            get { return Util.GetMinimumSequence(_sequencesRef.ReadFullFence()); }
             set
             {
-                var sequences = _sequencesRef.Value;
+                var sequences = _sequencesRef.ReadFullFence();
                 for (int i = 0; i < sequences.Length; i++)
                 {
                     sequences[i].Value = value;
@@ -36,7 +36,7 @@ namespace Disruptor
         /// <param name="value">the new value</param>
         public override void LazySet(long value)
         {
-            var sequences = _sequencesRef.Value;
+            var sequences = _sequencesRef.ReadFullFence();
             for (int i = 0; i < sequences.Length; i++)
             {
                 sequences[i].LazySet(value);
@@ -53,13 +53,13 @@ namespace Disruptor
             Sequence[] newSequences;
             do
             {
-                oldSequences = _sequencesRef.Value;
+                oldSequences = _sequencesRef.ReadFullFence();
                 int oldSize = oldSequences.Length;
                 newSequences = new Sequence[oldSize + 1];
                 Array.Copy(oldSequences, newSequences, oldSize);
                 newSequences[oldSize] = sequence;
             }
-            while (!_sequencesRef.CompareAndSet(oldSequences, newSequences));
+            while (!_sequencesRef.AtomicCompareExchange(newSequences, oldSequences));
         }
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace Disruptor
             Sequence[] newSequences;
             do
             {
-                oldSequences = _sequencesRef.Value;
+                oldSequences = _sequencesRef.ReadFullFence();
                 int oldSize = oldSequences.Length;
                 newSequences = new Sequence[oldSize - 1];
 
@@ -97,7 +97,7 @@ namespace Disruptor
                     break;
                 }
             }
-            while (!_sequencesRef.CompareAndSet(oldSequences, newSequences));
+            while (!_sequencesRef.AtomicCompareExchange(newSequences, oldSequences));
 
             return found;
         }
@@ -107,7 +107,7 @@ namespace Disruptor
         /// </summary>
         public int Size
         {
-            get { return _sequencesRef.Value.Length; }
+            get { return _sequencesRef.ReadFullFence().Length; }
         }
     }
 }

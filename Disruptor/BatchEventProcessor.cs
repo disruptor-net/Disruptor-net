@@ -1,6 +1,5 @@
 ﻿using System;
-
-using Disruptor.Atomic;
+using System.Threading;
 
 namespace Disruptor
 {
@@ -14,7 +13,10 @@ namespace Disruptor
     /// <typeparam name="T">Event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
     internal sealed class BatchEventProcessor<T> : IEventProcessor where T : class
     {
-        private AtomicBool _running = new AtomicBool(false);
+        private const bool Running = true;
+        private const bool Stopped = false;
+        
+        private Volatile.Boolean _running = new Volatile.Boolean(Stopped);
         private IExceptionHandler _exceptionHandler = new FatalExceptionHandler();
         private readonly RingBuffer<T> _ringBuffer;
         private readonly ISequenceBarrier _sequenceBarrier;
@@ -52,7 +54,7 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running.Value = false;
+            _running.WriteFullFence(Stopped);
             _sequenceBarrier.Alert();
         }
 
@@ -72,7 +74,7 @@ namespace Disruptor
         /// </summary>
         public void Run()
         {
-            if (!_running.CompareAndSet(false, true))
+            if (!_running.AtomicCompareExchange(Running, Stopped))
             {
                 throw new InvalidOperationException("Thread is already running");
             }
@@ -98,7 +100,7 @@ namespace Disruptor
                 }
                 catch (AlertException)
                 {
-                    if (!_running.Value)
+                    if (!_running.ReadFullFence())
                     {
                         break;
                     }
@@ -113,7 +115,7 @@ namespace Disruptor
 
             NotifyShutdown();
 
-            _running.Value = false;
+            _running.WriteFullFence(Stopped);
         }
 
         private void NotifyStart()

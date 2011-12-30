@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Disruptor.Atomic;
 
 namespace Disruptor.Dsl
 {
@@ -12,10 +11,13 @@ namespace Disruptor.Dsl
     /// <typeparam name="T">the type of event used.</typeparam>
     public class Disruptor<T> where T : class
     {
+        private const bool Running = true;
+        private const bool Stopped = false;
+
         private readonly RingBuffer<T> _ringBuffer;
         private readonly TaskScheduler _taskScheduler;
         private readonly EventProcessorRepository<T> _eventProcessorRepository = new EventProcessorRepository<T>();
-        private AtomicBool _started = new AtomicBool(false);
+        private Volatile.Boolean _running = new Volatile.Boolean(Stopped);
         private readonly EventPublisher<T> _eventPublisher;
         private IExceptionHandler _exceptionHandler;
 
@@ -254,7 +256,7 @@ namespace Disruptor.Dsl
 
         private void CheckNotStarted()
         {
-            if (_started.Value)
+            if (_running.ReadFullFence())
             {
                 throw new InvalidOperationException("All event handlers must be added before calling starts.");
             }
@@ -262,7 +264,7 @@ namespace Disruptor.Dsl
 
         private void CheckOnlyStartedOnce()
         {
-            if (!_started.CompareAndSet(false, true))
+            if (!_running.AtomicCompareExchange(Running, Stopped))
             {
                 throw new InvalidOperationException("Disruptor.start() must only be called once.");
             }

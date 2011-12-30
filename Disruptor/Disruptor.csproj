@@ -49,9 +49,6 @@
     </Compile>
     <Compile Include="AggregateEventHandler.cs" />
     <Compile Include="AlertException.cs" />
-    <Compile Include="Atomic\AtomicBool.cs" />
-    <Compile Include="Atomic\AtomicLongArray.cs" />
-    <Compile Include="Atomic\AtomicReference.cs" />
     <Compile Include="BlockingWaitStrategy.cs" />
     <Compile Include="BusySpinWaitStrategy.cs" />
     <Compile Include="Dsl\Disruptor.cs" />
@@ -96,7 +93,12 @@
     <Compile Include="WorkProcessor.cs" />
     <Compile Include="YieldingWaitStrategy.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Atomic\Atomic.csproj">
+      <Project>{BDB4336E-54F2-475D-8193-B730C522261F}</Project>
+      <Name>Atomic</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

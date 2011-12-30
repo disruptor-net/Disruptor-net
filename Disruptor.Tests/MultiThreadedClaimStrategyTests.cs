@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Threading;
-using Disruptor.Atomic;
 using Moq;
 using NUnit.Framework;
 
@@ -97,7 +96,7 @@ namespace Disruptor.Tests
             Sequence[] dependentSequences = { dependentSequence };
             _claimStrategy.SetSequence(_claimStrategy.BufferSize - 1L, dependentSequences);
 
-            var done = new AtomicBool(false);
+            var done = new Volatile.Boolean(false);
             var beforeLatch = new ManualResetEvent(false);
             var afterLatch = new ManualResetEvent(false);
 
@@ -108,14 +107,14 @@ namespace Disruptor.Tests
 
                         Assert.AreEqual(_claimStrategy.BufferSize, _claimStrategy.IncrementAndGet(dependentSequences));
 
-                        done.Value = true;
+                        done.WriteFullFence(true);
                         afterLatch.Set();
                     }).Start();
 
             beforeLatch.WaitOne();
 
             Thread.Sleep(1000);
-            Assert.IsFalse(done.Value);
+            Assert.IsFalse(done.ReadFullFence());
 
             dependentSequence.Value =  dependentSequence.Value + 1L;
 

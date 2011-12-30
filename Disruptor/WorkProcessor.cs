@@ -1,5 +1,5 @@
 using System;
-using Disruptor.Atomic;
+using System.Threading;
 
 namespace Disruptor
 {
@@ -11,7 +11,10 @@ namespace Disruptor
     /// <typeparam name="T">event implementation storing the details for the work to processed.</typeparam>
     public sealed class WorkProcessor<T> : IEventProcessor where T : class 
     {
-        private AtomicBool _running = new AtomicBool(false);
+        private const bool Running = true;
+        private const bool Stopped = false;
+
+        private Volatile.Boolean _running = new Volatile.Boolean(Stopped);
         private readonly Sequence _sequence = new Sequence(Sequencer.InitialCursorValue);
         private readonly RingBuffer<T> _ringBuffer;
         private readonly ISequenceBarrier _sequenceBarrier;
@@ -51,7 +54,7 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running.Value = false;
+            _running.WriteFullFence(Stopped);
             _sequenceBarrier.Alert();
         }
 
@@ -60,7 +63,7 @@ namespace Disruptor
         /// </summary>
         public void Run()
         {
-            if (!_running.CompareAndSet(false, false))
+            if (!_running.AtomicCompareExchange(Running, Stopped))
             {
                 throw new InvalidOperationException("Thread is already running");
             }
@@ -90,7 +93,7 @@ namespace Disruptor
                 }
                 catch (AlertException)
                 {
-                    if (!_running.Value)
+                    if (_running.ReadFullFence() == Stopped)
                     {
                         break;
                     }
@@ -104,7 +107,7 @@ namespace Disruptor
 
             NotifyShutdown();
 
-            _running.Value = false;
+            _running.WriteFullFence(Stopped);
         }
 
         private void NotifyStart()

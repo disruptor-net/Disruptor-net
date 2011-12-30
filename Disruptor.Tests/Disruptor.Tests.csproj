@@ -83,6 +83,10 @@
     <Compile Include="UtilTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Atomic\Atomic.csproj">
+      <Project>{BDB4336E-54F2-475D-8193-B730C522261F}</Project>
+      <Name>Atomic</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj">
       <Project>{37FBDBE1-8524-4489-B082-CC109B0F5EA3}</Project>
       <Name>Disruptor</Name>

@@ -1,6 +1,4 @@
-using System;
 using System.Threading;
-using Disruptor.Atomic;
 using Disruptor.MemoryLayout;
 
 namespace Disruptor
@@ -13,12 +11,11 @@ namespace Disruptor
     /// for a single publisher, compared to the MultithreadedLowContention strategy which needs only a single CAS and a
     /// lazySet per publication.
     /// </summary>
-    [Obsolete("Just ported Mike's algorithm but I've seen it dealocking - wait for a fix on my side or their side")]
     public class MultiThreadedClaimStrategy : IClaimStrategy
     {
         private readonly int _bufferSize;
         private PaddedAtomicLong _claimSequence = new PaddedAtomicLong(Sequencer.InitialCursorValue);
-        private readonly AtomicLongArray _pendingPublication;
+        private readonly Volatile.LongArray _pendingPublication;
         private readonly int _pendingMask;
         private readonly ThreadLocal<MutableLong> _minGatingSequenceThreadLocal = new ThreadLocal<MutableLong>(() => new MutableLong(Sequencer.InitialCursorValue));
 
@@ -30,7 +27,7 @@ namespace Disruptor
         public MultiThreadedClaimStrategy(int bufferSize, int pendingBufferSize = 1024)
         {
             _bufferSize = bufferSize;
-            _pendingPublication = new AtomicLongArray(pendingBufferSize);
+            _pendingPublication = new Volatile.LongArray(pendingBufferSize);
             _pendingMask = pendingBufferSize - 1;
         }
 
@@ -135,7 +132,7 @@ namespace Disruptor
             long expectedSequence = sequence - batchSize;
             for (long pendingSequence = expectedSequence + 1; pendingSequence <= sequence; pendingSequence++)
             {
-                _pendingPublication[(int)pendingSequence & _pendingMask] = pendingSequence;
+                _pendingPublication.WriteFullFence((int)pendingSequence & _pendingMask, pendingSequence);
             }
 
             if (cursor.Value != expectedSequence)
@@ -148,7 +145,7 @@ namespace Disruptor
             {
                 expectedSequence = nextSequence;
                 nextSequence++;
-                if (_pendingPublication[(int)nextSequence & _pendingMask] != nextSequence)
+                if (_pendingPublication.ReadFullFence((int)nextSequence & _pendingMask) != nextSequence)
                 {
                     break;
                 }
