@@ -131,9 +131,10 @@ namespace Disruptor
             if (wrapPoint > minGatingSequence.Value)
             {
                 long minSequence;
+                var spinWait = default(SpinWait);
                 while (wrapPoint > (minSequence = Util.GetMinimumSequence(dependentSequences)))
                 {
-                    //TODO LockSupport.parkNanos(1L);
+                    spinWait.SpinOnce(); //LockSupport.parkNanos(1L);
                 }
 
                 minGatingSequence.Value = minSequence;
@@ -146,9 +147,10 @@ namespace Disruptor
             if (wrapPoint > minGatingSequence.Value)
             {
                 long minSequence;
+                var spinWait = default(SpinWait);
                 while (wrapPoint > (minSequence = Util.GetMinimumSequence(dependentSequences)))
                 {
-                    //TODO LockSupport.parkNanos(1L);
+                    spinWait.SpinOnce(); //LockSupport.parkNanos(1L);
                 }
 
                 minGatingSequence.Value =  minSequence;

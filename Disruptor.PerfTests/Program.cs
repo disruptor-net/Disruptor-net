@@ -45,8 +45,8 @@ namespace Disruptor.PerfTests
             Console.WriteLine();
             Console.WriteLine("Runs: number of test run to do for each scenario and implementation");
             Console.WriteLine();
-            Console.WriteLine("Example: Disruptor.PerfTests 1 1");
-            Console.WriteLine("will run UniCast1P1C performance test with the disruptor only.");
+            Console.WriteLine("Example: Disruptor.PerfTests 0 0 3");
+            Console.WriteLine("will run all performance test scenarios for all implementations 3 times.");
         }
 
         private static void PrintEnum(Type enumType)

@@ -1,4 +1,5 @@
-﻿using Disruptor.MemoryLayout;
+﻿using System.Threading;
+using Disruptor.MemoryLayout;
 
 namespace Disruptor
 {
@@ -121,9 +122,10 @@ namespace Disruptor
             if (wrapPoint > _minGatingSequence.Value)
             {
                 long minSequence;
+                var spinWait = default(SpinWait);
                 while (wrapPoint > (minSequence = Util.GetMinimumSequence(dependentSequences)))
                 {
-                    // TODO LockSupport.parkNanos(1L);
+                    spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
                 }
 
                 _minGatingSequence.Value = minSequence;

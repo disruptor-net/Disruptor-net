@@ -8,6 +8,6 @@
         ///<summary>
         /// Size of a cache line in bytes
         ///</summary>
-        public const int Size = 128;
+        public const int Size = 64;
     }
 }

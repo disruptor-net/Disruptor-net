@@ -22,7 +22,7 @@ namespace Disruptor
         public long WaitFor(long sequence, Sequence cursor, Sequence[] dependents, ISequenceBarrier barrier)
         {
             long availableSequence;
-            var spinWait = new SpinWait();
+            var spinWait = default(SpinWait);
 
             if (dependents.Length == 0)
             {
@@ -57,7 +57,7 @@ namespace Disruptor
         public long WaitFor(long sequence, Sequence cursor, Sequence[] dependents, ISequenceBarrier barrier, TimeSpan timeout)
         {
             long availableSequence;
-            var spinWait = new SpinWait();
+            var spinWait = default(SpinWait);
             var sw = Stopwatch.StartNew();
 
             if (dependents.Length == 0)

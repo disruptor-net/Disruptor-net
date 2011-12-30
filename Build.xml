@@ -17,10 +17,15 @@
 
   <Target Name="Clean">
     <RemoveDir Directories="$(TargetDir)" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Atomic\bin" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Atomic\obj" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor\bin" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor\obj" />
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.PerfTestRunner\bin" />
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.PerfTestRunner\obj" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.Scheduler\bin" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.Scheduler\obj" />
+
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Atomic.Tests\bin" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\Atomic.Tests\obj" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.PerfTests\bin" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.PerfTests\obj" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.Tests\bin" />
@@ -52,7 +57,12 @@
     <NUnit 
       Assemblies="$(BinDir)\Disruptor.Tests.dll"
       ToolPath="$(NUnitToolPath)"
-      OutputXmlFile="$(UnitReportDir)\UnitTests.xml"
+      OutputXmlFile="$(UnitReportDir)\Disruptor.Tests.xml"
+      />
+    <NUnit
+      Assemblies="$(BinDir)\Atomic.Tests.dll"
+      ToolPath="$(NUnitToolPath)"
+      OutputXmlFile="$(UnitReportDir)\Atomic.Tests.xml"
       />
   </Target>
 
@@ -80,6 +90,12 @@
       <DisruptorZip Include="$(BinDir)Disruptor.dll" />
       <DisruptorZip Include="$(BinDir)Disruptor.pdb" />
       <DisruptorZip Include="$(BinDir)Disruptor.XML" />
+      <DisruptorZip Include="$(BinDir)Atomic.dll" />
+      <DisruptorZip Include="$(BinDir)Atomic.pdb" />
+      <DisruptorZip Include="$(BinDir)Atomic.XML" />
+      <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.dll" />
+      <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.pdb" />
+      <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.XML" />
     </ItemGroup>
     <Zip Files="@(DisruptorZip)" WorkingDirectory="$(BinDir)" ZipFileName="Target\Dist\Disruptor-binaries-$(DisruptorVersion).zip" ZipLevel="9" />
 
@@ -89,8 +105,13 @@
       <DisruptorPerfZip Include="$(BinDir)Disruptor.XML" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.PerfTests.exe" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.PerfTests.pdb" />
+      <DisruptorPerfZip Include="$(BinDir)Atomic.dll" />
+      <DisruptorPerfZip Include="$(BinDir)Atomic.pdb" />
+      <DisruptorPerfZip Include="$(BinDir)Atomic.XML" />
+      <DisruptorPerfZip Include="$(BinDir)Disruptor.Scheduler.dll" />
+      <DisruptorPerfZip Include="$(BinDir)Disruptor.Scheduler.pdb" />
+      <DisruptorPerfZip Include="$(BinDir)Disruptor.Scheduler.XML" />
       <DisruptorPerfZip Include="$(BinDir)nunit.framework.dll" />
-      <DisruptorPerfZip Include="$(BinDir)System.Threading.Tasks.Dataflow.dll" />
     </ItemGroup>
     <Zip Files="@(DisruptorPerfZip)" WorkingDirectory="$(BinDir)" ZipFileName="Target\Dist\Disruptor-perfRunner-$(DisruptorVersion).zip" ZipLevel="9" />
 

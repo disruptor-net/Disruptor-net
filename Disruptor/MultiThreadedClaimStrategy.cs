@@ -16,7 +16,6 @@ namespace Disruptor
     [Obsolete("Just ported Mike's algorithm but I've seen it dealocking - wait for a fix on my side or their side")]
     public class MultiThreadedClaimStrategy : IClaimStrategy
     {
-        private const int Retries = 1000;
         private readonly int _bufferSize;
         private PaddedAtomicLong _claimSequence = new PaddedAtomicLong(Sequencer.InitialCursorValue);
         private readonly AtomicLongArray _pendingPublication;
@@ -127,14 +126,10 @@ namespace Disruptor
         ///<param name="batchSize">batchSize of the sequence.</param>
         public void SerialisePublishing(long sequence, Sequence cursor, long batchSize)
         {
-            int counter = Retries;
+            var spinWait = default(SpinWait);
             while (sequence - cursor.Value > _pendingPublication.Length)
             {
-                if (--counter == 0)
-                {
-                    Thread.Sleep(1);
-                    counter = Retries;
-                }
+                spinWait.SpinOnce();
             }
 
             long expectedSequence = sequence - batchSize;
@@ -165,11 +160,11 @@ namespace Disruptor
             long wrapPoint = (_claimSequence.Value + 1L) - _bufferSize;
             if (wrapPoint > minGatingSequence.Value)
             {
+                var spinWait = default(SpinWait);
                 long minSequence;
                 while (wrapPoint > (minSequence = Util.GetMinimumSequence(dependentSequences)))
                 {
-                    Thread.Sleep(1);
-                    //TODO LockSupport.parkNanos(1L);
+                    spinWait.SpinOnce(); //Java version uses LockSupport.parkNanos(1L);
                 }
 
                 minGatingSequence.Value = minSequence;
@@ -181,11 +176,11 @@ namespace Disruptor
             long wrapPoint = sequence - _bufferSize;
             if (wrapPoint > minGatingSequence.Value)
             {
+                var spinWait = default(SpinWait);
                 long minSequence;
                 while (wrapPoint > (minSequence = Util.GetMinimumSequence(dependentSequences)))
                 {
-                    Thread.Sleep(1);
-                    // LockSupport.parkNanos(1L);
+                    spinWait.SpinOnce(); //Java version uses LockSupport.parkNanos(1L);
                 }
 
                 minGatingSequence.Value = minSequence;

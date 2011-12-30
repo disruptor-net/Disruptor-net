@@ -4,7 +4,5 @@
 
 - port OnePublisherToOneProcessorUniCastRawThroughputTest
 - port OnePublisherToThreeWorkerPoolThroughputTest
-- find an equivalent for LockSupport.parkNanos(1L); (Search TODOs)
 - port the DSL Tests
-- pull request from TimGebhardt
-- create new assembly for Atomics/Padded
+- use new atomics instead of current implementation

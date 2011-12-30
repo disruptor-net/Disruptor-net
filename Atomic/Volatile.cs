@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace System.Threading
 {
     ///<summary>
-    /// A small toolkit of classes that support lock-free thread-safe programming on single variables.
+    /// A small toolkit of classes that support lock-free thread-safe programming on single variables and arrays
     ///</summary>
     public static class Volatile
     {
