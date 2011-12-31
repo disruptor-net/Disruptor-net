@@ -1,5 +1,4 @@
 using System.Threading;
-using Disruptor.MemoryLayout;
 
 namespace Disruptor
 {
@@ -14,7 +13,7 @@ namespace Disruptor
     public class MultiThreadedClaimStrategy : IClaimStrategy
     {
         private readonly int _bufferSize;
-        private PaddedAtomicLong _claimSequence = new PaddedAtomicLong(Sequencer.InitialCursorValue);
+        private Volatile.PaddedLong _claimSequence = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
         private readonly Volatile.LongArray _pendingPublication;
         private readonly int _pendingMask;
         private readonly ThreadLocal<MutableLong> _minGatingSequenceThreadLocal = new ThreadLocal<MutableLong>(() => new MutableLong(Sequencer.InitialCursorValue));
@@ -44,7 +43,7 @@ namespace Disruptor
         /// </summary>
         public long Sequence
         {
-            get { return _claimSequence.Value; }
+            get { return _claimSequence.ReadFullFence(); }
         }
 
         /// <summary>
@@ -55,7 +54,7 @@ namespace Disruptor
         /// <returns>true if the buffer has capacity for the requested sequence.</returns>
         public bool HasAvailableCapacity(int availableCapacity, Sequence[] dependentSequences)
         {
-            long wrapPoint = (_claimSequence.Value + availableCapacity) - _bufferSize;
+            long wrapPoint = (_claimSequence.ReadFullFence() + availableCapacity) - _bufferSize;
             MutableLong minGatingSequence = _minGatingSequenceThreadLocal.Value;
             if (wrapPoint > minGatingSequence.Value)
             {
@@ -82,7 +81,7 @@ namespace Disruptor
             MutableLong minGatingSequence = _minGatingSequenceThreadLocal.Value;
             WaitForCapacity(dependentSequences, minGatingSequence);
 
-            long nextSequence = _claimSequence.IncrementAndGet();
+            long nextSequence = _claimSequence.AtomicIncrementAndGet();
             WaitForFreeSlotAt(nextSequence, dependentSequences, minGatingSequence);
 
             return nextSequence;
@@ -97,7 +96,7 @@ namespace Disruptor
         ///<returns>the result after incrementing.</returns>
         public long IncrementAndGet(int delta, Sequence[] dependentSequences)
         {
-            long nextSequence = _claimSequence.AddAndGet(delta);
+            long nextSequence = _claimSequence.AtomicAddAndGet(delta);
             WaitForFreeSlotAt(nextSequence, dependentSequences, _minGatingSequenceThreadLocal.Value);
 
             return nextSequence;
@@ -111,7 +110,7 @@ namespace Disruptor
         /// <param name="dependentSequences">dependentSequences to be checked for range.</param>
         public void SetSequence(long sequence, Sequence[] dependentSequences)
         {
-            _claimSequence.LazySet(sequence);
+            _claimSequence.WriteCompilerOnlyFence(sequence);
             WaitForFreeSlotAt(sequence, dependentSequences, _minGatingSequenceThreadLocal.Value);
         }
 
@@ -154,7 +153,7 @@ namespace Disruptor
 
         private void WaitForCapacity(Sequence[] dependentSequences, MutableLong minGatingSequence)
         {
-            long wrapPoint = (_claimSequence.Value + 1L) - _bufferSize;
+            long wrapPoint = (_claimSequence.ReadFullFence() + 1L) - _bufferSize;
             if (wrapPoint > minGatingSequence.Value)
             {
                 var spinWait = default(SpinWait);

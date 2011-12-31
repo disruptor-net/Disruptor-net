@@ -130,6 +130,10 @@
     <Compile Include="UniCast1P1C\UniCast1P1CDisruptorPerfTest.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Atomic\Atomic.csproj">
+      <Project>{BDB4336E-54F2-475D-8193-B730C522261F}</Project>
+      <Name>Atomic</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Disruptor.Scheduler\Disruptor.Scheduler.csproj">
       <Project>{7B1F3DC3-5DA8-4E36-A03B-837D90D2A51D}</Project>
       <Name>Disruptor.Scheduler</Name>

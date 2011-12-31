@@ -1,12 +1,11 @@
 using System.Threading;
-using Disruptor.MemoryLayout;
 
 namespace Disruptor.PerfTests.Support
 {
     public class ValueAdditionEventHandler : IEventHandler<ValueEvent>
     {
         private readonly long _iterations;
-        private PaddedLong _value;
+        private Volatile.PaddedLong _value;
         private readonly ManualResetEvent _mru;
 
         public ValueAdditionEventHandler(long iterations, ManualResetEvent mru)
@@ -17,12 +16,12 @@ namespace Disruptor.PerfTests.Support
 
         public long Value
         {
-            get { return _value.Value; }
+            get { return _value.ReadUnfenced(); }
         }
 
         public void OnNext(ValueEvent value, long sequence, bool endOfBatch)
         {
-            _value.Value += value.Value;
+            _value.WriteUnfenced(_value.ReadUnfenced() + value.Value);
 
             if(sequence == _iterations - 1)
             {

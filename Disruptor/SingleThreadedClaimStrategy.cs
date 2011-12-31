@@ -1,5 +1,4 @@
 ﻿using System.Threading;
-using Disruptor.MemoryLayout;
 
 namespace Disruptor
 {
@@ -11,8 +10,8 @@ namespace Disruptor
     public sealed class SingleThreadedClaimStrategy : IClaimStrategy
     {
         private readonly int _bufferSize;
-        private PaddedLong _claimSequence = new PaddedLong(Sequencer.InitialCursorValue);
-        private PaddedLong _minGatingSequence = new PaddedLong(Sequencer.InitialCursorValue);
+        private Volatile.PaddedLong _claimSequence = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
+        private Volatile.PaddedLong _minGatingSequence = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
 
         /// <summary>
         /// Construct a new single threaded publisher <see cref="IClaimStrategy"/> for a given buffer size.
@@ -36,7 +35,7 @@ namespace Disruptor
         /// </summary>
         public long Sequence
         {
-            get { return _claimSequence.Value; }
+            get { return _claimSequence.ReadUnfenced(); }
         }
 
         /// <summary>
@@ -47,11 +46,11 @@ namespace Disruptor
         /// <returns>true if the buffer has capacity for the requested sequence.</returns>
         public bool HasAvailableCapacity(int availableCapacity, Sequence[] dependentSequences)
         {
-            long wrapPoint = (_claimSequence.Value + availableCapacity) - _bufferSize;
-            if (wrapPoint > _minGatingSequence.Value)
+            long wrapPoint = (_claimSequence.ReadUnfenced() + availableCapacity) - _bufferSize;
+            if (wrapPoint > _minGatingSequence.ReadUnfenced())
             {
                 long minSequence = Util.GetMinimumSequence(dependentSequences);
-                _minGatingSequence.Value = minSequence;
+                _minGatingSequence.WriteUnfenced(minSequence);
 
                 if (wrapPoint > minSequence)
                 {
@@ -70,8 +69,8 @@ namespace Disruptor
         /// <returns>the index to be used for the publishing.</returns>
         public long IncrementAndGet(Sequence[] dependentSequences)
         {
-            long nextSequence = _claimSequence.Value + 1L;
-            _claimSequence.Value = nextSequence;
+            long nextSequence = _claimSequence.ReadUnfenced() + 1L;
+            _claimSequence.WriteUnfenced(nextSequence);
             WaitForFreeSlotAt(nextSequence, dependentSequences);
 
             return nextSequence;
@@ -86,8 +85,8 @@ namespace Disruptor
         ///<returns>the result after incrementing.</returns>
         public long IncrementAndGet(int delta, Sequence[] dependentSequences)
         {
-            long nextSequence = _claimSequence.Value + delta;
-            _claimSequence.Value = nextSequence;
+            long nextSequence = _claimSequence.ReadUnfenced() + delta;
+            _claimSequence.WriteUnfenced(nextSequence);
             WaitForFreeSlotAt(nextSequence, dependentSequences);
 
             return nextSequence;
@@ -101,7 +100,7 @@ namespace Disruptor
         /// <param name="dependentSequences">dependentSequences to be checked for range.</param>
         public void SetSequence(long sequence, Sequence[] dependentSequences)
         {
-            _claimSequence.Value = sequence;
+            _claimSequence.WriteUnfenced(sequence);
             WaitForFreeSlotAt(sequence, dependentSequences);
         }
 
@@ -119,7 +118,7 @@ namespace Disruptor
         private void WaitForFreeSlotAt(long sequence, Sequence[] dependentSequences)
         {
             long wrapPoint = sequence - _bufferSize;
-            if (wrapPoint > _minGatingSequence.Value)
+            if (wrapPoint > _minGatingSequence.ReadUnfenced())
             {
                 long minSequence;
                 var spinWait = default(SpinWait);
@@ -128,7 +127,7 @@ namespace Disruptor
                     spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
                 }
 
-                _minGatingSequence.Value = minSequence;
+                _minGatingSequence.WriteUnfenced(minSequence);
             }
         }
     }

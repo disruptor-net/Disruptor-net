@@ -65,14 +65,11 @@
     <Compile Include="ProcessingSequenceBarrier.cs" />
     <Compile Include="BatchEventProcessor.cs" />
     <Compile Include="Collections\Histogram.cs" />
-    <Compile Include="MemoryLayout\PaddedAtomicLong.cs" />
-    <Compile Include="MemoryLayout\PaddedLong.cs" />
     <Compile Include="Dsl\EventHandlerGroup.cs" />
     <Compile Include="Dsl\EventProcessorInfo.cs" />
     <Compile Include="Dsl\EventProcessorRepository.cs" />
     <Compile Include="IEventHandlerGroup.cs" />
     <Compile Include="ILifecycleAware.cs" />
-    <Compile Include="MemoryLayout\CacheLine.cs" />
     <Compile Include="IEventHandler.cs" />
     <Compile Include="IClaimStrategy.cs" />
     <Compile Include="IEventProcessor.cs" />

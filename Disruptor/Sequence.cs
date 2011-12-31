@@ -1,4 +1,4 @@
-using Disruptor.MemoryLayout;
+using System.Threading;
 
 namespace Disruptor
 {
@@ -8,7 +8,7 @@ namespace Disruptor
     /// </summary>
     public class Sequence
     {
-        private PaddedAtomicLong _value = new PaddedAtomicLong(Sequencer.InitialCursorValue);
+        private Volatile.PaddedLong _value = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
 
         /// <summary>
         /// Default Constructor that uses an initial value of <see cref="Sequencer.InitialCursorValue"/>
@@ -23,7 +23,7 @@ namespace Disruptor
         /// <param name="initialValue">initial value for the counter</param>
         public Sequence(long initialValue)
         {
-            _value.LazySet(initialValue);
+            _value.WriteCompilerOnlyFence(initialValue);
         }
 
         /// <summary>
@@ -31,8 +31,8 @@ namespace Disruptor
         /// </summary>
         public virtual long Value
         {
-            get { return _value.Value; }
-            set { _value.Value = value; }
+            get { return _value.ReadFullFence(); }
+            set { _value.WriteFullFence(value); }
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace Disruptor
         /// <param name="value">the new value</param>
         public virtual void LazySet(long value)
         {
-            _value.LazySet(value);
+            _value.WriteCompilerOnlyFence(value);
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace Disruptor
         /// <returns>true if successful. False return indicates that the actual value was not equal to the expected value.</returns>
         public virtual bool CompareAndSet(long expectedSequence, long nextSequence)
         {
-            return _value.CompareAndSet(expectedSequence, nextSequence);
+            return _value.AtomicCompareExchange(nextSequence, expectedSequence);
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace Disruptor
         /// <returns>String representation of the sequence.</returns>
         public override string ToString()
         {
-            return _value.Value.ToString();
+            return _value.ToString();
         }
 
         ///<summary>
@@ -70,7 +70,7 @@ namespace Disruptor
         ///<returns>incremented sequence</returns>
         public long IncrementAndGet()
         {
-            return _value.IncrementAndGet();
+            return _value.AtomicIncrementAndGet();
         }
     }
 }

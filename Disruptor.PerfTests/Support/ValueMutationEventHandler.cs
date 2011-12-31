@@ -1,12 +1,11 @@
 using System.Threading;
-using Disruptor.MemoryLayout;
 
 namespace Disruptor.PerfTests.Support
 {
     public class ValueMutationEventHandler : IEventHandler<ValueEvent>
     {
         private readonly Operation _operation;
-        private PaddedLong _value;
+        private Volatile.PaddedLong _value = new Volatile.PaddedLong(0);
         private readonly long _iterations;
         private readonly CountdownEvent _latch;
 
@@ -19,12 +18,12 @@ namespace Disruptor.PerfTests.Support
 
         public long Value
         {
-            get { return _value.Value; }
+            get { return _value.ReadUnfenced(); }
         }
 
         public void OnNext(ValueEvent data, long sequence, bool endOfBatch)
         {
-            _value.Value = _operation.Op(_value.Value, data.Value);
+            _value.WriteUnfenced(_operation.Op(_value.ReadUnfenced(), data.Value));
 
             if (sequence == _iterations - 1)
             {
