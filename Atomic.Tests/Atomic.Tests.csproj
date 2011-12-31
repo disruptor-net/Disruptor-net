@@ -44,6 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="VolatilePaddedIntegerTests.cs" />
+    <Compile Include="VolatilePaddedBooleanTests.cs" />
+    <Compile Include="VolatilePaddedLongTests.cs" />
     <Compile Include="VolatileReferenceArrayTests.cs" />
     <Compile Include="VolatileBooleanArrayTests.cs" />
     <Compile Include="Support\ClassStub.cs" />

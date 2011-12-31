@@ -11,6 +11,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		Backlog.txt = Backlog.txt
 		Build.xml = Build.xml
+		LastJavaRevisionPorted.txt = LastJavaRevisionPorted.txt
+		Package.nuspec = Package.nuspec
+		README.md = README.md
 		Version.cs = Version.cs
 	EndProjectSection
 EndProject
