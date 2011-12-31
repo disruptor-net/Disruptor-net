@@ -1,7 +1,5 @@
-- add test coverage (NCover? DotCover?)
-- generate API documentation in the build process
 - add proper documentation in the wiki
-
 - port OnePublisherToOneProcessorUniCastRawThroughputTest
 - port OnePublisherToThreeWorkerPoolThroughputTest
 - port the DSL Tests
+- improve README with samples, how to contrbute, etc
