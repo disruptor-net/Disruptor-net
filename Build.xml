@@ -11,9 +11,13 @@
     <DocDir>$(TargetDir)Doc\</DocDir>
     <DistDir>$(TargetDir)Dist\</DistDir>
     <BinDir>$(TargetDir)Bin\</BinDir>
+    <NuGetDir>$(TargetDir)Package\</NuGetDir>
+
+    <MSBuildNuGetTasksPath>$(MSBuildProjectDirectory)\Tools\MSBuildNuGetTasks</MSBuildNuGetTasksPath>
   </PropertyGroup>
 
   <Import Project="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.Targets" />
+  <Import Project="$(MSBuildNuGetTasksPath)\MSBuild.NuGet.Tasks.Targets" />
 
   <Target Name="Clean">
     <RemoveDir Directories="$(TargetDir)" />
@@ -40,10 +44,21 @@
     <MakeDir Directories="$(PerfReportDir)" />
     <MakeDir Directories="$(UnitReportDir)" />
     <MakeDir Directories="$(BinDir)" />
+    <MakeDir Directories="$(NuGetDir)" />
+  </Target>
+
+  <Target Name="UpdateVersion" Condition=" '$(DisruptorVersion)' != '' " DependsOnTargets="PreBuild">
+    <AssemblyInfo CodeLanguage="CS"
+      OutputFile="$(MsBuildProjectDirectory)\Version.cs"
+      AssemblyCompany="http://github.com/odeheurles/Disruptor-net/network"
+      AssemblyProduct="Disruptor"
+      AssemblyCopyright="Copyright © disruptor-net"
+      AssemblyVersion="$(DisruptorVersion)"
+      AssemblyFileVersion="$(DisruptorVersion)" />
   </Target>
   
   <!-- Compiles the VS solution -->
-  <Target Name="Build" DependsOnTargets="PreBuild">
+  <Target Name="Build" DependsOnTargets="UpdateVersion">
     <MSBuild
 		  Projects="NDisruptor.sln"
 		  Properties="Configuration=Release;OutputPath=$(BinDir);Optimize=true"
@@ -75,17 +90,8 @@
       />
   </Target>
 
-  <Target Name="UpdateVersion">
-    <AssemblyInfo CodeLanguage="CS"
-      OutputFile="$(MsBuildProjectDirectory)\Version.cs"
-      AssemblyCompany="http://code.google.com/p/disruptor-net/"
-      AssemblyProduct="Disruptor"
-      AssemblyCopyright="Copyright © disruptor-net"
-      AssemblyVersion="$(DisruptorVersion)"
-      AssemblyFileVersion="$(DisruptorVersion)" />
-  </Target>
-
-  <Target Name="Package">
+  <Target Name="Package" DependsOnTargets="Test">
+    <!-- Zip binnaries -->
     <ItemGroup>
       <DisruptorZip Include="$(BinDir)Disruptor.dll" />
       <DisruptorZip Include="$(BinDir)Disruptor.pdb" />
@@ -99,6 +105,7 @@
     </ItemGroup>
     <Zip Files="@(DisruptorZip)" WorkingDirectory="$(BinDir)" ZipFileName="Target\Dist\Disruptor-binaries-$(DisruptorVersion).zip" ZipLevel="9" />
 
+    <!-- Zip perf test runner -->
     <ItemGroup>
       <DisruptorPerfZip Include="$(BinDir)Disruptor.dll" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.pdb" />
@@ -115,32 +122,35 @@
     </ItemGroup>
     <Zip Files="@(DisruptorPerfZip)" WorkingDirectory="$(BinDir)" ZipFileName="Target\Dist\Disruptor-perfRunner-$(DisruptorVersion).zip" ZipLevel="9" />
 
-    <ItemGroup>
-      <DisruptorSourceZipExclude Include="$(SourceDir)\**\.svn\**" />
-      <DisruptorSourceZipExclude Include="$(SourceDir)\**\obj\**" />
-      <DisruptorSourceZipExclude Include="$(SourceDir)\_ReSharper.NDisruptor\**" />
-      <DisruptorSourceZipExclude Include="$(SourceDir)\Doc\**" />
-      <DisruptorSourceZipExclude Include="$(SourceDir)\Target\**" />
-      <DisruptorSourceZipExclude Include="$(SourceDir)\Tools\**" />
-      <DisruptorSourceZipExclude Include="$(SourceDir)\Backlog.txt" />
-      <DisruptorSourceZipExclude Include="$(SourceDir)\NDisruptor.5.1.ReSharper.user" />
-      <DisruptorSourceZipExclude Include="$(SourceDir)\NDisruptor.6.5.TeamCity.user" />
-      <DisruptorSourceZipExclude Include="$(SourceDir)\NDisruptor.suo" />
-      <DisruptorSourceZipExclude Include="$(SourceDir)\perfMonitor.bat" />
+    <!-- Update NuGet manifest -->
+    <ManifestUpdate
+      ManifestFile="$(SourceDir)\Package.nuspec"
+      WorkingDirectory="$(BinDir)"
+      Version="$(DisruptorVersion)"
+    />
 
-      <DisruptorSourceZipInclude Include="$(SourceDir)\**\*.*" Exclude="@(DisruptorSourceZipExclude)" />
-    </ItemGroup>
-    <Zip Files="@(DisruptorSourceZipInclude)" WorkingDirectory="$(SourceDir)" ZipFileName="Target\Dist\Disruptor-source-$(DisruptorVersion).zip" ZipLevel="9" />
+    <!-- Create NuGet package -->
+    <Pack 
+      NuGetExePath="$(SourceDir)\Tools\NuGet\NuGet.exe"
+      ManifestFile="$(SourceDir)\Package.nuspec"
+      BasePath="$(BinDir)"
+      OutputDirectory="$(NuGetDir)"
+      Verbose="true"
+    />
 
+    <!-- Copy packages to output folder -->
     <ItemGroup>
       <Zips Include="Target\Dist\Disruptor-binaries-$(DisruptorVersion).zip" />
       <Zips Include="Target\Dist\Disruptor-perfRunner-$(DisruptorVersion).zip" />
-      <Zips Include="Target\Dist\Disruptor-source-$(DisruptorVersion).zip" />
     </ItemGroup>
 
     <Copy
        SourceFiles="@(Zips)"
        DestinationFolder="C:\Disruptor-release"
     />
+  </Target>
+
+  <Target Name="PackAndPublish" DependsOnTargets="Package">
+    <Exec Command="$(SourceDir)\Tools\NuGet\NuGet.exe Push $(NuGetDir)Disruptor.$(DisruptorVersion).nupkg"/>
   </Target>
 </Project>
