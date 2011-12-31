@@ -16,7 +16,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("http://github.com/odeheurles/Disruptor-net/network")]
 [assembly: AssemblyProduct("Disruptor")]
 [assembly: AssemblyCopyright("Copyright © disruptor-net")]
-[assembly: AssemblyVersion("0.1")]
-[assembly: AssemblyFileVersion("0.1")]
+[assembly: AssemblyVersion("1.1.0")]
+[assembly: AssemblyFileVersion("1.1.0")]
 
 
