@@ -118,7 +118,7 @@ namespace Disruptor.Collections
             {
                 _minValue = value;
             }
-            else if (value > _maxValue)
+            if (value > _maxValue)
             {
                 _maxValue = value;
             }

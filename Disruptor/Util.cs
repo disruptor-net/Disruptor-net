@@ -10,17 +10,28 @@
         /// </summary>
         /// <param name="x">Value to round up</param>
         /// <returns>The next power of 2 from x inclusive</returns>
-        public static int CeilingNextPowerOfTwo(int x)
+        public static int CeilingNextPowerOfTwo(this int x)
         {
             var result = 2;
 
             while (result < x)
             {
-                result *= 2;
+                result <<= 1;
             }
 
             return result;
         }
+
+        /// <summary>
+        /// Test whether a given integer is a power of 2 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        public static bool IsPowerOf2(this int x)
+        {
+            return x > 0 && (x & (x - 1)) == 0;
+        }
+
 
         /// <summary>
         /// Get the minimum sequence from an array of <see cref="Sequence"/>s.

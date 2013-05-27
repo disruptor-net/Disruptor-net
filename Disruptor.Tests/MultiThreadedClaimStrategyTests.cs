@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using Moq;
@@ -15,6 +16,12 @@ namespace Disruptor.Tests
         public void SetUp()
         {
             _claimStrategy = new MultiThreadedClaimStrategy(BufferSize);
+        }
+            
+        [Test]
+        public void ShouldNotCreateBufferWithNonPowerOf2()
+        {
+            Assert.Throws<ArgumentException>(() => new MultiThreadedClaimStrategy(1024, 129));
         }
 
         [Test]
@@ -200,7 +207,7 @@ namespace Disruptor.Tests
         }
 
         //[Test]
-        //public void shouldSerialisePublishingOnTheCursorWhenTwoThreadsArePublishing()
+        //public void ShouldSerialisePublishingOnTheCursorWhenTwoThreadsArePublishing()
         //{
         //    Sequence dependentSequence = new Sequence(Sequencer.InitialCursorValue);
         //    Sequence[] dependentSequences = { dependentSequence };
@@ -277,6 +284,60 @@ namespace Disruptor.Tests
         //    // One thread can end up setting both sequences.
         //    assertThat(threadSequences.get(0), is(notNullValue()));
         //    assertThat(threadSequences.get(1), is(notNullValue()));
+        //}
+
+        //@Test
+        //public void shouldSerialisePublishingOnTheCursorWhenTwoThreadsArePublishingWithBatches() throws InterruptedException
+        //{
+        //    final Sequence[] dependentSequences = {};
+        //    final Sequence cursor = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
+
+        //    final CountDownLatch orderingLatch = new CountDownLatch(2);
+        //    final int iterations = 1000000;
+        //    final int batchSize = 44;
+
+        //    final Runnable publisherOne = new Runnable()
+        //    {
+        //        @Override
+        //        public void run()
+        //        {
+        //            int counter = iterations;
+        //            while (-1 != --counter)
+        //            {
+        //                final long sequence = claimStrategy.incrementAndGet(batchSize, dependentSequences);
+        //                claimStrategy.serialisePublishing(sequence, cursor, batchSize);
+        //            }
+                
+        //            orderingLatch.countDown();
+        //        }
+        //    };
+
+        //    final Runnable publisherTwo = new Runnable()
+        //    {
+        //        @Override
+        //        public void run()
+        //        {
+        //            int counter = iterations;
+        //            while (-1 != --counter)
+        //            {
+        //                final long sequence = claimStrategy.incrementAndGet(batchSize, dependentSequences);
+        //                claimStrategy.serialisePublishing(sequence, cursor, batchSize);
+        //            }
+                
+        //            orderingLatch.countDown();
+        //        }
+        //    };
+
+        //    Thread tOne = new Thread(publisherOne);
+        //    tOne.setDaemon(true);
+        //    Thread tTwo = new Thread(publisherTwo);
+        //    tTwo.setDaemon(true);
+        //    tOne.setName("tOne");
+        //    tTwo.setName("tTwo");
+        //    tOne.start();
+        //    tTwo.start();
+        
+        //    assertThat("Timed out waiting for threads", orderingLatch.await(10, TimeUnit.SECONDS), is(true));
         //}
     }
 }
