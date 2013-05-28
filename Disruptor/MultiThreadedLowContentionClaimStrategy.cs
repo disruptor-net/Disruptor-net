@@ -7,7 +7,7 @@ namespace Disruptor
     /// 
     /// This strategy requires sufficient cores to allow multiple publishers to be concurrently claiming sequences.
     /// </summary>
-    public sealed class MultiThreadedLowContentionClaimStrategy : IClaimStrategy
+    public sealed class MultiThreadedLowContentionClaimStrategy : AbstractMultiThreadedClaimStrategy
     {
         private readonly int _bufferSize;
         private Volatile.PaddedLong _claimSequence = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
@@ -17,94 +17,10 @@ namespace Disruptor
         /// Construct a new multi-threaded publisher <see cref="IClaimStrategy"/> for a given buffer size.
         /// </summary>
         /// <param name="bufferSize">bufferSize for the underlying data structure.</param>
-        public MultiThreadedLowContentionClaimStrategy(int bufferSize)
+        public MultiThreadedLowContentionClaimStrategy(int bufferSize) : base(bufferSize)
         {
             _bufferSize = bufferSize;
             _minGatingSequenceThreadLocal = new ThreadLocal<MutableLong>(() => new MutableLong(Sequencer.InitialCursorValue));
-        }
-
-        /// <summary>
-        /// Get the size of the data structure used to buffer events.
-        /// </summary>
-        public int BufferSize
-        {
-            get { return _bufferSize; }
-        }
-
-        /// <summary>
-        /// Get the current claimed sequence.
-        /// </summary>
-        public long Sequence
-        {
-            get { return _claimSequence.ReadFullFence(); }
-        }
-
-        /// <summary>
-        /// Is there available capacity in the buffer for the requested sequence.
-        /// </summary>
-        /// <param name="availableCapacity">availableCapacity remaining in the buffer.</param>
-        /// <param name="dependentSequences">dependentSequences to be checked for range.</param>
-        /// <returns>true if the buffer has capacity for the requested sequence.</returns>
-        public bool HasAvailableCapacity(int availableCapacity, Sequence[] dependentSequences)
-        {
-            long wrapPoint = (_claimSequence.ReadFullFence() + availableCapacity) - _bufferSize;
-            var minGatingSequence = _minGatingSequenceThreadLocal.Value;
-            if (wrapPoint > minGatingSequence.Value)
-            {
-                long minSequence = Util.GetMinimumSequence(dependentSequences);
-                minGatingSequence.Value = minSequence;
-
-                if (wrapPoint > minSequence)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Claim the next sequence in the <see cref="Sequencer"/>
-        /// The caller should be held up until the claimed sequence is available by tracking the dependentSequences.
-        /// </summary>
-        /// <param name="dependentSequences">dependentSequences to be checked for range.</param>
-        /// <returns>the index to be used for the publishing.</returns>
-        public long IncrementAndGet(Sequence[] dependentSequences)
-        {
-            var minGatingSequence = _minGatingSequenceThreadLocal.Value;
-            WaitForCapacity(dependentSequences, minGatingSequence);
-
-            long nextSequence = _claimSequence.AtomicIncrementAndGet();
-            WaitForFreeSlotAt(nextSequence, dependentSequences, minGatingSequence);
-
-            return nextSequence;
-        }
-
-        ///<summary>
-        /// Increment sequence by a delta and get the result.
-        /// The caller should be held up until the claimed sequence batch is available by tracking the dependentSequences.
-        ///</summary>
-        ///<param name="delta">delta to increment by.</param>
-        /// <param name="dependentSequences">dependentSequences to be checked for range.</param>
-        ///<returns>the result after incrementing.</returns>
-        public long IncrementAndGet(int delta, Sequence[] dependentSequences)
-        {
-            long nextSequence = _claimSequence.AtomicAddAndGet(delta);
-            WaitForFreeSlotAt(nextSequence, dependentSequences, _minGatingSequenceThreadLocal.Value);
-
-            return nextSequence;
-        }
-
-        /// <summary>
-        /// Set the current sequence value for claiming an event in the <see cref="Sequencer"/>
-        /// The caller should be held up until the claimed sequence is available by tracking the dependentSequences.
-        /// </summary>
-        /// <param name="sequence">sequence to be set as the current value.</param>
-        /// <param name="dependentSequences">dependentSequences to be checked for range.</param>
-        public void SetSequence(long sequence, Sequence[] dependentSequences)
-        {
-            _claimSequence.WriteCompilerOnlyFence(sequence);
-            WaitForFreeSlotAt(sequence, dependentSequences, _minGatingSequenceThreadLocal.Value);
         }
 
         ///<summary>
@@ -113,7 +29,7 @@ namespace Disruptor
         ///<param name="sequence">sequence to be applied</param>
         ///<param name="cursor">cursor to serialise against.</param>
         ///<param name="batchSize">batchSize of the sequence.</param>
-        public void SerialisePublishing(long sequence, Sequence cursor, long batchSize)
+        public override void SerialisePublishing(long sequence, Sequence cursor, long batchSize)
         {
             long expectedSequence = sequence - batchSize;
             while (expectedSequence != cursor.Value)
@@ -122,38 +38,6 @@ namespace Disruptor
             }
 
             cursor.LazySet(sequence);
-        }
-
-        private void WaitForCapacity(Sequence[] dependentSequences, MutableLong minGatingSequence)
-        {
-            long wrapPoint = (_claimSequence.ReadFullFence() + 1L) - _bufferSize;
-            if (wrapPoint > minGatingSequence.Value)
-            {
-                long minSequence;
-                var spinWait = default(SpinWait);
-                while (wrapPoint > (minSequence = Util.GetMinimumSequence(dependentSequences)))
-                {
-                    spinWait.SpinOnce(); //LockSupport.parkNanos(1L);
-                }
-
-                minGatingSequence.Value = minSequence;
-            }
-        }
-
-        private void WaitForFreeSlotAt(long sequence, Sequence[] dependentSequences, MutableLong minGatingSequence)
-        {
-            long wrapPoint = sequence - _bufferSize;
-            if (wrapPoint > minGatingSequence.Value)
-            {
-                long minSequence;
-                var spinWait = default(SpinWait);
-                while (wrapPoint > (minSequence = Util.GetMinimumSequence(dependentSequences)))
-                {
-                    spinWait.SpinOnce(); //LockSupport.parkNanos(1L);
-                }
-
-                minGatingSequence.Value =  minSequence;
-            }
         }
     }
 }

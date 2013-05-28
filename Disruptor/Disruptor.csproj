@@ -47,10 +47,12 @@
     <Compile Include="..\Version.cs">
       <Link>Version.cs</Link>
     </Compile>
+    <Compile Include="AbstractMultiThreadedClaimStrategy.cs" />
     <Compile Include="AggregateEventHandler.cs" />
     <Compile Include="AlertException.cs" />
     <Compile Include="BlockingWaitStrategy.cs" />
     <Compile Include="BusySpinWaitStrategy.cs" />
+    <Compile Include="InsufficientCapacityException.cs" />
     <Compile Include="Dsl\Disruptor.cs" />
     <Compile Include="Dsl\ExceptionHandlerSetting.cs" />
     <Compile Include="EventPublisher.cs" />

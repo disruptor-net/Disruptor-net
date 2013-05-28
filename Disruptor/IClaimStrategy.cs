@@ -55,5 +55,14 @@
         ///<param name="cursor">cursor to serialise against.</param>
         ///<param name="batchSize">batchSize of the sequence.</param>
         void SerialisePublishing(long sequence, Sequence cursor, long batchSize);
+        /// <summary>
+        /// Atomically checks the available capacity of the ring buffer and claims the next sequence.  Will
+        /// throw InsufficientCapacityException if the capacity not available.
+        /// </summary>
+        /// <param name="availableCapacity">the capacity that should be available before claiming the next slot</param>
+        /// <param name="delta">the number of slots to claim</param>
+        /// <param name="dependentSequences">the set of sequences to check to ensure capacity is available</param>
+        /// <returns>the slot after incrementing</returns>
+        long CheckAndIncrement(int availableCapacity, int delta, Sequence[] dependentSequences);
     }
 }

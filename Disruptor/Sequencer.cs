@@ -106,6 +106,25 @@ namespace Disruptor
             return _claimStrategy.IncrementAndGet(_gatingSequences);
         }
 
+       
+        /// <summary>
+        /// Attempt to claim the next event in sequence for publishing.  Will return the
+        /// number of the slot if there is at least <param name="availableCapacity"></param> slots
+        /// available. 
+        /// </summary>
+        /// <param name="availableCapacity"></param>
+        /// <returns>the claimed sequence value</returns>
+        public long TryNext(int availableCapacity)
+        {
+            if (_gatingSequences == null)
+            {
+                throw new NullReferenceException("_gatingSequences must be set before claiming sequences");
+            }
+        
+            return _claimStrategy.CheckAndIncrement(availableCapacity, 1, _gatingSequences);
+        }
+
+
         /// <summary>
         /// Claim the next event in sequence for publishing with a timeout.
         /// If the timeout occurs the sequence will not be claimed and a <see cref="TimeoutException"/> will be thrown.
@@ -113,6 +132,9 @@ namespace Disruptor
         /// </summary>
         /// <param name="timeout">timeout period to wait</param>
         /// <returns>the claimed sequence value</returns>
+        /// <remarks>This method is obsolete, Use <see cref="TryNext"/> to avoid blocking indefinitely. Any timeout behavior
+        ///  should be handled within the calling code.</remarks>
+        [Obsolete]
         public long Next(TimeSpan timeout)
         {
             WaitForCapacity(1, timeout);
@@ -145,6 +167,9 @@ namespace Disruptor
         /// <param name="batchDescriptor">batchDescriptor to be updated for the batch range.</param>
         /// <param name="timeout">timeout period to wait</param>
         /// <returns>the updated batchDescriptor.</returns>
+        /// <remarks>This method is obsolete, Use <see cref="TryNext"/> to avoid blocking indefinitely. Any timeout behavior
+        ///  should be handled within the calling code.</remarks>
+        [Obsolete]
         public BatchDescriptor Next(BatchDescriptor batchDescriptor, TimeSpan timeout)
         {
             WaitForCapacity(batchDescriptor.Size, timeout);

@@ -201,6 +201,13 @@ namespace Disruptor.Tests
             _sequencer.Next(batchDescriptor, TimeSpan.FromSeconds(1));
         }
 
+        [Test]
+        [ExpectedException(typeof(InsufficientCapacityException))]
+        public void ShouldThrowInsufficientCapacityExceptionWhenSequencerIsFull()
+        {
+            _sequencer.TryNext(5);
+        }
+
         private void FillBuffer()
         {
             for (int i = 0; i < BufferSize; i++)

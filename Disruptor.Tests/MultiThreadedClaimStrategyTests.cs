@@ -144,6 +144,90 @@ namespace Disruptor.Tests
         }
 
         [Test]
+        [ExpectedException(typeof(InsufficientCapacityException))]
+        public void ShouldThrowExceptionIfCapacityIsNotAvailable()
+        {
+            Sequence dependentSequence = new Sequence();
+            Sequence[] dependentSequences = { dependentSequence };
+
+            _claimStrategy.CheckAndIncrement(9, 1, dependentSequences);
+        }
+    
+        [Test]
+        public void ShouldSucessfullyGetNextValueIfLessThanCapacityIsAvailable()
+        {
+            Sequence dependentSequence = new Sequence();
+            Sequence[] dependentSequences = { dependentSequence };
+
+            for (long i = 0; i < 8; i++)
+            {
+                Assert.AreEqual(i, _claimStrategy.CheckAndIncrement(1, 1, dependentSequences));
+            }
+        }
+    
+        [Test]
+        public void ShouldSucessfullyGetNextValueIfLessThanCapacityIsAvailableWhenClaimingMoreThanOne()
+        {
+            Sequence dependentSequence = new Sequence();
+            Sequence[] dependentSequences = { dependentSequence };
+
+            Assert.AreEqual(3, _claimStrategy.CheckAndIncrement(4, 4, dependentSequences));
+            Assert.AreEqual(7, _claimStrategy.CheckAndIncrement(4, 4, dependentSequences));
+        }
+    
+        [Test]
+        public void ShouldOnlyClaimWhatsAvailable()
+        {
+            Sequence dependentSequence = new Sequence();
+            Sequence[] dependentSequences = { dependentSequence };
+        
+            for (int j = 0; j < 1000; j++)
+            {
+                int numThreads = BufferSize * 2;
+                IClaimStrategy claimStrategy = new MultiThreadedClaimStrategy(BufferSize);
+                Volatile.LongArray claimed = new Volatile.LongArray(numThreads);
+                Barrier barrier = new Barrier(numThreads);
+                Thread[] ts = new Thread[numThreads];
+            
+                for (int i = 0; i < numThreads; i++)
+                {
+                    ts[i] = new Thread(() =>
+                        {
+                            try
+                            {
+                                barrier.SignalAndWait();
+                                long next = claimStrategy.CheckAndIncrement(1, 1, dependentSequences);
+                                claimed.AtomicIncrementAndGet((int) next);
+                            }
+                            catch (Exception e)
+                            {                                
+                            }
+                        });
+                }
+            
+                foreach (Thread t in ts)
+                {
+                    t.Start();
+                }
+            
+                foreach (Thread t in ts)
+                {
+                    t.Join();
+                }
+            
+                for (int i = 0; i < BufferSize; i++)
+                {
+                    Assert.AreEqual(1L, claimed.ReadFullFence(i), "j = " + j + ", i = " + i);
+                }
+            
+                for (int i = BufferSize; i < numThreads; i++)
+                {
+                    Assert.AreEqual(0L, claimed.ReadFullFence(i), "j = " + j + ", i = " + i);
+                }
+            }
+        }
+
+        [Test]
         public void ShouldSerialisePublishingOnTheCursorWhenTwoThreadsArePublishing()
         {
             var dependentSequence = new Sequence(Sequencer.InitialCursorValue);

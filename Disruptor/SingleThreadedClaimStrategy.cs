@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using Disruptor;
 
 namespace Disruptor
 {
@@ -113,6 +114,16 @@ namespace Disruptor
         public void SerialisePublishing(long sequence, Sequence cursor, long batchSize)
         {
             cursor.LazySet(sequence);
+        }
+
+        public long CheckAndIncrement(int availableCapacity, int delta, Sequence[] dependentSequences)
+        {
+            if (!HasAvailableCapacity(availableCapacity, dependentSequences))
+            {
+                throw InsufficientCapacityException.Instance;
+            }
+
+            return IncrementAndGet(delta, dependentSequences);
         }
 
         private void WaitForFreeSlotAt(long sequence, Sequence[] dependentSequences)
