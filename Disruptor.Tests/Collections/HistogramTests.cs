@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Disruptor.Collections;
 using NUnit.Framework;
 
@@ -149,6 +150,14 @@ namespace Disruptor.Tests.Collections
             AddObservations(_histogram, 1L, 7L, 10L, 10L, 11L, 144L);
 
             Assert.AreEqual(1L, _histogram.Min);
+        }
+
+        [Test]
+        public void ShouldGetMinAndMaxOfSingleObservation()
+        {
+            AddObservations(_histogram, 10L);
+            Assert.AreEqual(10L, _histogram.Min);
+            Assert.AreEqual(10L, _histogram.Max);
         }
 
         [Test]

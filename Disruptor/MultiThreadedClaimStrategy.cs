@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 
 namespace Disruptor
@@ -7,7 +8,7 @@ namespace Disruptor
     /// 
     /// This strategy is reasonably forgiving when the multiple publisher threads are highly contended or working in an
     /// environment where there is insufficient CPUs to handle multiple publisher threads.  It requires 2 CAS operations
-    /// for a single publisher, compared to the MultithreadedLowContention strategy which needs only a single CAS and a
+    /// for a single publisher, compared to the <see cref="MultiThreadedLowContentionClaimStrategy"/> strategy which needs only a single CAS and a
     /// lazySet per publication.
     /// </summary>
     public class MultiThreadedClaimStrategy : IClaimStrategy
@@ -22,9 +23,13 @@ namespace Disruptor
         /// Construct a new multi-threaded publisher <see cref="IClaimStrategy"/> for a given buffer size.
         /// </summary>
         /// <param name="bufferSize">bufferSize for the underlying data structure.</param>
-        /// <param name="pendingBufferSize"></param>
+        /// <param name="pendingBufferSize">pendingBufferSize number of item that can be pending for serialization</param>
         public MultiThreadedClaimStrategy(int bufferSize, int pendingBufferSize = 1024)
         {
+            if (!pendingBufferSize.IsPowerOf2())
+            {
+                throw new ArgumentException("must be power of 2", "pendingBufferSize");
+            }
             _bufferSize = bufferSize;
             _pendingPublication = new Volatile.LongArray(pendingBufferSize);
             _pendingMask = pendingBufferSize - 1;
@@ -134,11 +139,12 @@ namespace Disruptor
                 _pendingPublication.WriteFullFence((int)pendingSequence & _pendingMask, pendingSequence);
             }
 
-            if (cursor.Value != expectedSequence)
+            long cursorSequence = cursor.Value;
+            if (cursorSequence >= sequence)
             {
                 return;
             }
-
+            expectedSequence = Math.Max(expectedSequence, cursorSequence);
             long nextSequence = expectedSequence + 1;
             while (cursor.CompareAndSet(expectedSequence, nextSequence))
             {

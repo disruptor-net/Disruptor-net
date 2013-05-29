@@ -26,7 +26,7 @@ namespace Disruptor.Dsl
         {
             get
             {
-                return (from eventProcessorInfo in _eventProcessorInfoByHandler.Values
+                return (from eventProcessorInfo in _eventProcessorInfoByEventProcessor.Values
                         where eventProcessorInfo.IsEndOfChain
                         select eventProcessorInfo.EventProcessor).ToArray();
             }

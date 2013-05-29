@@ -1,5 +1,7 @@
 - add proper documentation in the wiki
 - port OnePublisherToOneProcessorUniCastRawThroughputTest
 - port OnePublisherToThreeWorkerPoolThroughputTest
+- port ShouldSerialisePublishingOnTheCursorWhenTwoThreadsArePublishing
+- port ShouldSerialisePublishingOnTheCursorWhenTwoThreadsArePublishingWithBatches
 - port the DSL Tests
 - improve README with samples, how to contrbute, etc
