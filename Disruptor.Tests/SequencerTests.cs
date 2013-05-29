@@ -208,6 +208,13 @@ namespace Disruptor.Tests
             _sequencer.TryNext(5);
         }
 
+        [Test]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void ShouldRejectAvailableCapcityLessThanOne()
+        {
+            _sequencer.TryNext(0);
+        }
+
         private void FillBuffer()
         {
             for (int i = 0; i < BufferSize; i++)

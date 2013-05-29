@@ -38,11 +38,32 @@ namespace Disruptor
         /// </summary>
         /// <param name="translator">The user specified translation for the event</param>
         /// <param name="timeout"></param>
+        /// <remarks>Obsolete: Timeout based methods are a bad idea, if timeout functionality
+        /// is required, then it can be implemented on top tryPublishEvent</remarks>
         public void PublishEvent(Func<T, long, T> translator, TimeSpan timeout)
         {
             long sequence = _ringBuffer.Next(timeout);
             TranslateAndPublish(translator, sequence);
         }
+        /// </summary>
+        /// <param name="translator">The user specified translation for the event</param>
+        /// <param name="capacity">The capacity that should be available before publishing</param>
+        /// <returns>true if the value was published, false if there was insufficient
+        /// capacity.</returns>
+        public bool TryPublishEvent(Func<T, long, T> translator, int capacity)
+        {
+            try
+            {
+                long sequence = _ringBuffer.TryNext(capacity);
+                TranslateAndPublish(translator, sequence);
+                return true;
+            }
+            catch (InsufficientCapacityException e)
+            {
+                return false;
+            }
+        }
+
 
         private void TranslateAndPublish(Func<T, long, T> translator, long sequence)
         {

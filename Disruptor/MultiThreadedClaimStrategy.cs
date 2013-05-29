@@ -50,8 +50,9 @@ namespace Disruptor
             long expectedSequence = sequence - batchSize;
             for (long pendingSequence = expectedSequence + 1; pendingSequence <= sequence; pendingSequence++)
             {
-                _pendingPublication.WriteFullFence((int)pendingSequence & _pendingMask, pendingSequence);
+                _pendingPublication.WriteCompilerOnlyFence((int)pendingSequence & _pendingMask, pendingSequence);                
             }
+            _pendingPublication.WriteFullFence((int)sequence & _pendingMask, sequence);
 
             long cursorSequence = cursor.Value;
             if (cursorSequence >= sequence)

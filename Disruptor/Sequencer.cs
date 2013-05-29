@@ -120,6 +120,11 @@ namespace Disruptor
             {
                 throw new NullReferenceException("_gatingSequences must be set before claiming sequences");
             }
+
+            if (availableCapacity < 1)
+            {
+                throw new ArgumentOutOfRangeException("availableCapacity", "Available capacity must be greater than 0");
+            }
         
             return _claimStrategy.CheckAndIncrement(availableCapacity, 1, _gatingSequences);
         }
