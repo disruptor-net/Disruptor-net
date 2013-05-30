@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace Disruptor
 {
@@ -129,24 +128,6 @@ namespace Disruptor
             return _claimStrategy.CheckAndIncrement(availableCapacity, 1, _gatingSequences);
         }
 
-
-        /// <summary>
-        /// Claim the next event in sequence for publishing with a timeout.
-        /// If the timeout occurs the sequence will not be claimed and a <see cref="TimeoutException"/> will be thrown.
-        /// 
-        /// </summary>
-        /// <param name="timeout">timeout period to wait</param>
-        /// <returns>the claimed sequence value</returns>
-        /// <remarks>This method is obsolete, Use <see cref="TryNext"/> to avoid blocking indefinitely. Any timeout behavior
-        ///  should be handled within the calling code.</remarks>
-        [Obsolete]
-        public long Next(TimeSpan timeout)
-        {
-            WaitForCapacity(1, timeout);
-
-            return Next();
-        }
-
         /// <summary>
         /// Claim the next batch of sequence numbers for publishing.
         /// </summary>
@@ -162,24 +143,6 @@ namespace Disruptor
             long sequence = _claimStrategy.IncrementAndGet(batchDescriptor.Size, _gatingSequences);
             batchDescriptor.End = sequence;
             return batchDescriptor;
-        }
-
-        /// <summary>
-        /// Claim the next batch of sequence numbers for publishing with a timeout.
-        /// If the timeout occurs the sequence will not be claimed and a <see cref="TimeoutException"/> will be thrown.
-        /// 
-        /// </summary>
-        /// <param name="batchDescriptor">batchDescriptor to be updated for the batch range.</param>
-        /// <param name="timeout">timeout period to wait</param>
-        /// <returns>the updated batchDescriptor.</returns>
-        /// <remarks>This method is obsolete, Use <see cref="TryNext"/> to avoid blocking indefinitely. Any timeout behavior
-        ///  should be handled within the calling code.</remarks>
-        [Obsolete]
-        public BatchDescriptor Next(BatchDescriptor batchDescriptor, TimeSpan timeout)
-        {
-            WaitForCapacity(batchDescriptor.Size, timeout);
-
-            return Next(batchDescriptor);
         }
 
         /// <summary>
@@ -234,19 +197,6 @@ namespace Disruptor
         {
             _claimStrategy.SerialisePublishing(sequence, _cursor, batchSize);
             _waitStrategy.SignalAllWhenBlocking();
-        }
-
-        private void WaitForCapacity(int capacity, TimeSpan timeout)
-        {
-            var sw = Stopwatch.StartNew();
-
-            while (!_claimStrategy.HasAvailableCapacity(capacity, _gatingSequences))
-            {
-                if (sw.Elapsed > timeout)
-                {
-                    throw _timeoutExceptionInstance;
-                }
-            }
         }
     }
 }

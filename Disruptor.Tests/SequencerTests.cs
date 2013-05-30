@@ -160,48 +160,6 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldNotTimeoutWhenBufferHasSufficientCapacity()
-        {
-            long sequence = _sequencer.Next(TimeSpan.FromSeconds(1L));
-            Assert.AreEqual(Sequencer.InitialCursorValue + 1L, sequence);
-        }
-
-        [Test]
-        [ExpectedException(typeof(TimeoutException))]
-        public void ShouldThrowExceptionDueToTimeoutWhenInsufficientCapacity()
-        {
-            long expectedFullSequence = Sequencer.InitialCursorValue + _sequencer.BufferSize;
-            _sequencer.Claim(expectedFullSequence);
-            _sequencer.Publish(expectedFullSequence);
-
-            _sequencer.Next(TimeSpan.FromSeconds(1));
-        }
-
-        [Test]
-        public void ShouldNotTimeoutWhenBufferHasSufficientCapacityForBatch()
-        {
-            const int batchSize = 3;
-            BatchDescriptor batchDescriptor = _sequencer.NewBatchDescriptor(batchSize);
-
-            batchDescriptor = _sequencer.Next(batchDescriptor, TimeSpan.FromSeconds(1));
-            Assert.AreEqual(Sequencer.InitialCursorValue + batchSize, batchDescriptor.End);
-        }
-
-        [Test]
-        [ExpectedException(typeof(TimeoutException))]
-        public void ShouldThrowExceptionDueToTimeoutWhenInsufficientCapacityForBatch()
-        {
-            long expectedFullSequence = Sequencer.InitialCursorValue + _sequencer.BufferSize;
-            _sequencer.Claim(expectedFullSequence);
-            _sequencer.Publish(expectedFullSequence);
-
-            const int batchSize = 3;
-            BatchDescriptor batchDescriptor = _sequencer.NewBatchDescriptor(batchSize);
-
-            _sequencer.Next(batchDescriptor, TimeSpan.FromSeconds(1));
-        }
-
-        [Test]
         [ExpectedException(typeof(InsufficientCapacityException))]
         public void ShouldThrowInsufficientCapacityExceptionWhenSequencerIsFull()
         {
