@@ -30,21 +30,6 @@ namespace Disruptor
             long sequence = _ringBuffer.Next();
             TranslateAndPublish(translator, sequence);
         }
-        /// <summary>
-        /// Publishes an event to the ring buffer.  It handles
-        /// claiming the next sequence, getting the current (uninitialized) 
-        /// event from the ring buffer and publishing the claimed sequence
-        /// after translation.
-        /// </summary>
-        /// <param name="translator">The user specified translation for the event</param>
-        /// <param name="timeout"></param>
-        /// <remarks>Obsolete: Timeout based methods are a bad idea, if timeout functionality
-        /// is required, then it can be implemented on top tryPublishEvent</remarks>
-        public void PublishEvent(Func<T, long, T> translator, TimeSpan timeout)
-        {
-            long sequence = _ringBuffer.Next(timeout);
-            TranslateAndPublish(translator, sequence);
-        }
         /// </summary>
         /// <param name="translator">The user specified translation for the event</param>
         /// <param name="capacity">The capacity that should be available before publishing</param>
