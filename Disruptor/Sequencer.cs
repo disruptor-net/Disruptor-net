@@ -198,5 +198,12 @@ namespace Disruptor
             _claimStrategy.SerialisePublishing(sequence, _cursor, batchSize);
             _waitStrategy.SignalAllWhenBlocking();
         }
+
+        public long RemainingCapacity()
+        {
+            long consumed = Util.GetMinimumSequence(_gatingSequences);
+            long produced = _cursor.Value;
+            return BufferSize - (produced - consumed);
+        }
     }
 }
