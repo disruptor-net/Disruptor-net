@@ -70,7 +70,16 @@ namespace Disruptor
         ///<returns>incremented sequence</returns>
         public long IncrementAndGet()
         {
-            return _value.AtomicIncrementAndGet();
+            return AddAndGet(1);
+        }
+
+        ///<summary>
+        /// Increments the sequence and stores the result, as an atomic operation.
+        ///</summary>
+        ///<returns>incremented sequence</returns>
+        public long AddAndGet(long value)
+        {
+            return _value.AtomicAddAndGet(value);
         }
     }
 }
