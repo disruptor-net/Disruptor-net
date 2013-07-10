@@ -4,9 +4,13 @@ This project aims to provide the full functionality of the Disruptor to CLR proj
 
 ## What's new?
 
-11/7/2013 (v2.10.0):
+12/7/2013 (v2.10.1):
 
-* All features available in Java Disruptor **2.10.0** have been ported 
+* All features available in Java Disruptor **2.10.1** have been ported 
+* Using [GitInfoPlanter] to push git information into binary assemblies
+* More use of NuGet for all dependencies
+
+[GitInfoPlanter]: http://damageboy.github.io/daemaged.gitinfoplanter/
 
 ## Getting Started
 
