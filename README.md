@@ -4,11 +4,9 @@ This project aims to provide the full functionality of the Disruptor to CLR proj
 
 ## What's new?
 
-31/12/2011 (v1.1.0):
+11/7/2013 (v2.10.0):
 
-* Disruptor now has a [NuGet package]
-* All features available in Java Disruptor **2.7.1** have been ported 
-* Set processsor affinity with a new TaskScheduler
+* All features available in Java Disruptor **2.10.0** have been ported 
 
 ## Getting Started
 
