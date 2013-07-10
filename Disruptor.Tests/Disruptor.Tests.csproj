@@ -58,6 +58,13 @@
     <Compile Include="BatchEventProcessorTests.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Dsl\DelayedEventHandler.cs" />
+    <Compile Include="Dsl\DisruptorTests.cs" />
+    <Compile Include="Dsl\EventHandlerStub.cs" />
+    <Compile Include="Dsl\EvilEqualsEventHandler.cs" />
+    <Compile Include="Dsl\SleepingEventHandler.cs" />
+    <Compile Include="Dsl\StubTaskScheduler.cs" />
+    <Compile Include="EventTranslatorTests.cs" />
     <Compile Include="MultiThreadedClaimStrategyTests.cs" />
     <Compile Include="SequenceBarrierTests.cs">
       <SubType>Code</SubType>
@@ -77,6 +84,7 @@
     <Compile Include="SequenceReportingCallbackTests.cs" />
     <Compile Include="SequencerTests.cs" />
     <Compile Include="SingleThreadedClaimStrategyTests.cs" />
+    <Compile Include="Support\TestEvent.cs" />
     <Compile Include="Support\LongEvent.cs" />
     <Compile Include="Support\StubEvent.cs" />
     <Compile Include="Support\TestWaiter.cs" />

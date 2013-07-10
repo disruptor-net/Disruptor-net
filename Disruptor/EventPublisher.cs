@@ -27,7 +27,7 @@ namespace Disruptor
         /// <param name="translator">The user specified translation for the event</param>
         public void PublishEvent(Func<T,long,T> translator)
         {
-            long sequence = _ringBuffer.Next();
+            var sequence = _ringBuffer.Next();
             TranslateAndPublish(translator, sequence);
         }
         /// </summary>

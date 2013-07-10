@@ -1,5 +1,3 @@
-using System;
-
 namespace Disruptor.Tests.Support
 {
     public class StubEvent

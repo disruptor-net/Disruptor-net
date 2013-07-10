@@ -1,13 +1,30 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Disruptor.Dsl
 {
     internal class EventProcessorRepository<T>
     {
-        private readonly IDictionary<IEventHandler<T>, EventProcessorInfo<T>> _eventProcessorInfoByHandler = new Dictionary<IEventHandler<T>, EventProcessorInfo<T>>();
-        private readonly IDictionary<IEventProcessor, EventProcessorInfo<T>> _eventProcessorInfoByEventProcessor = new Dictionary<IEventProcessor, EventProcessorInfo<T>>();
+        public class IdentityEqualityComparer<T> : IEqualityComparer<T> where T : class
+        {
+            public int GetHashCode(T value)
+            {
+                return RuntimeHelpers.GetHashCode(value);
+            }
+
+            public bool Equals(T left, T right)
+            {
+                return ReferenceEquals(left, right); // Reference identity comparison
+            }
+        }
+
+        private readonly IDictionary<IEventHandler<T>, EventProcessorInfo<T>> _eventProcessorInfoByHandler = 
+            new Dictionary<IEventHandler<T>, EventProcessorInfo<T>>(new IdentityEqualityComparer<IEventHandler<T>>());
+        private readonly IDictionary<IEventProcessor, EventProcessorInfo<T>> _eventProcessorInfoByEventProcessor =
+            new Dictionary<IEventProcessor, EventProcessorInfo<T>>(new IdentityEqualityComparer<IEventProcessor>());
 
         public void Add(IEventProcessor eventProcessor, IEventHandler<T> eventHandler, ISequenceBarrier sequenceBarrier)
         {
@@ -34,8 +51,8 @@ namespace Disruptor.Dsl
 
         public IEventProcessor GetEventProcessorFor(IEventHandler<T> eventHandler)
         {
-            var eventProcessorInfo = _eventProcessorInfoByHandler[eventHandler];
-            if(eventProcessorInfo == null)
+            EventProcessorInfo<T> eventProcessorInfo;
+            if (!_eventProcessorInfoByHandler.TryGetValue(eventHandler, out eventProcessorInfo))
             {
                 throw new ArgumentException("The event handler " + eventHandler + " is not processing events.");
             }
