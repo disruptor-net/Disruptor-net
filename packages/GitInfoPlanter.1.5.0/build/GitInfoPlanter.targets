@@ -1,0 +1,5 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="UseMyCustomBuildAction" AfterTargets="Build"  >
+    <Exec Command="$(MSBuildThisFileDirectory)..\tools\gitinfoplanter.exe --search-path &quot;$(TargetFrameworkDirectory)&quot; --basedate 2000-01-01 --repo $(ProjectDir) $(TargetPath) $(TargetPath)" />
+  </Target>
+</Project>

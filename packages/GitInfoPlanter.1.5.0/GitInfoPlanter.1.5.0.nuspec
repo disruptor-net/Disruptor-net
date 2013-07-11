@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>GitInfoPlanter</id>
+    <version>1.5.0</version>
+    <title>GitInfoPlanter - Plant git repo information in .NET assemblies</title>
+    <authors>Dan Shechter</authors>
+    <owners>Dan Shechter</owners>
+    <projectUrl>http://damageboy.github.com/daemaged.gitinfoplanter</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>gitinfoplanter automates the process of reading your git repo status and embedding it as an easy to use string in an assembly level attribute of your .NET executable.</description>
+    <summary>Plant Git Information into .NET Assemblies</summary>
+    <releaseNotes />
+    <copyright>Copyright � Dan Shechter 2011-2012</copyright>
+    <language />
+  </metadata>
+</package>
