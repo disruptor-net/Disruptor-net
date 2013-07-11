@@ -108,7 +108,7 @@ namespace Disruptor
        
         /// <summary>
         /// Attempt to claim the next event in sequence for publishing.  Will return the
-        /// number of the slot if there is at least <param name="availableCapacity"></param> slots
+        /// number of the slot if there is at least <paramref name="availableCapacity"></paramref> slots
         /// available. 
         /// </summary>
         /// <param name="availableCapacity"></param>
@@ -199,11 +199,20 @@ namespace Disruptor
             _waitStrategy.SignalAllWhenBlocking();
         }
 
-        public long RemainingCapacity()
+
+        /// <summary>
+        /// Gets the remaining capacity.
+        /// </summary>
+        /// <value>
+        /// The remaining capacity.
+        /// </value>
+        public long RemainingCapacity
         {
-            long consumed = Util.GetMinimumSequence(_gatingSequences);
-            long produced = _cursor.Value;
-            return BufferSize - (produced - consumed);
+            get {
+                var consumed = Util.GetMinimumSequence(_gatingSequences);
+                var produced = _cursor.Value;
+                return BufferSize - (produced - consumed);
+            }
         }
     }
 }

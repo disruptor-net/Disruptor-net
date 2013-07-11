@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Disruptor", "Disruptor\Disruptor.csproj", "{37FBDBE1-8524-4489-B082-CC109B0F5EA3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Disruptor.Tests", "Disruptor.Tests\Disruptor.Tests.csproj", "{759BF0BB-D922-4E85-A4C8-2C9F382E0A79}"
@@ -24,6 +24,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A44B9C7B-781B-4E2B-AA71-FA5A086A6C0F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atomic.Tests", "Atomic.Tests\Atomic.Tests.csproj", "{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{2D1779CB-3068-42E6-89DF-6189256F5EA8}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\packages.config = .nuget\packages.config
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

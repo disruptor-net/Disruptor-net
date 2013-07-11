@@ -17,20 +17,20 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\Target\Bin\</OutputPath>
+    <OutputPath>..\build\debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\Target\Bin\Disruptor.XML</DocumentationFile>
+    <DocumentationFile>..\build\debug\Disruptor.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\Target\Bin\</OutputPath>
+    <OutputPath>..\build\release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\Target\Bin\Disruptor.XML</DocumentationFile>
+    <DocumentationFile>..\build\release\Disruptor.xml</DocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>

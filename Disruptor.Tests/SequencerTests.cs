@@ -176,13 +176,13 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldCalculateRemainingCapacity()
         {
-            Assert.AreEqual(4L, _sequencer.RemainingCapacity());
+            Assert.AreEqual(4L, _sequencer.RemainingCapacity);
             _sequencer.Publish(_sequencer.Next());
-            Assert.AreEqual(3L, _sequencer.RemainingCapacity());
+            Assert.AreEqual(3L, _sequencer.RemainingCapacity);
             _sequencer.Publish(_sequencer.Next());
-            Assert.AreEqual(2L, _sequencer.RemainingCapacity());
+            Assert.AreEqual(2L, _sequencer.RemainingCapacity);
             _sequencer.Publish(_sequencer.Next());
-            Assert.AreEqual(1L, _sequencer.RemainingCapacity());
+            Assert.AreEqual(1L, _sequencer.RemainingCapacity);
         }
 
         private void FillBuffer()

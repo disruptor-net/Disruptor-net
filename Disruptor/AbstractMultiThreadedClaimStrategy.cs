@@ -2,12 +2,22 @@ using System.Threading;
 
 namespace Disruptor
 {
+    /// <summary>
+    /// An abstract base class for MultiThreaded Claim Strategies
+    /// </summary>
     public abstract class AbstractMultiThreadedClaimStrategy : IClaimStrategy
     {
+        /// <summary>
+        /// The buffer size
+        /// </summary>
         protected int _bufferSize;
-        private Sequence _claimSequence = new Sequence();
+        private readonly Sequence _claimSequence = new Sequence();
         private readonly ThreadLocal<MutableLong> _minGatingSequenceThreadLocal = new ThreadLocal<MutableLong>(() => new MutableLong(Sequencer.InitialCursorValue));
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AbstractMultiThreadedClaimStrategy"/> class.
+        /// </summary>
+        /// <param name="bufferSize">Size of the buffer.</param>
         public AbstractMultiThreadedClaimStrategy(int bufferSize)
         {
             _bufferSize = bufferSize;
@@ -55,8 +65,16 @@ namespace Disruptor
             WaitForFreeSlotAt(nextSequence, dependentSequences, minGatingSequence);
 
             return nextSequence;
-        }
+        }   
 
+        /// <summary>
+        /// Atomically checks the available capacity of the ring buffer and claims the next sequence.  Will
+        /// throw InsufficientCapacityException if the capacity not available.
+        /// </summary>
+        /// <param name="availableCapacity">the capacity that should be available before claiming the next slot</param>
+        /// <param name="delta">the number of slots to claim</param>
+        /// <param name="dependentSequences">the set of sequences to check to ensure capacity is available</param>
+        /// <returns>the index to be used for the publishing.</returns>
         public long CheckAndIncrement(int availableCapacity, int delta, Sequence[] dependentSequences)
         {
             for (;;)
@@ -105,6 +123,12 @@ namespace Disruptor
             WaitForFreeSlotAt(sequence, dependentSequences, _minGatingSequenceThreadLocal.Value);
         }
 
+        /// <summary>
+        /// Serialize publishers in sequence and set cursor to latest available sequence.
+        /// </summary>
+        /// <param name="sequence">sequence to be applied</param>
+        /// <param name="cursor">cursor to serialize against.</param>
+        /// <param name="batchSize">batchSize of the sequence.</param>
         public abstract void SerialisePublishing(long sequence, Sequence cursor, long batchSize);
 
         private void WaitForCapacity(Sequence[] dependentSequences, MutableLong minGatingSequence)

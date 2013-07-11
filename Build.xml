@@ -3,8 +3,8 @@
   <PropertyGroup>
     <MSBuildCommunityTasksPath>$(MSBuildProjectDirectory)\Lib\MSBuild.Community\</MSBuildCommunityTasksPath>
     <SourceDir>$(MSBuildProjectDirectory)</SourceDir>
-    <NUnitToolPath>$(MSBuildProjectDirectory)\Lib\NUnit\</NUnitToolPath>
-    <TargetDir>$(MsBuildProjectDirectory)\Target\</TargetDir>
+    <NUnitToolPath>$(MSBuildProjectDirectory)\packages\NUnit.Runners.2.6.2\tools</NUnitToolPath>
+    <TargetDir>$(MsBuildProjectDirectory)\build\release\</TargetDir>
     <ReportDir>$(TargetDir)Report\</ReportDir>
     <PerfReportDir>$(ReportDir)Perf\</PerfReportDir>
     <UnitReportDir>$(ReportDir)Unit\</UnitReportDir>
@@ -95,13 +95,13 @@
     <ItemGroup>
       <DisruptorZip Include="$(BinDir)Disruptor.dll" />
       <DisruptorZip Include="$(BinDir)Disruptor.pdb" />
-      <DisruptorZip Include="$(BinDir)Disruptor.XML" />
+      <DisruptorZip Include="$(BinDir)Disruptor.xml" />
       <DisruptorZip Include="$(BinDir)Atomic.dll" />
       <DisruptorZip Include="$(BinDir)Atomic.pdb" />
-      <DisruptorZip Include="$(BinDir)Atomic.XML" />
+      <DisruptorZip Include="$(BinDir)Atomic.xml" />
       <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.dll" />
       <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.pdb" />
-      <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.XML" />
+      <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.xml" />
     </ItemGroup>
     <Zip Files="@(DisruptorZip)" WorkingDirectory="$(BinDir)" ZipFileName="Target\Dist\Disruptor-binaries-$(DisruptorVersion).zip" ZipLevel="9" />
 
@@ -109,15 +109,15 @@
     <ItemGroup>
       <DisruptorPerfZip Include="$(BinDir)Disruptor.dll" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.pdb" />
-      <DisruptorPerfZip Include="$(BinDir)Disruptor.XML" />
+      <DisruptorPerfZip Include="$(BinDir)Disruptor.xml" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.PerfTests.exe" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.PerfTests.pdb" />
       <DisruptorPerfZip Include="$(BinDir)Atomic.dll" />
       <DisruptorPerfZip Include="$(BinDir)Atomic.pdb" />
-      <DisruptorPerfZip Include="$(BinDir)Atomic.XML" />
+      <DisruptorPerfZip Include="$(BinDir)Atomic.xml" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.Scheduler.dll" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.Scheduler.pdb" />
-      <DisruptorPerfZip Include="$(BinDir)Disruptor.Scheduler.XML" />
+      <DisruptorPerfZip Include="$(BinDir)Disruptor.Scheduler.xml" />
       <DisruptorPerfZip Include="$(BinDir)nunit.framework.dll" />
     </ItemGroup>
     <Zip Files="@(DisruptorPerfZip)" WorkingDirectory="$(BinDir)" ZipFileName="Target\Dist\Disruptor-perfRunner-$(DisruptorVersion).zip" ZipLevel="9" />
@@ -131,7 +131,7 @@
 
     <!-- Create NuGet package -->
     <Pack 
-      NuGetExePath="$(SourceDir)\Tools\NuGet\NuGet.exe"
+      NuGetExePath="$(SourceDir)\packages\NuGet.CommandLine.2.6.1\tools\NuGet.exe"
       ManifestFile="$(SourceDir)\Package.nuspec"
       BasePath="$(BinDir)"
       OutputDirectory="$(NuGetDir)"

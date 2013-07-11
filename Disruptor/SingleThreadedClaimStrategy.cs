@@ -116,6 +116,16 @@ namespace Disruptor
             cursor.LazySet(sequence);
         }
 
+        /// <summary>
+        /// Atomically checks the available capacity of the ring buffer and claims the next sequence.  Will
+        /// throw InsufficientCapacityException if the capacity not available.
+        /// </summary>
+        /// <param name="availableCapacity">the capacity that should be available before claiming the next slot</param>
+        /// <param name="delta">the number of slots to claim</param>
+        /// <param name="dependentSequences">the set of sequences to check to ensure capacity is available</param>
+        /// <returns>
+        /// the slot after incrementing
+        /// </returns>
         public long CheckAndIncrement(int availableCapacity, int delta, Sequence[] dependentSequences)
         {
             if (!HasAvailableCapacity(availableCapacity, dependentSequences))

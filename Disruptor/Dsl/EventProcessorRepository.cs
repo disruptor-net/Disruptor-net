@@ -8,14 +8,14 @@ namespace Disruptor.Dsl
 {
     internal class EventProcessorRepository<T>
     {
-        public class IdentityEqualityComparer<T> : IEqualityComparer<T> where T : class
+        public class IdentityEqualityComparer<TKey> : IEqualityComparer<TKey> where TKey : class
         {
-            public int GetHashCode(T value)
+            public int GetHashCode(TKey value)
             {
                 return RuntimeHelpers.GetHashCode(value);
             }
 
-            public bool Equals(T left, T right)
+            public bool Equals(TKey left, TKey right)
             {
                 return ReferenceEquals(left, right); // Reference identity comparison
             }

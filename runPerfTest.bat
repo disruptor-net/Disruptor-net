@@ -1,2 +1,2 @@
-Target\Bin\Disruptor.PerfTests.exe 0 0 3
+build\release\Disruptor.PerfTests.exe 0 0 3
 pause

@@ -30,6 +30,11 @@ namespace Disruptor
             var sequence = _ringBuffer.Next();
             TranslateAndPublish(translator, sequence);
         }
+        /// <summary>
+        /// Try Publishing an event to the ring buffer.  It handles
+        /// claiming the next sequence, getting the current (uninitialized) 
+        /// event from the ring buffer and publishing the claimed sequence
+        /// after translation.
         /// </summary>
         /// <param name="translator">The user specified translation for the event</param>
         /// <param name="capacity">The capacity that should be available before publishing</param>
@@ -39,11 +44,11 @@ namespace Disruptor
         {
             try
             {
-                long sequence = _ringBuffer.TryNext(capacity);
+                var sequence = _ringBuffer.TryNext(capacity);
                 TranslateAndPublish(translator, sequence);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }

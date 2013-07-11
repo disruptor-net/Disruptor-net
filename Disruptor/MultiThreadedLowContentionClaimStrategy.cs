@@ -8,8 +8,7 @@ namespace Disruptor
     /// This strategy requires sufficient cores to allow multiple publishers to be concurrently claiming sequences.
     /// </summary>
     public sealed class MultiThreadedLowContentionClaimStrategy : AbstractMultiThreadedClaimStrategy
-    {
-        private readonly int _bufferSize;
+    {        
         private Volatile.PaddedLong _claimSequence = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
         private readonly ThreadLocal<MutableLong> _minGatingSequenceThreadLocal;
 
