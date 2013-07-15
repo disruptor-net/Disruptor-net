@@ -50,7 +50,7 @@
   <Target Name="UpdateVersion" Condition=" '$(DisruptorVersion)' != '' " DependsOnTargets="PreBuild">
     <AssemblyInfo CodeLanguage="CS"
       OutputFile="$(MsBuildProjectDirectory)\Version.cs"
-      AssemblyCompany="http://github.com/odeheurles/Disruptor-net/network"
+      AssemblyCompany="http://github.com/disruptor-net/Disruptor-net/network"
       AssemblyProduct="Disruptor"
       AssemblyCopyright="Copyright © disruptor-net"
       AssemblyVersion="$(DisruptorVersion)"
@@ -58,7 +58,7 @@
   </Target>
   
   <!-- Compiles the VS solution -->
-  <Target Name="Build" DependsOnTargets="UpdateVersion">
+  <Target Name="Build" DependsOnTargets="UpdateVersion;PreBuild">
     <MSBuild
 		  Projects="NDisruptor.sln"
 		  Properties="Configuration=Release;OutputPath=$(BinDir);Optimize=true"

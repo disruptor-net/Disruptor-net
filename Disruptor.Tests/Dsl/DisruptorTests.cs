@@ -14,7 +14,7 @@ namespace Disruptor.Tests.Dsl
         private const int TIMEOUT_IN_SECONDS = 2;
         private StubTaskScheduler _scheduler;
         private Disruptor<TestEvent> _disruptor;        
-        private List<DelayedEventHandler> _delayedEventHandlers = new List<DelayedEventHandler>();
+        private readonly List<DelayedEventHandler> _delayedEventHandlers = new List<DelayedEventHandler>();
         private RingBuffer<TestEvent> _ringBuffer;
         private TestEvent _lastPublishedEvent;
 
@@ -138,40 +138,36 @@ namespace Disruptor.Tests.Dsl
             _disruptor.After(handler2);
         }
 
+        [Test]
+        public void ShouldSupportSpecifyingADefaultExceptionHandlerForEventProcessors()
+        {
+            var wrappedException = new StructWrapper<Volatile.Reference<Exception>> {
+                Value = new Volatile.Reference<Exception>()
+            };
+            var exceptionHandler = new StubExceptionHandler(wrappedException);
+            var testException = new Exception();
+            var handler = new ExceptionThrowingEventHandler(testException);
 
+            _disruptor.HandleExceptionsWith(exceptionHandler);
+            _disruptor.HandleEventsWith(handler);
 
-#if HELL_FROZE_OVER
-    @Test
-    public void shouldSupportSpecifyingADefaultExceptionHandlerForEventProcessors()
-        throws Exception
-    {
-        AtomicReference<Throwable> eventHandled = new AtomicReference<Throwable>();
-        ExceptionHandler exceptionHandler = new StubExceptionHandler(eventHandled);
-        RuntimeException testException = new RuntimeException();
-        ExceptionThrowingEventHandler handler = new ExceptionThrowingEventHandler(testException);
+            PublishEvent();
 
-        disruptor.handleExceptionsWith(exceptionHandler);
-        disruptor.handleEventsWith(handler);
-
-        publishEvent();
-
-        final Throwable actualException = waitFor(eventHandled);
-        assertSame(testException, actualException);
+            var actualException = WaitFor(wrappedException);
+            Assert.AreEqual(testException, actualException);
     }
 
-    @Test
+    [Test]
     public void shouldBlockProducerUntilAllEventProcessorsHaveAdvanced()
-        throws Exception
     {
-        final DelayedEventHandler delayedEventHandler = createDelayedEventHandler();
-        disruptor.handleEventsWith(delayedEventHandler);
+        var delayedEventHandler = CreateDelayedEventHandler();
+        _disruptor.HandleEventsWith(delayedEventHandler);
 
-        final RingBuffer<TestEvent> ringBuffer = disruptor.start();
+        var ringBuffer = _disruptor.Start();
 
-        final StubPublisher stubPublisher = new StubPublisher(ringBuffer);
-        try
-        {
-            executor.execute(stubPublisher);
+        var stubPublisher = new StubPublisher(ringBuffer);
+        try {
+            _executor.execute(stubPublisher);
 
             assertProducerReaches(stubPublisher, 4, true);
 
@@ -189,7 +185,10 @@ namespace Disruptor.Tests.Dsl
         }
     }
 
-    @Test
+
+#if HELL_FROZE_OVER
+
+    [Test]
     public void shouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor()
         throws Exception
     {
@@ -206,9 +205,9 @@ namespace Disruptor.Tests.Dsl
         waitFor(reference);
     }
 
-    @Test(expected = IllegalStateException.class)
+    [Test]
+    [ExpectedException(typeof(InvalidOperationException)]
     public void shouldThrowExceptionWhenAddingEventProcessorsAfterTheProducerBarrierHasBeenCreated()
-        throws Exception
     {
         executor.ignoreExecutions();
         disruptor.handleEventsWith(new SleepingEventHandler());
@@ -216,9 +215,8 @@ namespace Disruptor.Tests.Dsl
         disruptor.handleEventsWith(new SleepingEventHandler());
     }
 
-    @Test(expected = IllegalStateException.class)
+    [ExpectedException(typeof(InvalidOperationException)]
     public void shouldThrowExceptionIfStartIsCalledTwice()
-        throws Exception
     {
         executor.ignoreExecutions();
         disruptor.handleEventsWith(new SleepingEventHandler());
@@ -226,9 +224,8 @@ namespace Disruptor.Tests.Dsl
         disruptor.start();
     }
 
-    @Test
+    [Test]
     public void shouldSupportCustomProcessorsAsDependencies()
-        throws Exception
     {
         RingBuffer<TestEvent> ringBuffer = disruptor.getRingBuffer();
 
@@ -244,6 +241,11 @@ namespace Disruptor.Tests.Dsl
 
         ensureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
     }
+
+
+
+
+
 
     @Test
     public void shouldSupportHandlersAsDependenciesToCustomProcessors()
@@ -333,6 +335,17 @@ namespace Disruptor.Tests.Dsl
         return _lastPublishedEvent;
     }
 
+    private Exception WaitFor(StructWrapper<Volatile.Reference<Exception>> reference)
+    {
+        while (reference.Value.ReadCompilerOnlyFence() == null)
+        {
+            Thread.Yield();
+        }
+
+        return reference.Value.ReadCompilerOnlyFence();
+    }
+
+
     private DelayedEventHandler CreateDelayedEventHandler()
     {
         var delayedEventHandler = new DelayedEventHandler();
@@ -349,5 +362,10 @@ namespace Disruptor.Tests.Dsl
     {
         Assert.IsTrue(countDownEvent.Wait(TIMEOUT_IN_SECONDS * 1000), "Batch handler did not receive entries.");
     }
+    }
+
+    public class StructWrapper<T>
+    {
+        public T Value;
     }
 }
