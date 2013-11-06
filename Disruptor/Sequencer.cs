@@ -108,8 +108,8 @@ namespace Disruptor
        
         /// <summary>
         /// Attempt to claim the next event in sequence for publishing.  Will return the
-        /// number of the slot if there is at least <param name="availableCapacity"></param> slots
-        /// available. 
+        /// number of the slot if there is at least the number of slots specified by the 
+        /// availableCapacity paramter. 
         /// </summary>
         /// <param name="availableCapacity"></param>
         /// <returns>the claimed sequence value</returns>
@@ -199,6 +199,10 @@ namespace Disruptor
             _waitStrategy.SignalAllWhenBlocking();
         }
 
+        /// <summary>
+        /// Remaining capacity for the sequencer
+        /// </summary>
+        /// <returns></returns>
         public long RemainingCapacity()
         {
             long consumed = Util.GetMinimumSequence(_gatingSequences);
