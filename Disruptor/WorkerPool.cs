@@ -119,7 +119,7 @@ namespace Disruptor
                 var workProcessor = _workProcessors[i];
                 workProcessor.Sequence.Value = cursor;
 
-                Task.Factory.StartNew(workProcessor.Run, CancellationToken.None, TaskCreationOptions.None, taskScheduler);
+                Task.Factory.StartNew(workProcessor.Run, CancellationToken.None, TaskCreationOptions.LongRunning, taskScheduler);
             }
 
             return _ringBuffer;

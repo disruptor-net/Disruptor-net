@@ -164,7 +164,7 @@ namespace Disruptor.Dsl
             {
                 var eventProcessor = eventProcessorInfo.EventProcessor;
 
-                Task.Factory.StartNew(eventProcessor.Run, CancellationToken.None, TaskCreationOptions.None, _taskScheduler);
+                Task.Factory.StartNew(eventProcessor.Run, CancellationToken.None, TaskCreationOptions.LongRunning, _taskScheduler);
             }
 
             return _ringBuffer;
