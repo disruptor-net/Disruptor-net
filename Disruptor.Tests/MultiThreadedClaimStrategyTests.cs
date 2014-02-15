@@ -199,7 +199,7 @@ namespace Disruptor.Tests
                                 long next = claimStrategy.CheckAndIncrement(1, 1, dependentSequences);
                                 claimed.AtomicIncrementAndGet((int) next);
                             }
-                            catch (Exception e)
+                            catch (Exception)
                             {                                
                             }
                         });
