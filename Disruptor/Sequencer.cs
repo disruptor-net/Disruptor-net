@@ -17,7 +17,8 @@ namespace Disruptor
 
         private readonly IClaimStrategy _claimStrategy;
         private readonly IWaitStrategy _waitStrategy;
-        private readonly TimeoutException _timeoutExceptionInstance = new TimeoutException();
+        // TODO Is this needed?  It is never read.
+        //private readonly TimeoutException _timeoutExceptionInstance = new TimeoutException();
 
         /// <summary>
         /// Construct a Sequencer with the selected strategies.

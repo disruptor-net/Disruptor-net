@@ -9,8 +9,9 @@ namespace Disruptor
     /// </summary>
     public sealed class MultiThreadedLowContentionClaimStrategy : AbstractMultiThreadedClaimStrategy
     {
-        private Volatile.PaddedLong _claimSequence = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
-        private readonly ThreadLocal<MutableLong> _minGatingSequenceThreadLocal;
+        // TODO are these needed?  They are never read.
+        //private Volatile.PaddedLong _claimSequence = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
+        //private readonly ThreadLocal<MutableLong> _minGatingSequenceThreadLocal;
 
         /// <summary>
         /// Construct a new multi-threaded publisher <see cref="IClaimStrategy"/> for a given buffer size.
@@ -19,7 +20,7 @@ namespace Disruptor
         public MultiThreadedLowContentionClaimStrategy(int bufferSize) : base(bufferSize)
         {
             _bufferSize = bufferSize;
-            _minGatingSequenceThreadLocal = new ThreadLocal<MutableLong>(() => new MutableLong(Sequencer.InitialCursorValue));
+            //_minGatingSequenceThreadLocal = new ThreadLocal<MutableLong>(() => new MutableLong(Sequencer.InitialCursorValue));
         }
 
         ///<summary>
