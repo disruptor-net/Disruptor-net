@@ -116,6 +116,13 @@ namespace Disruptor
             cursor.LazySet(sequence);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="availableCapacity"></param>
+        /// <param name="delta"></param>
+        /// <param name="dependentSequences"></param>
+        /// <returns></returns>
         public long CheckAndIncrement(int availableCapacity, int delta, Sequence[] dependentSequences)
         {
             if (!HasAvailableCapacity(availableCapacity, dependentSequences))

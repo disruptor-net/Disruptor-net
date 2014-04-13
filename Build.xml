@@ -1,22 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <PropertyGroup>
-    <MSBuildCommunityTasksPath>$(MSBuildProjectDirectory)\Lib\MSBuild.Community\</MSBuildCommunityTasksPath>
+    <MSBuildCommunityTasksPath>$(MSBuildProjectDirectory)\Lib\MSBuild.Community</MSBuildCommunityTasksPath>
     <SourceDir>$(MSBuildProjectDirectory)</SourceDir>
-    <NUnitToolPath>$(MSBuildProjectDirectory)\Lib\NUnit\</NUnitToolPath>
-    <TargetDir>$(MsBuildProjectDirectory)\Target\</TargetDir>
-    <ReportDir>$(TargetDir)Report\</ReportDir>
-    <PerfReportDir>$(ReportDir)Perf\</PerfReportDir>
-    <UnitReportDir>$(ReportDir)Unit\</UnitReportDir>
-    <DocDir>$(TargetDir)Doc\</DocDir>
-    <DistDir>$(TargetDir)Dist\</DistDir>
-    <BinDir>$(TargetDir)Bin\</BinDir>
-    <NuGetDir>$(TargetDir)Package\</NuGetDir>
+    <NUnitToolPath>$(MSBuildProjectDirectory)\Lib\NUnit</NUnitToolPath>
+    <TargetDir>$(MsBuildProjectDirectory)\Target</TargetDir>
+    <ReportDir>$(TargetDir)\Report</ReportDir>
+    <PerfReportDir>$(ReportDir)\Perf</PerfReportDir>
+    <UnitReportDir>$(ReportDir)\Unit</UnitReportDir>
+    <DocDir>$(TargetDir)\Doc</DocDir>
+    <DistDir>$(TargetDir)\Dist</DistDir>
+    <BinDir>$(TargetDir)\Bin</BinDir>
+    <NuGetDir>$(TargetDir)\Package</NuGetDir>
 
     <MSBuildNuGetTasksPath>$(MSBuildProjectDirectory)\Tools\MSBuildNuGetTasks</MSBuildNuGetTasksPath>
   </PropertyGroup>
 
-  <Import Project="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.Targets" />
+  <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets" />
   <Import Project="$(MSBuildNuGetTasksPath)\MSBuild.NuGet.Tasks.Targets" />
 
   <Target Name="Clean">
@@ -93,15 +93,15 @@
   <Target Name="Package" DependsOnTargets="Test">
     <!-- Zip binnaries -->
     <ItemGroup>
-      <DisruptorZip Include="$(BinDir)Disruptor.dll" />
-      <DisruptorZip Include="$(BinDir)Disruptor.pdb" />
-      <DisruptorZip Include="$(BinDir)Disruptor.XML" />
-      <DisruptorZip Include="$(BinDir)Atomic.dll" />
-      <DisruptorZip Include="$(BinDir)Atomic.pdb" />
-      <DisruptorZip Include="$(BinDir)Atomic.XML" />
-      <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.dll" />
-      <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.pdb" />
-      <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.XML" />
+      <DisruptorZip Include="$(BinDir)\Disruptor.dll" />
+      <DisruptorZip Include="$(BinDir)\Disruptor.pdb" />
+      <DisruptorZip Include="$(BinDir)\Disruptor.XML" />
+      <DisruptorZip Include="$(BinDir)\Atomic.dll" />
+      <DisruptorZip Include="$(BinDir)\Atomic.pdb" />
+      <DisruptorZip Include="$(BinDir)\Atomic.XML" />
+      <DisruptorZip Include="$(BinDir)\Disruptor.Scheduler.dll" />
+      <DisruptorZip Include="$(BinDir)\Disruptor.Scheduler.pdb" />
+      <DisruptorZip Include="$(BinDir)\Disruptor.Scheduler.XML" />
     </ItemGroup>
     <Zip Files="@(DisruptorZip)" WorkingDirectory="$(BinDir)" ZipFileName="Target\Dist\Disruptor-binaries-$(DisruptorVersion).zip" ZipLevel="9" />
 

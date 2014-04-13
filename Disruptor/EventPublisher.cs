@@ -30,11 +30,12 @@ namespace Disruptor
             long sequence = _ringBuffer.Next();
             TranslateAndPublish(translator, sequence);
         }
-        /// </summary>
+        /// <summary>
         /// <param name="translator">The user specified translation for the event</param>
         /// <param name="capacity">The capacity that should be available before publishing</param>
         /// <returns>true if the value was published, false if there was insufficient
         /// capacity.</returns>
+        /// </summary>
         public bool TryPublishEvent(Func<T, long, T> translator, int capacity)
         {
             try
@@ -43,7 +44,7 @@ namespace Disruptor
                 TranslateAndPublish(translator, sequence);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }

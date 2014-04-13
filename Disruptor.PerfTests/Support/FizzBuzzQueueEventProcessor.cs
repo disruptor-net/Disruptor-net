@@ -59,44 +59,48 @@ namespace Disruptor.PerfTests.Support
 
             for (var i = 0; i < _iterations; i++)
             {
-                try
+                if (_running)
                 {
-                    switch (_fizzBuzzStep)
+                    try
                     {
-                        case FizzBuzzStep.Fizz:
-                            {
-                                var value = _fizzInputQueue.Take();
-                                _fizzOutputQueue.Add((value % 3) == 0);
-                                break;
-                            }
-
-                        case FizzBuzzStep.Buzz:
-                            {
-                                var value = _buzzInputQueue.Take();
-                                _buzzOutputQueue.Add((value % 5) == 0);
-                                break;
-                            }
-
-                        case FizzBuzzStep.FizzBuzz:
-                            {
-                                var fizz = _fizzOutputQueue.Take();
-                                var buzz = _buzzOutputQueue.Take();
-                                if (fizz && buzz)
+                        switch (_fizzBuzzStep)
+                        {
+                            case FizzBuzzStep.Fizz:
                                 {
-                                    ++_fizzBuzzCounter;
+                                    var value = _fizzInputQueue.Take();
+                                    _fizzOutputQueue.Add((value % 3) == 0);
+                                    break;
                                 }
-                                break;
-                            }
-                    }
 
-                   
-                }
-                catch (Exception)
-                {
-                    break;
+                            case FizzBuzzStep.Buzz:
+                                {
+                                    var value = _buzzInputQueue.Take();
+                                    _buzzOutputQueue.Add((value % 5) == 0);
+                                    break;
+                                }
+
+                            case FizzBuzzStep.FizzBuzz:
+                                {
+                                    var fizz = _fizzOutputQueue.Take();
+                                    var buzz = _buzzOutputQueue.Take();
+                                    if (fizz && buzz)
+                                    {
+                                        ++_fizzBuzzCounter;
+                                    }
+                                    break;
+                                }
+                        }
+
+
+                    }
+                    catch (Exception)
+                    {
+                        break;
+                    }
                 }
             }
             _done = true;
+            _running = false;
         }
     }
 }

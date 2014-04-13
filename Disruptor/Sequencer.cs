@@ -17,7 +17,8 @@ namespace Disruptor
 
         private readonly IClaimStrategy _claimStrategy;
         private readonly IWaitStrategy _waitStrategy;
-        private readonly TimeoutException _timeoutExceptionInstance = new TimeoutException();
+        // TODO Is this needed?  It is never read.
+        //private readonly TimeoutException _timeoutExceptionInstance = new TimeoutException();
 
         /// <summary>
         /// Construct a Sequencer with the selected strategies.
@@ -105,10 +106,9 @@ namespace Disruptor
             return _claimStrategy.IncrementAndGet(_gatingSequences);
         }
 
-       
         /// <summary>
         /// Attempt to claim the next event in sequence for publishing.  Will return the
-        /// number of the slot if there is at least <param name="availableCapacity"></param> slots
+        /// number of the slot if there is at least <paramref name="availableCapacity"/> slots
         /// available. 
         /// </summary>
         /// <param name="availableCapacity"></param>
@@ -199,6 +199,10 @@ namespace Disruptor
             _waitStrategy.SignalAllWhenBlocking();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public long RemainingCapacity()
         {
             long consumed = Util.GetMinimumSequence(_gatingSequences);
