@@ -6,21 +6,27 @@ using System.Threading;
 namespace Disruptor.Collections
 {
     /// <summary>
-    /// Histogram for tracking the frequency of observations of values below interval upper bounds.
-    /// This class is useful for recording timings in nanoseconds across a large number of observations
-    /// when high performance is required.
+    ///     Histogram for tracking the frequency of observations of values below interval upper bounds.
+    ///     This class is useful for recording timings in nanoseconds across a large number of observations
+    ///     when high performance is required.
+    ///     The interval bounds are used to define the ranges of the histogram buckets. If provided bounds
+    ///     are [10, 20, 30, 40, 50] then there will be five buckets, accessible by index 0-4. Any value
+    ///     0-10 will fall into the first interval bar, values 11-20 will fall into the
+    ///     second bar, and so on.
     /// </summary>
     public class Histogram
     {
-        private readonly long[] _upperBounds;
         private readonly long[] _counts;
-        private long _minValue = long.MaxValue;
-        private long _maxValue;
+        private readonly long[] _upperBounds;
 
-        /// <summary>
         /// Create a new Histogram with a provided list of interval bounds.
-        /// </summary>
-        /// <param name="upperBounds">upperBounds of the intervals.</param>
+        /// <param name="upperBounds">
+        ///     upperBounds of the intervals.Bounds
+        ///     must be provided in order least to greatest, and lowest bound
+        ///     must be greater than or equal to 1.
+        /// </param>
+        /// <exception cref="ArgumentOutOfRangeException">if any of the upper bounds are less than or equal to zero</exception>
+        /// <exception cref="ArgumentOutOfRangeException">if the bounds are not in order, least to greatest</exception>
         public Histogram(long[] upperBounds)
         {
             ValidateBounds(upperBounds);
@@ -31,19 +37,105 @@ namespace Disruptor.Collections
             _counts = new long[upperBounds.Length];
         }
 
+        /// <summary>
+        /// Size of the list of interval bars (ie: count of interval bars).
+        /// </summary>
+        public int Size => _upperBounds.Length;
+
+        /// <summary>
+        /// Count total number of recorded observations.
+        /// </summary>
+        /// <returns>the total number of recorded observations.</returns>
+        public long Count
+        {
+            get
+            {
+                var count = 0L;
+
+                for (var i = 0; i < _counts.Length; i++)
+                {
+                    count += _counts[i];
+                }
+
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Get the minimum observed value.
+        /// </summary>
+        public long Min { get; private set; } = long.MaxValue;
+
+        /// <summary>
+        /// Get the maximum observed value.
+        /// </summary>
+        public long Max { get; private set; }
+
+        /// <summary>
+        /// Calculate the mean of all recorded observations.
+        ///
+        /// The mean is calculated by summing the mid points of each interval multiplied by the count
+        /// for that interval, then dividing by the total count of observations.The max and min are
+        /// considered for adjusting the top and bottom bin when calculating the mid point, this
+        /// minimises skew if the observed values are very far away from the possible histogram values
+        /// </summary>
+        public decimal Mean
+        {
+            get
+            {
+                if (Count == 0)
+                {
+                    return 0;
+                }
+
+                var lowerBound = _counts[0] > 0L ? Min : 0L;
+                decimal total = 0;
+
+                for (var i = 0; i < _upperBounds.Length; i++)
+                {
+                    if (_counts[i] != 0L)
+                    {
+                        var upperBound = Math.Min(_upperBounds[i], Max);
+                        var midPoint = lowerBound + ((upperBound - lowerBound) / 2L);
+
+                        var intervalTotal = (decimal)midPoint * _counts[i];
+                        total += intervalTotal;
+                    }
+
+                    lowerBound = Math.Max(_upperBounds[i] + 1L, Min);
+                }
+
+                return Math.Round(total / Count, 2, MidpointRounding.AwayFromZero);
+            }
+        }
+
+        /// <summary>
+        /// Calculate the upper bound within which 99% of observations fall.
+        /// </summary>
+        public long TwoNinesUpperBound => GetUpperBoundForFactor(0.99d);
+
+        /// <summary>
+        ///     Calculate the upper bound within which 99.99% of observations fall.
+        /// </summary>
+        public long FourNinesUpperBound => GetUpperBoundForFactor(0.9999d);
+
         private static void ValidateBounds(long[] upperBounds)
         {
             long lastBound = -1L;
+            if (upperBounds.Length <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(upperBounds), "Must provide at least one interval");
+            }
             foreach (long bound in upperBounds)
             {
                 if (bound <= 0L)
                 {
-                    throw new ArgumentOutOfRangeException("upperBounds", "Bounds must be positive values");
+                    throw new ArgumentOutOfRangeException(nameof(upperBounds), "Bounds must be positive values");
                 }
 
                 if (bound <= lastBound)
                 {
-                    throw new ArgumentOutOfRangeException("upperBounds", "bound " + bound + " is not greater than " + lastBound);
+                    throw new ArgumentOutOfRangeException(nameof(upperBounds), "bound " + bound + " is not greater than " + lastBound);
                 }
 
                 lastBound = bound;
@@ -51,35 +143,21 @@ namespace Disruptor.Collections
         }
 
         /// <summary>
-        /// Size of the list of interval bars.
-        /// </summary>
-        public int Size
-        {
-            get { return _upperBounds.Length; }
-        }
-
-        /// <summary>
-        /// Get the upper bound of an interval for an index.
+        ///     Get the upper bound of an interval for an index.
         /// </summary>
         /// <param name="index">index of the upper bound.</param>
         /// <returns>the interval upper bound for the index.</returns>
-        public long GetUpperBoundAt(int index)
-        {
-            return _upperBounds[index];
-        }
+        public long GetUpperBoundAt(int index) => _upperBounds[index];
 
         /// <summary>
-        /// Get the count of observations at a given index.
+        ///     Get the count of observations at a given index.
         /// </summary>
         /// <param name="index">index of the observations counter.</param>
         /// <returns>the count of observations at a given index.</returns>
-        public long GetCountAt(int index)
-        {
-            return _counts[index];
-        }
+        public long GetCountAt(int index) => _counts[index];
 
         /// <summary>
-        /// Add an observation to the histogram and increment the counter for the interval it matches.
+        ///     Add an observation to the histogram and increment the counter for the interval it matches.
         /// </summary>
         /// <param name="value">value for the observation to be added.</param>
         /// <returns>return true if in the range of intervals otherwise false.</returns>
@@ -114,33 +192,34 @@ namespace Disruptor.Collections
 
         private void TrackRange(long value)
         {
-            if (value < _minValue)
+            if (value < Min)
             {
-                _minValue = value;
+                Min = value;
             }
-            if (value > _maxValue)
+            if (value > Max)
             {
-                _maxValue = value;
+                Max = value;
             }
         }
 
         /// <summary>
-        /// Add observations from another Histogram into this one.
-        /// Histograms must have the same intervals.
+        ///     Add observations from another Histogram into this one.
+        ///     Histograms must have the same intervals.
         /// </summary>
         /// <param name="histogram">histogram from which to add the observation counts.</param>
+        /// <exception cref="ArgumentException">if interval count or values do not match exactly</exception>
         public void AddObservations(Histogram histogram)
         {
             if (_upperBounds.Length != histogram._upperBounds.Length)
             {
-                throw new ArgumentException("Histograms must have matching intervals", "histogram");
+                throw new ArgumentException("Histograms must have matching intervals", nameof(histogram));
             }
 
             for (int i = 0; i < _upperBounds.Length; i++)
             {
                 if (_upperBounds[i] != histogram._upperBounds[i])
                 {
-                    throw new ArgumentException("Histograms must have matching intervals", "histogram");
+                    throw new ArgumentException("Histograms must have matching intervals", nameof(histogram));
                 }
             }
 
@@ -149,8 +228,8 @@ namespace Disruptor.Collections
                 _counts[i] += histogram._counts[i];
             }
 
-            TrackRange(histogram._minValue);
-            TrackRange(histogram._maxValue);
+            TrackRange(histogram.Min);
+            TrackRange(histogram.Max);
         }
 
         /// <summary>
@@ -158,8 +237,8 @@ namespace Disruptor.Collections
         /// </summary>
         public void Clear()
         {
-            _maxValue = 0L;
-            _minValue = long.MaxValue;
+            Max = 0L;
+            Min = long.MaxValue;
 
             for (int i = 0; i < _counts.Length; i++)
             {
@@ -168,112 +247,24 @@ namespace Disruptor.Collections
         }
 
         /// <summary>
-        /// Count total number of recorded observations.
-        /// </summary>
-        /// <returns>the total number of recorded observations.</returns>
-        public long Count
-        {
-            get
-            {
-                long count = 0L;
-
-                for (int i = 0; i < _counts.Length; i++)
-                {
-                    count += _counts[i];
-                }
-
-                return count;    
-            }
-        }
-
-        /// <summary>
-        /// Get the minimum observed value.
-        /// </summary>
-        public long Min
-        {
-            get { return _minValue; }
-        }
-    
-        /// <summary>
-        /// Get the maximum observed value.
-        /// </summary>
-        public long Max
-        {
-            get { return _maxValue; }
-        }
-
-        /// <summary>
-        /// Calculate the mean of all recorded observations.
-        /// 
-        /// The mean is calculated by the summing the mid points of each interval multiplied by the count
-        /// for that interval, then dividing by the total count of observations.  The max and min are
-        /// considered for adjusting the top and bottom bin when calculating the mid point.
-        /// </summary>
-        public decimal Mean
-        {
-            get
-            {
-                if (Count == 0)
-                {
-                    return 0;
-                }
-
-                var lowerBound = _counts[0] > 0L ? _minValue : 0L;
-                decimal total = 0;
-
-                for (var i = 0; i < _upperBounds.Length; i++)
-                {
-                    if (0L != _counts[i])
-                    {
-                        var upperBound = Math.Min(_upperBounds[i], _maxValue);
-                        var midPoint = lowerBound + ((upperBound - lowerBound) / 2L);
-
-                        var intervalTotal = midPoint*_counts[i];
-                        total += intervalTotal;
-                    }
-
-                    lowerBound = Math.Max(_upperBounds[i] + 1L, _minValue);
-                }
-
-                return Math.Round(total/Count, 2, MidpointRounding.AwayFromZero);
-            }
-        }
-
-        ///<summary>
-        /// Calculate the upper bound within which 99% of observations fall.
-        ///</summary>
-        public long TwoNinesUpperBound
-        {
-            get { return GetUpperBoundForFactor(0.99d); }
-        }
-
-        ///<summary>
-        /// Calculate the upper bound within which 99.99% of observations fall.
-        ///</summary>
-        public long FourNinesUpperBound
-        {
-            get { return GetUpperBoundForFactor(0.9999d); }
-        }
-
-        /// <summary>
-        /// Get the interval upper bound for a given factor of the observation population.
+        ///     Get the interval upper bound for a given factor of the observation population.
         /// </summary>
         /// <param name="factor">factor representing the size of the population.</param>
         /// <returns>the interval upper bound.</returns>
         public long GetUpperBoundForFactor(double factor)
         {
-            if (0.0d >= factor || factor >= 1.0d)
+            if (factor < 0 || factor > 1)
             {
-                throw new ArgumentException("factor must be >= 0.0 and <= 1.0", "factor");
+                throw new ArgumentException("factor must be > 0.0 and < 1.0", nameof(factor));
             }
 
             var totalCount = Count;
             var tailTotal = (long)(totalCount - Math.Round(totalCount * factor));
             var tailCount = 0L;
 
-            for (int i = _counts.Length - 1; i >= 0; i--)
+            for (var i = _counts.Length - 1; i >= 0; i--)
             {
-                if (0L != _counts[i])
+                if (_counts[i] != 0L)
                 {
                     tailCount += _counts[i];
                     if (tailCount >= tailTotal)
@@ -287,10 +278,9 @@ namespace Disruptor.Collections
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <returns></returns>
-        public override string  ToString()
+        public override string ToString()
         {
             var culture = Thread.CurrentThread.CurrentCulture;
 
