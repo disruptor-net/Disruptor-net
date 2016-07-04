@@ -56,6 +56,9 @@
     <Compile Include="Dsl\IConsumerInfo.cs" />
     <Compile Include="Dsl\IExecutor.cs" />
     <Compile Include="Dsl\WorkerPoolInfo.cs" />
+    <Compile Include="IDataProvider.cs" />
+    <Compile Include="IEventReleaseAware.cs" />
+    <Compile Include="IEventReleaser.cs" />
     <Compile Include="InsufficientCapacityException.cs" />
     <Compile Include="Dsl\Disruptor.cs" />
     <Compile Include="Dsl\ExceptionHandlerSetting.cs" />
@@ -64,6 +67,7 @@
     <Compile Include="IEventTranslator.cs" />
     <Compile Include="IExceptionHandler.cs" />
     <Compile Include="IgnoreExceptionHandler.cs" />
+    <Compile Include="ITimeoutHandler.cs" />
     <Compile Include="IWorkHandler.cs" />
     <Compile Include="MultiThreadedClaimStrategy.cs" />
     <Compile Include="MultiThreadedLowContentionClaimStrategy.cs" />
