@@ -4,6 +4,7 @@
     /// Callback interface to be implemented for processing events as they become available in the <see cref="RingBuffer{T}"/>
     /// </summary>
     /// <typeparam name="T">Type of events for sharing during exchange or parallel coordination of an event.</typeparam>
+    /// <remarks>See <see cref="BatchEventProcessor{T}.SetExceptionHandler"/> if you want to handle exceptions propagated out of the handler.</remarks>
     public interface IEventHandler<in T>
     {
         /// <summary>
