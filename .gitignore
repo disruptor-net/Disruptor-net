@@ -46,3 +46,5 @@ packages/
 
 #Target build folder
 Target/
+*.ncrunchsolution
+*.ncrunchproject

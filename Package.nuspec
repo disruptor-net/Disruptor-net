@@ -2,11 +2,11 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Disruptor</id>
-    <version>1.1.0</version>
+    <version>3.3.4</version>
     <title>Disruptor-net</title>
-    <authors>Olivier Deheurles</authors>
+    <authors>Olivier Deheurles, Mendel Monteiro Beckerman, Antoine Blanchet</authors>
     <owners>Disruptor-net</owners>
-    <projectUrl>http://github.com/odeheurles/Disruptor-net</projectUrl>
+    <projectUrl>https://github.com/disruptor-net/Disruptor-net</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Port of LMAX Disruptor to .NET</description>
     <tags>Concurrency Disruptor Latency Throughput</tags>
