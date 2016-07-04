@@ -20,5 +20,10 @@
         /// Starts this instance 
         /// </summary>
         void Run();
+
+        /// <summary>
+        /// Gets if the processor is running
+        /// </summary>
+        bool IsRunning { get; }
     }
 }
