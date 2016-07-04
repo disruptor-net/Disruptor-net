@@ -16,7 +16,7 @@ namespace Disruptor.Dsl
 
         private readonly RingBuffer<T> _ringBuffer;
         private readonly TaskScheduler _taskScheduler;
-        private readonly EventProcessorRepository<T> _eventProcessorRepository = new EventProcessorRepository<T>();
+        private readonly ConsumerInfoRepository<T> _consumerInfoRepository = new ConsumerInfoRepository<T>();
         private Volatile.Boolean _running = new Volatile.Boolean(Stopped);
         private readonly EventPublisher<T> _eventPublisher;
         private IExceptionHandler _exceptionHandler;
@@ -77,10 +77,10 @@ namespace Disruptor.Dsl
         {
             foreach (var eventProcessor in processors)
             {
-                _eventProcessorRepository.Add(eventProcessor);
+                _consumerInfoRepository.Add(eventProcessor);
             }
 
-            return new EventHandlerGroup<T>(this, _eventProcessorRepository, processors);
+            return new EventHandlerGroup<T>(this, _consumerInfoRepository, processors);
         }
 
         /// <summary>
@@ -100,7 +100,7 @@ namespace Disruptor.Dsl
         /// <returns>an <see cref="ExceptionHandlerSetting{T}"/> dsl object - intended to be used by chaining the with method call.</returns>
         public ExceptionHandlerSetting<T> HandleExceptionsFor(IEventHandler<T> eventHandler)
         {
-            return new ExceptionHandlerSetting<T>(eventHandler, _eventProcessorRepository);
+            return new ExceptionHandlerSetting<T>(eventHandler, _consumerInfoRepository);
         }
 
         /// <summary>
@@ -115,10 +115,10 @@ namespace Disruptor.Dsl
             var selectedEventProcessors = new IEventProcessor[handlers.Length];
             for (int i = 0; i < handlers.Length; i++)
             {
-                selectedEventProcessors[i] = _eventProcessorRepository.GetEventProcessorFor(handlers[i]);
+                selectedEventProcessors[i] = _consumerInfoRepository.GetEventProcessorFor(handlers[i]);
             }
 
-            return new EventHandlerGroup<T>(this, _eventProcessorRepository, selectedEventProcessors);
+            return new EventHandlerGroup<T>(this, _consumerInfoRepository, selectedEventProcessors);
         }
 
         /// <summary>
@@ -132,10 +132,10 @@ namespace Disruptor.Dsl
         {
             foreach (var eventProcessor in processors)
             {
-                _eventProcessorRepository.Add(eventProcessor);
+                _consumerInfoRepository.Add(eventProcessor);
             }
 
-            return new EventHandlerGroup<T>(this, _eventProcessorRepository, processors);
+            return new EventHandlerGroup<T>(this, _consumerInfoRepository, processors);
         }
 
         /// <summary>
@@ -156,11 +156,11 @@ namespace Disruptor.Dsl
         /// <returns>the configured <see cref="RingBuffer"/>.</returns>
         public RingBuffer<T> Start()
         {
-            var gatingProcessors = _eventProcessorRepository.LastEventProcessorsInChain;
+            var gatingProcessors = _consumerInfoRepository.LastEventProcessorsInChain;
             _ringBuffer.SetGatingSequences(Util.GetSequencesFor(gatingProcessors));
 
             CheckOnlyStartedOnce();
-            foreach (var eventProcessorInfo in _eventProcessorRepository.EventProcessors)
+            foreach (var eventProcessorInfo in _consumerInfoRepository.EventProcessors)
             {
                 var eventProcessor = eventProcessorInfo.EventProcessor;
 
@@ -175,7 +175,7 @@ namespace Disruptor.Dsl
         /// </summary>
         public void Halt()
         {
-            foreach (var eventProcessorInfo in _eventProcessorRepository.EventProcessors)
+            foreach (var eventProcessorInfo in _consumerInfoRepository.EventProcessors)
             {
                 eventProcessorInfo.EventProcessor.Halt();
             }
@@ -213,13 +213,13 @@ namespace Disruptor.Dsl
         /// <returns></returns>
         public ISequenceBarrier GetBarrierFor(IEventHandler<T> handler)
         {
-            return _eventProcessorRepository.GetBarrierFor(handler);
+            return _consumerInfoRepository.GetBarrierFor(handler);
         }
 
         private bool HasBacklog()
         {
             long cursor = _ringBuffer.Cursor;
-            return _eventProcessorRepository.LastEventProcessorsInChain
+            return _consumerInfoRepository.LastEventProcessorsInChain
                                             .Any(eventProcessor => cursor != eventProcessor.Sequence.Value);
         }
 
@@ -242,16 +242,16 @@ namespace Disruptor.Dsl
                     batchEventProcessor.SetExceptionHandler(_exceptionHandler);
                 }
 
-                _eventProcessorRepository.Add(batchEventProcessor, eventHandler, barrier);
+                _consumerInfoRepository.Add(batchEventProcessor, eventHandler, barrier);
                 createdEventProcessors[i] = batchEventProcessor;
             }
 
             if (createdEventProcessors.Length > 0)
             {
-                _eventProcessorRepository.UnmarkEventProcessorsAsEndOfChain(barrierEventProcessors);
+                _consumerInfoRepository.UnmarkEventProcessorsAsEndOfChain(barrierEventProcessors);
             }
 
-            return new EventHandlerGroup<T>(this, _eventProcessorRepository, createdEventProcessors);
+            return new EventHandlerGroup<T>(this, _consumerInfoRepository, createdEventProcessors);
         }
 
         private void CheckNotStarted()

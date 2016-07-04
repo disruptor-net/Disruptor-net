@@ -9,13 +9,13 @@ namespace Disruptor.Dsl
     public class EventHandlerGroup<T> where T : class
     {
         private readonly Disruptor<T> _disruptor;
-        private readonly EventProcessorRepository<T> _eventProcessorRepository;
+        private readonly ConsumerInfoRepository<T> _consumerInfoRepository;
         private readonly IEventProcessor[] _eventProcessors;
 
-        internal EventHandlerGroup(Disruptor<T> disruptor, EventProcessorRepository<T> eventProcessorRepository, IEventProcessor[] eventProcessors)
+        internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerInfoRepository<T> consumerInfoRepository, IEventProcessor[] eventProcessors)
         {
             _disruptor = disruptor;
-            _eventProcessorRepository = eventProcessorRepository;
+            _consumerInfoRepository = consumerInfoRepository;
             _eventProcessors = eventProcessors;
         }
 
@@ -28,11 +28,11 @@ namespace Disruptor.Dsl
         public EventHandlerGroup<T> And(params IEventHandler<T>[] handlers)
         {
             var processors = from handler in handlers
-                             select _eventProcessorRepository.GetEventProcessorFor(handler);
+                             select _consumerInfoRepository.GetEventProcessorFor(handler);
 
             var combindedProcessors = _eventProcessors.Concat(processors).ToArray();
 
-            return new EventHandlerGroup<T>(_disruptor, _eventProcessorRepository, combindedProcessors);
+            return new EventHandlerGroup<T>(_disruptor, _consumerInfoRepository, combindedProcessors);
         }
 
         /// <summary>
@@ -46,10 +46,10 @@ namespace Disruptor.Dsl
 
             foreach (var eventProcessor in processors)
             {
-                _eventProcessorRepository.Add(eventProcessor);
+                _consumerInfoRepository.Add(eventProcessor);
             }
 
-            return new EventHandlerGroup<T>(_disruptor, _eventProcessorRepository, combinedProcessors);
+            return new EventHandlerGroup<T>(_disruptor, _consumerInfoRepository, combinedProcessors);
         }
 
         /// <summary>

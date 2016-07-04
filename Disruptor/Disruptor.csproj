@@ -52,6 +52,10 @@
     <Compile Include="AlertException.cs" />
     <Compile Include="BlockingWaitStrategy.cs" />
     <Compile Include="BusySpinWaitStrategy.cs" />
+    <Compile Include="Dsl\BasicExecutor.cs" />
+    <Compile Include="Dsl\IConsumerInfo.cs" />
+    <Compile Include="Dsl\IExecutor.cs" />
+    <Compile Include="Dsl\WorkerPoolInfo.cs" />
     <Compile Include="InsufficientCapacityException.cs" />
     <Compile Include="Dsl\Disruptor.cs" />
     <Compile Include="Dsl\ExceptionHandlerSetting.cs" />
@@ -69,7 +73,7 @@
     <Compile Include="Collections\Histogram.cs" />
     <Compile Include="Dsl\EventHandlerGroup.cs" />
     <Compile Include="Dsl\EventProcessorInfo.cs" />
-    <Compile Include="Dsl\EventProcessorRepository.cs" />
+    <Compile Include="Dsl\ConsumerInfoRepository.cs" />
     <Compile Include="IEventHandlerGroup.cs" />
     <Compile Include="ILifecycleAware.cs" />
     <Compile Include="IEventHandler.cs" />
