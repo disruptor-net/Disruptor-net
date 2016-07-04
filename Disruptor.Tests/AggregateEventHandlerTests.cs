@@ -30,11 +30,11 @@ namespace Disruptor.Tests
                                                                          _eventHandlerMock2.Object,
                                                                          _eventHandlerMock3.Object);
 
-            _eventHandlerMock1.Setup(eh => eh.OnNext(evt, sequence, endOfBatch)).Verifiable("event handler 1 was not called");
-            _eventHandlerMock2.Setup(eh => eh.OnNext(evt, sequence, endOfBatch)).Verifiable("event handler 2 was not called");
-            _eventHandlerMock3.Setup(eh => eh.OnNext(evt, sequence, endOfBatch)).Verifiable("event handler 3 was not called");
+            _eventHandlerMock1.Setup(eh => eh.OnEvent(evt, sequence, endOfBatch)).Verifiable("event handler 1 was not called");
+            _eventHandlerMock2.Setup(eh => eh.OnEvent(evt, sequence, endOfBatch)).Verifiable("event handler 2 was not called");
+            _eventHandlerMock3.Setup(eh => eh.OnEvent(evt, sequence, endOfBatch)).Verifiable("event handler 3 was not called");
 
-            aggregateEventHandler.OnNext(evt, sequence, endOfBatch);
+            aggregateEventHandler.OnEvent(evt, sequence, endOfBatch);
 
             _eventHandlerMock1.Verify();
             _eventHandlerMock2.Verify();
@@ -82,7 +82,7 @@ namespace Disruptor.Tests
         {
             var aggregateEventHandler = new AggregateEventHandler<int[]>();
 
-            aggregateEventHandler.OnNext(new[]{7}, 0L, true);
+            aggregateEventHandler.OnEvent(new[]{7}, 0L, true);
             aggregateEventHandler.OnStart();
             aggregateEventHandler.OnShutdown();
         }

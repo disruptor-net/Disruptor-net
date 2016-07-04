@@ -50,7 +50,7 @@ namespace Disruptor.Tests
                 _sequenceCallback = sequenceTrackerCallback;
             }
 
-            public void OnNext(StubEvent evt, long sequence, bool endOfBatch)
+            public void OnEvent(StubEvent evt, long sequence, bool endOfBatch)
             {
                 _sequenceCallback.Value = sequence;
                 _callbackLatch.Set();

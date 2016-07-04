@@ -19,7 +19,7 @@ namespace Disruptor.PerfTests.Support
             get { return _value.ReadUnfenced(); }
         }
 
-        public void OnNext(ValueEvent value, long sequence, bool endOfBatch)
+        public void OnEvent(ValueEvent value, long sequence, bool endOfBatch)
         {
             _value.WriteUnfenced(_value.ReadUnfenced() + value.Value);
 

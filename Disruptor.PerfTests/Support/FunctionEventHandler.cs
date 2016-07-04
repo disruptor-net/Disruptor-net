@@ -21,7 +21,7 @@ namespace Disruptor.PerfTests.Support
             _mru = mru;
         }
 
-        public void OnNext(FunctionEvent data, long sequence, bool endOfBatch)
+        public void OnEvent(FunctionEvent data, long sequence, bool endOfBatch)
         {
             switch (_functionStep)
             {

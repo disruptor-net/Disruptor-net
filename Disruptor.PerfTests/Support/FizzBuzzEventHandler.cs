@@ -22,7 +22,7 @@ namespace Disruptor.PerfTests.Support
             _fizzBuzzCounter = new Volatile.PaddedLong(0);
         }
 
-        public void OnNext(FizzBuzzEvent data, long sequence, bool endOfBatch)
+        public void OnEvent(FizzBuzzEvent data, long sequence, bool endOfBatch)
         {
             switch (_fizzBuzzStep)
             {
