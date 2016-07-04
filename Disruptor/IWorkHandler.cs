@@ -1,7 +1,7 @@
 namespace Disruptor
 {
     /// <summary>
-    /// Callback interface to be implemented for processing units of work as they become available in the {@link RingBuffer}
+    /// Callback interface to be implemented for processing units of work as they become available in the <see cref="RingBuffer{T}"/>
     /// 
     /// </summary>
     /// <typeparam name="T">event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>

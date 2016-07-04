@@ -1,9 +1,6 @@
-﻿using System;
-
-namespace Disruptor.Dsl
+﻿namespace Disruptor.Dsl
 {
-    public class WorkerPoolInfo<T> : IConsumerInfo
-        where T : class
+    public class WorkerPoolInfo<T> : IConsumerInfo where T : class
     {
         private readonly WorkerPool<T> _workerPool;
 

@@ -5,7 +5,7 @@ namespace Disruptor
 {
     /// <summary>
     /// Convenience class for handling the batching semantics of consuming events from a <see cref="RingBuffer{T}"/>
-    /// and delegating the available events to a <see cref="IEventHandler{T}"/>.
+    /// and delegating the available events to an <see cref="IEventHandler{T}"/>.
     /// 
     /// If the <see cref="BatchEventProcessor{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
     /// is started and just before the thread is shutdown.
@@ -13,40 +13,32 @@ namespace Disruptor
     /// <typeparam name="T">Event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
     internal sealed class BatchEventProcessor<T> : IEventProcessor where T : class
     {
-        private const bool Running = true;
-        private const bool Stopped = false;
-        
-        private Volatile.Boolean _running = new Volatile.Boolean(Stopped);
-        private IExceptionHandler _exceptionHandler = new FatalExceptionHandler();
-        private readonly RingBuffer<T> _ringBuffer;
+        private readonly Volatile.Boolean _running = new Volatile.Boolean(false);
+        private readonly IDataProvider<T> _dataProvider;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IEventHandler<T> _eventHandler;
         private readonly Sequence _sequence = new Sequence(Sequencer.InitialCursorValue);
+        private readonly ITimeoutHandler _timeoutHandler;
+        private IExceptionHandler _exceptionHandler = new FatalExceptionHandler();
 
         /// <summary>
         /// Construct a <see cref="BatchEventProcessor{T}"/> that will automatically track the progress by updating its sequence when
         /// the <see cref="IEventHandler{T}.OnNext"/> method returns.
         /// </summary>
-        /// <param name="ringBuffer">ringBuffer to which events are published</param>
+        /// <param name="dataProvider">dataProvider to which events are published</param>
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
         /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
-        public BatchEventProcessor(RingBuffer<T> ringBuffer, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
+        public BatchEventProcessor(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
         {
-            _ringBuffer = ringBuffer;
+            _dataProvider = dataProvider;
             _sequenceBarrier = sequenceBarrier;
             _eventHandler = eventHandler;
 
-            var sequenceReportingEventHandler = eventHandler as ISequenceReportingEventHandler<T>;
-            if(sequenceReportingEventHandler != null)
-            {
-                sequenceReportingEventHandler.SetSequenceCallback(_sequence);
-            }
+            (eventHandler as ISequenceReportingEventHandler<T>)?.SetSequenceCallback(_sequence);
+            _timeoutHandler = eventHandler as ITimeoutHandler;
         }
 
-        public Sequence Sequence
-        {
-            get { return _sequence; }
-        }
+        public Sequence Sequence => _sequence;
 
         /// <summary>
         /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
@@ -54,9 +46,11 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running.WriteFullFence(Stopped);
+            _running.WriteFullFence(false);
             _sequenceBarrier.Alert();
         }
+
+        public bool IsRunning => _running.ReadFullFence();
 
         /// <summary>
         /// Set a new <see cref="IExceptionHandler"/> for handling exceptions propagated out of the <see cref="BatchEventProcessor{T}"/>
@@ -64,7 +58,7 @@ namespace Disruptor
         /// <param name="exceptionHandler">exceptionHandler to replace the existing exceptionHandler.</param>
         public void SetExceptionHandler(IExceptionHandler exceptionHandler)
         {
-            if(exceptionHandler == null) throw new ArgumentNullException("exceptionHandler");
+            if(exceptionHandler == null) throw new ArgumentNullException(nameof(exceptionHandler));
 
             _exceptionHandler = exceptionHandler;
         }
@@ -74,7 +68,7 @@ namespace Disruptor
         /// </summary>
         public void Run()
         {
-            if (!_running.AtomicCompareExchange(Running, Stopped))
+            if (!_running.AtomicCompareExchange(true, false))
             {
                 throw new InvalidOperationException("Thread is already running");
             }
@@ -83,39 +77,60 @@ namespace Disruptor
             NotifyStart();
 
             T evt = null;
-            long nextSequence = _sequence.Value + 1L;
-            while (true)
+            var nextSequence = _sequence.Value + 1L;
+            try
             {
-                try
+                while (true)
                 {
-                    long availableSequence = _sequenceBarrier.WaitFor(nextSequence);
-                    while (nextSequence <= availableSequence)
+                    try
                     {
-                        evt = _ringBuffer[nextSequence];
-                        _eventHandler.OnNext(evt, nextSequence, nextSequence == availableSequence);
+                        var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
+
+                        while (nextSequence <= availableSequence)
+                        {
+                            evt = _dataProvider.Get(nextSequence);
+                            _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
+                            nextSequence++;
+                        }
+
+                        _sequence.LazySet(availableSequence);
+                    }
+                    catch (TimeoutException)
+                    {
+                        NotifyTimeout(_sequence.Value);
+                    }
+                    catch (AlertException)
+                    {
+                        if (!_running.ReadFullFence())
+                        {
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _exceptionHandler.HandleEventException(ex, nextSequence, evt);
+                        _sequence.LazySet(nextSequence);
                         nextSequence++;
                     }
-
-                    _sequence.LazySet(nextSequence - 1L);
-                }
-                catch (AlertException)
-                {
-                    if (!_running.ReadFullFence())
-                    {
-                        break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _exceptionHandler.HandleEventException(ex, nextSequence, evt);
-                    _sequence.LazySet(nextSequence);
-                    nextSequence++;
                 }
             }
+            finally
+            {
+                NotifyShutdown();
+                _running.WriteFullFence(false);
+            }
+        }
 
-            NotifyShutdown();
-
-            _running.WriteFullFence(Stopped);
+        private void NotifyTimeout(long availableSequence)
+        {
+            try
+            {
+                _timeoutHandler?.OnTimeout(availableSequence);
+            }
+            catch (Exception ex)
+            {
+                _exceptionHandler.HandleEventException(ex, availableSequence, null);
+            }
         }
 
         private void NotifyStart()

@@ -4,17 +4,14 @@ using System.Threading;
 namespace Disruptor
 {
     /// <summary>
-    /// <see cref="WorkProcessor{T}"/> for ensuring each sequence is handled by only a single processor, effectively consuming the sequence.
+    /// A <see cref="WorkProcessor{T}"/> wraps a single <see cref="IWorkHandler{T}"/>, effectively consuming the sequence and ensuring appropriate barriers.
     /// 
-    /// No other <see cref="WorkProcessor{T}"/>s in the <see cref="WorkerPool{T}"/> will consume the same sequence.
+    /// Generally, this will be used as part of a <see cref="WorkerPool{T}"/>.
     /// </summary>
     /// <typeparam name="T">event implementation storing the details for the work to processed.</typeparam>
-    public sealed class WorkProcessor<T> : IEventProcessor where T : class 
+    public sealed class WorkProcessor<T> : IEventProcessor, IEventReleaser where T : class 
     {
-        private const bool Running = true;
-        private const bool Stopped = false;
-
-        private Volatile.Boolean _running = new Volatile.Boolean(Stopped);
+        private Volatile.Boolean _running = new Volatile.Boolean(false);
         private readonly Sequence _sequence = new Sequence(Sequencer.InitialCursorValue);
         private readonly RingBuffer<T> _ringBuffer;
         private readonly ISequenceBarrier _sequenceBarrier;
@@ -38,15 +35,14 @@ namespace Disruptor
             _workHandler = workHandler;
             _exceptionHandler = exceptionHandler;
             _workSequence = workSequence;
+
+            (_workHandler as IEventReleaseAware)?.SetEventReleaser(this);
         }
 
         /// <summary>
         /// Return a reference to the <see cref="IEventProcessor.Sequence"/> being used by this <see cref="IEventProcessor"/>
         /// </summary>
-        public Sequence Sequence
-        {
-            get { return _sequence; }
-        }
+        public Sequence Sequence => _sequence;
 
         /// <summary>
         /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
@@ -54,16 +50,18 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running.WriteFullFence(Stopped);
+            _running.WriteFullFence(false);
             _sequenceBarrier.Alert();
         }
+
+        public bool IsRunning => _running.ReadFullFence();
 
         /// <summary>
         /// It is ok to have another thread re-run this method after a halt().
         /// </summary>
         public void Run()
         {
-            if (!_running.AtomicCompareExchange(Running, Stopped))
+            if (!_running.AtomicCompareExchange(true, false))
             {
                 throw new InvalidOperationException("Thread is already running");
             }
@@ -72,7 +70,8 @@ namespace Disruptor
             NotifyStart();
 
             var processedSequence = true;
-            long nextSequence = _sequence.Value;
+            var cachedAvailableSequence = long.MinValue;
+            var nextSequence = _sequence.Value;
             T eventRef = null;
             while (true)
             {
@@ -81,19 +80,27 @@ namespace Disruptor
                     if (processedSequence)
                     {
                         processedSequence = false;
-                        nextSequence = _workSequence.IncrementAndGet();
-                        _sequence.Value = nextSequence - 1L;
+                        do
+                        {
+                            nextSequence = _workSequence.IncrementAndGet();
+                            _sequence.Value = nextSequence - 1L;
+                        } while (!_workSequence.CompareAndSet(nextSequence - 1L, nextSequence));
                     }
 
-                    _sequenceBarrier.WaitFor(nextSequence);
-                    eventRef = _ringBuffer[nextSequence];
-                    _workHandler.OnEvent(eventRef);
-
-                    processedSequence = true;
+                    if (cachedAvailableSequence >= nextSequence)
+                    {
+                        eventRef = _ringBuffer[nextSequence];
+                        _workHandler.OnEvent(eventRef);
+                        processedSequence = true;
+                    }
+                    else
+                    {
+                        cachedAvailableSequence = _sequenceBarrier.WaitFor(nextSequence);
+                    }
                 }
                 catch (AlertException)
                 {
-                    if (_running.ReadFullFence() == Stopped)
+                    if (!_running.ReadFullFence())
                     {
                         break;
                     }
@@ -107,7 +114,12 @@ namespace Disruptor
 
             NotifyShutdown();
 
-            _running.WriteFullFence(Stopped);
+            _running.WriteFullFence(false);
+        }
+
+        public void Release()
+        {
+            _sequence.Value = long.MaxValue;
         }
 
         private void NotifyStart()

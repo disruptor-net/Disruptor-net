@@ -190,7 +190,10 @@ namespace Disruptor.Tests
 
             public void Run()
             {
+                IsRunning = true;
             }
+
+            public bool IsRunning { get; private set; }
 
             public Sequence Sequence
             {
@@ -199,6 +202,7 @@ namespace Disruptor.Tests
 
             public void Halt()
             {
+                IsRunning = false;
             }
         }
     }

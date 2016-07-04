@@ -220,13 +220,17 @@ namespace Disruptor.Tests
 
             public void Halt()
             {
+                IsRunning = false;
             }
 
             public void Run()
             {
+                IsRunning = true;
                 _sequenceBarrier.WaitFor(0L);
                 _sequence.Value += 1;
             }
+
+            public bool IsRunning { get; private set; }
         }
     }
 }
