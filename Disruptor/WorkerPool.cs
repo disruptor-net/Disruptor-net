@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Dsl;
 
 namespace Disruptor
 {
@@ -99,12 +100,14 @@ namespace Disruptor
             }
         }
 
+        public bool IsRunning => _running.ReadFullFence();
+
         /// <summary>
         /// Start the worker pool processing events in sequence.
         /// </summary>
         /// <returns>the <see cref="RingBuffer{T}"/> used for the work queue.</returns>
         /// <exception cref="InvalidOperationException">if the pool has already been started and not halted yet</exception>
-        public RingBuffer<T> Start(TaskScheduler taskScheduler)
+        public RingBuffer<T> Start(IExecutor executor)
         {
             if (! _running.AtomicCompareExchange(Running, Stopped))
             {
@@ -119,7 +122,7 @@ namespace Disruptor
                 var workProcessor = _workProcessors[i];
                 workProcessor.Sequence.Value = cursor;
 
-                Task.Factory.StartNew(workProcessor.Run, CancellationToken.None, TaskCreationOptions.None, taskScheduler);
+                executor.Execute(workProcessor.Run);
             }
 
             return _ringBuffer;
