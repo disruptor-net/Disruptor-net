@@ -86,7 +86,7 @@
     <Compile Include="Sequencer.cs" />
     <Compile Include="SequenceReportingEventHandler.cs" />
     <Compile Include="SingleThreadedClaimStrategy.cs" />
-    <Compile Include="Util.cs" />
+    <Compile Include="Util\Util.cs" />
     <Compile Include="SleepingWaitStrategy.cs" />
     <Compile Include="WorkerPool.cs" />
     <Compile Include="WorkProcessor.cs" />
