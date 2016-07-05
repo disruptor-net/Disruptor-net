@@ -89,7 +89,7 @@ namespace Disruptor
 
                         while (nextSequence <= availableSequence)
                         {
-                            evt = _dataProvider.Get(nextSequence);
+                            evt = _dataProvider[nextSequence];
                             _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
                             nextSequence++;
                         }

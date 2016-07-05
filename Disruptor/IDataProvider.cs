@@ -2,6 +2,6 @@
 {
     public interface IDataProvider<T>
     {
-        T Get(long sequence);
+        T this[long sequence] { get; }
     }
 }

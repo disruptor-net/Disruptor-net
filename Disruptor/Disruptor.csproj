@@ -60,9 +60,17 @@
     <Compile Include="Dsl\IExecutor.cs" />
     <Compile Include="Dsl\ProducerType.cs" />
     <Compile Include="Dsl\WorkerPoolInfo.cs" />
+    <Compile Include="EventPoller.cs" />
+    <Compile Include="FixedSequenceGroup.cs" />
+    <Compile Include="ICursored.cs" />
     <Compile Include="IDataProvider.cs" />
     <Compile Include="IEventReleaseAware.cs" />
     <Compile Include="IEventReleaser.cs" />
+    <Compile Include="IEventSequencer.cs" />
+    <Compile Include="IEventTranslatorOneArg.cs" />
+    <Compile Include="IEventTranslatorThreeArg.cs" />
+    <Compile Include="IEventTranslatorTwoArg.cs" />
+    <Compile Include="IEventTranslatorVararg.cs" />
     <Compile Include="InsufficientCapacityException.cs" />
     <Compile Include="Dsl\Disruptor.cs" />
     <Compile Include="Dsl\ExceptionHandlerSetting.cs" />
@@ -97,6 +105,7 @@
     <Compile Include="Sequence.cs" />
     <Compile Include="BatchDescriptor.cs" />
     <Compile Include="SequenceGroup.cs" />
+    <Compile Include="SequenceGroups.cs" />
     <Compile Include="Sequencer.cs" />
     <Compile Include="SequenceReportingEventHandler.cs" />
     <Compile Include="SingleProducerSequencer.cs" />

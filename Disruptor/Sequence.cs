@@ -72,7 +72,7 @@ namespace Disruptor
         /// Increments the sequence and stores the result, as an atomic operation.
         ///</summary>
         ///<returns>incremented sequence</returns>
-        public long IncrementAndGet()
+        public virtual long IncrementAndGet()
         {
             return AddAndGet(1);
         }
@@ -81,7 +81,7 @@ namespace Disruptor
         /// Increments the sequence and stores the result, as an atomic operation.
         ///</summary>
         ///<returns>incremented sequence</returns>
-        public long AddAndGet(long value)
+        public virtual long AddAndGet(long value)
         {
             return _value.AtomicAddAndGet(value);
         }

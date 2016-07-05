@@ -49,6 +49,7 @@ namespace Disruptor
         /// <param name="sequence">sequence to be added to the aggregate.</param>
         public void Add(Sequence sequence)
         {
+            // TODO: use SequenceGroups
             Sequence[] oldSequences;
             Sequence[] newSequences;
             do

@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Threading;
 
 namespace Disruptor
 {
     /// <summary>
     /// Coordinator for claiming sequences for access to a data structure while tracking dependent <see cref="Sequence"/>s
     /// </summary>
-    public abstract class Sequencer : ISequenced
+    public abstract class Sequencer : ISequenced, ICursored
     {
         protected readonly Sequence _cursor = new Sequence(Sequence.InitialCursorValue);
-        protected Sequence[] _gatingSequences;
+        protected Volatile.Reference<Sequence[]> _gatingSequences = new Volatile.Reference<Sequence[]>(new Sequence[0]);
 
         private readonly IClaimStrategy _claimStrategy;
         protected readonly IWaitStrategy _waitStrategy;
@@ -44,7 +45,7 @@ namespace Disruptor
         /// <param name="sequences">sequences to be to be gated on.</param>
         public void SetGatingSequences(params Sequence[] sequences)
         {
-            _gatingSequences = sequences;
+            _gatingSequences.WriteUnfenced(sequences);
         }
 
         /// <summary>
@@ -129,12 +130,7 @@ namespace Disruptor
         /// <returns>the updated batchDescriptor.</returns>
         public BatchDescriptor Next(BatchDescriptor batchDescriptor)
         {
-            if (_gatingSequences == null)
-            {
-                throw new NullReferenceException("gatingSequences must be set before claiming sequences");
-            }
-
-            long sequence = _claimStrategy.IncrementAndGet(batchDescriptor.Size, _gatingSequences);
+            long sequence = _claimStrategy.IncrementAndGet(batchDescriptor.Size, _gatingSequences.ReadFullFence());
             batchDescriptor.End = sequence;
             return batchDescriptor;
         }
@@ -208,6 +204,45 @@ namespace Disruptor
         {
             _claimStrategy.SerialisePublishing(sequence, _cursor, batchSize);
             _waitStrategy.SignalAllWhenBlocking();
+        }
+
+        /// <summary>
+        /// Add the specified gating sequences to this instance of the Disruptor.  They will
+        /// safely and atomically added to the list of gating sequences. 
+        /// </summary>
+        /// <param name="gatingSequences">The sequences to add.</param>
+        public void AddGatingSequences(params Sequence[] gatingSequences)
+        {
+            SequenceGroups.AddSequences(_gatingSequences, this, gatingSequences);
+        }
+
+        public bool RemoveGatingSequence(Sequence sequence)
+        {
+            return SequenceGroups.RemoveSequence(_gatingSequences, sequence);
+        }
+
+        /// <summary>
+        /// Get the current cursor value.
+        /// </summary>
+        /// <returns></returns>
+        public long GetCursor()
+        {
+            return _cursor.Value;
+        }
+
+        /// <summary>
+        /// Get the minimum sequence value from all of the gating sequences
+        /// added to this ringBuffer.
+        /// </summary>
+        /// <returns>The minimum gating sequence or the cursor sequence if no sequences have been added.</returns>
+        public long GetMinimumSequence()
+        {
+            return Util.GetMinimumSequence(_gatingSequences.ReadUnfenced(), _cursor.Value);
+        }
+
+        public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
+        {
+            return EventPoller<T>.NewInstance(provider, this, new Sequence(), _cursor, gatingSequences);
         }
     }
 }

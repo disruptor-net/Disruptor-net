@@ -38,7 +38,7 @@ namespace Disruptor
         /// <returns>true if the buffer has the capacity to allocate the next sequence otherwise false.</returns>
         public override bool HasAvailableCapacity(int requiredCapacity)
         {
-            return HasAvailableCapacity(_gatingSequences, requiredCapacity, _cursor.Value);
+            return HasAvailableCapacity(_gatingSequences.ReadFullFence(), requiredCapacity, _cursor.Value);
         }
 
         private bool HasAvailableCapacity(Sequence[] gatingSequences, int requiredCapacity, long cursorValue)
@@ -104,7 +104,7 @@ namespace Disruptor
 
                 if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
                 {
-                    long gatingSequence = Util.GetMinimumSequence(_gatingSequences, current);
+                    long gatingSequence = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), current);
 
                     if (wrapPoint > gatingSequence)
                     {
@@ -155,7 +155,7 @@ namespace Disruptor
                 current = _cursor.Value;
                 next = current + n;
 
-                if (!HasAvailableCapacity(_gatingSequences, n, current))
+                if (!HasAvailableCapacity(_gatingSequences.ReadFullFence(), n, current))
                 {
                     throw InsufficientCapacityException.Instance;
                 }
@@ -170,7 +170,7 @@ namespace Disruptor
         /// </summary>
         public override long GetRemainingCapacity()
         {
-            long consumed = Util.GetMinimumSequence(_gatingSequences);
+            long consumed = Util.GetMinimumSequence(_gatingSequences.ReadFullFence());
             long produced = _cursor.Value;
             return BufferSize - (produced - consumed);
         }

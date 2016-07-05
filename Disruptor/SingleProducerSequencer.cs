@@ -29,7 +29,7 @@ namespace Disruptor
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
             {
-                long minSequence = Util.GetMinimumSequence(_gatingSequences, nextValue);
+                long minSequence = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), nextValue);
                 _cachedValue.WriteUnfenced(minSequence);
 
                 if (wrapPoint > minSequence)
@@ -81,7 +81,7 @@ namespace Disruptor
             {
                 var spinWait = default(SpinWait);
                 long minSequence;
-                while (wrapPoint > (minSequence = Util.GetMinimumSequence(_gatingSequences, nextValue)))
+                while (wrapPoint > (minSequence = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), nextValue)))
                 {
                      spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
                 }
@@ -132,7 +132,7 @@ namespace Disruptor
         /// </summary>
         public override long GetRemainingCapacity()
         {
-            long consumed = Util.GetMinimumSequence(_gatingSequences);
+            long consumed = Util.GetMinimumSequence(_gatingSequences.ReadFullFence());
             long produced = _cursor.Value;
             return BufferSize - (produced - consumed);
         }
