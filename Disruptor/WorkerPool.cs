@@ -28,7 +28,7 @@ namespace Disruptor
         /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
         public WorkerPool(RingBuffer<T> ringBuffer,
                           ISequenceBarrier sequenceBarrier,
-                          IExceptionHandler exceptionHandler,
+                          IExceptionHandler<T> exceptionHandler,
                           params IWorkHandler<T>[] workHandlers)
         {
             _ringBuffer = ringBuffer;

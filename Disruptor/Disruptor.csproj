@@ -92,7 +92,6 @@
     <Compile Include="Dsl\EventHandlerGroup.cs" />
     <Compile Include="Dsl\EventProcessorInfo.cs" />
     <Compile Include="Dsl\ConsumerRepository.cs" />
-    <Compile Include="IEventHandlerGroup.cs" />
     <Compile Include="ILifecycleAware.cs" />
     <Compile Include="IEventHandler.cs" />
     <Compile Include="IClaimStrategy.cs" />

@@ -16,7 +16,7 @@ namespace Disruptor
         private readonly RingBuffer<T> _ringBuffer;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IWorkHandler<T> _workHandler;
-        private readonly IExceptionHandler _exceptionHandler;
+        private readonly IExceptionHandler<T> _exceptionHandler;
         private readonly Sequence _workSequence;
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace Disruptor
         /// <param name="exceptionHandler">exceptionHandler to be called back when an error occurs</param>
         /// <param name="workSequence">workSequence from which to claim the next event to be worked on.  It should always be initialised
         /// as <see cref="Disruptor.Sequence.InitialCursorValue"/></param>
-        public WorkProcessor(RingBuffer<T> ringBuffer, ISequenceBarrier sequenceBarrier, IWorkHandler<T> workHandler, IExceptionHandler exceptionHandler, Sequence workSequence)
+        public WorkProcessor(RingBuffer<T> ringBuffer, ISequenceBarrier sequenceBarrier, IWorkHandler<T> workHandler, IExceptionHandler<T> exceptionHandler, Sequence workSequence)
         {
             _ringBuffer = ringBuffer;
             _sequenceBarrier = sequenceBarrier;
