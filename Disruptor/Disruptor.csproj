@@ -77,7 +77,7 @@
     <Compile Include="Collections\Histogram.cs" />
     <Compile Include="Dsl\EventHandlerGroup.cs" />
     <Compile Include="Dsl\EventProcessorInfo.cs" />
-    <Compile Include="Dsl\ConsumerInfoRepository.cs" />
+    <Compile Include="Dsl\ConsumerRepository.cs" />
     <Compile Include="IEventHandlerGroup.cs" />
     <Compile Include="ILifecycleAware.cs" />
     <Compile Include="IEventHandler.cs" />

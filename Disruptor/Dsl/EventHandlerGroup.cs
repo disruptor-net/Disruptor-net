@@ -9,13 +9,13 @@ namespace Disruptor.Dsl
     public class EventHandlerGroup<T> where T : class
     {
         private readonly Disruptor<T> _disruptor;
-        private readonly ConsumerInfoRepository<T> _consumerInfoRepository;
+        private readonly ConsumerRepository<T> _consumerRepository;
         private readonly IEventProcessor[] _eventProcessors;
 
-        internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerInfoRepository<T> consumerInfoRepository, IEventProcessor[] eventProcessors)
+        internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository<T> consumerRepository, IEventProcessor[] eventProcessors)
         {
             _disruptor = disruptor;
-            _consumerInfoRepository = consumerInfoRepository;
+            _consumerRepository = consumerRepository;
             _eventProcessors = eventProcessors;
         }
 
@@ -28,11 +28,11 @@ namespace Disruptor.Dsl
         public EventHandlerGroup<T> And(params IEventHandler<T>[] handlers)
         {
             var processors = from handler in handlers
-                             select _consumerInfoRepository.GetEventProcessorFor(handler);
+                             select _consumerRepository.GetEventProcessorFor(handler);
 
             var combindedProcessors = _eventProcessors.Concat(processors).ToArray();
 
-            return new EventHandlerGroup<T>(_disruptor, _consumerInfoRepository, combindedProcessors);
+            return new EventHandlerGroup<T>(_disruptor, _consumerRepository, combindedProcessors);
         }
 
         /// <summary>
@@ -46,10 +46,10 @@ namespace Disruptor.Dsl
 
             foreach (var eventProcessor in processors)
             {
-                _consumerInfoRepository.Add(eventProcessor);
+                _consumerRepository.Add(eventProcessor);
             }
 
-            return new EventHandlerGroup<T>(_disruptor, _consumerInfoRepository, combinedProcessors);
+            return new EventHandlerGroup<T>(_disruptor, _consumerRepository, combinedProcessors);
         }
 
         /// <summary>

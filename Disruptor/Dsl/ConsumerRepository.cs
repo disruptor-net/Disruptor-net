@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Disruptor.Dsl
 {
-    internal class ConsumerInfoRepository<T> : IEnumerable<IConsumerInfo> where T : class
+    internal class ConsumerRepository<T> : IEnumerable<IConsumerInfo> where T : class
     {
         private readonly Dictionary<IEventHandler<T>, EventProcessorInfo<T>> _eventProcessorInfoByEventHandler = new Dictionary<IEventHandler<T>, EventProcessorInfo<T>>();
         private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence = new Dictionary<Sequence, IConsumerInfo>();
@@ -35,7 +35,7 @@ namespace Disruptor.Dsl
             }
         }
 
-        public Sequence[] GetLastEventProcessorsInChain(bool includeStopped)
+        public Sequence[] GetLastSequenceInChain(bool includeStopped)
         {
             var lastSequence = new List<Sequence>();
             foreach (var consumerInfo in _consumerInfos)
