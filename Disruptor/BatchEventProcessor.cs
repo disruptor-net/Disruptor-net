@@ -13,7 +13,8 @@ namespace Disruptor
     /// <typeparam name="T">Event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
     internal sealed class BatchEventProcessor<T> : IEventProcessor where T : class
     {
-        private readonly Volatile.Boolean _running = new Volatile.Boolean(false);
+        private readonly RunningFlag _running = new RunningFlag();
+
         private readonly IDataProvider<T> _dataProvider;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IEventHandler<T> _eventHandler;
@@ -23,7 +24,7 @@ namespace Disruptor
 
         /// <summary>
         /// Construct a <see cref="BatchEventProcessor{T}"/> that will automatically track the progress by updating its sequence when
-        /// the <see cref="IEventHandler{T}.OnNext"/> method returns.
+        /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
         /// </summary>
         /// <param name="dataProvider">dataProvider to which events are published</param>
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
@@ -46,11 +47,11 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running.WriteFullFence(false);
+            _running.MarkAsStopped();
             _sequenceBarrier.Alert();
         }
 
-        public bool IsRunning => _running.ReadFullFence();
+        public bool IsRunning => _running.IsRunning;
 
         /// <summary>
         /// Set a new <see cref="IExceptionHandler"/> for handling exceptions propagated out of the <see cref="BatchEventProcessor{T}"/>
@@ -68,10 +69,7 @@ namespace Disruptor
         /// </summary>
         public void Run()
         {
-            if (!_running.AtomicCompareExchange(true, false))
-            {
-                throw new InvalidOperationException("Thread is already running");
-            }
+            _running.MarkAsRunning();
             _sequenceBarrier.ClearAlert();
             
             NotifyStart();
@@ -101,7 +99,7 @@ namespace Disruptor
                     }
                     catch (AlertException)
                     {
-                        if (!_running.ReadFullFence())
+                        if (!_running.IsRunning)
                         {
                             break;
                         }
@@ -117,7 +115,7 @@ namespace Disruptor
             finally
             {
                 NotifyShutdown();
-                _running.WriteFullFence(false);
+                _running.MarkAsStopped();
             }
         }
 

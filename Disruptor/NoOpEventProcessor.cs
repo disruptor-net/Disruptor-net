@@ -10,7 +10,7 @@ namespace Disruptor
     public sealed class NoOpEventProcessor : IEventProcessor
     {
         private readonly SequencerFollowingSequence _sequence;
-        private readonly Volatile.Boolean _running = new Volatile.Boolean(false);
+        private readonly RunningFlag _running = new RunningFlag();
 
         /// <summary>
         /// Construct a <see cref="IEventProcessor"/> that simply tracks a <see cref="Sequencer"/>.
@@ -26,10 +26,7 @@ namespace Disruptor
         /// </summary>
         public void Run()
         {
-            if (!_running.AtomicCompareExchange(true, false))
-            {
-                throw new InvalidOperationException("Thread is already running");
-            }
+            _running.MarkAsRunning();
         }
 
         /// <summary>
@@ -42,10 +39,10 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running.WriteFullFence(false);
+            _running.MarkAsStopped();
         }
 
-        public bool IsRunning => _running.ReadFullFence();
+        public bool IsRunning => _running.IsRunning;
 
 	    private sealed class SequencerFollowingSequence : Sequence
 	    {
@@ -57,10 +54,7 @@ namespace Disruptor
                 _sequencer = sequencer;
 	        }
 
-            public override long Value
-            {
-                get { return _sequencer.Cursor; }
-            } 
+            public override long Value => _sequencer.Cursor;
 	    }
     }
 }

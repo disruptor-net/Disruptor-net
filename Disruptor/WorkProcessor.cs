@@ -11,7 +11,7 @@ namespace Disruptor
     /// <typeparam name="T">event implementation storing the details for the work to processed.</typeparam>
     public sealed class WorkProcessor<T> : IEventProcessor, IEventReleaser where T : class 
     {
-        private Volatile.Boolean _running = new Volatile.Boolean(false);
+        private readonly RunningFlag _running = new RunningFlag();
         private readonly Sequence _sequence = new Sequence(Sequencer.InitialCursorValue);
         private readonly RingBuffer<T> _ringBuffer;
         private readonly ISequenceBarrier _sequenceBarrier;
@@ -50,21 +50,18 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running.WriteFullFence(false);
+            _running.MarkAsStopped();
             _sequenceBarrier.Alert();
         }
 
-        public bool IsRunning => _running.ReadFullFence();
+        public bool IsRunning => _running.IsRunning;
 
         /// <summary>
         /// It is ok to have another thread re-run this method after a halt().
         /// </summary>
         public void Run()
         {
-            if (!_running.AtomicCompareExchange(true, false))
-            {
-                throw new InvalidOperationException("Thread is already running");
-            }
+            _running.MarkAsRunning();
             _sequenceBarrier.ClearAlert();
 
             NotifyStart();
@@ -100,7 +97,7 @@ namespace Disruptor
                 }
                 catch (AlertException)
                 {
-                    if (!_running.ReadFullFence())
+                    if (!_running.IsRunning)
                     {
                         break;
                     }
@@ -114,7 +111,7 @@ namespace Disruptor
 
             NotifyShutdown();
 
-            _running.WriteFullFence(false);
+            _running.MarkAsStopped();
         }
 
         public void Release()

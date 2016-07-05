@@ -1,7 +1,5 @@
 using System;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Disruptor.Dsl
 {
@@ -11,13 +9,10 @@ namespace Disruptor.Dsl
     /// <typeparam name="T">the type of event used.</typeparam>
     public class Disruptor<T> where T : class
     {
-        private const bool Running = true;
-        private const bool Stopped = false;
-
         private readonly RingBuffer<T> _ringBuffer;
         private readonly IExecutor _executor;
         private readonly ConsumerRepository<T> _consumerRepository = new ConsumerRepository<T>();
-        private Volatile.Boolean _running = new Volatile.Boolean(Stopped);
+        private readonly RunningFlag _running = new RunningFlag();
         private readonly EventPublisher<T> _eventPublisher;
         private IExceptionHandler _exceptionHandler;
 
@@ -258,7 +253,7 @@ namespace Disruptor.Dsl
 
         private void CheckNotStarted()
         {
-            if (_running.ReadFullFence())
+            if (_running.IsRunning)
             {
                 throw new InvalidOperationException("All event handlers must be added before calling starts.");
             }
@@ -266,7 +261,7 @@ namespace Disruptor.Dsl
 
         private void CheckOnlyStartedOnce()
         {
-            if (!_running.AtomicCompareExchange(Running, Stopped))
+            if (!_running.TryMarkAsRunning())
             {
                 throw new InvalidOperationException("Disruptor.start() must only be called once.");
             }
