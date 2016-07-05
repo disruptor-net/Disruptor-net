@@ -11,8 +11,8 @@ namespace Disruptor
     public sealed class SingleThreadedClaimStrategy : IClaimStrategy
     {
         private readonly int _bufferSize;
-        private Volatile.PaddedLong _claimSequence = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
-        private Volatile.PaddedLong _minGatingSequence = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
+        private Volatile.PaddedLong _claimSequence = new Volatile.PaddedLong(Disruptor.Sequence.InitialCursorValue);
+        private Volatile.PaddedLong _minGatingSequence = new Volatile.PaddedLong(Disruptor.Sequence.InitialCursorValue);
 
         /// <summary>
         /// Construct a new single threaded publisher <see cref="IClaimStrategy"/> for a given buffer size.

@@ -12,7 +12,7 @@ namespace Disruptor
     public sealed class WorkProcessor<T> : IEventProcessor, IEventReleaser where T : class 
     {
         private readonly RunningFlag _running = new RunningFlag();
-        private readonly Sequence _sequence = new Sequence(Sequencer.InitialCursorValue);
+        private readonly Sequence _sequence = new Sequence(Sequence.InitialCursorValue);
         private readonly RingBuffer<T> _ringBuffer;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IWorkHandler<T> _workHandler;
@@ -27,7 +27,7 @@ namespace Disruptor
         /// <param name="workHandler">workHandler is the delegate to which events are dispatched.</param>
         /// <param name="exceptionHandler">exceptionHandler to be called back when an error occurs</param>
         /// <param name="workSequence">workSequence from which to claim the next event to be worked on.  It should always be initialised
-        /// as <see cref="Sequencer.InitialCursorValue"/></param>
+        /// as <see cref="Disruptor.Sequence.InitialCursorValue"/></param>
         public WorkProcessor(RingBuffer<T> ringBuffer, ISequenceBarrier sequenceBarrier, IWorkHandler<T> workHandler, IExceptionHandler exceptionHandler, Sequence workSequence)
         {
             _ringBuffer = ringBuffer;

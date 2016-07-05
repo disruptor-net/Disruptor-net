@@ -6,7 +6,7 @@ namespace Disruptor
     {
         protected int _bufferSize;
         private Sequence _claimSequence = new Sequence();
-        private readonly ThreadLocal<MutableLong> _minGatingSequenceThreadLocal = new ThreadLocal<MutableLong>(() => new MutableLong(Sequencer.InitialCursorValue));
+        private readonly ThreadLocal<MutableLong> _minGatingSequenceThreadLocal = new ThreadLocal<MutableLong>(() => new MutableLong(Disruptor.Sequence.InitialCursorValue));
 
         public AbstractMultiThreadedClaimStrategy(int bufferSize)
         {
@@ -16,18 +16,12 @@ namespace Disruptor
         /// <summary>
         /// Get the size of the data structure used to buffer events.
         /// </summary>
-        public int BufferSize
-        {
-            get { return _bufferSize; }
-        }
+        public int BufferSize => _bufferSize;
 
         /// <summary>
         /// Get the current claimed sequence.
         /// </summary>
-        public long Sequence
-        {
-            get { return _claimSequence.Value; }
-        }
+        public long Sequence => _claimSequence.Value;
 
         /// <summary>
         /// Is there available capacity in the buffer for the requested sequence.

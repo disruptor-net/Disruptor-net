@@ -8,10 +8,14 @@ namespace Disruptor
     /// </summary>
     public class Sequence
     {
-        private Volatile.PaddedLong _value = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
+        /// <summary>
+        /// Set to -1 as sequence starting point
+        /// </summary>
+        public const long InitialCursorValue = -1;
+        private Volatile.PaddedLong _value = new Volatile.PaddedLong(InitialCursorValue);
 
         /// <summary>
-        /// Default Constructor that uses an initial value of <see cref="Sequencer.InitialCursorValue"/>
+        /// Default Constructor that uses an initial value of <see cref="InitialCursorValue"/>
         /// </summary>
         public Sequence()
         {

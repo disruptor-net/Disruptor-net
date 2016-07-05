@@ -12,7 +12,7 @@ namespace Disruptor
     public sealed class WorkerPool<T> where T : class 
     {
         private readonly RunningFlag _running = new RunningFlag();
-        private readonly Sequence _workSequence = new Sequence(Sequencer.InitialCursorValue);
+        private readonly Sequence _workSequence = new Sequence(Sequence.InitialCursorValue);
         private readonly RingBuffer<T> _ringBuffer;
         private readonly WorkProcessor<T>[] _workProcessors;
 

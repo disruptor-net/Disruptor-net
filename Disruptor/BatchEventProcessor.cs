@@ -18,7 +18,7 @@ namespace Disruptor
         private readonly IDataProvider<T> _dataProvider;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IEventHandler<T> _eventHandler;
-        private readonly Sequence _sequence = new Sequence(Sequencer.InitialCursorValue);
+        private readonly Sequence _sequence = new Sequence(Sequence.InitialCursorValue);
         private readonly ITimeoutHandler _timeoutHandler;
         private IExceptionHandler _exceptionHandler = new FatalExceptionHandler();
 

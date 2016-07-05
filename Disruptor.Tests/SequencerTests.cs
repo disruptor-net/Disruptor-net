@@ -14,7 +14,7 @@ namespace Disruptor.Tests
         [SetUp]
         public void SetUp()
         {
-            _gatingSequence = new Sequence(Sequencer.InitialCursorValue);
+            _gatingSequence = new Sequence(Sequence.InitialCursorValue);
 
             _sequencer = new Sequencer(new SingleThreadedClaimStrategy(BufferSize), new SleepingWaitStrategy());
             _sequencer.SetGatingSequences(_gatingSequence);
@@ -23,14 +23,14 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldStartWithInitialValue()
         {
-            Assert.AreEqual(Sequencer.InitialCursorValue, _sequencer.Cursor);
+            Assert.AreEqual(Sequence.InitialCursorValue, _sequencer.Cursor);
         }
 
         [Test]
         public void ShouldGetPublishFirstSequence()
         {
             long sequence = _sequencer.Next();
-            Assert.AreEqual(Sequencer.InitialCursorValue, _sequencer.Cursor);
+            Assert.AreEqual(Sequence.InitialCursorValue, _sequencer.Cursor);
             Assert.AreEqual(sequence, 0L);
 
             _sequencer.Publish(sequence);
@@ -57,7 +57,7 @@ namespace Disruptor.Tests
             const long claimSequence = 3L;
 
             long sequence = _sequencer.Claim(claimSequence);
-            Assert.AreEqual(Sequencer.InitialCursorValue, _sequencer.Cursor);
+            Assert.AreEqual(Sequence.InitialCursorValue, _sequencer.Cursor);
             Assert.AreEqual(sequence, claimSequence);
 
             _sequencer.ForcePublish(sequence);
@@ -71,12 +71,12 @@ namespace Disruptor.Tests
             var batchDescriptor = new BatchDescriptor(batchSize);
 
             batchDescriptor = _sequencer.Next(batchDescriptor);
-            Assert.AreEqual(Sequencer.InitialCursorValue, _sequencer.Cursor);
-            Assert.AreEqual(batchDescriptor.End, Sequencer.InitialCursorValue + batchSize);
+            Assert.AreEqual(Sequence.InitialCursorValue, _sequencer.Cursor);
+            Assert.AreEqual(batchDescriptor.End, Sequence.InitialCursorValue + batchSize);
             Assert.AreEqual(batchDescriptor.Size, batchSize);
 
             _sequencer.Publish(batchDescriptor);
-            Assert.AreEqual(_sequencer.Cursor, Sequencer.InitialCursorValue + batchSize);
+            Assert.AreEqual(_sequencer.Cursor, Sequence.InitialCursorValue + batchSize);
         }
 
         [Test]
@@ -99,7 +99,7 @@ namespace Disruptor.Tests
             long sequence = _sequencer.Next();
             _sequencer.Publish(sequence);
 
-            Assert.AreEqual(sequence, barrier.WaitFor(Sequencer.InitialCursorValue + 1L));
+            Assert.AreEqual(sequence, barrier.WaitFor(Sequence.InitialCursorValue + 1L));
         }
 
         [Test]
@@ -108,7 +108,7 @@ namespace Disruptor.Tests
             var barrier = _sequencer.NewBarrier();
             var waitingLatch = new ManualResetEvent(false);
             var doneLatch = new ManualResetEvent(false);
-            const long expectedSequence = Sequencer.InitialCursorValue + 1L;
+            const long expectedSequence = Sequence.InitialCursorValue + 1L;
 
             new Thread(
                 () =>
@@ -121,7 +121,7 @@ namespace Disruptor.Tests
                     }).Start();
 
             waitingLatch.WaitOne();
-            Assert.AreEqual(_gatingSequence.Value, Sequencer.InitialCursorValue);
+            Assert.AreEqual(_gatingSequence.Value, Sequence.InitialCursorValue);
 
             _sequencer.Publish(_sequencer.Next());
 
@@ -137,7 +137,7 @@ namespace Disruptor.Tests
             var waitingLatch = new ManualResetEvent(false);
             var doneLatch = new ManualResetEvent(false);
 
-            long expectedFullSequence = Sequencer.InitialCursorValue + _sequencer.BufferSize;
+            long expectedFullSequence = Sequence.InitialCursorValue + _sequencer.BufferSize;
             Assert.AreEqual(_sequencer.Cursor, expectedFullSequence);
 
             new Thread(
@@ -153,7 +153,7 @@ namespace Disruptor.Tests
             waitingLatch.WaitOne();
             Assert.AreEqual(_sequencer.Cursor, expectedFullSequence);
 
-            _gatingSequence.Value = Sequencer.InitialCursorValue + 1L;
+            _gatingSequence.Value = Sequence.InitialCursorValue + 1L;
 
             doneLatch.WaitOne();
             Assert.AreEqual(_sequencer.Cursor, expectedFullSequence + 1L);

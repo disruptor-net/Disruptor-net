@@ -1,4 +1,6 @@
-﻿namespace Disruptor
+﻿using System;
+
+namespace Disruptor
 {
     /// <summary>
     /// Set of common functions used by the Disruptor
@@ -23,6 +25,22 @@
         }
 
         /// <summary>
+        /// Calculate the log base 2 of the supplied integer, essentially reports the location
+        /// of the highest bit.
+        /// </summary>
+        /// <param name="i">Value to calculate log2 for.</param>
+        /// <returns>The log2 value</returns>
+        public static int Log2(int i)
+        {
+            var r = 0;
+            while ((i >>= 1) != 0)
+            {
+                ++r;
+            }
+            return r;
+        }
+
+        /// <summary>
         /// Test whether a given integer is a power of 2 
         /// </summary>
         /// <param name="x"></param>
@@ -32,23 +50,20 @@
             return x > 0 && (x & (x - 1)) == 0;
         }
 
-
         /// <summary>
         /// Get the minimum sequence from an array of <see cref="Sequence"/>s.
         /// </summary>
         /// <param name="sequences">sequences to compare.</param>
+        /// <param name="minimum">an initial default minimum.  If the array is empty this value will returned.</param>
         /// <returns>the minimum sequence found or lon.MaxValue if the array is empty.</returns>
-        public static long GetMinimumSequence(Sequence[] sequences)
+        public static long GetMinimumSequence(Sequence[] sequences, long minimum = long.MaxValue)
         {
-            if (sequences.Length == 0) return long.MaxValue;
-
-            var min = long.MaxValue;
             for (var i = 0; i < sequences.Length; i++)
             {
                 var sequence = sequences[i].Value; // volatile read
-                min = min < sequence ? min : sequence;
+                minimum = Math.Min(minimum, sequence);
             }
-            return min;
+            return minimum;
         }
 
         /// <summary>
@@ -66,7 +81,5 @@
 
             return sequences;
         }
-
-        
     }
 }

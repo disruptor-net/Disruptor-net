@@ -24,7 +24,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldClaimAndGet()
         {
-            Assert.AreEqual(Sequencer.InitialCursorValue, _ringBuffer.Cursor);
+            Assert.AreEqual(Sequence.InitialCursorValue, _ringBuffer.Cursor);
 
             var expectedEvent = new StubEvent(2701);
 
@@ -45,7 +45,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldClaimAndGetWithTimeout()
         {
-            Assert.AreEqual(Sequencer.InitialCursorValue, _ringBuffer.Cursor);
+            Assert.AreEqual(Sequence.InitialCursorValue, _ringBuffer.Cursor);
 
             var expectedEvent = new StubEvent(2701);
 
@@ -67,7 +67,7 @@ namespace Disruptor.Tests
         public void ShouldGetWithTimeout()
         {
             long sequence = _sequenceBarrier.WaitFor(0, TimeSpan.FromMilliseconds(5));
-            Assert.AreEqual(Sequencer.InitialCursorValue, sequence);
+            Assert.AreEqual(Sequence.InitialCursorValue, sequence);
         }
 
         [Test]
@@ -206,7 +206,7 @@ namespace Disruptor.Tests
         private class TestEventProcessor : IEventProcessor
         {
             private readonly ISequenceBarrier _sequenceBarrier;
-            private readonly Sequence _sequence = new Sequence(Sequencer.InitialCursorValue);
+            private readonly Sequence _sequence = new Sequence(Sequence.InitialCursorValue);
 
             public TestEventProcessor(ISequenceBarrier sequenceBarrier)
             {

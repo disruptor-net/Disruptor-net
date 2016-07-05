@@ -26,7 +26,7 @@ namespace Disruptor.Tests
 
             Assert.AreEqual(0L, batchDescriptor.Start);
             Assert.AreEqual(4L, batchDescriptor.End);
-            Assert.AreEqual(Sequencer.InitialCursorValue, _ringBuffer.Cursor);
+            Assert.AreEqual(Sequence.InitialCursorValue, _ringBuffer.Cursor);
 
             _ringBuffer.Publish(batchDescriptor);
 

@@ -181,7 +181,7 @@ namespace Disruptor.Tests
 
         private class StubEventProcessor : IEventProcessor
         {
-            private readonly Sequence _sequence = new Sequence(Sequencer.InitialCursorValue);
+            private readonly Sequence _sequence = new Sequence(Sequence.InitialCursorValue);
 
             public StubEventProcessor(long sequence)
             {

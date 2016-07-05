@@ -33,7 +33,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldGetInitialSequence()
         {
-            Assert.AreEqual(Sequencer.InitialCursorValue, _claimStrategy.Sequence);
+            Assert.AreEqual(Sequence.InitialCursorValue, _claimStrategy.Sequence);
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace Disruptor.Tests
             var dependentSequence = new Mock<Sequence>();
             
             Sequence[] dependentSequences = { dependentSequence.Object };
-            const long expectedSequence = Sequencer.InitialCursorValue + 1L;
+            const long expectedSequence = Sequence.InitialCursorValue + 1L;
 
             Assert.AreEqual(expectedSequence, _claimStrategy.IncrementAndGet(dependentSequences));
             Assert.AreEqual(expectedSequence, _claimStrategy.Sequence);
@@ -55,7 +55,7 @@ namespace Disruptor.Tests
 
             Sequence[] dependentSequences = { dependentSequence.Object };
             const int batchSize = 5;
-            const long expectedSequence = Sequencer.InitialCursorValue + batchSize;
+            const long expectedSequence = Sequence.InitialCursorValue + batchSize;
 
             Assert.AreEqual(expectedSequence, _claimStrategy.IncrementAndGet(batchSize, dependentSequences));
             Assert.AreEqual(expectedSequence, _claimStrategy.Sequence);
@@ -87,7 +87,7 @@ namespace Disruptor.Tests
         public void ShouldNotHaveAvailableCapacityWhenBufferIsFull()
         {
             var dependentSequence = new Mock<Sequence>();
-            dependentSequence.Setup(ds => ds.Value).Returns(Sequencer.InitialCursorValue);
+            dependentSequence.Setup(ds => ds.Value).Returns(Sequence.InitialCursorValue);
             
             Sequence[] dependentSequences = { dependentSequence.Object };
 
@@ -99,7 +99,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldNotReturnNextClaimSequenceUntilBufferHasReserve()
         {
-            var dependentSequence = new Sequence(Sequencer.InitialCursorValue);
+            var dependentSequence = new Sequence(Sequence.InitialCursorValue);
             Sequence[] dependentSequences = { dependentSequence };
             _claimStrategy.SetSequence(_claimStrategy.BufferSize - 1L, dependentSequences);
 
@@ -132,12 +132,12 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldSerialisePublishingOnTheCursor()
         {
-            var dependentSequence = new Sequence(Sequencer.InitialCursorValue);
+            var dependentSequence = new Sequence(Sequence.InitialCursorValue);
             Sequence[] dependentSequences = { dependentSequence };
 
             long sequence = _claimStrategy.IncrementAndGet(dependentSequences);
 
-            var cursor = new Sequence(Sequencer.InitialCursorValue);
+            var cursor = new Sequence(Sequence.InitialCursorValue);
             _claimStrategy.SerialisePublishing(sequence, cursor, 1);
 
             Assert.AreEqual(sequence, cursor.Value);
@@ -230,11 +230,11 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldSerialisePublishingOnTheCursorWhenTwoThreadsArePublishing()
         {
-            var dependentSequence = new Sequence(Sequencer.InitialCursorValue);
+            var dependentSequence = new Sequence(Sequence.InitialCursorValue);
             var dependentSequences = new[] { dependentSequence };
 
             var threadSequences = new ConcurrentDictionary<long, string>();
-            var cursor = new SequenceStub(Sequencer.InitialCursorValue, threadSequences);
+            var cursor = new SequenceStub(Sequence.InitialCursorValue, threadSequences);
 
             var mre = new ManualResetEvent(false);
 

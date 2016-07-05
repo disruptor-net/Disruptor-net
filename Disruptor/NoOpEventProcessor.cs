@@ -49,7 +49,7 @@ namespace Disruptor
 	        private readonly Sequencer _sequencer;
 
             public SequencerFollowingSequence(Sequencer sequencer)
-                : base(Sequencer.InitialCursorValue)
+                : base(InitialCursorValue)
 	        {
                 _sequencer = sequencer;
 	        }
