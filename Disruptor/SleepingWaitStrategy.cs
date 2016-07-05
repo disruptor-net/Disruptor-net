@@ -1,90 +1,49 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading;
+﻿using System.Threading;
 
 namespace Disruptor
 {
     /// <summary>
-    /// Sleeping strategy that uses a <see cref="SpinWait"/> while the <see cref="IEventProcessor"/>s are waiting on a barrier.
-    /// 
-    /// This strategy is a good compromise between performance and CPU resource. Latency spikes can occur after quiet periods.
+    /// Sleeping strategy that initially spins, then uses a <see cref="Thread.Sleep(int)"/>, and
+    /// eventually sleep(<see cref="SpinWait"/>) for the minimum
+    /// number of nanos the OS and JVM will allow while the
+    /// {@link com.lmax.disruptor.EventProcessor}
+    /// s are waiting on a barrier.
+    /// <para/>
+    /// This strategy is a good compromise between performance and CPU resource.
+    /// Latency spikes can occur after quiet periods.
     /// </summary>
     public sealed class SleepingWaitStrategy : IWaitStrategy
     {
+        private const int _defaultRetries = 200;
+        private readonly int _retries;
+
+        public SleepingWaitStrategy()
+            : this(_defaultRetries)
+        {
+        }
+
+        public SleepingWaitStrategy(int retries)
+        {
+            _retries = retries;
+        }
+
         /// <summary>
         /// Wait for the given sequence to be available
         /// </summary>
         /// <param name="sequence">sequence to be waited on.</param>
         /// <param name="cursor">Ring buffer cursor on which to wait.</param>
-        /// <param name="dependents">dependents further back the chain that must advance first</param>
+        /// <param name="dependentSequence">dependents further back the chain that must advance first</param>
         /// <param name="barrier">barrier the <see cref="IEventProcessor"/> is waiting on.</param>
         /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
-        public long WaitFor(long sequence, Sequence cursor, Sequence[] dependents, ISequenceBarrier barrier)
+        public long WaitFor(long sequence, Sequence cursor, Sequence dependentSequence, ISequenceBarrier barrier)
         {
-            long availableSequence;
             var spinWait = default(SpinWait);
-
-            if (dependents.Length == 0)
-            {
-                while ((availableSequence = cursor.Value) < sequence) // volatile read
-                {
-                    barrier.CheckAlert();
-                    spinWait.SpinOnce();
-                }
-            }
-            else
-            {
-                while ((availableSequence = Util.GetMinimumSequence(dependents)) < sequence)
-                {
-                    barrier.CheckAlert();
-                    spinWait.SpinOnce();
-                }
-            }
-
-            return availableSequence;
-        }
-
-        /// <summary>
-        /// Wait for the given sequence to be available with a timeout specified.
-        /// </summary>
-        /// <param name="sequence">sequence to be waited on.</param>
-        /// <param name="cursor">cursor on which to wait.</param>
-        /// <param name="dependents">dependents further back the chain that must advance first</param>
-        /// <param name="barrier">barrier the processor is waiting on.</param>
-        /// <param name="timeout">timeout value to abort after.</param>
-        /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
-        /// <exception cref="AlertException">AlertException if the status of the Disruptor has changed.</exception>
-        public long WaitFor(long sequence, Sequence cursor, Sequence[] dependents, ISequenceBarrier barrier, TimeSpan timeout)
-        {
             long availableSequence;
-            var spinWait = default(SpinWait);
-            var sw = Stopwatch.StartNew();
+            int counter = _retries;
 
-            if (dependents.Length == 0)
+            while ((availableSequence = dependentSequence.Value) < sequence)
             {
-                while ((availableSequence = cursor.Value) < sequence) // volatile read
-                {
-                    barrier.CheckAlert();
-                    spinWait.SpinOnce();
-
-                    if (sw.Elapsed > timeout)
-                    {
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                while ((availableSequence = Util.GetMinimumSequence(dependents)) < sequence)
-                {
-                    barrier.CheckAlert();
-                    spinWait.SpinOnce();
-
-                    if (sw.Elapsed > timeout)
-                    {
-                        break;
-                    }
-                }
+                counter = ApplyWaitMethod(barrier, counter, spinWait);
             }
 
             return availableSequence;
@@ -95,6 +54,27 @@ namespace Disruptor
         /// </summary>
         public void SignalAllWhenBlocking()
         {
+        }
+
+        private static int ApplyWaitMethod(ISequenceBarrier barrier, int counter, SpinWait spinWait)
+        {
+            barrier.CheckAlert();
+
+            if (counter > 100)
+            {
+                --counter;
+            }
+            else if (counter > 0)
+            {
+                --counter;
+                Thread.Sleep(0);
+            }
+            else
+            {
+                spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
+            }
+
+            return counter;
         }
     }
 }

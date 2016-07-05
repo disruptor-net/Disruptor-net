@@ -1,5 +1,3 @@
-using System;
-
 namespace Disruptor
 {
     /// <summary>
@@ -26,13 +24,6 @@ namespace Disruptor
             CheckAlert();
 
             return _waitStrategy.WaitFor(sequence, _cursorSequence, _dependentSequences, this);
-        }
-
-        public long WaitFor(long sequence, TimeSpan timeout)
-        {
-            CheckAlert();
-
-            return _waitStrategy.WaitFor(sequence, _cursorSequence, _dependentSequences, this, timeout);
         }
 
         public long Cursor

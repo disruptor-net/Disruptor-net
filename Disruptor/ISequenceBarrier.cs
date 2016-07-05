@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Disruptor
+﻿namespace Disruptor
 {
     /// <summary>
     /// Coordination barrier for tracking the cursor for producers and sequence of
@@ -15,15 +13,6 @@ namespace Disruptor
         /// <returns>the sequence up to which is available</returns>
         /// <exception cref="AlertException">if a status change has occurred for the Disruptor</exception>
         long WaitFor(long sequence);
-
-        /// <summary>
-        /// Wait for the given sequence to be available for consumption with a time out.
-        /// </summary>
-        /// <param name="sequence">sequence to wait for</param>
-        /// <param name="timeout">timeout value</param>
-        /// <returns>the sequence up to which is available</returns>
-        /// <exception cref="AlertException">if a status change has occurred for the Disruptor</exception>
-        long WaitFor(long sequence, TimeSpan timeout);
 
         /// <summary>
         /// Delegate a call to the <see cref="Sequencer.Cursor"/>
