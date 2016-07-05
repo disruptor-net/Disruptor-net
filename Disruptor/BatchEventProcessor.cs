@@ -13,7 +13,7 @@ namespace Disruptor
     /// <typeparam name="T">Event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
     internal sealed class BatchEventProcessor<T> : IEventProcessor where T : class
     {
-        private readonly RunningFlag _running = new RunningFlag();
+        private volatile int _running;
 
         private readonly IDataProvider<T> _dataProvider;
         private readonly ISequenceBarrier _sequenceBarrier;
@@ -47,11 +47,11 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running.MarkAsStopped();
+            _running = 0;
             _sequenceBarrier.Alert();
         }
 
-        public bool IsRunning => _running.IsRunning;
+        public bool IsRunning => _running == 1;
 
         /// <summary>
         /// Set a new <see cref="IExceptionHandler"/> for handling exceptions propagated out of the <see cref="BatchEventProcessor{T}"/>
@@ -69,7 +69,10 @@ namespace Disruptor
         /// </summary>
         public void Run()
         {
-            _running.MarkAsRunning();
+            if (Interlocked.Exchange(ref _running, 1) != 0)
+            {
+                throw new InvalidOperationException("Thread is already running");
+            }
             _sequenceBarrier.ClearAlert();
             
             NotifyStart();
@@ -99,7 +102,7 @@ namespace Disruptor
                     }
                     catch (AlertException)
                     {
-                        if (!_running.IsRunning)
+                        if (_running == 0)
                         {
                             break;
                         }
@@ -115,7 +118,7 @@ namespace Disruptor
             finally
             {
                 NotifyShutdown();
-                _running.MarkAsStopped();
+                _running = 0;
             }
         }
 

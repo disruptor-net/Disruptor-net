@@ -11,7 +11,7 @@ namespace Disruptor
     /// <typeparam name="T">event to be processed by a pool of workers</typeparam>
     public sealed class WorkerPool<T> where T : class 
     {
-        private readonly RunningFlag _running = new RunningFlag();
+        private volatile int _running;
         private readonly Sequence _workSequence = new Sequence(Sequence.InitialCursorValue);
         private readonly RingBuffer<T> _ringBuffer;
         private readonly WorkProcessor<T>[] _workProcessors;
@@ -102,7 +102,10 @@ namespace Disruptor
         /// <exception cref="InvalidOperationException">if the pool has already been started and not halted yet</exception>
         public RingBuffer<T> Start(IExecutor executor)
         {
-            _running.MarkAsRunning("WorkerPool has already been started and cannot be restarted until halted");
+            if (Interlocked.Exchange(ref _running, 1) != 0)
+            {
+                throw new InvalidOperationException("WorkerPool has already been started and cannot be restarted until halted");
+            }
 
             var cursor = _ringBuffer.Cursor;
             _workSequence.Value = cursor;
@@ -135,7 +138,7 @@ namespace Disruptor
                 workProcessor.Halt();
             }
 
-            _running.MarkAsStopped();
+            _running = 0;
         }
 
         /// <summary>
@@ -149,9 +152,9 @@ namespace Disruptor
                 workProcessor.Halt();
             }
 
-            _running.MarkAsStopped();
+            _running = 0;
         }
 
-        public bool IsRunning => _running.IsRunning;
+        public bool IsRunning => _running == 1;
     }
 }

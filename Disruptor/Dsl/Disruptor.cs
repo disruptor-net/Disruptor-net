@@ -12,7 +12,7 @@ namespace Disruptor.Dsl
         private readonly RingBuffer<T> _ringBuffer;
         private readonly IExecutor _executor;
         private readonly ConsumerRepository<T> _consumerRepository = new ConsumerRepository<T>();
-        private readonly RunningFlag _running = new RunningFlag();
+        private volatile int _running;
         private readonly EventPublisher<T> _eventPublisher;
         private IExceptionHandler _exceptionHandler;
 
@@ -253,7 +253,7 @@ namespace Disruptor.Dsl
 
         private void CheckNotStarted()
         {
-            if (_running.IsRunning)
+            if (_running == 1)
             {
                 throw new InvalidOperationException("All event handlers must be added before calling starts.");
             }
@@ -261,7 +261,7 @@ namespace Disruptor.Dsl
 
         private void CheckOnlyStartedOnce()
         {
-            if (!_running.TryMarkAsRunning())
+            if (Interlocked.Exchange(ref _running, 1) != 0)
             {
                 throw new InvalidOperationException("Disruptor.start() must only be called once.");
             }

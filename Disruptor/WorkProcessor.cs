@@ -11,7 +11,7 @@ namespace Disruptor
     /// <typeparam name="T">event implementation storing the details for the work to processed.</typeparam>
     public sealed class WorkProcessor<T> : IEventProcessor, IEventReleaser where T : class 
     {
-        private readonly RunningFlag _running = new RunningFlag();
+        private volatile int _running;
         private readonly Sequence _sequence = new Sequence(Sequence.InitialCursorValue);
         private readonly RingBuffer<T> _ringBuffer;
         private readonly ISequenceBarrier _sequenceBarrier;
@@ -50,18 +50,21 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running.MarkAsStopped();
+            _running = 0;
             _sequenceBarrier.Alert();
         }
 
-        public bool IsRunning => _running.IsRunning;
+        public bool IsRunning => _running == 1;
 
         /// <summary>
         /// It is ok to have another thread re-run this method after a halt().
         /// </summary>
         public void Run()
         {
-            _running.MarkAsRunning();
+            if (Interlocked.Exchange(ref _running, 1) != 0)
+            {
+                throw new InvalidOperationException("Thread is already running");
+            }
             _sequenceBarrier.ClearAlert();
 
             NotifyStart();
@@ -97,7 +100,7 @@ namespace Disruptor
                 }
                 catch (AlertException)
                 {
-                    if (!_running.IsRunning)
+                    if (_running == 0)
                     {
                         break;
                     }
@@ -111,7 +114,7 @@ namespace Disruptor
 
             NotifyShutdown();
 
-            _running.MarkAsStopped();
+            _running = 0;
         }
 
         public void Release()
