@@ -54,8 +54,11 @@
     <Compile Include="BlockingWaitStrategy.cs" />
     <Compile Include="BusySpinWaitStrategy.cs" />
     <Compile Include="Dsl\BasicExecutor.cs" />
+    <Compile Include="Dsl\ExceptionHandlerWrapper.cs" />
     <Compile Include="Dsl\IConsumerInfo.cs" />
+    <Compile Include="Dsl\IEventProcessorFactory.cs" />
     <Compile Include="Dsl\IExecutor.cs" />
+    <Compile Include="Dsl\ProducerType.cs" />
     <Compile Include="Dsl\WorkerPoolInfo.cs" />
     <Compile Include="IDataProvider.cs" />
     <Compile Include="IEventReleaseAware.cs" />
