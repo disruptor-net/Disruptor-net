@@ -1,197 +1,273 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
+using Disruptor.Dsl;
+using Moq;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
 {
-    [TestFixture]
+    [TestFixture(ProducerType.Single)]
+    [TestFixture(ProducerType.Multi)]
     public class SequencerTests
     {
-        private const int BufferSize = 4;
+        private const int _bufferSize = 16;
+        private readonly ProducerType _producerType;
         private Sequencer _sequencer;
         private Sequence _gatingSequence;
+
+        public SequencerTests(ProducerType producerType)
+        {
+            _producerType = producerType;
+        }
+
+        private Sequencer NewProducer(ProducerType producerType, int bufferSize, IWaitStrategy waitStrategy)
+        {
+            switch (producerType)
+            {
+                case ProducerType.Single:
+                    return new SingleProducerSequencer(bufferSize, waitStrategy);
+                case ProducerType.Multi:
+                    return new MultiProducerSequencer(bufferSize, waitStrategy);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(producerType), producerType, null);
+            }
+        }
 
         [SetUp]
         public void SetUp()
         {
-            _gatingSequence = new Sequence(Sequence.InitialCursorValue);
-
-            _sequencer = new Sequencer(new SingleThreadedClaimStrategy(BufferSize), new SleepingWaitStrategy());
-            _sequencer.SetGatingSequences(_gatingSequence);
+            _gatingSequence = new Sequence();
+            _sequencer = NewProducer(_producerType, _bufferSize, new BlockingWaitStrategy());
         }
 
         [Test]
         public void ShouldStartWithInitialValue()
         {
-            Assert.AreEqual(Sequence.InitialCursorValue, _sequencer.Cursor);
+            Assert.AreEqual(0, _sequencer.Next());
         }
 
         [Test]
-        public void ShouldGetPublishFirstSequence()
+        public void ShouldBatchClaim()
         {
-            long sequence = _sequencer.Next();
-            Assert.AreEqual(Sequence.InitialCursorValue, _sequencer.Cursor);
-            Assert.AreEqual(sequence, 0L);
-
-            _sequencer.Publish(sequence);
-            Assert.AreEqual(sequence, _sequencer.Cursor);
+            Assert.AreEqual(3, _sequencer.Next(4));
         }
 
         [Test]
-        public void ShouldIndicateAvailableCapacity()
+        public void ShouldIndicateHasAvailableCapacity()
         {
+            _sequencer.AddGatingSequences(_gatingSequence);
+
             Assert.IsTrue(_sequencer.HasAvailableCapacity(1));
+            Assert.IsTrue(_sequencer.HasAvailableCapacity(_bufferSize));
+            Assert.False(_sequencer.HasAvailableCapacity(_bufferSize + 1));
+
+            _sequencer.Publish(_sequencer.Next());
+
+            Assert.IsTrue(_sequencer.HasAvailableCapacity(_bufferSize - 1));
+            Assert.False(_sequencer.HasAvailableCapacity(_bufferSize));
         }
 
         [Test]
         public void ShouldIndicateNoAvailableCapacity()
         {
-            FillBuffer();
+            _sequencer.AddGatingSequences(_gatingSequence);
+
+            var sequence = _sequencer.Next(_bufferSize);
+            _sequencer.Publish(sequence - (_bufferSize - 1), sequence);
 
             Assert.IsFalse(_sequencer.HasAvailableCapacity(1));
         }
 
         [Test]
-        public void ShouldForceClaimSequence()
-        {
-            const long claimSequence = 3L;
-
-            long sequence = _sequencer.Claim(claimSequence);
-            Assert.AreEqual(Sequence.InitialCursorValue, _sequencer.Cursor);
-            Assert.AreEqual(sequence, claimSequence);
-
-            _sequencer.ForcePublish(sequence);
-            Assert.AreEqual(claimSequence, _sequencer.Cursor);
-        }
-
-        [Test]
-        public void ShouldPublishSequenceBatch()
-        {
-            const int batchSize = 3;
-            var batchDescriptor = new BatchDescriptor(batchSize);
-
-            batchDescriptor = _sequencer.Next(batchDescriptor);
-            Assert.AreEqual(Sequence.InitialCursorValue, _sequencer.Cursor);
-            Assert.AreEqual(batchDescriptor.End, Sequence.InitialCursorValue + batchSize);
-            Assert.AreEqual(batchDescriptor.Size, batchSize);
-
-            _sequencer.Publish(batchDescriptor);
-            Assert.AreEqual(_sequencer.Cursor, Sequence.InitialCursorValue + batchSize);
-        }
-
-        [Test]
-        public void ShouldWaitOnSequence()
-        {
-            var barrier = _sequencer.NewBarrier();
-            long sequence = _sequencer.Next();
-            _sequencer.Publish(sequence);
-
-            Assert.AreEqual(sequence, barrier.WaitFor(sequence));
-        }
-
-        [Test]
-        public void ShouldWaitOnSequenceShowingBatchingEffect()
-        {
-            var barrier = _sequencer.NewBarrier();
-            _sequencer.Publish(_sequencer.Next());
-            _sequencer.Publish(_sequencer.Next());
-
-            long sequence = _sequencer.Next();
-            _sequencer.Publish(sequence);
-
-            Assert.AreEqual(sequence, barrier.WaitFor(Sequence.InitialCursorValue + 1L));
-        }
-
-        [Test]
-        public void ShouldSignalWaitingProcessorWhenSequenceIsPublished()
-        {
-            var barrier = _sequencer.NewBarrier();
-            var waitingLatch = new ManualResetEvent(false);
-            var doneLatch = new ManualResetEvent(false);
-            const long expectedSequence = Sequence.InitialCursorValue + 1L;
-
-            new Thread(
-                () =>
-                    {
-                        waitingLatch.Set();
-                        Assert.AreEqual(expectedSequence, barrier.WaitFor(expectedSequence));
-
-                        _gatingSequence.Value = expectedSequence;
-                        doneLatch.Set();
-                    }).Start();
-
-            waitingLatch.WaitOne();
-            Assert.AreEqual(_gatingSequence.Value, Sequence.InitialCursorValue);
-
-            _sequencer.Publish(_sequencer.Next());
-
-            doneLatch.WaitOne();
-            Assert.AreEqual(_gatingSequence.Value, expectedSequence);
-        }
-
-        [Test]
         public void ShouldHoldUpPublisherWhenBufferIsFull()
         {
-            FillBuffer();
+            _sequencer.AddGatingSequences(_gatingSequence);
+            var sequence = _sequencer.Next(_bufferSize);
+            _sequencer.Publish(sequence - (_bufferSize - 1), sequence);
 
-            var waitingLatch = new ManualResetEvent(false);
-            var doneLatch = new ManualResetEvent(false);
+            var waitingSignal = new ManualResetEvent(false);
+            var doneSignal = new ManualResetEvent(false);
 
-            long expectedFullSequence = Sequence.InitialCursorValue + _sequencer.BufferSize;
-            Assert.AreEqual(_sequencer.Cursor, expectedFullSequence);
+            var expectedFullSequence = Sequence.InitialCursorValue + _sequencer.BufferSize;
+            Assert.That(_sequencer.Cursor, Is.EqualTo(expectedFullSequence));
 
-            new Thread(
-                ()=>
-                    {
-                        waitingLatch.Set();
+            RunAsync(() =>
+                     {
+                         waitingSignal.Set();
 
-                        _sequencer.Publish(_sequencer.Next());
+                         var next = _sequencer.Next();
+                         _sequencer.Publish(next);
 
-                        doneLatch.Set();
-                    }).Start();
+                         doneSignal.Set();
+                     });
 
-            waitingLatch.WaitOne();
-            Assert.AreEqual(_sequencer.Cursor, expectedFullSequence);
+            waitingSignal.WaitOne(TimeSpan.FromMilliseconds(500));
+            Assert.That(_sequencer.Cursor, Is.EqualTo(expectedFullSequence));
 
             _gatingSequence.Value = Sequence.InitialCursorValue + 1L;
 
-            doneLatch.WaitOne();
-            Assert.AreEqual(_sequencer.Cursor, expectedFullSequence + 1L);
+            doneSignal.WaitOne(TimeSpan.FromMilliseconds(500));
+            Assert.That(_sequencer.Cursor, Is.EqualTo(expectedFullSequence + 1L));
         }
 
         [Test]
         [ExpectedException(typeof(InsufficientCapacityException))]
         public void ShouldThrowInsufficientCapacityExceptionWhenSequencerIsFull()
         {
-            _sequencer.TryNext(5);
-        }
+            _sequencer.AddGatingSequences(_gatingSequence);
 
-        [Test]
-        [ExpectedException(typeof(ArgumentOutOfRangeException))]
-        public void ShouldRejectAvailableCapcityLessThanOne()
-        {
-            _sequencer.TryNext(0);
+            for (var i = 0; i < _bufferSize; i++)
+            {
+                _sequencer.Next();
+            }
+            _sequencer.TryNext();
         }
 
         [Test]
         public void ShouldCalculateRemainingCapacity()
         {
-            Assert.AreEqual(4L, _sequencer.RemainingCapacity());
-            _sequencer.Publish(_sequencer.Next());
-            Assert.AreEqual(3L, _sequencer.RemainingCapacity());
-            _sequencer.Publish(_sequencer.Next());
-            Assert.AreEqual(2L, _sequencer.RemainingCapacity());
-            _sequencer.Publish(_sequencer.Next());
-            Assert.AreEqual(1L, _sequencer.RemainingCapacity());
+            _sequencer.AddGatingSequences(_gatingSequence);
+
+            Assert.That(_sequencer.GetRemainingCapacity(), Is.EqualTo(_bufferSize));
+
+            for (var i = 1; i < _bufferSize; i++)
+            {
+                _sequencer.Next();
+                Assert.That(_sequencer.GetRemainingCapacity(), Is.EqualTo(_bufferSize - i));
+            }
         }
 
-        private void FillBuffer()
+        [Test]
+        public void ShoundNotBeAvailableUntilPublished()
         {
-            for (int i = 0; i < BufferSize; i++)
+            var next = _sequencer.Next(6);
+
+            for (var i = 0; i <= 5; i++)
             {
-                long sequence = _sequencer.Next();
-                _sequencer.Publish(sequence);
+                Assert.That(_sequencer.IsAvailable(i), Is.False);
             }
+
+            _sequencer.Publish(next - (6 - 1), next);
+
+            for (var i = 0; i <= 5; i++)
+            {
+                Assert.That(_sequencer.IsAvailable(i), Is.True);
+            }
+
+            Assert.That(_sequencer.IsAvailable(6), Is.False);
+        }
+
+        [Test]
+        public void ShouldNotifyWaitStrategyOnPublish()
+        {
+            var waitStrategyMock = new Mock<IWaitStrategy>();
+            var sequencer = NewProducer(_producerType, _bufferSize, waitStrategyMock.Object);
+
+            sequencer.Publish(sequencer.Next());
+
+            waitStrategyMock.Verify(x => x.SignalAllWhenBlocking(), Times.Once());
+        }
+
+        [Test]
+        public void ShouldNotifyWaitStrategyOnPublishBatch()
+        {
+            var waitStrategyMock = new Mock<IWaitStrategy>();
+            var sequencer = NewProducer(_producerType, _bufferSize, waitStrategyMock.Object);
+
+            var next = _sequencer.Next(4);
+            sequencer.Publish(next - (4 - 1), next);
+
+            waitStrategyMock.Verify(x => x.SignalAllWhenBlocking(), Times.Once());
+        }
+
+        [Test]
+        public void ShouldWaitOnPublication()
+        {
+            var barrier = _sequencer.NewBarrier();
+
+            var next = _sequencer.Next(10);
+            var lo = next - (10 - 1);
+            var mid = next - 5;
+
+            for (var l = lo; l < mid; l++)
+            {
+                _sequencer.Publish(l);
+            }
+
+            Assert.That(barrier.WaitFor(-1), Is.EqualTo(mid - 1));
+
+            for (var l = mid; l <= next; l++)
+            {
+                _sequencer.Publish(l);
+            }
+            Assert.That(barrier.WaitFor(-1), Is.EqualTo(next));
+        }
+
+        [Test]
+        public void ShouldTryNext()
+        {
+            _sequencer.AddGatingSequences(_gatingSequence);
+
+            for (int i = 0; i < _bufferSize; i++)
+            {
+                _sequencer.Publish(_sequencer.TryNext());
+            }
+
+            try
+            {
+                _sequencer.TryNext();
+                throw new ApplicationException("Should of thrown: " + nameof(InsufficientCapacityException));
+            }
+            catch (InsufficientCapacityException e)
+            {
+                // No-op
+            }
+        }
+
+        [Test]
+        public void ShouldClaimSpecificSequence()
+        {
+            long sequence = 14L;
+
+            _sequencer.Claim(sequence);
+            _sequencer.Publish(sequence);
+            Assert.That(_sequencer.Next(), Is.EqualTo(sequence + 1));
+        }
+        
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+        public void ShouldNotAllowBulkNextLessThanZero()
+        {
+            _sequencer.Next(-1);
+        }
+
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+        public void ShouldNotAllowBulkNextOfZero()
+        {
+            _sequencer.Next(0);
+        }
+
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+
+        public void ShouldNotAllowBulkTryNextLessThanZero()
+        {
+            _sequencer.TryNext(-1);
+        }
+
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+
+        public void ShouldNotAllowBulkTryNextOfZero()
+        {
+            _sequencer.TryNext(0);
+        }
+
+        private Task RunAsync(Action action)
+        {
+            return Task.Factory.StartNew(action);
         }
     }
 }

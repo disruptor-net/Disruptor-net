@@ -132,8 +132,9 @@ namespace Disruptor
         /// </summary>
         public override long GetRemainingCapacity()
         {
-            long consumed = Util.GetMinimumSequence(_gatingSequences.ReadFullFence());
-            long produced = _cursor.Value;
+            var nextValue = _nextValue.ReadUnfenced();
+            long consumed = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), nextValue);
+            long produced = nextValue;
             return BufferSize - (produced - consumed);
         }
 

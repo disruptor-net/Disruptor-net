@@ -25,7 +25,7 @@ namespace Disruptor
             {
                 throw new ArgumentException("bufferSize must not be less than 1");
             }
-            if (bufferSize.IsPowerOf2())
+            if (!bufferSize.IsPowerOf2())
             {
                 throw new ArgumentException("bufferSize must be a power of 2");
             }
@@ -174,7 +174,7 @@ namespace Disruptor
         /// <param name="gatingSequences">The sequences to add.</param>
         public void AddGatingSequences(params Sequence[] gatingSequences)
         {
-            SequenceGroups.AddSequences(_gatingSequences, this, gatingSequences);
+            SequenceGroups.AddSequences(ref _gatingSequences, this, gatingSequences);
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace Disruptor
         /// <returns>true if this sequence was found, false otherwise.</returns>
         public bool RemoveGatingSequence(Sequence sequence)
         {
-            return SequenceGroups.RemoveSequence(_gatingSequences, sequence);
+            return SequenceGroups.RemoveSequence(ref _gatingSequences, sequence);
         }
 
         /// <summary>

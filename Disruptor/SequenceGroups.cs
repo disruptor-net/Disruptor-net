@@ -8,7 +8,7 @@ namespace Disruptor
     /// </summary>
     internal static class SequenceGroups
     {
-        public static void AddSequences(Volatile.Reference<Sequence[]> sequences, ICursored cursor, params Sequence[] sequencesToAdd) 
+        public static void AddSequences(ref Volatile.Reference<Sequence[]> sequences, ICursored cursor, params Sequence[] sequencesToAdd) 
         {
             long cursorSequence;
             Sequence[] updatedSequences;
@@ -18,7 +18,7 @@ namespace Disruptor
             {
                 currentSequences = sequences.ReadFullFence();
                 updatedSequences = new Sequence[currentSequences.Length + sequencesToAdd.Length];
-                Array.Copy(currentSequences, updatedSequences, currentSequences.Length + sequencesToAdd.Length);
+                Array.Copy(currentSequences, updatedSequences, currentSequences.Length);
                 cursorSequence = cursor.GetCursor();
 
                 var index = currentSequences.Length;
@@ -36,7 +36,7 @@ namespace Disruptor
             }
         }
 
-        public static bool RemoveSequence(Volatile.Reference<Sequence[]> sequences, Sequence sequence)
+        public static bool RemoveSequence(ref Volatile.Reference<Sequence[]> sequences, Sequence sequence)
         {
             int numToRemove;
             Sequence[] oldSequences;

@@ -76,7 +76,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">sequence to be removed from this aggregate.</param>
         /// <returns>true if the sequence was removed otherwise false.</returns>
-        public bool Remove(Sequence sequence) => SequenceGroups.RemoveSequence(_sequencesRef, sequence);
+        public bool Remove(Sequence sequence) => SequenceGroups.RemoveSequence(ref _sequencesRef, sequence);
 
         /// <summary>
         /// Get the size of the group.
@@ -92,7 +92,7 @@ namespace Disruptor
         /// <param name="sequence">The sequence to add</param>
         public void AddWhileRunning(ICursored cursored, Sequence sequence)
         {
-            SequenceGroups.AddSequences(_sequencesRef, cursored, sequence);
+            SequenceGroups.AddSequences(ref _sequencesRef, cursored, sequence);
         }
     }
 }

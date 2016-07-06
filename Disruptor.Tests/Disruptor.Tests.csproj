@@ -61,6 +61,7 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SequenceGroupTests.cs" />
+    <Compile Include="SequencerTests.cs" />
     <Compile Include="Support\LongEvent.cs" />
     <Compile Include="Support\StubEvent.cs" />
     <Compile Include="Support\TestWaiter.cs" />
