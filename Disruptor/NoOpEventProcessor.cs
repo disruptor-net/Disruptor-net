@@ -4,19 +4,19 @@ using System.Threading;
 namespace Disruptor
 {
     /// <summary>
-    /// No operation version of a <see cref="IEventProcessor"/> that simply tracks a <see cref="Sequencer"/>.
+    /// No operation version of a <see cref="IEventProcessor"/> that simply tracks a <see cref="Disruptor.Sequence"/>.
     /// This is useful in tests or for pre-filling a <see cref="RingBuffer{T}"/> from a producer.
     /// </summary>
-    public sealed class NoOpEventProcessor : IEventProcessor
+    public sealed class NoOpEventProcessor<T> : IEventProcessor where T : class 
     {
         private readonly SequencerFollowingSequence _sequence;
         private volatile int _running;
 
         /// <summary>
-        /// Construct a <see cref="IEventProcessor"/> that simply tracks a <see cref="Sequencer"/>.
+        /// Construct a <see cref="IEventProcessor"/> that simply tracks a <see cref="Disruptor.Sequence"/>.
         /// </summary>
         /// <param name="sequencer">sequencer to track.</param>
-        public NoOpEventProcessor(Sequencer sequencer)
+        public NoOpEventProcessor(RingBuffer<T> sequencer)
         {
             _sequence = new SequencerFollowingSequence(sequencer);
         }
@@ -49,9 +49,9 @@ namespace Disruptor
 
 	    private sealed class SequencerFollowingSequence : Sequence
 	    {
-	        private readonly Sequencer _sequencer;
+	        private readonly RingBuffer<T> _sequencer;
 
-            public SequencerFollowingSequence(Sequencer sequencer)
+            public SequencerFollowingSequence(RingBuffer<T> sequencer)
                 : base(InitialCursorValue)
 	        {
                 _sequencer = sequencer;

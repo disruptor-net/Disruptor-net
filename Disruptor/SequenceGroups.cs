@@ -3,7 +3,10 @@ using System.Threading;
 
 namespace Disruptor
 {
-    public static class SequenceGroups
+    /// <summary>
+    /// Provides static methods for managing a <see cref="SequenceGroup"/> object
+    /// </summary>
+    internal static class SequenceGroups
     {
         public static void AddSequences(Volatile.Reference<Sequence[]> sequences, ICursored cursor, params Sequence[] sequencesToAdd) 
         {
@@ -18,8 +21,8 @@ namespace Disruptor
                 Array.Copy(currentSequences, updatedSequences, currentSequences.Length + sequencesToAdd.Length);
                 cursorSequence = cursor.GetCursor();
 
-                int index = currentSequences.Length;
-                foreach (Sequence sequence in sequencesToAdd)
+                var index = currentSequences.Length;
+                foreach (var sequence in sequencesToAdd)
                 {
                     sequence.Value = cursorSequence;
                     updatedSequences[index++] = sequence;
@@ -27,7 +30,7 @@ namespace Disruptor
             } while (!sequences.AtomicCompareExchange(updatedSequences, currentSequences));
 
             cursorSequence = cursor.GetCursor();
-            foreach (Sequence sequence in sequencesToAdd)
+            foreach (var sequence in sequencesToAdd)
             {
                 sequence.Value = cursorSequence;
             }
@@ -45,17 +48,15 @@ namespace Disruptor
 
                 numToRemove = CountMatching(oldSequences, sequence);
 
-                if (0 == numToRemove)
-                {
+                if (numToRemove == 0)
                     break;
-                }
 
-                int oldSize = oldSequences.Length;
+                var oldSize = oldSequences.Length;
                 newSequences = new Sequence[oldSize - numToRemove];
 
                 for (int i = 0, pos = 0; i < oldSize; i++)
                 {
-                    Sequence testSequence = oldSequences[i];
+                    var testSequence = oldSequences[i];
                     if (sequence != testSequence)
                     {
                         newSequences[pos++] = testSequence;
@@ -69,8 +70,8 @@ namespace Disruptor
 
         private static int CountMatching<T>(T[] values, T toMatch)
         {
-            int numToRemove = 0;
-            foreach (T value in values)
+            var numToRemove = 0;
+            foreach (var value in values)
             {
                 if (ReferenceEquals(value, toMatch)) // Specifically uses identity
                 {
