@@ -1,5 +1,9 @@
 namespace Disruptor
 {
+    /// <summary>
+    /// Experimental poll-based interface for the Disruptor.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class EventPoller<T>
     {
         private IDataProvider<T> _dataProvider;

@@ -109,6 +109,8 @@
     <Compile Include="SequenceReportingEventHandler.cs" />
     <Compile Include="SingleProducerSequencer.cs" />
     <Compile Include="SingleThreadedClaimStrategy.cs" />
+    <Compile Include="TimeoutBlockingWaitStrategy.cs" />
+    <Compile Include="TimeoutException.cs" />
     <Compile Include="Util\Util.cs" />
     <Compile Include="SleepingWaitStrategy.cs" />
     <Compile Include="WorkerPool.cs" />
