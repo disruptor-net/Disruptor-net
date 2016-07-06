@@ -67,6 +67,7 @@
     <Compile Include="IEventReleaseAware.cs" />
     <Compile Include="IEventReleaser.cs" />
     <Compile Include="IEventSequencer.cs" />
+    <Compile Include="IEventSink.cs" />
     <Compile Include="IEventTranslatorOneArg.cs" />
     <Compile Include="IEventTranslatorThreeArg.cs" />
     <Compile Include="IEventTranslatorTwoArg.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="MultiThreadedClaimStrategy.cs" />
     <Compile Include="MultiThreadedLowContentionClaimStrategy.cs" />
     <Compile Include="MutableLong.cs" />
+    <Compile Include="PhasedBackoffWaitStrategy.cs" />
     <Compile Include="ProcessingSequenceBarrier.cs" />
     <Compile Include="BatchEventProcessor.cs" />
     <Compile Include="Collections\Histogram.cs" />

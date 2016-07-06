@@ -8,7 +8,7 @@ namespace Disruptor
     ///     publisher and <see cref="IEventProcessor" />s.
     /// </summary>
     /// <typeparam name="T">implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
-    public sealed class RingBuffer<T> : IEventSequencer<T>
+    public sealed class RingBuffer<T> : IEventSequencer<T>, IEventSink<T>
         where T : class
     {
         private readonly int _indexMask;
