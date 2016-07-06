@@ -66,6 +66,7 @@
     <Compile Include="SequenceGroupTests.cs" />
     <Compile Include="SequencerTests.cs" />
     <Compile Include="SequenceUpdater.cs" />
+    <Compile Include="ShutdownOnFatalExceptionTest.cs" />
     <Compile Include="SleepingWaitStrategyTests.cs" />
     <Compile Include="Support\LongEvent.cs" />
     <Compile Include="Support\StubEvent.cs" />
