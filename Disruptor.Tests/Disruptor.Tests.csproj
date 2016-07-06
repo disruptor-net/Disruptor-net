@@ -69,6 +69,7 @@
     <Compile Include="SleepingWaitStrategyTests.cs" />
     <Compile Include="Support\LongEvent.cs" />
     <Compile Include="Support\StubEvent.cs" />
+    <Compile Include="Support\TestEvent.cs" />
     <Compile Include="Support\TestWaiter.cs" />
     <Compile Include="TimeoutBlockingWaitStrategyTest.cs" />
     <Compile Include="UtilTests.cs" />
