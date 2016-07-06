@@ -3,6 +3,9 @@ using System.Linq;
 
 namespace Disruptor
 {
+    /// <summary>
+    /// Hides a group of Sequences behind a single Sequence
+    /// </summary>
     internal sealed class FixedSequenceGroup : Sequence
     {
         private readonly Sequence[] _sequences;
@@ -13,6 +16,16 @@ namespace Disruptor
         {
             _sequences = new Sequence[sequences.Length];
             sequences.CopyTo(_sequences, 0);
+        }
+
+        /// <summary>
+        /// Get the minimum sequence value for the group.
+        /// Set not supported.
+        /// </summary>
+        public override long Value
+        {
+            get { return Util.GetMinimumSequence(_sequences); }
+            set { throw new NotImplementedException(); }
         }
 
         /// <summary>
