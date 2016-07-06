@@ -25,7 +25,7 @@ namespace Disruptor
         public override long Value
         {
             get { return Util.GetMinimumSequence(_sequences); }
-            set { throw new NotImplementedException(); }
+            set { throw new NotSupportedException(); }
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Disruptor
         /// <returns></returns>
         public override bool CompareAndSet(long expectedValue, long newValue)
         {
-            throw new InvalidOperationException();
+            throw new NotSupportedException();
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace Disruptor
         /// <returns></returns>
         public override long IncrementAndGet()
         {
-            throw new InvalidOperationException();
+            throw new NotSupportedException();
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace Disruptor
         /// <returns></returns>
         public override long AddAndGet(long increment)
         {
-            throw new InvalidOperationException();
+            throw new NotSupportedException();
         }
 
         public override string ToString()

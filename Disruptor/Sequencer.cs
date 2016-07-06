@@ -17,7 +17,7 @@ namespace Disruptor
         /// <summary>
         /// Construct a Sequencer with the selected strategies.
         /// </summary>
-        /// <param name="claimStrategy">claimStrategy for those claiming sequences.</param>
+        /// <param name="bufferSize"></param>
         /// <param name="waitStrategy">waitStrategy for those waiting on sequences.</param>
         public Sequencer(int bufferSize, IWaitStrategy waitStrategy)
         {
@@ -177,6 +177,11 @@ namespace Disruptor
             SequenceGroups.AddSequences(_gatingSequences, this, gatingSequences);
         }
 
+        /// <summary>
+        /// Remove the specified sequence from this sequencer.
+        /// </summary>
+        /// <param name="sequence">to be removed.</param>
+        /// <returns>true if this sequence was found, false otherwise.</returns>
         public bool RemoveGatingSequence(Sequence sequence)
         {
             return SequenceGroups.RemoveSequence(_gatingSequences, sequence);
