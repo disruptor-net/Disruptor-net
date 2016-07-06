@@ -1,40 +1,45 @@
 namespace Disruptor
 {
     /// <summary>
-    /// <see cref="ISequenceBarrier"/> handed out for gating <see cref="IEventProcessor"/> on a cursor sequence and optional dependent <see cref="IEventProcessor"/>s
+    /// <see cref="ISequenceBarrier"/> handed out for gating <see cref="IEventProcessor"/> on a cursor sequence and optional dependent <see cref="IEventProcessor"/>s,
+    ///  using the given WaitStrategy.
     /// </summary>
     internal sealed class ProcessingSequenceBarrier : ISequenceBarrier
     {
         private readonly IWaitStrategy _waitStrategy;
+        private readonly Sequence _dependentSequence;
         private readonly Sequence _cursorSequence;
-        private readonly Sequence[] _dependentSequences;
+        private readonly Sequencer _sequencer;
+
         private volatile bool _alerted;
 
-        public ProcessingSequenceBarrier(IWaitStrategy waitStrategy, 
-                               Sequence cursorSequence, 
-                               Sequence[] dependentSequences)
+        public ProcessingSequenceBarrier(Sequencer sequencer, 
+                                         IWaitStrategy waitStrategy, 
+                                         Sequence cursorSequence, 
+                                         Sequence[] dependentSequences)
         {
             _waitStrategy = waitStrategy;
             _cursorSequence = cursorSequence;
-            _dependentSequences = dependentSequences;
+            _sequencer = sequencer;
+
+            _dependentSequence = 0 == dependentSequences.Length ? cursorSequence : new FixedSequenceGroup(dependentSequences);
         }
 
         public long WaitFor(long sequence)
         {
             CheckAlert();
 
-            return _waitStrategy.WaitFor(sequence, _cursorSequence, _dependentSequences, this);
+            var availableSequence = _waitStrategy.WaitFor(sequence, _cursorSequence, _dependentSequence, this);
+
+            if (availableSequence < sequence)
+                return availableSequence;
+
+            return _sequencer.GetHighestPublishedSequence(sequence, availableSequence);
         }
 
-        public long Cursor
-        {
-            get { return _cursorSequence.Value; }
-        }
+        public long Cursor => _dependentSequence.Value;
 
-        public bool IsAlerted
-        {
-            get { return _alerted; }
-        }
+        public bool IsAlerted => _alerted;
 
         public void Alert()
         {
