@@ -3,10 +3,9 @@ using System;
 namespace Disruptor
 {
     /// <summary>
-    /// Convenience implementation of an exception handler that using Console.WriteLine to log
-    /// the exception
+    /// Convenience implementation of an exception handler that using Console.WriteLine to log the exception
     /// </summary>
-    public class IgnoreExceptionHandler : IExceptionHandler
+    public class IgnoreExceptionHandler : IExceptionHandler<object>
     {
         /// <summary>
         /// Strategy for handling uncaught exceptions when processing an event.
@@ -16,7 +15,7 @@ namespace Disruptor
         /// <param name="evt">event being processed when the exception occurred.</param>
         public void HandleEventException(Exception ex, long sequence, object evt)
         {
-            var message = string.Format("Exception processing sequence {0} for event {1}: {2}", sequence, evt, ex);
+            var message = $"Exception processing sequence {sequence} for event {evt}: {ex}";
 
             Console.WriteLine(message);
         }
@@ -27,7 +26,7 @@ namespace Disruptor
         /// <param name="ex">ex throw during the starting process.</param>
         public void HandleOnStartException(Exception ex)
         {
-            var message = string.Format("Exception during OnStart(): {0}", ex);
+            var message = $"Exception during OnStart(): {ex}";
 
             Console.WriteLine(message);
         }
@@ -38,7 +37,7 @@ namespace Disruptor
         /// <param name="ex">ex throw during the shutdown process.</param>
         public void HandleOnShutdownException(Exception ex)
         {
-            var message = string.Format("Exception during OnShutdown(): {0}", ex);
+            var message = $"Exception during OnShutdown(): {ex}";
 
             Console.WriteLine(message);
         }
