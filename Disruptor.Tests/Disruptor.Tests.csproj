@@ -53,6 +53,7 @@
       <Link>Version.cs</Link>
     </Compile>
     <Compile Include="AggregateEventHandlerTests.cs" />
+    <Compile Include="BatchEventProcessorTests.cs" />
     <Compile Include="BusySpinWaitStrategyTests.cs" />
     <Compile Include="Collections\HistogramTests.cs" />
     <Compile Include="DummySequenceBarrier.cs" />
