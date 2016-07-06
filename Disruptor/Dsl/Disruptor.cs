@@ -270,7 +270,7 @@ namespace Disruptor.Dsl
             while (HasBacklog())
             {
                 if (DateTime.UtcNow > timeoutAt)
-                    throw new TimeoutException();
+                    throw TimeoutException.Instance;
             }
             Halt();
         }
@@ -343,12 +343,12 @@ namespace Disruptor.Dsl
             return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
         }
 
-        private EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IEventProcessorFactory<T>[] processorFactories)
+        internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IEventProcessorFactory<T>[] processorFactories)
         {
             return HandleEventsWith(processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, barrierSequences)).ToArray());
         }
 
-        private EventHandlerGroup<T> CreateWorkerPool(Sequence[] barrierSequences, IWorkHandler<T>[] workHandlers)
+        internal EventHandlerGroup<T> CreateWorkerPool(Sequence[] barrierSequences, IWorkHandler<T>[] workHandlers)
         {
             var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
             var workerPool = new WorkerPool<T>(_ringBuffer, sequenceBarrier, _exceptionHandler, workHandlers);

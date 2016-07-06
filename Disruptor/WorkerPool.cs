@@ -14,6 +14,7 @@ namespace Disruptor
         private volatile int _running;
         private readonly Sequence _workSequence = new Sequence(Sequence.InitialCursorValue);
         private readonly RingBuffer<T> _ringBuffer;
+        // WorkProcessors are created to wrap each of the provided WorkHandlers
         private readonly WorkProcessor<T>[] _workProcessors;
 
         /// <summary>
@@ -37,10 +38,10 @@ namespace Disruptor
             for (var i = 0; i < workHandlers.Length; i++)
             {
                 _workProcessors[i] = new WorkProcessor<T>(ringBuffer,
-                                                         sequenceBarrier,
-                                                         workHandlers[i],
-                                                         exceptionHandler,
-                                                         _workSequence);
+                                                          sequenceBarrier,
+                                                          workHandlers[i],
+                                                          exceptionHandler,
+                                                          _workSequence);
             }
         }
 
@@ -57,24 +58,24 @@ namespace Disruptor
         public WorkerPool(Func<T> eventFactory,
                           IClaimStrategy claimStrategy,
                           IWaitStrategy waitStrategy,
-                          IExceptionHandler exceptionHandler,
+                          IExceptionHandler<T> exceptionHandler,
                           params IWorkHandler<T>[] workHandlers)
 
         {
-            _ringBuffer = new RingBuffer<T>(eventFactory, claimStrategy, waitStrategy); // TODO : Build with RingBuffer.CreateMultiProducer
+            _ringBuffer = RingBuffer<T>.CreateMultiProducer(eventFactory, 1024, new BlockingWaitStrategy());
             var barrier = _ringBuffer.NewBarrier();
             _workProcessors = new WorkProcessor<T>[workHandlers.Length];
 
             for (var i = 0; i < workHandlers.Length; i++)
             {
                 _workProcessors[i] = new WorkProcessor<T>(_ringBuffer,
-                                                         barrier,
-                                                         workHandlers[i],
-                                                         exceptionHandler,
-                                                         _workSequence);
+                                                          barrier,
+                                                          workHandlers[i],
+                                                          exceptionHandler,
+                                                          _workSequence);
             }
 
-            _ringBuffer.SetGatingSequences(WorkerSequences);
+            _ringBuffer.AddGatingSequences(WorkerSequences);
         }
 
         /// <summary>
@@ -132,9 +133,8 @@ namespace Disruptor
                 Thread.Sleep(0);
             }
 
-            for (var i = 0; i < _workProcessors.Length; i++)
+            foreach (var workProcessor in _workProcessors)
             {
-                var workProcessor = _workProcessors[i];
                 workProcessor.Halt();
             }
 
@@ -146,9 +146,8 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            for (var i = 0; i < _workProcessors.Length; i++)
+            foreach (var workProcessor in _workProcessors)
             {
-                var workProcessor = _workProcessors[i];
                 workProcessor.Halt();
             }
 
