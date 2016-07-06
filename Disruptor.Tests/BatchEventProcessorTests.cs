@@ -23,7 +23,7 @@ namespace Disruptor.Tests
             _batchHandlerMock = new Mock<IEventHandler<StubEvent>>();
             _countDownEvent = new CountdownEvent(1);
             _batchEventProcessor = new BatchEventProcessor<StubEvent>(_ringBuffer, _sequenceBarrier, _batchHandlerMock.Object);
-            _ringBuffer.SetGatingSequences(_batchEventProcessor.Sequence);
+            _ringBuffer.AddGatingSequences(_batchEventProcessor.Sequence);
         }
 
         [Test]
@@ -79,7 +79,7 @@ namespace Disruptor.Tests
         public void ShouldCallExceptionHandlerOnUncaughtException()
         {
             var ex = new Exception();
-            var exceptionHandlerMock = new Mock<IExceptionHandler>();
+            var exceptionHandlerMock = new Mock<IExceptionHandler<object>>();
             _batchEventProcessor.SetExceptionHandler(exceptionHandlerMock.Object);
 
             _batchHandlerMock.Setup(bh => bh.OnEvent(_ringBuffer[0], 0, true))

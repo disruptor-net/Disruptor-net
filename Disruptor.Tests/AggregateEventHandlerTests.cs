@@ -17,10 +17,9 @@ namespace Disruptor.Tests
             _eventHandlerMock2 = new Mock<ILifecycleAwareEventHandler<int[]>>();
             _eventHandlerMock3 = new Mock<ILifecycleAwareEventHandler<int[]>>();
         }
-
             
         [Test]
-        public void ShouldCallOnEvent()
+        public void ShouldCallOnEventInSequence()
         {
             var evt = new[] {7};
             const long sequence = 3L;
@@ -42,7 +41,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldCallOnStart()
+        public void ShouldCallOnStartInSequence()
         {
             var aggregateEventHandler = new AggregateEventHandler<int[]>(_eventHandlerMock1.Object,
                                                                          _eventHandlerMock2.Object,
@@ -60,7 +59,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldCallOnShutdown()
+        public void ShouldCallOnShutdownInSequence()
         {
             var aggregateEventHandler = new AggregateEventHandler<int[]>(_eventHandlerMock1.Object,
                                                                          _eventHandlerMock2.Object,
