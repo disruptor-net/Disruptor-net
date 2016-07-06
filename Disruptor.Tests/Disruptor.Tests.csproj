@@ -53,30 +53,14 @@
       <Link>Version.cs</Link>
     </Compile>
     <Compile Include="AggregateEventHandlerTests.cs" />
-    <Compile Include="BatchPublisherTests.cs" />
     <Compile Include="Collections\HistogramTests.cs" />
-    <Compile Include="BatchEventProcessorTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MultiThreadedClaimStrategyTests.cs" />
-    <Compile Include="SequenceBarrierTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="EventPublisherTests.cs" />
     <Compile Include="FatalExceptionHandlerTests.cs" />
     <Compile Include="IgnoreExceptionHandlerTests.cs" />
     <Compile Include="LifecycleAwareTests.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MultiThreadedLowContentionClaimStrategyTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RingBufferTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="SequenceGroupTests.cs" />
-    <Compile Include="SequenceReportingCallbackTests.cs" />
-    <Compile Include="SequencerTests.cs" />
-    <Compile Include="SingleThreadedClaimStrategyTests.cs" />
     <Compile Include="Support\LongEvent.cs" />
     <Compile Include="Support\StubEvent.cs" />
     <Compile Include="Support\TestWaiter.cs" />

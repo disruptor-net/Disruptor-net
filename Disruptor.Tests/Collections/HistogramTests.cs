@@ -8,19 +8,19 @@ namespace Disruptor.Tests.Collections
     [TestFixture]
     public class HistogramTests
     {
-        private static readonly long[] Intervals = new[]{ 1, 10, 100, 1000, long.MaxValue};
+        private static readonly long[] _intervals = { 1, 10, 100, 1000, long.MaxValue};
         private Histogram _histogram;
 
         [SetUp]
         public void SetUp()
         {
-            _histogram = new Histogram(Intervals);
+            _histogram = new Histogram(_intervals);
         }
 
         [Test]
         public void ShouldSizeBasedOnBucketConfiguration()
         {
-            Assert.AreEqual(Intervals.Length, _histogram.Size);
+            Assert.AreEqual(_intervals.Length, _histogram.Size);
         }
 
         [Test]
@@ -28,7 +28,7 @@ namespace Disruptor.Tests.Collections
         {
             for (var i = 0; i < _histogram.Size; i++)
             {
-                Assert.AreEqual(Intervals[i], _histogram.GetUpperBoundAt(i));
+                Assert.AreEqual(_intervals[i], _histogram.GetUpperBoundAt(i));
             }
         }
 
@@ -74,7 +74,7 @@ namespace Disruptor.Tests.Collections
         {
             AddObservations(_histogram, 10L, 30L, 50L);
 
-            var histogram2 = new Histogram(Intervals);
+            var histogram2 = new Histogram(_intervals);
             AddObservations(histogram2, 10L, 20L, 25L);
 
             _histogram.AddObservations(histogram2);
@@ -89,7 +89,6 @@ namespace Disruptor.Tests.Collections
             var histogram2 = new Histogram(new[]{ 1L, 2L, 3L});
             _histogram.AddObservations(histogram2);
         }
-
 
         [Test]
         public void ShouldClearCounts()
@@ -128,7 +127,7 @@ namespace Disruptor.Tests.Collections
             var intervals = new long[]{ 100, 110, 120, 130, 140, 150, 1000, 10000 };
             var histogram = new Histogram(intervals);
 
-            for (long i = 100; i < 152; i++)
+            for (var i = 100; i < 152; i++)
             {
                 histogram.AddObservation(i);
             }
