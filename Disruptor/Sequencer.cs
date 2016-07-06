@@ -13,7 +13,6 @@ namespace Disruptor
 
         private readonly IClaimStrategy _claimStrategy;
         protected readonly IWaitStrategy _waitStrategy;
-        private readonly TimeoutException _timeoutExceptionInstance = new TimeoutException();
         protected readonly int _bufferSize;
 
         /// <summary>
@@ -55,7 +54,7 @@ namespace Disruptor
         /// <returns></returns>
         public ISequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
         {
-            return new ProcessingSequenceBarrier(_waitStrategy, _cursor, sequencesToTrack);
+            return new ProcessingSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
         }
 
         /// <summary>
