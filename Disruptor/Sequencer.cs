@@ -56,17 +56,7 @@ namespace Disruptor
         {
             return new ProcessingSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
         }
-
-        /// <summary>
-        /// Create a new <see cref="BatchDescriptor"/> that is the minimum of the requested size and the buffer size.
-        /// </summary>
-        /// <param name="size">size for the batch</param>
-        /// <returns>the new <see cref="BatchDescriptor"/></returns>
-        public BatchDescriptor NewBatchDescriptor(int size)
-        {
-            return new BatchDescriptor(Math.Min(size, _claimStrategy.BufferSize));
-        }
-
+        
         /// <summary>
         /// The capacity of the data structure to hold entries.
         /// </summary>
@@ -123,18 +113,6 @@ namespace Disruptor
         public abstract long TryNext(int n);
 
         /// <summary>
-        /// Claim the next batch of sequence numbers for publishing.
-        /// </summary>
-        /// <param name="batchDescriptor">batchDescriptor to be updated for the batch range.</param>
-        /// <returns>the updated batchDescriptor.</returns>
-        public BatchDescriptor Next(BatchDescriptor batchDescriptor)
-        {
-            long sequence = _claimStrategy.IncrementAndGet(batchDescriptor.Size, _gatingSequences.ReadFullFence());
-            batchDescriptor.End = sequence;
-            return batchDescriptor;
-        }
-
-        /// <summary>
         /// Claim a specific sequence when only one publisher is involved.
         /// </summary>
         /// <param name="sequence">sequence to be claimed.</param>
@@ -176,15 +154,6 @@ namespace Disruptor
         /// <param name="availableSequence">The sequence to scan to.</param>
         /// <returns>The highest value that can be safely read, will be at least <code>nextSequence - 1</code>.</returns>
         public abstract long GetHighestPublishedSequence(long nextSequence, long availableSequence);
-
-        /// <summary>
-        /// Publish the batch of events in sequence.
-        /// </summary>
-        /// <param name="batchDescriptor">batchDescriptor to be published.</param>
-        public void Publish(BatchDescriptor batchDescriptor)
-        {
-            Publish(batchDescriptor.End, batchDescriptor.Size);
-        }
 
         /// <summary>
         /// Force the publication of a cursor sequence.
