@@ -37,6 +37,29 @@ namespace Disruptor
                 throw new ApplicationException("Precise system time is not available so sub-millisecond resolution is not available and this wait strategy is not recommended");
             }
         }
+        
+        /// <summary>
+        /// Block with wait/notifyAll semantics
+        /// </summary>
+        /// <param name="spinTimeout"></param>
+        /// <param name="yieldTimeout"></param>
+        /// <param name="units"></param>
+        /// <returns></returns>
+        public static PhasedBackoffWaitStrategy WithLock(TimeSpan spinTimeout, TimeSpan yieldTimeout)
+        {
+            return new PhasedBackoffWaitStrategy(spinTimeout, yieldTimeout, new BlockingWaitStrategy());
+        }
+
+        /// <summary>
+        /// Block by sleeping in a loop
+        /// </summary>
+        /// <param name="spinTimeout"></param>
+        /// <param name="yieldTimeout"></param>
+        /// <returns></returns>
+        public static PhasedBackoffWaitStrategy WithSleep(TimeSpan spinTimeout, TimeSpan yieldTimeout)
+        {
+            return new PhasedBackoffWaitStrategy(spinTimeout, yieldTimeout, new SleepingWaitStrategy(0));
+        }
 
         public long WaitFor(long sequence, Sequence cursor, Sequence dependentSequence, ISequenceBarrier barrier)
         {
@@ -64,7 +87,7 @@ namespace Disruptor
                             return _fallbackStrategy.WaitFor(sequence, cursor, dependentSequence, barrier);
 
                         if (timeDelta > _spinDurationInTicks)
-                            Thread.Yield(); 
+                            Thread.Yield();
                     }
                     counter = _spinTries;
                 }
