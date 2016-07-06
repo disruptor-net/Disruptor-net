@@ -11,7 +11,6 @@ namespace Disruptor
         protected readonly Sequence _cursor = new Sequence(Sequence.InitialCursorValue);
         protected Volatile.Reference<Sequence[]> _gatingSequences = new Volatile.Reference<Sequence[]>(new Sequence[0]);
 
-        private readonly IClaimStrategy _claimStrategy;
         protected readonly IWaitStrategy _waitStrategy;
         protected readonly int _bufferSize;
 
@@ -60,7 +59,7 @@ namespace Disruptor
         /// <summary>
         /// The capacity of the data structure to hold entries.
         /// </summary>
-        public int BufferSize => _claimStrategy.BufferSize;
+        public int BufferSize => _bufferSize;
 
         /// <summary>
         /// Get the value of the cursor indicating the published sequence.
@@ -165,12 +164,6 @@ namespace Disruptor
         public void ForcePublish(long sequence)
         {
             _cursor.LazySet(sequence);
-            _waitStrategy.SignalAllWhenBlocking();
-        }
-
-        private void Publish(long sequence, int batchSize)
-        {
-            _claimStrategy.SerialisePublishing(sequence, _cursor, batchSize);
             _waitStrategy.SignalAllWhenBlocking();
         }
 

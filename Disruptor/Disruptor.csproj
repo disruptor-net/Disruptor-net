@@ -48,7 +48,6 @@
     <Compile Include="..\Version.cs">
       <Link>Version.cs</Link>
     </Compile>
-    <Compile Include="AbstractMultiThreadedClaimStrategy.cs" />
     <Compile Include="AggregateEventHandler.cs" />
     <Compile Include="AlertException.cs" />
     <Compile Include="BlockingWaitStrategy.cs" />
@@ -84,8 +83,6 @@
     <Compile Include="ISequenced.cs" />
     <Compile Include="IWorkHandler.cs" />
     <Compile Include="MultiProducerSequencer.cs" />
-    <Compile Include="MultiThreadedClaimStrategy.cs" />
-    <Compile Include="MultiThreadedLowContentionClaimStrategy.cs" />
     <Compile Include="MutableLong.cs" />
     <Compile Include="PhasedBackoffWaitStrategy.cs" />
     <Compile Include="ProcessingSequenceBarrier.cs" />
@@ -96,7 +93,6 @@
     <Compile Include="Dsl\ConsumerRepository.cs" />
     <Compile Include="ILifecycleAware.cs" />
     <Compile Include="IEventHandler.cs" />
-    <Compile Include="IClaimStrategy.cs" />
     <Compile Include="IEventProcessor.cs" />
     <Compile Include="ISequenceBarrier.cs" />
     <Compile Include="IWaitStrategy.cs" />
@@ -109,7 +105,6 @@
     <Compile Include="Sequencer.cs" />
     <Compile Include="SequenceReportingEventHandler.cs" />
     <Compile Include="SingleProducerSequencer.cs" />
-    <Compile Include="SingleThreadedClaimStrategy.cs" />
     <Compile Include="TimeoutBlockingWaitStrategy.cs" />
     <Compile Include="TimeoutException.cs" />
     <Compile Include="Util\Util.cs" />

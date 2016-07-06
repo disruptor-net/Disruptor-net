@@ -51,13 +51,9 @@ namespace Disruptor
         /// This option does not require <see cref="Sequencer.SetGatingSequences"/> to be called before the work pool is started.
         /// </summary>
         /// <param name="eventFactory">eventFactory for filling the <see cref="RingBuffer{T}"/></param>
-        /// <param name="claimStrategy">claimStrategy for the <see cref="RingBuffer{T}"/></param>
-        /// <param name="waitStrategy">waitStrategy for the <see cref="RingBuffer{T}"/></param>
         /// <param name="exceptionHandler">exceptionHandler to callback when an error occurs which is not handled by the <see cref="IWorkHandler{T}"/>s.</param>
         /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
         public WorkerPool(Func<T> eventFactory,
-                          IClaimStrategy claimStrategy,
-                          IWaitStrategy waitStrategy,
                           IExceptionHandler<T> exceptionHandler,
                           params IWorkHandler<T>[] workHandlers)
 
