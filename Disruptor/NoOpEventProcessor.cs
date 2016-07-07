@@ -47,17 +47,17 @@ namespace Disruptor
 
         public bool IsRunning => _running == 1;
 
-	    private sealed class SequencerFollowingSequence : Sequence
-	    {
-	        private readonly RingBuffer<T> _sequencer;
+        private sealed class SequencerFollowingSequence : Sequence
+        {
+            private readonly RingBuffer<T> _sequencer;
 
             public SequencerFollowingSequence(RingBuffer<T> sequencer)
                 : base(InitialCursorValue)
-	        {
+            {
                 _sequencer = sequencer;
-	        }
+            }
 
             public override long Value => _sequencer.Cursor;
-	    }
+        }
     }
 }

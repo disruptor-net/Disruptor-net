@@ -30,7 +30,8 @@ namespace Disruptor
             long sequence = _ringBuffer.Next();
             TranslateAndPublish(translator, sequence);
         }
-        /// </summary>
+
+        /// <summary></summary>
         /// <param name="translator">The user specified translation for the event</param>
         /// <param name="capacity">The capacity that should be available before publishing</param>
         /// <returns>true if the value was published, false if there was insufficient
@@ -48,7 +49,6 @@ namespace Disruptor
                 return false;
             }
         }
-
 
         private void TranslateAndPublish(Func<T, long, T> translator, long sequence)
         {

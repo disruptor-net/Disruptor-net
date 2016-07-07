@@ -58,6 +58,7 @@
     <Compile Include="BusySpinWaitStrategyTests.cs" />
     <Compile Include="Collections\HistogramTests.cs" />
     <Compile Include="DummySequenceBarrier.cs" />
+    <Compile Include="EventPublisherTests.cs" />
     <Compile Include="FatalExceptionHandlerTests.cs" />
     <Compile Include="IgnoreExceptionHandlerTests.cs" />
     <Compile Include="LifecycleAwareTests.cs">
