@@ -160,6 +160,13 @@ namespace Disruptor
             return _sequencer.TryNext(n);
         }
 
+        [Obsolete]
+        public void ResetTo(long sequence)
+        {
+            _sequencer.Claim(sequence);
+            _sequencer.Publish(sequence);
+        }
+
         public T ClaimAndGetPreallocated(long sequence)
         {
             _sequencer.Claim(sequence);
@@ -447,15 +454,20 @@ namespace Disruptor
             }
         }
 
-        public void PublishEvents(IEventTranslatorVararg<T> translator, params object[] args)
+        public void PublishEvents(IEventTranslatorVararg<T> translator, params object[][] args)
         {
-            PublishEvents(translator, 0, args.Length, args);
+            PublishEventsInternal(translator, 0, args.Length, args);
         }
 
         public void PublishEvents(IEventTranslatorVararg<T> translator, int batchStartsAt, int batchSize, params object[][] args)
         {
+            PublishEventsInternal(translator, batchStartsAt, batchSize, args);
+        }
+
+        private void PublishEventsInternal(IEventTranslatorVararg<T> translator, int batchStartsAt, int batchSize, object[][] args)
+        {
             CheckBounds(batchStartsAt, batchSize, args);
-            long finalSequence = _sequencer.Next(batchSize);
+            var finalSequence = _sequencer.Next(batchSize);
             TranslateAndPublishBatch(translator, batchStartsAt, batchSize, finalSequence, args);
         }
 
@@ -465,7 +477,7 @@ namespace Disruptor
         /// <param name="translator"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        public bool TryPublishEvents(IEventTranslatorVararg<T> translator, params object[] args)
+        public bool TryPublishEvents(IEventTranslatorVararg<T> translator, params object[][] args)
         {
             return TryPublishEvents(translator, 0, args.Length, args);
         }
@@ -478,8 +490,7 @@ namespace Disruptor
         /// <param name="batchSize"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        public bool TryPublishEvents(
-            IEventTranslatorVararg<T> translator, int batchStartsAt, int batchSize, params object[][] args)
+        public bool TryPublishEvents(IEventTranslatorVararg<T> translator, int batchStartsAt, int batchSize, params object[][] args)
         {
             CheckBounds(args, batchStartsAt, batchSize);
             try

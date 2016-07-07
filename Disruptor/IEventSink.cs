@@ -283,7 +283,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="translator"></param>
         /// <param name="args"></param>
-        void PublishEvents(IEventTranslatorVararg<T> translator, params object[] args);
+        void PublishEvents(IEventTranslatorVararg<T> translator, params object[][] args);
 
         /// <summary>
         /// Allows a variable number of user supplied arguments per event.
@@ -300,7 +300,7 @@ namespace Disruptor
         /// <param name="translator"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        bool TryPublishEvents(IEventTranslatorVararg<T> translator, params object[] args);
+        bool TryPublishEvents(IEventTranslatorVararg<T> translator, params object[][] args);
 
         /// <summary>
         /// Allows a variable number of user supplied arguments per event.

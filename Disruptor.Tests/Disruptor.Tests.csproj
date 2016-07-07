@@ -67,9 +67,11 @@
     <Compile Include="LifecycleAwareTests.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MultiProducerSequencerTest.cs" />
     <Compile Include="PhasedBackoffWaitStrategyTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SequenceBarrierTests.cs" />
+    <Compile Include="RingBufferTests.cs" />
     <Compile Include="SequenceGroupTests.cs" />
     <Compile Include="SequencerTests.cs" />
     <Compile Include="SequenceUpdater.cs" />
