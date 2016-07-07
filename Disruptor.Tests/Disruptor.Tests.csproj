@@ -61,6 +61,13 @@
     <Compile Include="DummySequenceBarrier.cs" />
     <Compile Include="EventPollerTest.cs" />
     <Compile Include="EventPublisherTests.cs" />
+    <Compile Include="Example\DynamiclyAddHandler.cs" />
+    <Compile Include="Example\MutliProducerWithTranslator.cs" />
+    <Compile Include="Example\NamedEventHandler.cs" />
+    <Compile Include="Example\PullWithBatchedPoller\BatchedPoller.cs" />
+    <Compile Include="Example\PullWithBatchedPoller\PullWithBatchedPoller.cs" />
+    <Compile Include="Example\PullWithPoller.cs" />
+    <Compile Include="Example\ThreeToOneDisruptor.cs" />
     <Compile Include="FatalExceptionHandlerTests.cs" />
     <Compile Include="FixedSequenceGroupTest.cs" />
     <Compile Include="IgnoreExceptionHandlerTests.cs" />
