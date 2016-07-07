@@ -13,14 +13,14 @@ namespace Disruptor
     {
         private readonly int _indexMask;
         private readonly T[] _entries;
-        private readonly Sequencer _sequencer;
+        private readonly ISequencer _sequencer;
 
         /// <summary>
         ///     Construct a RingBuffer with the full option set.
         /// </summary>
         /// <param name="eventFactory">eventFactory to create entries for filling the RingBuffer</param>
         /// <param name="sequencer">waiting strategy employed by processorsToTrack waiting on entries becoming available.</param>
-        public RingBuffer(Func<T> eventFactory, Sequencer sequencer)
+        public RingBuffer(Func<T> eventFactory, ISequencer sequencer)
         {
             _sequencer = sequencer;
             int bufferSize = sequencer.BufferSize;

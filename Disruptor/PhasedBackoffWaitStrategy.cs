@@ -9,6 +9,8 @@ namespace Disruptor
     /// 
     /// <para>This strategy can be used when throughput and low-latency are not as important as CPU resource.
     /// Spins, then yields, then waits using the configured fallback WaitStrategy.</para>
+    /// 
+    /// TODO Create two versions, one that uses the precise system time (100 nano precision) and another that uses DateTime.UtcNow (1ms precision)
     /// </summary>
     public class PhasedBackoffWaitStrategy : IWaitStrategy
     {
