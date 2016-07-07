@@ -82,6 +82,7 @@
     <Compile Include="TimeoutBlockingWaitStrategyTest.cs" />
     <Compile Include="UtilTests.cs" />
     <Compile Include="WaitStrategyTestUtil.cs" />
+    <Compile Include="WorkerPoolTests.cs" />
     <Compile Include="YieldingWaitStrategyTests.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -82,7 +82,7 @@ namespace Disruptor
                         processedSequence = false;
                         do
                         {
-                            nextSequence = _workSequence.IncrementAndGet();
+                            nextSequence = _workSequence.Value + 1L;
                             _sequence.Value = nextSequence - 1L;
                         } while (!_workSequence.CompareAndSet(nextSequence - 1L, nextSequence));
                     }
