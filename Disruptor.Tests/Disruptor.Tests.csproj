@@ -65,7 +65,7 @@
     <Compile Include="BatchingTest.cs" />
     <Compile Include="BusySpinWaitStrategyTests.cs" />
     <Compile Include="Collections\HistogramTests.cs" />
-    <Compile Include="ConsumerRepositoryTests.cs" />
+    <Compile Include="Example\ConsumerRepositoryTests.cs" />
     <Compile Include="DisruptorStressTest.cs" />
     <Compile Include="Dsl\DisruptorTest.cs" />
     <Compile Include="Dsl\Stubs\DelayedEventHandler.cs" />

@@ -1,5 +1,6 @@
 ﻿using System;
 using Disruptor.Dsl;
+using Disruptor.Tests.Dsl.Stubs;
 using Disruptor.Tests.Support;
 using Moq;
 using NUnit.Framework;
