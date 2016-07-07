@@ -69,6 +69,7 @@
     </Compile>
     <Compile Include="PhasedBackoffWaitStrategyTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SequenceBarrierTests.cs" />
     <Compile Include="SequenceGroupTests.cs" />
     <Compile Include="SequencerTests.cs" />
     <Compile Include="SequenceUpdater.cs" />

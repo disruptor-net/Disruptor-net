@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Tests.Support;
 using Moq;
 using NUnit.Framework;
@@ -17,25 +18,25 @@ namespace Disruptor.Tests
         [SetUp]
         public void SetUp()
         {
-            _ringBuffer = new RingBuffer<StubEvent>(()=>new StubEvent(-1), 64);
+            _ringBuffer = RingBuffer<StubEvent>.CreateMultiProducer(() => new StubEvent(-1), 64);
 
             _eventProcessorMock1 = new Mock<IEventProcessor>();
             _eventProcessorMock2 = new Mock<IEventProcessor>();
             _eventProcessorMock3 = new Mock<IEventProcessor>();
 
-            _ringBuffer.SetGatingSequences(new NoOpEventProcessor(_ringBuffer).Sequence);
+            _ringBuffer.AddGatingSequences(new NoOpEventProcessor<StubEvent>(_ringBuffer).Sequence);
         }
 
         [Test]
         public void ShouldWaitForWorkCompleteWhereCompleteWorkThresholdIsAhead()
         {
-            const int expectedNumberEvents = 10;
+            const int expectedNumberMessages = 10;
             const int expectedWorkSequence = 9;
-            FillRingBuffer(expectedNumberEvents);
+            FillRingBuffer(expectedNumberMessages);
 
-            var sequence1 = new Sequence(expectedNumberEvents);
+            var sequence1 = new Sequence(expectedNumberMessages);
             var sequence2 = new Sequence(expectedWorkSequence);
-            var sequence3 = new Sequence(expectedNumberEvents);
+            var sequence3 = new Sequence(expectedNumberMessages);
 
             _eventProcessorMock1.SetupGet(c => c.Sequence).Returns(sequence1);
             _eventProcessorMock2.SetupGet(c => c.Sequence).Returns(sequence2);
@@ -56,13 +57,13 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldWaitForWorkCompleteWhereAllWorkersAreBlockedOnRingBuffer()
         {
-            const long expectedNumberEvents = 10;
-            FillRingBuffer(expectedNumberEvents);
+            const long expectedNumberMessages = 10;
+            FillRingBuffer(expectedNumberMessages);
 
             var workers = new StubEventProcessor[3];
             for (var i = 0; i < workers.Length; i++)
             {
-                workers[i] = new StubEventProcessor(expectedNumberEvents - 1);
+                workers[i] = new StubEventProcessor(expectedNumberMessages - 1);
             }
 
             var dependencyBarrier = _ringBuffer.NewBarrier(Util.GetSequencesFor(workers));
@@ -80,93 +81,86 @@ namespace Disruptor.Tests
                     })
                     .Start();
 
-            const long expectedWorkSequence = expectedNumberEvents;
-            var completedWorkSequence = dependencyBarrier.WaitFor(expectedNumberEvents);
+            const long expectedWorkSequence = expectedNumberMessages;
+            var completedWorkSequence = dependencyBarrier.WaitFor(expectedNumberMessages);
             Assert.IsTrue(completedWorkSequence >= expectedWorkSequence);
         }
 
         [Test]
         public void ShouldInterruptDuringBusySpin()
         {
-            const long expectedNumberEvents = 10;
-            FillRingBuffer(expectedNumberEvents);
+            const long expectedNumberMessages = 10;
+            FillRingBuffer(expectedNumberMessages);
 
-            var sequence1 = new Sequence(8L);
-            var sequence2 = new Sequence(8L);
-            var sequence3 = new Sequence(8L);
+            var signal = new CountdownEvent(3);
+            var sequence1 = new CountDownEventSequence(8L, signal);
+            var sequence2 = new CountDownEventSequence(8L, signal);
+            var sequence3 = new CountDownEventSequence(8L, signal);
 
-            _eventProcessorMock1.SetupGet(c => c.Sequence).Returns(sequence1);
-            _eventProcessorMock2.SetupGet(c => c.Sequence).Returns(sequence2);
-            _eventProcessorMock3.SetupGet(c => c.Sequence).Returns(sequence3);
+            _eventProcessorMock1.Setup(x => x.Sequence).Returns(sequence1);
+            _eventProcessorMock2.Setup(x => x.Sequence).Returns(sequence2);
+            _eventProcessorMock3.Setup(x => x.Sequence).Returns(sequence3);
 
-            var dependencyBarrier = _ringBuffer.NewBarrier(_eventProcessorMock1.Object.Sequence, 
-                                                           _eventProcessorMock2.Object.Sequence, 
-                                                           _eventProcessorMock3.Object.Sequence);
-                    
-            var alerted = new[] { false };
-            var t = new Thread(
-                () =>
-                    {
-                        try
-                        {
-                            dependencyBarrier.WaitFor(expectedNumberEvents - 1);
-                        }
-                        catch (AlertException)
-                        {
-                            alerted[0] = true;
-                        }
-                    });
+            var sequenceBarrier = _ringBuffer.NewBarrier(Util.GetSequencesFor(_eventProcessorMock1.Object, _eventProcessorMock2.Object, _eventProcessorMock3.Object));
 
-            t.Start();
-            Thread.Sleep(TimeSpan.FromSeconds(1));
-            dependencyBarrier.Alert();
-            t.Join();
+            var alerted = false;
+            var t = Task.Factory.StartNew(() =>
+                                  {
+                                      try
+                                      {
+                                          sequenceBarrier.WaitFor(expectedNumberMessages - 1);
+                                      }
+                                      catch (AlertException)
+                                      {
+                                          alerted = true;
+                                      }
+                                  });
 
-            Assert.IsTrue(alerted[0], "Thread was not interrupted");
+            signal.Wait(TimeSpan.FromSeconds(3));
+            sequenceBarrier.Alert();
+            t.Wait();
 
-            _eventProcessorMock1.Verify();
-            _eventProcessorMock2.Verify();
-            _eventProcessorMock3.Verify();
+            Assert.That(alerted, Is.True, "Thread was not interrupted");
         }
 
         [Test]
         public void ShouldWaitForWorkCompleteWhereCompleteWorkThresholdIsBehind()
         {
-            const long expectedNumberEvents = 10;
-            FillRingBuffer(expectedNumberEvents);
+            const long expectedNumberMessages = 10;
+            FillRingBuffer(expectedNumberMessages);
 
             var eventProcessors = new StubEventProcessor[3];
             for (var i = 0; i < eventProcessors.Length; i++)
             {
-                eventProcessors[i] = new StubEventProcessor(expectedNumberEvents - 2);
+                eventProcessors[i] = new StubEventProcessor(expectedNumberMessages - 2);
             }
 
             var eventProcessorBarrier = _ringBuffer.NewBarrier(Util.GetSequencesFor(eventProcessors));
 
-            new Thread(() =>
-                           {
-                               foreach (var stubWorker in eventProcessors)
-                               {
-                                   stubWorker.Sequence.Value += 1;
-                               }
-                           }).Start();
+            Task.Factory.StartNew(() =>
+                                  {
+                                      foreach (var stubWorker in eventProcessors)
+                                      {
+                                          stubWorker.Sequence.Value += 1;
+                                      }
+                                  }).Wait();
 
-            const long expectedWorkSequence = expectedNumberEvents - 1;
-            long completedWorkSequence = eventProcessorBarrier.WaitFor(expectedWorkSequence);
+            const long expectedWorkSequence = expectedNumberMessages - 1;
+            var completedWorkSequence = eventProcessorBarrier.WaitFor(expectedWorkSequence);
             Assert.IsTrue(completedWorkSequence >= expectedWorkSequence);
         }
 
         [Test]
         public void ShouldSetAndClearAlertStatus()
         {
-            var dependencyBarrier = _ringBuffer.NewBarrier();
-            Assert.IsFalse(dependencyBarrier.IsAlerted);
+            var sequenceBarrier = _ringBuffer.NewBarrier();
+            Assert.IsFalse(sequenceBarrier.IsAlerted);
 
-            dependencyBarrier.Alert();
-            Assert.IsTrue(dependencyBarrier.IsAlerted);
+            sequenceBarrier.Alert();
+            Assert.IsTrue(sequenceBarrier.IsAlerted);
 
-            dependencyBarrier.ClearAlert();
-            Assert.IsFalse(dependencyBarrier.IsAlerted);
+            sequenceBarrier.ClearAlert();
+            Assert.IsFalse(sequenceBarrier.IsAlerted);
         }
 
         private void FillRingBuffer(long expectedNumberEvents)
@@ -174,13 +168,15 @@ namespace Disruptor.Tests
             for (var i = 0; i < expectedNumberEvents; i++)
             {
                 var sequence = _ringBuffer.Next();
-                _ringBuffer[sequence].Value = i;
+                var @event = _ringBuffer[sequence];
+                @event.Value = i;
                 _ringBuffer.Publish(sequence);
             }
         }
 
         private class StubEventProcessor : IEventProcessor
         {
+            private volatile int _running;
             private readonly Sequence _sequence = new Sequence(Sequence.InitialCursorValue);
 
             public StubEventProcessor(long sequence)
@@ -190,19 +186,39 @@ namespace Disruptor.Tests
 
             public void Run()
             {
-                IsRunning = true;
+                if(Interlocked.Exchange(ref _running, 1) != 0)
+                    throw new InvalidOperationException("Already running");
             }
 
-            public bool IsRunning { get; private set; }
+            public bool IsRunning => _running == 1;
 
-            public Sequence Sequence
-            {
-                get { return _sequence; }
-            }
+            public Sequence Sequence => _sequence;
 
             public void Halt()
             {
-                IsRunning = false;
+                _running = 0;
+            }
+        }
+
+        private class CountDownEventSequence : Sequence
+        {
+            private readonly CountdownEvent _signal;
+
+            public CountDownEventSequence(long initialValue, CountdownEvent signal)
+                : base(initialValue)
+            {
+                _signal = signal;
+            }
+
+            public override long Value
+            {
+                get
+                {
+                    if (_signal.CurrentCount > 0)
+                        _signal.Signal();
+                    return base.Value;
+                }
+                set { base.Value = value; }
             }
         }
     }
