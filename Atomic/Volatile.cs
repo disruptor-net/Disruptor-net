@@ -1,8 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 
-namespace System.Threading
+namespace Atomic
 {
     ///<summary>
     /// A small toolkit of classes that support lock-free thread-safe programming on single variables and arrays

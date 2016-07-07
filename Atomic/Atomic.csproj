@@ -8,7 +8,7 @@
     <ProjectGuid>{BDB4336E-54F2-475D-8193-B730C522261F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>System.Threading</RootNamespace>
+    <RootNamespace>Atomic</RootNamespace>
     <AssemblyName>Atomic</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
