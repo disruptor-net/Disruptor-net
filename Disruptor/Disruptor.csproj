@@ -79,6 +79,7 @@
     <Compile Include="IEventTranslator.cs" />
     <Compile Include="IExceptionHandler.cs" />
     <Compile Include="IgnoreExceptionHandler.cs" />
+    <Compile Include="ISequencer.cs" />
     <Compile Include="ITimeoutHandler.cs" />
     <Compile Include="ISequenced.cs" />
     <Compile Include="IWorkHandler.cs" />

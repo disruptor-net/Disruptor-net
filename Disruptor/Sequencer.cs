@@ -6,7 +6,7 @@ namespace Disruptor
     /// <summary>
     /// Coordinator for claiming sequences for access to a data structure while tracking dependent <see cref="Sequence"/>s
     /// </summary>
-    public abstract class Sequencer : ISequenced, ICursored
+    public abstract class Sequencer : ISequencer
     {
         protected readonly Sequence _cursor = new Sequence(Sequence.InitialCursorValue);
         protected Volatile.Reference<Sequence[]> _gatingSequences = new Volatile.Reference<Sequence[]>(new Sequence[0]);
@@ -185,15 +185,6 @@ namespace Disruptor
         public bool RemoveGatingSequence(Sequence sequence)
         {
             return SequenceGroups.RemoveSequence(ref _gatingSequences, sequence);
-        }
-
-        /// <summary>
-        /// Get the current cursor value.
-        /// </summary>
-        /// <returns></returns>
-        public long GetCursor()
-        {
-            return _cursor.Value;
         }
 
         /// <summary>

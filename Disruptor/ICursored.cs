@@ -2,6 +2,6 @@
 {
     public interface ICursored
     {
-        long GetCursor();
+        long Cursor { get; }
     }
 }

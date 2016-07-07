@@ -19,7 +19,7 @@ namespace Disruptor
                 currentSequences = sequences.ReadFullFence();
                 updatedSequences = new Sequence[currentSequences.Length + sequencesToAdd.Length];
                 Array.Copy(currentSequences, updatedSequences, currentSequences.Length);
-                cursorSequence = cursor.GetCursor();
+                cursorSequence = cursor.Cursor;
 
                 var index = currentSequences.Length;
                 foreach (var sequence in sequencesToAdd)
@@ -29,7 +29,7 @@ namespace Disruptor
                 }
             } while (!sequences.AtomicCompareExchange(updatedSequences, currentSequences));
 
-            cursorSequence = cursor.GetCursor();
+            cursorSequence = cursor.Cursor;
             foreach (var sequence in sequencesToAdd)
             {
                 sequence.Value = cursorSequence;

@@ -733,7 +733,5 @@ namespace Disruptor
                 _sequencer.Publish(initialSequence, finalSequence);
             }
         }
-
-        public long GetCursor() => _sequencer.GetCursor();
     }
 }
