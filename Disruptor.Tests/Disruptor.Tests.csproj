@@ -57,6 +57,7 @@
     <Compile Include="BatchingTest.cs" />
     <Compile Include="BusySpinWaitStrategyTests.cs" />
     <Compile Include="Collections\HistogramTests.cs" />
+    <Compile Include="ConsumerRepositoryTests.cs" />
     <Compile Include="DisruptorStressTest.cs" />
     <Compile Include="DummySequenceBarrier.cs" />
     <Compile Include="EventPollerTest.cs" />
