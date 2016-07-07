@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
@@ -59,7 +60,7 @@ namespace Disruptor.Tests
         [TestCaseSource(nameof(GenerateData))]
         public void ShouldBatch(ProducerType producerType)
         {
-            var d = new Disruptor<LongEvent>(LongEvent.Factory, 2048, TaskScheduler.Current, producerType, new SleepingWaitStrategy());
+            var d = new Disruptor<LongEvent>(() => new LongEvent(), 2048, TaskScheduler.Current, producerType, new SleepingWaitStrategy());
 
             var handler1 = new ParallelEventHandler(1, 0);
             var handler2 = new ParallelEventHandler(1, 1);
