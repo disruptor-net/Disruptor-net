@@ -62,6 +62,7 @@
     <Compile Include="EventPollerTest.cs" />
     <Compile Include="EventPublisherTests.cs" />
     <Compile Include="FatalExceptionHandlerTests.cs" />
+    <Compile Include="FixedSequenceGroupTest.cs" />
     <Compile Include="IgnoreExceptionHandlerTests.cs" />
     <Compile Include="LifecycleAwareTests.cs">
       <SubType>Code</SubType>
