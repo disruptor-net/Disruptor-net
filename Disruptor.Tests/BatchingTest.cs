@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Atomic;
 using Disruptor.Dsl;
 using Disruptor.Tests.Support;
 using NUnit.Framework;

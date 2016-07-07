@@ -67,6 +67,16 @@
     <Compile Include="Collections\HistogramTests.cs" />
     <Compile Include="ConsumerRepositoryTests.cs" />
     <Compile Include="DisruptorStressTest.cs" />
+    <Compile Include="Dsl\DisruptorTest.cs" />
+    <Compile Include="Dsl\Stubs\DelayedEventHandler.cs" />
+    <Compile Include="Dsl\Stubs\EventHandlerStub.cs" />
+    <Compile Include="Dsl\Stubs\EvilEqualsEventHandler.cs" />
+    <Compile Include="Dsl\Stubs\ExceptionThrowingEventHandler.cs" />
+    <Compile Include="Dsl\Stubs\SleepingEventHandler.cs" />
+    <Compile Include="Dsl\Stubs\StubExceptionHandler.cs" />
+    <Compile Include="Dsl\Stubs\StubExecutor.cs" />
+    <Compile Include="Dsl\Stubs\StubPublisher.cs" />
+    <Compile Include="Dsl\Stubs\TestWorkHandler.cs" />
     <Compile Include="DummySequenceBarrier.cs" />
     <Compile Include="EventPollerTest.cs" />
     <Compile Include="EventPublisherTests.cs" />
@@ -115,7 +125,6 @@
       <Name>Disruptor</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>

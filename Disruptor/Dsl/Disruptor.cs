@@ -25,7 +25,7 @@ namespace Disruptor.Dsl
         private readonly RingBuffer<T> _ringBuffer;
         private readonly IExecutor _executor;
         private readonly ConsumerRepository<T> _consumerRepository = new ConsumerRepository<T>();
-        private readonly ExceptionHandlerWrapper<T> _exceptionHandler = new ExceptionHandlerWrapper<T>();
+        private IExceptionHandler<T> _exceptionHandler = new ExceptionHandlerWrapper<T>();
         private volatile int _started;
 
         /// <summary>
@@ -133,7 +133,7 @@ namespace Disruptor.Dsl
         public void SetDefaultExceptionHandler(IExceptionHandler<T> exceptionHandler)
         {
             CheckNotStarted();
-            _exceptionHandler.SwitchTo(exceptionHandler);
+            ((ExceptionHandlerWrapper<T>)_exceptionHandler).SwitchTo(exceptionHandler);
         }
         
         /// <summary>
@@ -371,6 +371,11 @@ namespace Disruptor.Dsl
             {
                 throw new InvalidOperationException("Disruptor.start() must only be called once.");
             }
+        }
+
+        public void HandleExceptionsWith(IExceptionHandler<object> exceptionHandler)
+        {
+            _exceptionHandler = exceptionHandler;
         }
     }
 }
