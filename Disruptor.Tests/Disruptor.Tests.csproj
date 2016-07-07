@@ -73,6 +73,7 @@
     <Compile Include="SequenceBarrierTests.cs" />
     <Compile Include="RingBufferTests.cs" />
     <Compile Include="SequenceGroupTests.cs" />
+    <Compile Include="SequenceReportingCallbackTests.cs" />
     <Compile Include="SequencerTests.cs" />
     <Compile Include="SequenceUpdater.cs" />
     <Compile Include="ShutdownOnFatalExceptionTest.cs" />
