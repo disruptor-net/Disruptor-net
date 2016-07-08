@@ -57,6 +57,7 @@
     </Compile>
     <Compile Include="PerfTest.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Support\LongArrayEventHandler.cs" />
     <Compile Include="Sequenced\OneToOneSequencedBatchThroughputTest.cs" />
     <Compile Include="Sequenced\OneToOneSequencedLongArrayThroughputTest.cs" />
     <Compile Include="Support\PerfTestUtil.cs" />

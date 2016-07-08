@@ -15,11 +15,11 @@ namespace Disruptor.PerfTests.Support
             return temp;
         }
 
-        public static void FailIf(long a, long b)
+        public static void FailIf(long a, long b, string message)
         {
             if (a == b)
             {
-                throw new Exception();
+                throw new Exception(message);
             }
         }
 
