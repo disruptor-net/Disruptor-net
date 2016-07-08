@@ -99,14 +99,14 @@ namespace Disruptor.Dsl
             return GetEnumerator();
         }
 
-        class IdentityComparer<T> : IEqualityComparer<T>
+        private class IdentityComparer<TKey> : IEqualityComparer<TKey>
         {
-            public bool Equals(T x, T y)
+            public bool Equals(TKey x, TKey y)
             {
                 return ReferenceEquals(x, y);
             }
 
-            public int GetHashCode(T obj)
+            public int GetHashCode(TKey obj)
             {
                 return RuntimeHelpers.GetHashCode(obj);
             }
