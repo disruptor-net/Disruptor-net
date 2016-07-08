@@ -1,6 +1,6 @@
 using System.Threading;
 
-namespace Disruptor.PerfTests.Sequenced
+namespace Disruptor.PerfTests.Support
 {
     public class LongArrayEventHandler : IEventHandler<long[]>
     {
