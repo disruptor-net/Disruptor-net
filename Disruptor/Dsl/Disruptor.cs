@@ -347,7 +347,8 @@ namespace Disruptor.Dsl
             foreach (var eventHandler in eventHandlers)
             {
                 var batchEventProcessor = new BatchEventProcessor<T>(_ringBuffer, barrier, eventHandler);
-                batchEventProcessor.SetExceptionHandler(_exceptionHandler);
+                if (_exceptionHandler != null)
+                    batchEventProcessor.SetExceptionHandler(_exceptionHandler);
 
                 _consumerRepository.Add(batchEventProcessor, eventHandler, barrier);
                 processorSequences.Add(batchEventProcessor.Sequence);
