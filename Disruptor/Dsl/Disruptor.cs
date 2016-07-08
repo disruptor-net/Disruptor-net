@@ -264,7 +264,7 @@ namespace Disruptor.Dsl
         {
             try
             {
-                Shutdown(TimeSpan.MaxValue); // do not wait
+                Shutdown(TimeSpan.MinValue); // do not wait
             }
             catch (TimeoutException e)
             {
@@ -282,17 +282,13 @@ namespace Disruptor.Dsl
         /// <param name="timeout">the amount of time to wait for all events to be processed. <code>TimeSpan.MaxValue</code> will give an infinite timeout</param>
         public void Shutdown(TimeSpan timeout)
         {
-            if (timeout == TimeSpan.MaxValue)
-            {
-                Halt();
-                return;
-            }
-
             var timeoutAt = DateTime.UtcNow.Add(timeout);
             while (HasBacklog())
             {
-                if (DateTime.UtcNow > timeoutAt)
+                if (timeout.Ticks >= 0 && DateTime.UtcNow > timeoutAt)
                     throw TimeoutException.Instance;
+
+                // Busy spin
             }
             Halt();
         }
