@@ -1,68 +1,15 @@
 ﻿using System;
-using System.Diagnostics;
-using Disruptor.PerfTests.Runner;
+using Disruptor.PerfTests.Sequenced;
 
 namespace Disruptor.PerfTests
 {
-    public static class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            ScenarioType scenarioType;
-            ImplementationType implementationType;
-            int runs;
+            OneToOneSequencedBatchThroughputTest.Run();
 
-            if (args == null
-                || args.Length != 3
-                || !Enum.TryParse(args[0], out scenarioType)
-                || !Enum.TryParse(args[1], out implementationType)
-                || !int.TryParse(args[2], out runs)
-                )
-            {
-                PrintUsage();
-                return;
-            }
-            
-            Console.WriteLine(new ComputerSpecifications().ToString());
-
-            var session = new PerformanceTestSession(scenarioType, implementationType, runs);
-
-            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
-
-            session.Run();
-
-            session.GenerateAndOpenReport();
-            Console.ReadKey();
-        }
-
-        private static void PrintUsage()
-        {
-            Console.WriteLine("Usage: Disruptor.PerfTests Scenario Implementation Runs");
-            Console.WriteLine();
-            PrintEnum(typeof (ScenarioType));
-            Console.WriteLine();
-            PrintEnum(typeof(ImplementationType));
-            Console.WriteLine();
-            Console.WriteLine("Runs: number of test run to do for each scenario and implementation");
-            Console.WriteLine();
-            Console.WriteLine("Example: Disruptor.PerfTests 0 0 3");
-            Console.WriteLine("will run all performance test scenarios for all implementations 3 times.");
-        }
-
-        private static void PrintEnum(Type enumType)
-        {
-            var names = Enum.GetNames(enumType);
-            var values = Enum.GetValues(enumType);
-
-            Console.WriteLine(enumType.Name + " options:");
-
-            for (var i = 0; i < names.Length; i++)
-            {
-                var name = names[i];
-                var value = (int)values.GetValue(i);
-                Console.WriteLine(" - {0} ({1})", value, name);
-            }
+            Console.ReadLine();
         }
     }
 }
-
