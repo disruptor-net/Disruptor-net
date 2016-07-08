@@ -1,13 +1,12 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Disruptor
 {
     public class SingleProducerSequencer : Sequencer
     {
-        /// <summary> Set to -1 as sequence starting point </summary>
-        private Volatile.PaddedLong _nextValue = new Volatile.PaddedLong(Sequence.InitialCursorValue);
-        private Volatile.PaddedLong _cachedValue = new Volatile.PaddedLong(Sequence.InitialCursorValue);
+        private Fields _fields = new Fields(Sequence.InitialCursorValue, Sequence.InitialCursorValue);
 
         public SingleProducerSequencer(int bufferSize, IWaitStrategy waitStrategy)
             : base(bufferSize, waitStrategy)
@@ -22,15 +21,15 @@ namespace Disruptor
         /// <returns>true if the buffer has the capacity to allocate the next sequence otherwise false.</returns>
         public override bool HasAvailableCapacity(int requiredCapacity)
         {
-            long nextValue = _nextValue.ReadUnfenced();
+            long nextValue = _fields.NextValue;
 
             long wrapPoint = (nextValue + requiredCapacity) - _bufferSize;
-            long cachedGatingSequence = _cachedValue.ReadUnfenced();
+            long cachedGatingSequence = _fields.CachedValue;
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
             {
                 long minSequence = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), nextValue);
-                _cachedValue.WriteUnfenced(minSequence);
+                _fields.CachedValue = minSequence;
 
                 if (wrapPoint > minSequence)
                 {
@@ -71,11 +70,11 @@ namespace Disruptor
                 throw new ArgumentException("n must be > 0");
             }
 
-            long nextValue = _nextValue.ReadUnfenced();
+            long nextValue = _fields.NextValue;
 
             long nextSequence = nextValue + n;
             long wrapPoint = nextSequence - _bufferSize;
-            long cachedGatingSequence = _cachedValue.ReadUnfenced();
+            long cachedGatingSequence = _fields.CachedValue;
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
             {
@@ -83,13 +82,13 @@ namespace Disruptor
                 long minSequence;
                 while (wrapPoint > (minSequence = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), nextValue)))
                 {
-                     spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
+                    spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
                 }
 
-                _cachedValue.WriteUnfenced(minSequence);
+                _fields.CachedValue = minSequence;
             }
 
-            _nextValue.WriteUnfenced(nextSequence);
+            _fields.NextValue = nextSequence;
 
             return nextSequence;
         }
@@ -122,8 +121,8 @@ namespace Disruptor
                 throw InsufficientCapacityException.Instance;
             }
 
-            var newValue = _nextValue.ReadUnfenced() + n;
-            _nextValue.WriteUnfenced(newValue);
+            var newValue = _fields.NextValue + n;
+            _fields.NextValue = newValue;
             return newValue;
         }
 
@@ -132,7 +131,7 @@ namespace Disruptor
         /// </summary>
         public override long GetRemainingCapacity()
         {
-            var nextValue = _nextValue.ReadUnfenced();
+            var nextValue = _fields.NextValue;
             long consumed = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), nextValue);
             long produced = nextValue;
             return BufferSize - (produced - consumed);
@@ -145,7 +144,7 @@ namespace Disruptor
         /// <returns>sequence just claimed.</returns>
         public override long Claim(long sequence)
         {
-            _nextValue.WriteUnfenced(sequence);
+            _fields.NextValue = sequence;
             return sequence;
         }
 
@@ -190,6 +189,27 @@ namespace Disruptor
         public override long GetHighestPublishedSequence(long nextSequence, long availableSequence)
         {
             return availableSequence;
+        }
+
+        [StructLayout(LayoutKind.Explicit, Size = 128)]
+        private struct Fields
+        {
+            [FieldOffset(0)]
+            private Padding56 _beforePadding;
+            [FieldOffset(56)]
+            public long NextValue;
+            [FieldOffset(64)]
+            public long CachedValue;
+            [FieldOffset(72)]
+            private Padding56 _afterPadding;
+
+            public Fields(long nextValue, long cachedValue)
+            {
+                _beforePadding = default(Padding56);
+                NextValue = nextValue;
+                CachedValue = cachedValue;
+                _afterPadding = default(Padding56);
+            }
         }
     }
 }
