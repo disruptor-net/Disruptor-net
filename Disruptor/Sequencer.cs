@@ -35,18 +35,6 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Set the sequences that will gate publishers to prevent the buffer wrapping.
-        /// 
-        /// This method must be called prior to claiming sequences otherwise
-        /// a <see cref="NullReferenceException"/> will be thrown.
-        /// </summary>
-        /// <param name="sequences">sequences to be to be gated on.</param>
-        public void SetGatingSequences(params Sequence[] sequences)
-        {
-            _gatingSequences.WriteUnfenced(sequences);
-        }
-
-        /// <summary>
         /// Create a <see cref="ISequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
         /// </summary>
         /// <param name="sequencesToTrack"></param>
@@ -153,19 +141,6 @@ namespace Disruptor
         /// <param name="availableSequence">The sequence to scan to.</param>
         /// <returns>The highest value that can be safely read, will be at least <code>nextSequence - 1</code>.</returns>
         public abstract long GetHighestPublishedSequence(long nextSequence, long availableSequence);
-
-        /// <summary>
-        /// Force the publication of a cursor sequence.
-        /// 
-        /// Only use this method when forcing a sequence and you are sure only one publisher exists.
-        /// This will cause the cursor to advance to this sequence.
-        /// </summary>
-        /// <param name="sequence">sequence which is to be forced for publication.</param>
-        public void ForcePublish(long sequence)
-        {
-            _cursor.LazySet(sequence);
-            _waitStrategy.SignalAllWhenBlocking();
-        }
 
         /// <summary>
         /// Add the specified gating sequences to this instance of the Disruptor.  They will
