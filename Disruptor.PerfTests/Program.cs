@@ -10,6 +10,7 @@ namespace Disruptor.PerfTests
             if (args == null || args.Length != 1)
             {
                 PrintUsage();
+                Console.ReadKey();
                 return;
             }
 

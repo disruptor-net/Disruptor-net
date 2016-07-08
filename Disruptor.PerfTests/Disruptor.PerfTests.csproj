@@ -58,6 +58,7 @@
     <Compile Include="PerfTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Sequenced\OneToOneSequencedBatchThroughputTest.cs" />
+    <Compile Include="Sequenced\OneToOneSequencedLongArrayThroughputTest.cs" />
     <Compile Include="Support\PerfTestUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Support\FizzBuzzEvent.cs" />
