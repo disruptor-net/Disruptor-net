@@ -12,6 +12,8 @@ namespace Disruptor
         /// Set to -1 as sequence starting point
         /// </summary>
         public const long InitialCursorValue = -1;
+
+        // TODO: replace with a padded volatile value to avoid full fences
         private Volatile.PaddedLong _value = new Volatile.PaddedLong(InitialCursorValue);
 
         /// <summary>
