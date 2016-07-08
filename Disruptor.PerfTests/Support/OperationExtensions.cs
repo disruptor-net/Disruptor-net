@@ -10,12 +10,12 @@ namespace Disruptor.PerfTests.Support
             {
                 case Operation.Addition:
                     return lhs + rhs;
-                case Operation.Substraction:
+                case Operation.Subtraction:
                     return lhs - rhs;
                 case Operation.And:
                     return lhs & rhs;
                 default:
-                    throw new ArgumentOutOfRangeException("operation");
+                    throw new ArgumentOutOfRangeException(nameof(operation));
             }
         }
     }

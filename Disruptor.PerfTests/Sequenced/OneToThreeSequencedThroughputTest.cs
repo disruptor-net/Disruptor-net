@@ -1,0 +1,112 @@
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Disruptor.Dsl;
+using Disruptor.PerfTests.Support;
+
+namespace Disruptor.PerfTests.Sequenced
+{
+    /// <summary>
+    /// MultiCast a series of items between 1 publisher and 3 event processors.
+    ///           +-----+
+    ///    +----->| EP1 |
+    ///    |      +-----+
+    ///    |
+    /// +----+    +-----+
+    /// | P1 |--->| EP2 |
+    /// +----+    +-----+
+    ///    |
+    ///    |      +-----+
+    ///    +----->| EP3 |
+    ///           +-----+
+    /// Disruptor:
+    /// ==========
+    ///                             track to prevent wrap
+    ///             +--------------------+----------+----------+
+    ///             |                    |          |          |
+    ///             |                    v          v          v
+    /// +----+    +====+    +====+    +-----+    +-----+    +-----+
+    /// | P1 |---\| RB |/---| SB |    | EP1 |    | EP2 |    | EP3 |
+    /// +----+    +====+    +====+    +-----+    +-----+    +-----+
+    ///      claim      get    ^         |          |          |
+    ///                        |         |          |          |
+    ///                        +---------+----------+----------+
+    ///                                      waitFor
+    /// P1  - Publisher 1
+    /// RB  - RingBuffer
+    /// SB  - SequenceBarrier
+    /// EP1 - EventProcessor 1
+    /// EP2 - EventProcessor 2
+    /// EP3 - EventProcessor 3
+    /// </summary>
+    public class OneToThreeSequencedThroughputTest : IPerfTest
+    {
+        private const int _numEventProcessors = 3;
+        private const int _bufferSize = 1024 * 8;
+        private const long _iterations = 1000L * 1000L;// * 100L;
+
+        private readonly RingBuffer<ValueEvent> _ringBuffer;
+        private readonly ManualResetEvent _mru;
+        private readonly BatchEventProcessor<ValueEvent>[] _batchEventProcessors = new BatchEventProcessor<ValueEvent>[_numEventProcessors];
+        private readonly long[] _results = new long[_numEventProcessors];
+        private readonly ValueMutationEventHandler[] _handlers = new ValueMutationEventHandler[_numEventProcessors];
+        private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
+        
+        public OneToThreeSequencedThroughputTest()
+        {
+            _mru = new ManualResetEvent(false);
+
+            _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(), _bufferSize, new YieldingWaitStrategy());
+            var barrier = _ringBuffer.NewBarrier();
+
+            _handlers[0] = new ValueMutationEventHandler(Operation.Addition, _iterations, _mru);
+            _handlers[1] = new ValueMutationEventHandler(Operation.Subtraction, _iterations, _mru);
+            _handlers[2] = new ValueMutationEventHandler(Operation.And, _iterations, _mru);
+
+            for (int i = 0; i < _numEventProcessors; i++)
+            {
+                _batchEventProcessors[i] = new BatchEventProcessor<ValueEvent>(_ringBuffer, barrier, _handlers[i]);
+            }
+            _ringBuffer.AddGatingSequences(_batchEventProcessors.Select(x => x.Sequence).ToArray());
+
+            for (long i = 0; i < _iterations; i++)
+            {
+                _results[0] = Operation.Addition.Op(_results[0], i);
+                _results[1] = Operation.Subtraction.Op(_results[1], i);
+                _results[2] = Operation.And.Op(_results[2], i);
+            }
+        }
+
+        public long Run(Stopwatch stopwatch)
+        {
+            for (int i = 0; i < _numEventProcessors; i++)
+            {
+                _handlers[i].Reset(_mru, _batchEventProcessors[i].Sequence.Value + _iterations);
+                _executor.Execute(_batchEventProcessors[i].Run);
+            }
+
+            stopwatch.Start();
+
+            for (long i = 0; i < _iterations; i++)
+            {
+                long sequence = _ringBuffer.Next();
+                _ringBuffer[sequence].Value = i;
+                _ringBuffer.Publish(sequence);
+            }
+
+            _mru.WaitOne();
+            stopwatch.Stop();
+
+            for (int i = 0; i < _numEventProcessors; i++)
+            {
+                _batchEventProcessors[i].Halt();
+                PerfTestUtil.FailIfNot(_results[i], _handlers[i].Value, $"Result {_results[i]} != {_handlers[i].Value}");
+            }
+
+            return _numEventProcessors * _iterations;
+        }
+
+        public int RequiredProcessorCount => 4;
+    }
+}

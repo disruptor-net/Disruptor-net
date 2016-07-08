@@ -36,7 +36,7 @@ namespace Disruptor.PerfTests.Sequenced
     public class OneToOneSequencedThroughputTest : IPerfTest
     {
         private const int _bufferSize = 1024 * 64;
-        private const long _iterations = 1000L * 1000L;// * 100L;
+        private const long _iterations = 1000L * 1000L * 100L;
 
         private readonly RingBuffer<ValueEvent> _ringBuffer;
         private readonly ValueAdditionEventHandler _eventHandler;

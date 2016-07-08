@@ -5,29 +5,33 @@ namespace Disruptor.PerfTests.Support
     public class ValueMutationEventHandler : IEventHandler<ValueEvent>
     {
         private readonly Operation _operation;
-        private Volatile.PaddedLong _value = new Volatile.PaddedLong(0);
-        private readonly long _iterations;
-        private readonly CountdownEvent _latch;
+        private long _value;
+        private long _iterations;
+        private ManualResetEvent _latch;
 
-        public ValueMutationEventHandler(Operation operation, long iterations, CountdownEvent latch)
+        public ValueMutationEventHandler(Operation operation, long iterations, ManualResetEvent latch)
         {
             _operation = operation;
             _iterations = iterations;
             _latch = latch;
         }
 
-        public long Value
+        public long Value => _value;
+
+        public void Reset(ManualResetEvent latch, long expectedCount)
         {
-            get { return _value.ReadUnfenced(); }
+            _value = 0L;
+            _latch = latch;
+            _iterations = expectedCount;
         }
 
         public void OnEvent(ValueEvent data, long sequence, bool endOfBatch)
         {
-            _value.WriteUnfenced(_operation.Op(_value.ReadUnfenced(), data.Value));
+            _value = _operation.Op(_value, data.Value);
 
-            if (sequence == _iterations - 1)
+            if (sequence == _iterations)
             {
-                _latch.Signal();
+                _latch.Set();
             }
         }
     }

@@ -16,7 +16,7 @@ namespace Disruptor.PerfTests.Support
             return temp;
         }
 
-        public static void FailIf(long a, long b, string message)
+        public static void FailIf(long a, long b, string message = null)
         {
             if (a == b)
             {
@@ -24,7 +24,7 @@ namespace Disruptor.PerfTests.Support
             }
         }
 
-        public static void FailIfNot(long a, long b, string message)
+        public static void FailIfNot(long a, long b, string message = null)
         {
             if (a != b)
             {
