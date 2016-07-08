@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
@@ -84,20 +83,12 @@ namespace Disruptor.PerfTests.Sequenced
 
             signal.WaitOne();
             stopwatch.Stop();
-            WaitForEventProcessorSequence(expectedCount);
+            PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _batchEventProcessor);
             _batchEventProcessor.Halt();
 
             PerfTestUtil.FailIfNot(_expectedResult, _handler.Value, $"Handler should have processed {_expectedResult} events, but was: {_handler.Value}");
 
             return _batchSize * _iterations;
-        }
-
-        private void WaitForEventProcessorSequence(long expectedCount)
-        {
-            while (_batchEventProcessor.Sequence.Value != expectedCount)
-            {
-                Thread.Sleep(1);
-            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace Disruptor.PerfTests.Support
 {
@@ -28,6 +29,14 @@ namespace Disruptor.PerfTests.Support
             if (a != b)
             {
                 throw new Exception(message);
+            }
+        }
+
+        public static void WaitForEventProcessorSequence(long expectedCount, IEventProcessor batchEventProcessor)
+        {
+            while (batchEventProcessor.Sequence.Value != expectedCount)
+            {
+                Thread.Sleep(1);
             }
         }
     }

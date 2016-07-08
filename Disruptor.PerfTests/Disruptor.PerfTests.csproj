@@ -60,6 +60,7 @@
     <Compile Include="Support\LongArrayEventHandler.cs" />
     <Compile Include="Sequenced\OneToOneSequencedBatchThroughputTest.cs" />
     <Compile Include="Sequenced\OneToOneSequencedLongArrayThroughputTest.cs" />
+    <Compile Include="Sequenced\OneToOneSequencedThroughputTest.cs" />
     <Compile Include="Support\PerfTestUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Support\FizzBuzzEvent.cs" />

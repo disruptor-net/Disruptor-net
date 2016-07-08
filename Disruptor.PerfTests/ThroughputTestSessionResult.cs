@@ -43,7 +43,7 @@ namespace Disruptor.PerfTests
                 stringBuilder.AppendLine(" <tr>");
                 stringBuilder.AppendLine($"     <td>{runId}</td>");
                 stringBuilder.AppendLine($"     <td>{TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###}</td>");
-                stringBuilder.AppendLine($"     <td>{Duration.TotalMilliseconds} (ms)</td>");
+                stringBuilder.AppendLine($"     <td>{Duration.TotalMilliseconds:N0} (ms)</td>");
                 stringBuilder.AppendLine($"     <td>{Gen0} - {Gen1} - {Gen2}</td>");
                 stringBuilder.AppendLine(" </tr>");
             }
@@ -51,7 +51,7 @@ namespace Disruptor.PerfTests
 
         public override string ToString()
         {
-            return _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Ops: {TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###} - Duration: {Duration.TotalMilliseconds} (ms) - GC: {Gen0} - {Gen1} - {Gen2}";
+            return _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Ops: {TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###} - Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2}";
         }
     }
 }
