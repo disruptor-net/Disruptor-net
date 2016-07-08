@@ -264,7 +264,7 @@ namespace Disruptor.Dsl
         {
             try
             {
-                Shutdown(TimeSpan.MinValue); // do not wait
+                Shutdown(TimeSpan.FromMilliseconds(-1)); // do not wait
             }
             catch (TimeoutException e)
             {
