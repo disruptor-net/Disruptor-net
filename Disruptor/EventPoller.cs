@@ -70,7 +70,7 @@ namespace Disruptor
             }
         }
 
-        public static EventPoller<T> NewInstance<T>(IDataProvider<T> dataProvider,
+        public static EventPoller<T> NewInstance(IDataProvider<T> dataProvider,
                                                     ISequencer sequencer,
                                                     Sequence sequence,
                                                     Sequence cursorSequence,

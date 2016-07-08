@@ -44,7 +44,7 @@ namespace Disruptor
                 TranslateAndPublish(translator, sequence);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }

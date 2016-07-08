@@ -239,7 +239,7 @@ namespace Disruptor
                 TranslateAndPublish(translator, sequence);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }
@@ -259,7 +259,7 @@ namespace Disruptor
                 TranslateAndPublish(translator, sequence, arg0);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }
@@ -279,7 +279,7 @@ namespace Disruptor
                 TranslateAndPublish(translator, sequence, arg0, arg1);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }
@@ -299,7 +299,7 @@ namespace Disruptor
                 TranslateAndPublish(translator, sequence, arg0, arg1, arg2);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }
@@ -319,7 +319,7 @@ namespace Disruptor
                 TranslateAndPublish(translator, sequence, args);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }
@@ -351,7 +351,7 @@ namespace Disruptor
                 TranslateAndPublishBatch(translators, batchStartsAt, batchSize, finalSequence);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }
@@ -384,7 +384,7 @@ namespace Disruptor
                 TranslateAndPublishBatch(translator, arg0, batchStartsAt, batchSize, finalSequence);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }
@@ -416,7 +416,7 @@ namespace Disruptor
                 TranslateAndPublishBatch(translator, arg0, arg1, batchStartsAt, batchSize, finalSequence);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }
@@ -448,7 +448,7 @@ namespace Disruptor
                 TranslateAndPublishBatch(translator, arg0, arg1, arg2, batchStartsAt, batchSize, finalSequence);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }
@@ -499,7 +499,7 @@ namespace Disruptor
                 TranslateAndPublishBatch(translator, batchStartsAt, batchSize, finalSequence, args);
                 return true;
             }
-            catch (InsufficientCapacityException e)
+            catch (InsufficientCapacityException)
             {
                 return false;
             }
