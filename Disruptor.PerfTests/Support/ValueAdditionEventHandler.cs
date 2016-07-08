@@ -4,28 +4,28 @@ namespace Disruptor.PerfTests.Support
 {
     public class ValueAdditionEventHandler : IEventHandler<ValueEvent>
     {
-        private readonly long _iterations;
         private Volatile.PaddedLong _value;
-        private readonly ManualResetEvent _mru;
 
-        public ValueAdditionEventHandler(long iterations, ManualResetEvent mru)
-        {
-            _iterations = iterations;
-            _mru = mru;
-        }
+        public long Count { get; private set; }
 
-        public long Value
+        public ManualResetEvent Signal { get; private set; }
+
+        public long Value => _value.ReadUnfenced();
+
+        public void Reset(ManualResetEvent signal, long expectedCount)
         {
-            get { return _value.ReadUnfenced(); }
+            _value.WriteFullFence(0L);
+            Signal = signal;
+            Count = expectedCount;
         }
 
         public void OnEvent(ValueEvent value, long sequence, bool endOfBatch)
         {
             _value.WriteUnfenced(_value.ReadUnfenced() + value.Value);
 
-            if(sequence == _iterations - 1)
+            if(Count == sequence)
             {
-                _mru.Set();
+                Signal?.Set();
             }
         }
     }
