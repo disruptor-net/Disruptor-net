@@ -4,42 +4,14 @@ namespace Disruptor.Dsl
 {
     public class ExceptionHandlerWrapper<T> : IExceptionHandler<T> where T : class 
     {
-        private readonly FatalExceptionHandler _defaultHandler = new FatalExceptionHandler();
-        private IExceptionHandler<T> _switchedHandler;
+        private IExceptionHandler<T> _handler = new FatalExceptionHandler();
 
-        public void SwitchTo(IExceptionHandler<T> exceptionHandler) => _switchedHandler = exceptionHandler;
+        public void SwitchTo(IExceptionHandler<T> exceptionHandler) => _handler = exceptionHandler;
 
-        public void HandleEventException(Exception ex, long sequence, T evt)
-        {
-            if (_switchedHandler != null)
-            {
-                _switchedHandler.HandleEventException(ex, sequence, evt);
-                return;
-            }
+        public void HandleEventException(Exception ex, long sequence, T evt) => _handler.HandleEventException(ex, sequence, evt);
 
-            _defaultHandler.HandleEventException(ex, sequence, evt);
-        }
+        public void HandleOnStartException(Exception ex) => _handler.HandleOnStartException(ex);
 
-        public void HandleOnStartException(Exception ex)
-        {
-            if (_switchedHandler != null)
-            {
-                _switchedHandler.HandleOnStartException(ex);
-                return;
-            }
-
-            _defaultHandler.HandleOnStartException(ex);
-        }
-
-        public void HandleOnShutdownException(Exception ex)
-        {
-            if (_switchedHandler != null)
-            {
-                _switchedHandler.HandleOnShutdownException(ex);
-                return;
-            }
-
-            _defaultHandler.HandleOnShutdownException(ex);
-        }
+        public void HandleOnShutdownException(Exception ex) => _handler.HandleOnShutdownException(ex);
     }
 }
