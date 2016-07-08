@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
@@ -34,7 +35,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// EP1 - EventProcessor 1
     /// </code>
     /// </summary>
-    public class OneToOneSequencedBatchThroughputTest : AbstractPerfTestDisruptor
+    public class OneToOneSequencedBatchThroughputTest : IPerfTest
     {
         private const int _batchSize = 10;
         private const int _bufferSize = 1024 * 64;
@@ -45,30 +46,29 @@ namespace Disruptor.PerfTests.Sequenced
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
         private readonly RingBuffer<ValueEvent> _ringBuffer;
-        private readonly ISequenceBarrier _sequenceBarrier;
         private readonly ValueAdditionEventHandler _handler;
         private readonly BatchEventProcessor<ValueEvent> _batchEventProcessor;
 
         public OneToOneSequencedBatchThroughputTest()
         {
             _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(), _bufferSize, new YieldingWaitStrategy());
-            _sequenceBarrier = _ringBuffer.NewBarrier();
+            var sequenceBarrier = _ringBuffer.NewBarrier();
             _handler = new ValueAdditionEventHandler();
-            _batchEventProcessor = new BatchEventProcessor<ValueEvent>(_ringBuffer, _sequenceBarrier, _handler);
+            _batchEventProcessor = new BatchEventProcessor<ValueEvent>(_ringBuffer, sequenceBarrier, _handler);
             _ringBuffer.AddGatingSequences(_batchEventProcessor.Sequence);
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-        protected override int RequiredProcessorCount => 2;
+        public int RequiredProcessorCount => 2;
 
-        protected override long RunDisruptorPass()
+        public long Run(Stopwatch stopwatch)
         {
             var signal = new ManualResetEvent(false);
             var expectedCount = _batchEventProcessor.Sequence.Value + _iterations * _batchSize;
             _handler.Reset(signal, expectedCount);
             _executor.Execute(_batchEventProcessor.Run);
-            var start = DateTime.UtcNow.Ticks;
+            stopwatch.Start();
 
             var rb = _ringBuffer;
             for (var i = 0; i < _iterations; i++)
@@ -83,13 +83,13 @@ namespace Disruptor.PerfTests.Sequenced
             }
 
             signal.WaitOne();
-            var opsPerSecond = (_batchSize * _iterations * 10 * 1000L) / (DateTime.UtcNow.Ticks - start);
+            stopwatch.Stop();
             WaitForEventProcessorSequence(expectedCount);
             _batchEventProcessor.Halt();
 
-            PerfTestUtil.FailIfNot(_expectedResult, _handler.Value);
+            PerfTestUtil.FailIfNot(_expectedResult, _handler.Value, $"Handler should have processed {_expectedResult} events, but was: {_handler.Value}");
 
-            return opsPerSecond;
+            return _batchSize * _iterations;
         }
 
         private void WaitForEventProcessorSequence(long expectedCount)
@@ -99,12 +99,5 @@ namespace Disruptor.PerfTests.Sequenced
                 Thread.Sleep(1);
             }
         }
-
-        public static void Run()
-        {
-            var test = new OneToOneSequencedBatchThroughputTest();
-            test.TestImplementations();
-        }
-
     }
 }

@@ -23,11 +23,11 @@ namespace Disruptor.PerfTests.Support
             }
         }
 
-        public static void FailIfNot(long a, long b)
+        public static void FailIfNot(long a, long b, string message)
         {
             if (a != b)
             {
-                throw new Exception();
+                throw new Exception(message);
             }
         }
     }

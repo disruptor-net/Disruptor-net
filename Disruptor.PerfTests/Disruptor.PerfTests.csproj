@@ -55,8 +55,7 @@
     <Compile Include="..\Version.cs">
       <Link>Version.cs</Link>
     </Compile>
-    <Compile Include="AbstractPerfTestDisruptor.cs" />
-    <Compile Include="AbstractPerfTestQueue.cs" />
+    <Compile Include="PerfTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Sequenced\OneToOneSequencedBatchThroughputTest.cs" />
     <Compile Include="Support\PerfTestUtil.cs" />
@@ -80,6 +79,9 @@
     <Compile Include="Support\ValueMutationQueueEventProcessor.cs" />
     <Compile Include="Support\ValueProducer.cs" />
     <Compile Include="Support\ValueQueueProducer.cs" />
+    <Compile Include="ComputerSpecifications.cs" />
+    <Compile Include="PerformanceTestSession.cs" />
+    <Compile Include="ThroughputTestSessionResult.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Atomic\Atomic.csproj">
@@ -95,9 +97,7 @@
       <Name>Disruptor</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="_\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

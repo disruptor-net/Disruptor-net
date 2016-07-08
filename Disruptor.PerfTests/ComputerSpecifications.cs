@@ -2,7 +2,7 @@ using System;
 using System.Management;
 using System.Text;
 
-namespace Disruptor.PerfTests.Runner
+namespace Disruptor.PerfTests
 {
     /// <summary>
     /// A class that uses the System.Management APIS (WMI) to fetch the most 

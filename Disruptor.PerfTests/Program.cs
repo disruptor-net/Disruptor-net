@@ -5,11 +5,30 @@ namespace Disruptor.PerfTests
 {
     public class Program
     {
-        public static void Main(string[] args)
+        static void Main(string[] args)
         {
-            OneToOneSequencedBatchThroughputTest.Run();
+            if (args == null || args.Length != 1)
+            {
+                PrintUsage();
+                return;
+            }
 
-            Console.ReadLine();
+            var computerSpecifications = new ComputerSpecifications();
+            Console.WriteLine(computerSpecifications.ToString());
+
+            var session = new PerformanceTestSession(computerSpecifications, Type.GetType(args[0]));
+
+            //Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
+
+            session.Run();
+
+            session.GenerateAndOpenReport();
+            Console.ReadKey();
+        }
+
+        private static void PrintUsage()
+        {
+            Console.WriteLine("Usage: Disruptor.PerfTests TestTypeFullName [ie. Disruptor.PerfTests.Sequenced.OneToOneSequencedBatchThroughputTest]");
         }
     }
 }
