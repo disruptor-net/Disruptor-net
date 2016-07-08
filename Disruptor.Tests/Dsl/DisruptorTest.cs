@@ -533,7 +533,7 @@ namespace Disruptor.Tests.Dsl
             IEventHandler<TestEvent> eventHandler = new EventHandlerStub<TestEvent>(countDownLatch);
             var delayedEventHandler = CreateDelayedEventHandler();
 
-            _disruptor.HandleEventsWith(delayedEventHandler).Then(new EventProcessorFactory(_disruptor, eventHandler, 0));
+            _disruptor.HandleEventsWith(delayedEventHandler).Then(new EventProcessorFactory(_disruptor, eventHandler, 1));
 
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
         }
@@ -562,8 +562,8 @@ namespace Disruptor.Tests.Dsl
 
         private static void AssertProducerReaches(StubPublisher stubPublisher, int expectedPublicationCount, bool strict)
         {
-            var loopStart = DateTime.UtcNow.Ticks;
-            while (stubPublisher.GetPublicationCount() < expectedPublicationCount && DateTime.UtcNow.Ticks - loopStart < 5000)
+            var loopStart = DateTime.UtcNow;
+            while (stubPublisher.GetPublicationCount() < expectedPublicationCount && DateTime.UtcNow - loopStart < TimeSpan.FromMilliseconds(5))
             {
                 Thread.Yield();
             }

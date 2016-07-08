@@ -1,27 +1,34 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Disruptor.Dsl
 {
     internal class ConsumerRepository<T> : IEnumerable<IConsumerInfo> where T : class
     {
-        private readonly Dictionary<IEventHandler<T>, EventProcessorInfo<T>> _eventProcessorInfoByEventHandler = new Dictionary<IEventHandler<T>, EventProcessorInfo<T>>();
-        private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence = new Dictionary<Sequence, IConsumerInfo>();
+        private readonly Dictionary<IEventHandler<T>, EventProcessorInfo<T>> _eventProcessorInfoByEventHandler;
+        private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence;
         private readonly List<IConsumerInfo> _consumerInfos = new List<IConsumerInfo>();
+
+        public ConsumerRepository()
+        {
+            _eventProcessorInfoByEventHandler = new Dictionary<IEventHandler<T>, EventProcessorInfo<T>>(new IdentityComparer<IEventHandler<T>>());
+            _eventProcessorInfoBySequence = new Dictionary<Sequence, IConsumerInfo>(new IdentityComparer<Sequence>());
+        }
 
         public void Add(IEventProcessor eventProcessor, IEventHandler<T> eventHandler, ISequenceBarrier sequenceBarrier)
         {
             var consumerInfo = new EventProcessorInfo<T>(eventProcessor, eventHandler, sequenceBarrier);
-            _eventProcessorInfoByEventHandler.Add(eventHandler, consumerInfo);
-            _eventProcessorInfoBySequence.Add(eventProcessor.Sequence, consumerInfo);
+            _eventProcessorInfoByEventHandler[eventHandler] = consumerInfo;
+            _eventProcessorInfoBySequence[eventProcessor.Sequence] = consumerInfo;
             _consumerInfos.Add(consumerInfo);
         }
 
         public void Add(IEventProcessor processor)
         {
             var consumerInfo = new EventProcessorInfo<T>(processor, null, null);
-            _eventProcessorInfoBySequence.Add(processor.Sequence, consumerInfo);
+            _eventProcessorInfoBySequence [processor.Sequence] = consumerInfo;
             _consumerInfos.Add(consumerInfo);
         }
         
@@ -31,7 +38,7 @@ namespace Disruptor.Dsl
             _consumerInfos.Add(workerPoolInfo);
             foreach (var sequence in workerPool.WorkerSequences)
             {
-                _eventProcessorInfoBySequence.Add(sequence, workerPoolInfo);
+                _eventProcessorInfoBySequence[sequence] = workerPoolInfo;
             }
         }
 
@@ -53,7 +60,8 @@ namespace Disruptor.Dsl
         public IEventProcessor GetEventProcessorFor(IEventHandler<T> eventHandler)
         {
             EventProcessorInfo<T> eventprocessorInfo;
-            if(!_eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventprocessorInfo) || eventprocessorInfo == null)
+            var found = _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventprocessorInfo);
+            if(!found || eventprocessorInfo == null)
             {
                 throw new ArgumentException("The event handler " + eventHandler + " is not processing events.");
             }
@@ -89,6 +97,19 @@ namespace Disruptor.Dsl
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        class IdentityComparer<T> : IEqualityComparer<T>
+        {
+            public bool Equals(T x, T y)
+            {
+                return ReferenceEquals(x, y);
+            }
+
+            public int GetHashCode(T obj)
+            {
+                return RuntimeHelpers.GetHashCode(obj);
+            }
         }
     }
 }
