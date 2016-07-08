@@ -72,7 +72,7 @@ namespace Disruptor.Dsl
             _ringBuffer = ringBuffer;
             _executor = executor;
         }
-        
+
         /// <summary>
         /// Set up event handlers to handle events from the ring buffer. These handlers will process events
         /// as soon as they become available, in parallel.
@@ -135,7 +135,18 @@ namespace Disruptor.Dsl
         {
             return CreateWorkerPool(new Sequence[0], workHandlers);
         }
-        
+
+        /// <summary>
+        /// Specify an exception handler to be used for any future event handlers.
+        /// Note that only event handlers set up after calling this method will use the exception handler.
+        /// </summary>
+        /// <param name="exceptionHandler">the exception handler to use for any future <see cref="IEventProcessor"/>.</param>
+        [Obsolete("This method only applies to future event handlers. Use setDefaultExceptionHandler instead which applies to existing and new event handlers.")]
+        public void HandleExceptionsWith(IExceptionHandler<object> exceptionHandler)
+        {
+            _exceptionHandler = exceptionHandler;
+        }
+
         /// <summary>
         /// Specify an exception handler to be used for event handlers and worker pools created by this Disruptor.
         /// The exception handler will be used by existing and future event handlers and worker pools created by this Disruptor instance.
@@ -382,11 +393,6 @@ namespace Disruptor.Dsl
             {
                 throw new InvalidOperationException("Disruptor.start() must only be called once.");
             }
-        }
-
-        public void HandleExceptionsWith(IExceptionHandler<object> exceptionHandler)
-        {
-            _exceptionHandler = exceptionHandler;
         }
     }
 }
