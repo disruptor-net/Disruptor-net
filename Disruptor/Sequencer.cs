@@ -86,7 +86,7 @@ namespace Disruptor
         ///     int n = 10;
         ///     long hi = sequencer.next(n);
         ///     long lo = hi - (n - 1);
-        ///     for (long sequence = lo; sequence <= hi; sequence++) {
+        ///     for (long sequence = lo; sequence ~&lt;= hi; sequence++) {
         ///        // Do work.
         ///     }
         ///     sequencer.publish(lo, hi);
