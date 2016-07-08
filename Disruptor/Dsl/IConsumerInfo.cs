@@ -4,7 +4,7 @@
     {
         Sequence[] Sequences { get; }
 
-        ISequenceBarrier SequenceBarrier { get; }
+        ISequenceBarrier Barrier { get; }
 
         bool IsEndOfChain { get; }
 

@@ -4,16 +4,16 @@
     {
         private readonly WorkerPool<T> _workerPool;
 
-        public WorkerPoolInfo(WorkerPool<T> workerPool, ISequenceBarrier sequenceBarrier)
+        public WorkerPoolInfo(WorkerPool<T> workerPool, ISequenceBarrier barrier)
         {
             _workerPool = workerPool;
-            SequenceBarrier = sequenceBarrier;
+            Barrier = barrier;
             IsEndOfChain = true;
         }
 
         public Sequence[] Sequences => _workerPool.WorkerSequences;
 
-        public ISequenceBarrier SequenceBarrier { get; }
+        public ISequenceBarrier Barrier { get; }
 
         public bool IsEndOfChain { get; private set; }
 

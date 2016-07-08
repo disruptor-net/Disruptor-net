@@ -89,7 +89,7 @@ namespace Disruptor.Dsl
         public ISequenceBarrier GetBarrierFor(IEventHandler<T> eventHandler)
         {
             EventProcessorInfo<T> eventProcessorInfo;
-            return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventProcessorInfo) ? eventProcessorInfo.SequenceBarrier : null;
+            return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventProcessorInfo) ? eventProcessorInfo.Barrier : null;
         }
 
         public IEnumerator<IConsumerInfo> GetEnumerator() => _consumerInfos.GetEnumerator();

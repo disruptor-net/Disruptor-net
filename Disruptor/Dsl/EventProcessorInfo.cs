@@ -2,11 +2,11 @@
 {
     internal class EventProcessorInfo<T> : IConsumerInfo
     {
-        public EventProcessorInfo(IEventProcessor eventProcessor, IEventHandler<T> eventHandler, ISequenceBarrier sequenceBarrier)
+        public EventProcessorInfo(IEventProcessor eventProcessor, IEventHandler<T> eventHandler, ISequenceBarrier barrier)
         {
             EventProcessor = eventProcessor;
             Handler = eventHandler;
-            SequenceBarrier = sequenceBarrier;
+            Barrier = barrier;
             IsEndOfChain = true;
         }
 
@@ -16,7 +16,7 @@
 
         public IEventHandler<T> Handler { get; }
 
-        public ISequenceBarrier SequenceBarrier { get; }
+        public ISequenceBarrier Barrier { get; }
 
         public bool IsEndOfChain { get; private set; }
 
