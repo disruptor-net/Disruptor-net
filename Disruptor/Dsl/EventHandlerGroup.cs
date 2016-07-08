@@ -38,7 +38,11 @@ namespace Disruptor.Dsl
         /// <returns>a new EventHandlerGroup combining the existing and new processors into a single dependency group</returns>
         public EventHandlerGroup<T> And(params IEventProcessor[] processors)
         {
-            return new EventHandlerGroup<T>(_disruptor, _consumerRepository, _sequences.Concat(processors.Select(p => p.Sequence)));
+            foreach (var eventProcessor in processors)
+            {
+                _consumerRepository.Add(eventProcessor);
+            }
+            return new EventHandlerGroup<T>(_disruptor, _consumerRepository, processors.Select(p => p.Sequence).Concat(_sequences));
         }
 
         /// <summary>

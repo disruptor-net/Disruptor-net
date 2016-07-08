@@ -26,7 +26,7 @@ namespace Disruptor.Dsl
         private readonly IExecutor _executor;
         private readonly ConsumerRepository<T> _consumerRepository = new ConsumerRepository<T>();
         private IExceptionHandler<T> _exceptionHandler = new ExceptionHandlerWrapper<T>();
-        private volatile int _started;
+        private int _started;
 
         /// <summary>
         /// Create a new Disruptor. Will default to <see cref="BlockingWaitStrategy"/> and
@@ -50,6 +50,17 @@ namespace Disruptor.Dsl
         /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
         public Disruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
             : this(RingBuffer<T>.Create(producerType, eventFactory, ringBufferSize, waitStrategy), new BasicExecutor(taskScheduler))
+        {
+        }
+
+        /// <summary>
+        /// Allows the executor to be specified
+        /// </summary>
+        /// <param name="eventFactory"></param>
+        /// <param name="ringBufferSize"></param>
+        /// <param name="executor"></param>
+        public Disruptor(Func<T> eventFactory, int ringBufferSize, IExecutor executor)
+            : this(RingBuffer<T>.CreateMultiProducer(eventFactory, ringBufferSize), executor)
         {
         }
 

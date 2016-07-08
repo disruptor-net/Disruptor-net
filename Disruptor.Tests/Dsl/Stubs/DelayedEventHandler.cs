@@ -10,7 +10,7 @@ namespace Disruptor.Tests.Dsl.Stubs
         private volatile bool _stopped;
         private readonly Barrier _barrier;
 
-        public DelayedEventHandler(Barrier barrier)
+        private DelayedEventHandler(Barrier barrier)
         {
             _barrier = barrier;
         }
@@ -36,8 +36,7 @@ namespace Disruptor.Tests.Dsl.Stubs
 
         private void WaitForAndSetFlag(bool newValue)
         {
-            while (!_stopped && Thread.CurrentThread.IsAlive &&
-                !_readyToProcessEvent.AtomicCompareExchange(newValue, !newValue))
+            while (!_stopped && Thread.CurrentThread.IsAlive && !_readyToProcessEvent.AtomicCompareExchange(newValue, !newValue))
             {
                 Thread.Yield();
             }
