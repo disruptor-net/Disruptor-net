@@ -55,49 +55,12 @@
     <Compile Include="..\Version.cs">
       <Link>Version.cs</Link>
     </Compile>
-    <Compile Include="DiamondPath1P3C\AbstractDiamondPath1P3CPerfTest.cs" />
-    <Compile Include="DiamondPath1P3C\DiamondPath1P3CDisruptorWithAffinityPerfTest.cs" />
-    <Compile Include="DiamondPath1P3C\DiamondPath1P3CBlockingCollectionPerfTest.cs" />
-    <Compile Include="DiamondPath1P3C\DiamondPath1P3CDisruptorPerfTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="LatencyPerfTest.cs" />
-    <Compile Include="MultiCast1P3C\MultiCast1P3CDisruptorWithAffinityPerfTest.cs" />
-    <Compile Include="MultiCast1P3C\MultiCast1P3CDisruptorPerfTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="PerfTest.cs" />
-    <Compile Include="Pipeline3StepLatency\AbstractPipeline3StepLatencyPerfTest.cs" />
-    <Compile Include="Pipeline3StepLatency\Pipeline3StepLatencyDisruptorWithAffinityPerfTest.cs" />
-    <Compile Include="Pipeline3StepLatency\Pipeline3StepLatencyBlockingCollectionPerfTest.cs" />
-    <Compile Include="Pipeline3StepLatency\Pipeline3StepLatencyDisruptorPerfTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Pipeline3Step\Pipeline3StepDisruptorWithAffinityPerfTest.cs" />
-    <Compile Include="Pipeline3Step\Pipeline3StepDisruptorPerfTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Runner\ComputerSpecifications.cs" />
-    <Compile Include="Runner\Implementation.cs" />
-    <Compile Include="Runner\ImplementationType.cs" />
-    <Compile Include="MultiCast1P3C\AbstractMultiCast1P3CPerfTest.cs" />
-    <Compile Include="MultiCast1P3C\MultiCast1P3CBlockingCollectionPerfTest.cs" />
-    <Compile Include="Pipeline3Step\AbstractPipeline3StepPerfTest.cs" />
-    <Compile Include="Pipeline3Step\Pipeline3StepBlockingCollectionPerfTest.cs" />
+    <Compile Include="AbstractPerfTestDisruptor.cs" />
+    <Compile Include="AbstractPerfTestQueue.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Sequenced\OneToOneSequencedBatchThroughputTest.cs" />
+    <Compile Include="Support\PerfTestUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Runner\LatencyTestRun.cs" />
-    <Compile Include="Runner\Scenario.cs" />
-    <Compile Include="Runner\ScenarioType.cs" />
-    <Compile Include="Runner\PerformanceTestSession.cs" />
-    <Compile Include="Runner\TestRun.cs" />
-    <Compile Include="Runner\ThroughputTestRun.cs" />
-    <Compile Include="Sequencer3P1C\AbstractSequencer3P1CPerfTest.cs" />
-    <Compile Include="Sequencer3P1C\Sequencer3P1CDisruptorWithAffinityPerfTest.cs" />
-    <Compile Include="Sequencer3P1C\Sequencer3P1CBlockingCollectionPerfTest.cs" />
-    <Compile Include="Sequencer3P1C\Sequencer3P1CDisruptorPerfTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Support\FizzBuzzEvent.cs" />
     <Compile Include="Support\FizzBuzzEventHandler.cs" />
     <Compile Include="Support\FizzBuzzQueueEventProcessor.cs" />
@@ -117,17 +80,6 @@
     <Compile Include="Support\ValueMutationQueueEventProcessor.cs" />
     <Compile Include="Support\ValueProducer.cs" />
     <Compile Include="Support\ValueQueueProducer.cs" />
-    <Compile Include="ThroughputPerfTest.cs" />
-    <Compile Include="UniCast1P1CBatch\AbstractUniCast1P1CBatchPerfTest.cs" />
-    <Compile Include="UniCast1P1CBatch\UniCast1P1CBatchDisruptorWithAffinityPerfTest.cs" />
-    <Compile Include="UniCast1P1CBatch\UniCast1P1CBatchBlockingCollectionPerfTest.cs" />
-    <Compile Include="UniCast1P1CBatch\UniCast1P1CBatchDisruptorPerfTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="UniCast1P1C\AbstractUniCast1P1CPerfTest.cs" />
-    <Compile Include="UniCast1P1C\UniCast1P1CDisruptorWithAffinityPerfTest.cs" />
-    <Compile Include="UniCast1P1C\UniCast1P1CBlockingCollectionPerfTest.cs" />
-    <Compile Include="UniCast1P1C\UniCast1P1CDisruptorPerfTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Atomic\Atomic.csproj">
@@ -143,7 +95,9 @@
       <Name>Disruptor</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="_\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
