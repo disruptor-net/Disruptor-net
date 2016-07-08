@@ -13,8 +13,7 @@ namespace Disruptor
     /// <typeparam name="T">Event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
     public sealed class BatchEventProcessor<T> : IEventProcessor where T : class
     {
-        private int _running;
-
+        private volatile int _running;
         private readonly IDataProvider<T> _dataProvider;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IEventHandler<T> _eventHandler;
@@ -47,7 +46,7 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            Interlocked.Exchange(ref _running, 0);
+            _running = 0;
             _sequenceBarrier.Alert();
         }
 
@@ -118,7 +117,7 @@ namespace Disruptor
             finally
             {
                 NotifyShutdown();
-                Interlocked.Exchange(ref _running, 0);
+                _running = 0;
             }
         }
 
