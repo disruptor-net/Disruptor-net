@@ -11,7 +11,7 @@ namespace Disruptor
     /// is started and just before the thread is shutdown.
     /// </summary>
     /// <typeparam name="T">Event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
-    internal sealed class BatchEventProcessor<T> : IEventProcessor where T : class
+    public sealed class BatchEventProcessor<T> : IEventProcessor where T : class
     {
         private volatile int _running;
 
