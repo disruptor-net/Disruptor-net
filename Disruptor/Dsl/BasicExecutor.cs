@@ -26,7 +26,7 @@ namespace Disruptor.Dsl
         /// <param name="command"></param>
         public void Execute(Action command)
         {
-            Task.Factory.StartNew(command, CancellationToken.None, TaskCreationOptions.None, _taskScheduler);
+            Task.Factory.StartNew(command, CancellationToken.None, TaskCreationOptions.LongRunning, _taskScheduler);
         }
     }
 }
