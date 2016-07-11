@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Threading;
 using Disruptor.Dsl;
 using NUnit.Framework;
@@ -10,13 +9,13 @@ namespace Disruptor.Tests.Dsl.Stubs
     public class StubExecutor : IExecutor
     {
         private readonly ConcurrentBag<Thread> _threads = new ConcurrentBag<Thread>();
-        private Volatile.Boolean _ignoreExecutions = new Volatile.Boolean(false);
-        private Volatile.Integer _executionCount = new Volatile.Integer(0);
+        private bool _ignoreExecutions;
+        private int _executionCount;
 
         public void Execute(Action command)
         {
-            _executionCount.AtomicIncrementAndGet();
-            if (! _ignoreExecutions.ReadFullFence())
+            Interlocked.Increment(ref _executionCount);
+            if (!Volatile.Read(ref _ignoreExecutions))
             {
                 var t = new Thread(() => command());
                 //t.Name = command.toString();
@@ -53,12 +52,12 @@ namespace Disruptor.Tests.Dsl.Stubs
 
         public void IgnoreExecutions()
         {
-            _ignoreExecutions.WriteFullFence(true);
+            _ignoreExecutions = true;
         }
 
         public int GetExecutionCount()
         {
-            return _executionCount.ReadUnfenced();
+            return Volatile.Read(ref _executionCount);
         }
     }
 }

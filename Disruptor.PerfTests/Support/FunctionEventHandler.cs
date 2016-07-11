@@ -1,18 +1,16 @@
 using System.Threading;
+using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Support
 {
     public class FunctionEventHandler : IEventHandler<FunctionEvent>
     {
         private readonly FunctionStep _functionStep;
-        private Volatile.PaddedLong _stepThreeCounter = default(Volatile.PaddedLong);
+        private PaddedLong _stepThreeCounter;
         private readonly long _iterations;
         private readonly ManualResetEvent _mru;
 
-        public long StepThreeCounter
-        {
-            get { return _stepThreeCounter.ReadUnfenced(); }
-        }
+        public long StepThreeCounter => _stepThreeCounter.Value;
 
         public FunctionEventHandler(FunctionStep functionStep, long iterations, ManualResetEvent mru)
         {
@@ -35,7 +33,7 @@ namespace Disruptor.PerfTests.Support
                 case FunctionStep.Three:
                     if ((data.StepTwoResult & 4L) == 4L)
                     {
-                        _stepThreeCounter.WriteUnfenced(_stepThreeCounter.ReadUnfenced() + 1);
+                        _stepThreeCounter.Value = _stepThreeCounter.Value + 1;
                     }
                     break;
             }

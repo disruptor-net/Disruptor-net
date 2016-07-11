@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Disruptor", "Disruptor\Disruptor.csproj", "{37FBDBE1-8524-4489-B082-CC109B0F5EA3}"
 EndProject
@@ -20,11 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Disruptor.Scheduler", "Disruptor.Scheduler\Disruptor.Scheduler.csproj", "{7B1F3DC3-5DA8-4E36-A03B-837D90D2A51D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atomic", "Atomic\Atomic.csproj", "{BDB4336E-54F2-475D-8193-B730C522261F}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A44B9C7B-781B-4E2B-AA71-FA5A086A6C0F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atomic.Tests", "Atomic.Tests\Atomic.Tests.csproj", "{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -76,26 +72,6 @@ Global
 		{7B1F3DC3-5DA8-4E36-A03B-837D90D2A51D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{7B1F3DC3-5DA8-4E36-A03B-837D90D2A51D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{7B1F3DC3-5DA8-4E36-A03B-837D90D2A51D}.Release|x86.ActiveCfg = Release|Any CPU
-		{BDB4336E-54F2-475D-8193-B730C522261F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BDB4336E-54F2-475D-8193-B730C522261F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BDB4336E-54F2-475D-8193-B730C522261F}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{BDB4336E-54F2-475D-8193-B730C522261F}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{BDB4336E-54F2-475D-8193-B730C522261F}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{BDB4336E-54F2-475D-8193-B730C522261F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BDB4336E-54F2-475D-8193-B730C522261F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BDB4336E-54F2-475D-8193-B730C522261F}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{BDB4336E-54F2-475D-8193-B730C522261F}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{BDB4336E-54F2-475D-8193-B730C522261F}.Release|x86.ActiveCfg = Release|Any CPU
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -103,6 +79,5 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{759BF0BB-D922-4E85-A4C8-2C9F382E0A79} = {A44B9C7B-781B-4E2B-AA71-FA5A086A6C0F}
 		{BD103699-F540-40C3-99D7-462F53A9DABC} = {A44B9C7B-781B-4E2B-AA71-FA5A086A6C0F}
-		{2158C8FF-ACA1-4134-B3F5-EDC45C0E36C1} = {A44B9C7B-781B-4E2B-AA71-FA5A086A6C0F}
 	EndGlobalSection
 EndGlobal

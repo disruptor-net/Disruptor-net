@@ -12,14 +12,8 @@ namespace Disruptor
     /// </summary>
     public class SequenceGroup : Sequence
     {
+        /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
         private Sequence[] _sequences = new Sequence[0];
-        
-        /// <summary>
-        /// Default constructor
-        /// </summary>
-        public SequenceGroup() : base(InitialCursorValue)
-        {
-        }
 
         /// <summary>
         /// Get the minimum sequence value for the group.

@@ -95,8 +95,11 @@ namespace Disruptor
         {
             [FieldOffset(0)]
             private Padding56 _beforePadding;
+
+            /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
             [FieldOffset(56)]
             public long Value;
+
             [FieldOffset(64)]
             private Padding56 _afterPadding;
 

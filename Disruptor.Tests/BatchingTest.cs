@@ -27,7 +27,7 @@ namespace Disruptor.Tests
             public long BatchCount;
             public long PublishedValue;
             public long TempValue;
-            public Volatile.Long Processed;
+            public long Processed;
 
             public ParallelEventHandler(long mask, long ordinal)
             {
@@ -53,7 +53,7 @@ namespace Disruptor.Tests
                     Thread.Sleep(0); // LockSupport.parkNanos(1);
                 }
 
-                Processed.WriteFullFence(sequence);
+                Volatile.Write(ref Processed, sequence);
             }
         }
 
@@ -77,8 +77,8 @@ namespace Disruptor.Tests
                 buffer.PublishEvent(translator);
             }
 
-            while (handler1.Processed.ReadAcquireFence() != eventCount - 1 ||
-                   handler2.Processed.ReadAcquireFence() != eventCount - 1)
+            while (Volatile.Read(ref handler1.Processed) != eventCount - 1 ||
+                   Volatile.Read(ref handler2.Processed) != eventCount - 1)
             {
                 Thread.Sleep(1);
             }

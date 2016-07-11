@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
+using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Sequenced
 {
@@ -34,7 +35,7 @@ namespace Disruptor.PerfTests.Sequenced
             private readonly EventPoller<ValueEvent> _poller;
             private readonly Func<ValueEvent, long, bool, bool> _eventHandler;
             private volatile int _running = 1;
-            private Volatile.PaddedLong _value;
+            private PaddedLong _value;
             private ManualResetEvent _signal;
             private long _count;
 
@@ -44,7 +45,7 @@ namespace Disruptor.PerfTests.Sequenced
                 _eventHandler = OnEvent;
             }
 
-            public long Value => _value.ReadFullFence();
+            public long Value => _value.Value;
 
             public void Run()
             {
@@ -66,7 +67,7 @@ namespace Disruptor.PerfTests.Sequenced
 
             private bool OnEvent(ValueEvent @event, long sequence, bool endOfBatch)
             {
-                _value.WriteUnfenced(_value.ReadFullFence() + @event.Value);
+                _value.Value = _value.Value + @event.Value;
 
                 if (_count == sequence)
                 {
@@ -80,7 +81,7 @@ namespace Disruptor.PerfTests.Sequenced
 
             public void Reset(ManualResetEvent signal, long expectedCount)
             {
-                _value.WriteFullFence(0L);
+                _value.Value = 0L;
                 _signal = signal;
                 _count = expectedCount;
                 _running = 1;

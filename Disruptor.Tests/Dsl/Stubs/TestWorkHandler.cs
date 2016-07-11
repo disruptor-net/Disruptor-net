@@ -5,17 +5,17 @@ namespace Disruptor.Tests.Dsl.Stubs
 {
     public class TestWorkHandler : IWorkHandler<TestEvent>
     {
-        private Volatile.Boolean _readyToProcessEvent = new Volatile.Boolean();
+        private int _readyToProcessEvent;
         private volatile bool _stopped;
 
         public void OnEvent(TestEvent @event)
         {
-            WaitForAndSetFlag(false);
+            WaitForAndSetFlag(0);
         }
 
         public void ProcessEvent()
         {
-            WaitForAndSetFlag(true);
+            WaitForAndSetFlag(1);
         }
 
         public void StopWaiting()
@@ -23,9 +23,9 @@ namespace Disruptor.Tests.Dsl.Stubs
             _stopped = true;
         }
 
-        private void WaitForAndSetFlag(bool newValue)
+        private void WaitForAndSetFlag(int newValue)
         {
-            while (!_stopped && Thread.CurrentThread.IsAlive && !_readyToProcessEvent.AtomicCompareExchange(newValue, !newValue))
+            while (!_stopped && Thread.CurrentThread.IsAlive && Interlocked.Exchange(ref _readyToProcessEvent, newValue)  == newValue)
             {
                 Thread.Yield();
             }

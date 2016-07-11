@@ -64,7 +64,7 @@ namespace Disruptor
                     }
                 }
             }
-            while (Interlocked.CompareExchange( ref sequences, newSequences, oldSequences) != oldSequences);
+            while (Interlocked.CompareExchange(ref sequences, newSequences, oldSequences) != oldSequences);
 
             return numToRemove != 0;
         }

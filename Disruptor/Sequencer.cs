@@ -11,6 +11,8 @@ namespace Disruptor
         protected readonly int _bufferSize;
         protected readonly IWaitStrategy _waitStrategy;
         protected readonly Sequence _cursor = new Sequence();
+
+        /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
         protected Sequence[] _gatingSequences = new Sequence[0];
 
         /// <summary>
