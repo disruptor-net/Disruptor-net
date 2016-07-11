@@ -119,12 +119,6 @@
     <Compile Include="WorkProcessor.cs" />
     <Compile Include="YieldingWaitStrategy.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Atomic\Atomic.csproj">
-      <Project>{BDB4336E-54F2-475D-8193-B730C522261F}</Project>
-      <Name>Atomic</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
