@@ -28,7 +28,7 @@ namespace Disruptor
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
             {
-                long minSequence = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), nextValue);
+                long minSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
                 _fields.CachedValue = minSequence;
 
                 if (wrapPoint > minSequence)
@@ -80,7 +80,7 @@ namespace Disruptor
             {
                 var spinWait = default(SpinWait);
                 long minSequence;
-                while (wrapPoint > (minSequence = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), nextValue)))
+                while (wrapPoint > (minSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue)))
                 {
                     spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
                 }
@@ -132,7 +132,7 @@ namespace Disruptor
         public override long GetRemainingCapacity()
         {
             var nextValue = _fields.NextValue;
-            long consumed = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), nextValue);
+            long consumed = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
             long produced = nextValue;
             return BufferSize - (produced - consumed);
         }
@@ -154,7 +154,7 @@ namespace Disruptor
         /// <param name="sequence">sequence to be published</param>
         public override void Publish(long sequence)
         {
-            _cursor.Value = sequence;
+            _cursor.SetValue(sequence);
             _waitStrategy.SignalAllWhenBlocking();
         }
 

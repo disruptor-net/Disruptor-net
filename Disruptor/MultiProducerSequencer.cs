@@ -13,7 +13,7 @@ namespace Disruptor
     /// </summary>
     public class MultiProducerSequencer : Sequencer
     {
-        private readonly Sequence _gatingSequenceCache = new Sequence(Sequence.InitialCursorValue);
+        private readonly Sequence _gatingSequenceCache = new Sequence();
 
         // availableBuffer tracks the state of each ringbuffer slot
         // see below for more details on the approach
@@ -38,18 +38,18 @@ namespace Disruptor
         /// <returns>true if the buffer has the capacity to allocate the next sequence otherwise false.</returns>
         public override bool HasAvailableCapacity(int requiredCapacity)
         {
-            return HasAvailableCapacity(_gatingSequences.ReadFullFence(), requiredCapacity, _cursor.Value);
+            return HasAvailableCapacity(Volatile.Read(ref _gatingSequences), requiredCapacity, _cursor.Value);
         }
 
         private bool HasAvailableCapacity(Sequence[] gatingSequences, int requiredCapacity, long cursorValue)
         {
-            long wrapPoint = (cursorValue + requiredCapacity) - _bufferSize;
-            long cachedGatingSequence = _gatingSequenceCache.Value;
+            var wrapPoint = (cursorValue + requiredCapacity) - _bufferSize;
+            var cachedGatingSequence = _gatingSequenceCache.Value;
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > cursorValue)
             {
                 long minSequence = Util.GetMinimumSequence(gatingSequences, cursorValue);
-                _gatingSequenceCache.Value = minSequence;
+                _gatingSequenceCache.SetValue(minSequence);
 
                 if (wrapPoint > minSequence)
                 {
@@ -104,7 +104,7 @@ namespace Disruptor
 
                 if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
                 {
-                    long gatingSequence = Util.GetMinimumSequence(_gatingSequences.ReadFullFence(), current);
+                    long gatingSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current);
 
                     if (wrapPoint > gatingSequence)
                     {
@@ -112,7 +112,7 @@ namespace Disruptor
                         continue;
                     }
 
-                    _gatingSequenceCache.Value = gatingSequence;
+                    _gatingSequenceCache.SetValue(gatingSequence);
                 }
                 else if (_cursor.CompareAndSet(current, next))
                 {
@@ -155,7 +155,7 @@ namespace Disruptor
                 current = _cursor.Value;
                 next = current + n;
 
-                if (!HasAvailableCapacity(_gatingSequences.ReadFullFence(), n, current))
+                if (!HasAvailableCapacity(Volatile.Read(ref _gatingSequences), n, current))
                 {
                     throw InsufficientCapacityException.Instance;
                 }
@@ -170,8 +170,8 @@ namespace Disruptor
         /// </summary>
         public override long GetRemainingCapacity()
         {
-            long consumed = Util.GetMinimumSequence(_gatingSequences.ReadFullFence());
-            long produced = _cursor.Value;
+            var consumed = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences));
+            var produced = _cursor.Value;
             return BufferSize - (produced - consumed);
         }
 
@@ -229,7 +229,7 @@ namespace Disruptor
         /// <returns>sequence just claimed.</returns>
         public override long Claim(long sequence)
         {
-            _cursor.Value = sequence;
+            _cursor.SetValue(sequence);
             return sequence;
         }
 

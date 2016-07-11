@@ -93,7 +93,7 @@ namespace Disruptor
                             nextSequence++;
                         }
 
-                        _sequence.LazySet(availableSequence);
+                        _sequence.SetValue(availableSequence);
                     }
                     catch (TimeoutException)
                     {
@@ -109,7 +109,7 @@ namespace Disruptor
                     catch (Exception ex)
                     {
                         _exceptionHandler.HandleEventException(ex, nextSequence, evt);
-                        _sequence.LazySet(nextSequence);
+                        _sequence.SetValue(nextSequence);
                         nextSequence++;
                     }
                 }

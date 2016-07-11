@@ -8,7 +8,7 @@ namespace Disruptor
     /// </summary>
     internal static class SequenceGroups
     {
-        public static void AddSequences(ref Volatile.Reference<Sequence[]> sequences, ICursored cursor, params Sequence[] sequencesToAdd) 
+        public static void AddSequences(ref Sequence[] sequences, ICursored cursor, params Sequence[] sequencesToAdd) 
         {
             long cursorSequence;
             Sequence[] updatedSequences;
@@ -16,7 +16,7 @@ namespace Disruptor
 
             do
             {
-                currentSequences = sequences.ReadFullFence();
+                currentSequences = Volatile.Read(ref sequences);
                 updatedSequences = new Sequence[currentSequences.Length + sequencesToAdd.Length];
                 Array.Copy(currentSequences, updatedSequences, currentSequences.Length);
                 cursorSequence = cursor.Cursor;
@@ -24,19 +24,20 @@ namespace Disruptor
                 var index = currentSequences.Length;
                 foreach (var sequence in sequencesToAdd)
                 {
-                    sequence.Value = cursorSequence;
+                    sequence.SetValue(cursorSequence);
                     updatedSequences[index++] = sequence;
                 }
-            } while (!sequences.AtomicCompareExchange(updatedSequences, currentSequences));
+            }
+            while (Interlocked.CompareExchange(ref sequences, updatedSequences, currentSequences) != currentSequences);
 
             cursorSequence = cursor.Cursor;
             foreach (var sequence in sequencesToAdd)
             {
-                sequence.Value = cursorSequence;
+                sequence.SetValue(cursorSequence);
             }
         }
 
-        public static bool RemoveSequence(ref Volatile.Reference<Sequence[]> sequences, Sequence sequence)
+        public static bool RemoveSequence(ref Sequence[] sequences, Sequence sequence)
         {
             int numToRemove;
             Sequence[] oldSequences;
@@ -44,7 +45,7 @@ namespace Disruptor
 
             do
             {
-                oldSequences = sequences.ReadFullFence();
+                oldSequences = Volatile.Read(ref sequences);
 
                 numToRemove = CountMatching(oldSequences, sequence);
 
@@ -63,12 +64,12 @@ namespace Disruptor
                     }
                 }
             }
-            while (!sequences.AtomicCompareExchange(newSequences, oldSequences));
+            while (Interlocked.CompareExchange( ref sequences, newSequences, oldSequences) != oldSequences);
 
             return numToRemove != 0;
         }
 
-        private static int CountMatching<T>(T[] values, T toMatch)
+        private static int CountMatching(Sequence[] values, Sequence toMatch)
         {
             var numToRemove = 0;
             foreach (var value in values)

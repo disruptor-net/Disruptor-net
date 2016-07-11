@@ -14,26 +14,25 @@ namespace Disruptor
         /// <param name="sequences">sequences the list of sequences to be tracked under this sequence group</param>
         public FixedSequenceGroup(Sequence[] sequences)
         {
-            _sequences = new Sequence[sequences.Length];
-            sequences.CopyTo(_sequences, 0);
+            _sequences = sequences.ToArray();
         }
 
         /// <summary>
         /// Get the minimum sequence value for the group.
-        /// Set not supported.
         /// </summary>
-        public override long Value
+        public override long Value => Util.GetMinimumSequence(_sequences);
+
+        /// <summary>
+        /// Not supported.
+        /// </summary>
+        public override void SetValue(long value)
         {
-            get { return Util.GetMinimumSequence(_sequences); }
-            set { throw new NotSupportedException(); }
+            throw new NotSupportedException();
         }
 
         /// <summary>
         /// Not supported.
         /// </summary>
-        /// <param name="expectedValue"></param>
-        /// <param name="newValue"></param>
-        /// <returns></returns>
         public override bool CompareAndSet(long expectedValue, long newValue)
         {
             throw new NotSupportedException();
@@ -42,7 +41,6 @@ namespace Disruptor
         /// <summary>
         /// Not supported.
         /// </summary>
-        /// <returns></returns>
         public override long IncrementAndGet()
         {
             throw new NotSupportedException();
@@ -51,8 +49,6 @@ namespace Disruptor
         /// <summary>
         /// Not supported.
         /// </summary>
-        /// <param name="increment"></param>
-        /// <returns></returns>
         public override long AddAndGet(long increment)
         {
             throw new NotSupportedException();

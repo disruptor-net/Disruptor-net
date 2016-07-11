@@ -54,7 +54,7 @@ namespace Disruptor.Tests
 
             public void OnEvent(StubEvent evt, long sequence, bool endOfBatch)
             {
-                _sequenceCallback.Value = sequence;
+                _sequenceCallback.SetValue(sequence);
                 _callbackSignal.Set();
 
                 if (endOfBatch)

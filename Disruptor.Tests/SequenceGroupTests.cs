@@ -103,7 +103,7 @@ namespace Disruptor.Tests
             sequenceGroup.Add(sequenceThree);
 
             const long expectedSequence = 11L;
-            sequenceGroup.Value = expectedSequence;
+            sequenceGroup.SetValue(expectedSequence);
 
             Assert.AreEqual(expectedSequence, sequenceThree.Value);
             Assert.AreEqual(expectedSequence, sequenceSeven.Value);

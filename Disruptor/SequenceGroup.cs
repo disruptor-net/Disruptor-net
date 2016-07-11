@@ -12,7 +12,7 @@ namespace Disruptor
     /// </summary>
     public class SequenceGroup : Sequence
     {
-        private Volatile.Reference<Sequence[]> _sequencesRef = new Volatile.Reference<Sequence[]>(new Sequence[0]);
+        private Sequence[] _sequences = new Sequence[0];
         
         /// <summary>
         /// Default constructor
@@ -23,37 +23,25 @@ namespace Disruptor
 
         /// <summary>
         /// Get the minimum sequence value for the group.
-        /// Set all <see cref="Sequence"/>s in the group to a given value.
         /// </summary>
-        public override long Value
-        {
-            get { return Util.GetMinimumSequence(_sequencesRef.ReadFullFence()); }
-            set
-            {
-                var sequences = _sequencesRef.ReadFullFence();
-                for (var i = 0; i < sequences.Length; i++)
-                {
-                    sequences[i].Value = value;
-                }
-            }
-        }
+        public override long Value => Util.GetMinimumSequence(Volatile.Read(ref _sequences));
 
         /// <summary>
-        /// Eventually sets to the given value.
+        /// Set all <see cref="Sequence"/>s in the group to a given value.
         /// </summary>
-        /// <param name="value">the new value</param>
-        public override void LazySet(long value)
+        /// <param name="value">value to set the group of sequences to.</param>
+        public override void SetValue(long value)
         {
-            var sequences = _sequencesRef.ReadFullFence();
-            for (int i = 0; i < sequences.Length; i++)
+            var sequences = Volatile.Read(ref _sequences);
+            for (var i = 0; i < sequences.Length; i++)
             {
-                sequences[i].LazySet(value);
+                sequences[i].SetValue(value);
             }
         }
 
         /// <summary>
         /// Add a <see cref="Sequence"/> into this aggregate. This should only be used during
-        /// initialisation. Use <see cref="Sequence.AddWhileRunning"/>.
+        /// initialisation. Use <see cref="SequenceGroup.AddWhileRunning"/>.
         /// </summary>
         /// <param name="sequence">sequence to be added to the aggregate.</param>
         public void Add(Sequence sequence)
@@ -62,13 +50,13 @@ namespace Disruptor
             Sequence[] newSequences;
             do
             {
-                oldSequences = _sequencesRef.ReadFullFence();
+                oldSequences = Volatile.Read(ref _sequences);
                 var oldSize = oldSequences.Length;
                 newSequences = new Sequence[oldSize + 1];
                 Array.Copy(oldSequences, newSequences, oldSize);
                 newSequences[oldSize] = sequence;
             }
-            while (!_sequencesRef.AtomicCompareExchange(newSequences, oldSequences));
+            while (Interlocked.CompareExchange(ref _sequences, newSequences, oldSequences) != oldSequences);
         }
 
         /// <summary>
@@ -76,12 +64,15 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">sequence to be removed from this aggregate.</param>
         /// <returns>true if the sequence was removed otherwise false.</returns>
-        public bool Remove(Sequence sequence) => SequenceGroups.RemoveSequence(ref _sequencesRef, sequence);
+        public bool Remove(Sequence sequence)
+        {
+            return SequenceGroups.RemoveSequence(ref _sequences, sequence);
+        }
 
         /// <summary>
         /// Get the size of the group.
         /// </summary>
-        public int Size => _sequencesRef.ReadFullFence().Length;
+        public int Size => Volatile.Read(ref _sequences).Length;
         
         /// <summary>
         /// Adds a sequence to the sequence group after threads have started to publish to
@@ -92,7 +83,7 @@ namespace Disruptor
         /// <param name="sequence">The sequence to add</param>
         public void AddWhileRunning(ICursored cursored, Sequence sequence)
         {
-            SequenceGroups.AddSequences(ref _sequencesRef, cursored, sequence);
+            SequenceGroups.AddSequences(ref _sequences, cursored, sequence);
         }
     }
 }

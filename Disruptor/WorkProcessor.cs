@@ -83,7 +83,7 @@ namespace Disruptor
                         do
                         {
                             nextSequence = _workSequence.Value + 1L;
-                            _sequence.Value = nextSequence - 1L;
+                            _sequence.SetValue(nextSequence - 1L);
                         } while (!_workSequence.CompareAndSet(nextSequence - 1L, nextSequence));
                     }
 
@@ -119,7 +119,7 @@ namespace Disruptor
 
         public void Release()
         {
-            _sequence.Value = long.MaxValue;
+            _sequence.SetValue(long.MaxValue);
         }
 
         private void NotifyStart()

@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Disruptor
@@ -13,41 +14,32 @@ namespace Disruptor
         /// </summary>
         public const long InitialCursorValue = -1;
 
-        // TODO: replace with a padded volatile value to avoid full fences
-        private Volatile.PaddedLong _value = new Volatile.PaddedLong(InitialCursorValue);
-
-        /// <summary>
-        /// Default Constructor that uses an initial value of <see cref="InitialCursorValue"/>
-        /// </summary>
-        public Sequence()
-        {
-        }
+        private Fields _fields;
 
         /// <summary>
         /// Construct a new sequence counter that can be tracked across threads.
         /// </summary>
         /// <param name="initialValue">initial value for the counter</param>
-        public Sequence(long initialValue)
+        public Sequence(long initialValue = InitialCursorValue)
         {
-            _value.WriteCompilerOnlyFence(initialValue);
+            _fields = new Fields(initialValue);
         }
 
         /// <summary>
         /// Current sequence number
         /// </summary>
-        public virtual long Value
-        {
-            get { return _value.ReadFullFence(); }
-            set { _value.WriteFullFence(value); }
-        }
+        public virtual long Value => Volatile.Read(ref _fields.Value);
 
         /// <summary>
-        /// Eventually sets to the given value.
+        /// Perform an ordered write of this sequence.  The intent is
+        /// a Store/Store barrier between this write and any previous
+        /// store.
         /// </summary>
-        /// <param name="value">the new value</param>
-        public virtual void LazySet(long value)
+        /// <param name="value">The new value for the sequence.</param>
+        public virtual void SetValue(long value)
         {
-            _value.WriteCompilerOnlyFence(value);
+            // no synchronization required, the CLR memory model prevents Store/Store re-ordering
+            _fields.Value = value;
         }
 
         /// <summary>
@@ -58,7 +50,7 @@ namespace Disruptor
         /// <returns>true if successful. False return indicates that the actual value was not equal to the expected value.</returns>
         public virtual bool CompareAndSet(long expectedSequence, long nextSequence)
         {
-            return _value.AtomicCompareExchange(nextSequence, expectedSequence);
+            return Interlocked.CompareExchange(ref _fields.Value, nextSequence, expectedSequence) == expectedSequence;
         }
 
         /// <summary>
@@ -67,7 +59,7 @@ namespace Disruptor
         /// <returns>String representation of the sequence.</returns>
         public override string ToString()
         {
-            return _value.ToString();
+            return _fields.Value.ToString();
         }
 
         ///<summary>
@@ -76,7 +68,7 @@ namespace Disruptor
         ///<returns>incremented sequence</returns>
         public virtual long IncrementAndGet()
         {
-            return AddAndGet(1);
+            return Interlocked.Increment(ref _fields.Value);
         }
 
         ///<summary>
@@ -85,7 +77,25 @@ namespace Disruptor
         ///<returns>incremented sequence</returns>
         public virtual long AddAndGet(long value)
         {
-            return _value.AtomicAddAndGet(value);
+            return Interlocked.Add(ref _fields.Value, value);
+        }
+
+        [StructLayout(LayoutKind.Explicit, Size = 120)]
+        private struct Fields
+        {
+            [FieldOffset(0)]
+            private Padding56 _beforePadding;
+            [FieldOffset(56)]
+            public long Value;
+            [FieldOffset(64)]
+            private Padding56 _afterPadding;
+
+            public Fields(long value)
+            {
+                _beforePadding = default(Padding56);
+                Value = value;
+                _afterPadding = default(Padding56);
+            }
         }
     }
 }

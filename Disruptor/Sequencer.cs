@@ -8,11 +8,10 @@ namespace Disruptor
     /// </summary>
     public abstract class Sequencer : ISequencer
     {
-        protected readonly Sequence _cursor = new Sequence(Sequence.InitialCursorValue);
-        protected Volatile.Reference<Sequence[]> _gatingSequences = new Volatile.Reference<Sequence[]>(new Sequence[0]);
-
-        protected readonly IWaitStrategy _waitStrategy;
         protected readonly int _bufferSize;
+        protected readonly IWaitStrategy _waitStrategy;
+        protected readonly Sequence _cursor = new Sequence();
+        protected Sequence[] _gatingSequences = new Sequence[0];
 
         /// <summary>
         /// Construct a Sequencer with the selected strategies.
@@ -169,9 +168,17 @@ namespace Disruptor
         /// <returns>The minimum gating sequence or the cursor sequence if no sequences have been added.</returns>
         public long GetMinimumSequence()
         {
-            return Util.GetMinimumSequence(_gatingSequences.ReadUnfenced(), _cursor.Value);
+            return Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
         }
 
+        /// <summary>
+        /// Creates an event poller for this sequence that will use the supplied data provider and
+        /// gating sequences.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="provider">The data source for users of this event poller</param>
+        /// <param name="gatingSequences">Sequence to be gated on.</param>
+        /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
         public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
         {
             return EventPoller<T>.NewInstance(provider, this, new Sequence(), _cursor, gatingSequences);

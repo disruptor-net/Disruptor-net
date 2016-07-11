@@ -1204,8 +1204,8 @@ namespace Disruptor.Tests
                 ringBuffer.Publish(ringBuffer.Next());
             }
 
-            sequenceThree.Value = 3;
-            sequenceSeven.Value = 7;
+            sequenceThree.SetValue(3);
+            sequenceSeven.SetValue(7);
 
             Assert.That(ringBuffer.GetMinimumGatingSequence(), Is.EqualTo(3L));
             Assert.IsTrue(ringBuffer.RemoveGatingSequence(sequenceThree));
@@ -1238,7 +1238,7 @@ namespace Disruptor.Tests
             Assert.That(rb.Cursor, Is.EqualTo(127L));
 
             rb.ResetTo(31);
-            sequence.Value = 31;
+            sequence.SetValue(31);
 
             for (var i = 0; i < 4; i++)
             {
@@ -1328,7 +1328,7 @@ namespace Disruptor.Tests
             {
                 IsRunning = true;
                 _sequenceBarrier.WaitFor(0L);
-                Sequence.Value += 1;
+                Sequence.SetValue(Sequence.Value + 1);
             }
 
             public bool IsRunning { get; private set; }

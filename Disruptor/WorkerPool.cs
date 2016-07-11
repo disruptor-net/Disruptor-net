@@ -105,12 +105,12 @@ namespace Disruptor
             }
 
             var cursor = _ringBuffer.Cursor;
-            _workSequence.Value = cursor;
+            _workSequence.SetValue(cursor);
 
             for (var i = 0; i < _workProcessors.Length; i++)
             {
                 var workProcessor = _workProcessors[i];
-                workProcessor.Sequence.Value = cursor;
+                workProcessor.Sequence.SetValue(cursor);
 
                 executor.Execute(workProcessor.Run);
             }

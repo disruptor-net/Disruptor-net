@@ -55,7 +55,7 @@ namespace Disruptor
                 }
                 finally
                 {
-                    _sequence.Value = processedSequence;
+                    _sequence.SetValue(processedSequence);
                 }
 
                 return PollState.Processing;

@@ -76,7 +76,7 @@ namespace Disruptor.Tests
 
                         foreach (var stubWorker in workers)
                         {
-                            stubWorker.Sequence.Value = sequence;
+                            stubWorker.Sequence.SetValue(sequence);
                         }
                     })
                     .Start();
@@ -141,7 +141,7 @@ namespace Disruptor.Tests
                                   {
                                       foreach (var stubWorker in eventProcessors)
                                       {
-                                          stubWorker.Sequence.Value += 1;
+                                          stubWorker.Sequence.SetValue(stubWorker.Sequence.Value + 1);
                                       }
                                   }).Wait();
 
@@ -177,11 +177,11 @@ namespace Disruptor.Tests
         private class StubEventProcessor : IEventProcessor
         {
             private volatile int _running;
-            private readonly Sequence _sequence = new Sequence(Sequence.InitialCursorValue);
+            private readonly Sequence _sequence = new Sequence();
 
             public StubEventProcessor(long sequence)
             {
-                _sequence.Value = sequence;
+                _sequence.SetValue(sequence);
             }
 
             public void Run()
@@ -218,7 +218,6 @@ namespace Disruptor.Tests
                         _signal.Signal();
                     return base.Value;
                 }
-                set { base.Value = value; }
             }
         }
     }

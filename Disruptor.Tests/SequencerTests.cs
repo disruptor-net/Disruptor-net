@@ -105,7 +105,7 @@ namespace Disruptor.Tests
             waitingSignal.WaitOne(TimeSpan.FromMilliseconds(500));
             Assert.That(_sequencer.Cursor, Is.EqualTo(expectedFullSequence));
 
-            _gatingSequence.Value = Sequence.InitialCursorValue + 1L;
+            _gatingSequence.SetValue(Sequence.InitialCursorValue + 1L);
 
             doneSignal.WaitOne(TimeSpan.FromMilliseconds(500));
             Assert.That(_sequencer.Cursor, Is.EqualTo(expectedFullSequence + 1L));

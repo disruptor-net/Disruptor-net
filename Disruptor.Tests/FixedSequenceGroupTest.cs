@@ -13,9 +13,9 @@ namespace Disruptor.Tests
             var group = new FixedSequenceGroup(new[] { sequence1, sequnece2 });
 
             Assert.That(group.Value, Is.EqualTo(34L));
-            sequence1.Value = 35;
+            sequence1.SetValue(35);
             Assert.That(group.Value, Is.EqualTo(35L));
-            sequence1.Value = 48;
+            sequence1.SetValue(48);
             Assert.That(group.Value, Is.EqualTo(47L));
         }
     }
