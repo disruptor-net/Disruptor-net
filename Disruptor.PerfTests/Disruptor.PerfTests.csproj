@@ -61,6 +61,7 @@
     <Compile Include="PerfTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Sequenced\OneToOneSequencedPollerThroughputTest.cs" />
+    <Compile Include="Sequenced\OneToThreeDiamondSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\OneToThreeSequencedThroughputTest.cs" />
     <Compile Include="Support\LongArrayEventHandler.cs" />
     <Compile Include="Sequenced\OneToOneSequencedBatchThroughputTest.cs" />

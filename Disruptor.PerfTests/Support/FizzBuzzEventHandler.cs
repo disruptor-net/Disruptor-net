@@ -6,15 +6,20 @@ namespace Disruptor.PerfTests.Support
     public class FizzBuzzEventHandler : IEventHandler<FizzBuzzEvent>
     {
         private readonly FizzBuzzStep _fizzBuzzStep;
-        private readonly long _iterations;
-        private readonly ManualResetEvent _mru;
+        private long _iterations;
+        private ManualResetEvent _mru;
         private PaddedLong _fizzBuzzCounter;
 
         public long FizzBuzzCounter => _fizzBuzzCounter.Value;
 
-        public FizzBuzzEventHandler(FizzBuzzStep fizzBuzzStep, long iterations, ManualResetEvent mru)
+        public FizzBuzzEventHandler(FizzBuzzStep fizzBuzzStep)
         {
             _fizzBuzzStep = fizzBuzzStep;
+        }
+
+        public void Reset(ManualResetEvent mru, long iterations)
+        {
+            _fizzBuzzCounter.Value = 0;
             _iterations = iterations;
             _mru = mru;
         }

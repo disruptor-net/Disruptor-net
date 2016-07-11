@@ -20,7 +20,7 @@ namespace Disruptor.PerfTests.Support
         {
             if (a == b)
             {
-                throw new Exception(message);
+                throw new Exception(message ?? $"Test failed {a} == {b}");
             }
         }
 
@@ -28,7 +28,7 @@ namespace Disruptor.PerfTests.Support
         {
             if (a != b)
             {
-                throw new Exception(message);
+                throw new Exception(message ?? $"Test failed {a} != {b}");
             }
         }
 
