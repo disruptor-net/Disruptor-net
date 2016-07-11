@@ -16,9 +16,6 @@
     <file src="Disruptor.dll" target="lib\net40" />
     <file src="Disruptor.pdb" target="lib\net40" />
     <file src="Disruptor.XML" target="lib\net40" />
-    <file src="Atomic.dll" target="lib\net40" />
-    <file src="Atomic.pdb" target="lib\net40" />
-    <file src="Atomic.XML" target="lib\net40" />
     <file src="Disruptor.Scheduler.dll" target="lib\net40" />
     <file src="Disruptor.Scheduler.pdb" target="lib\net40" />
     <file src="Disruptor.Scheduler.XML" target="lib\net40" />

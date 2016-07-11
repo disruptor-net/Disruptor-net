@@ -21,15 +21,11 @@
 
   <Target Name="Clean">
     <RemoveDir Directories="$(TargetDir)" />
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\Atomic\bin" />
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\Atomic\obj" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor\bin" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor\obj" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.Scheduler\bin" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.Scheduler\obj" />
 
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\Atomic.Tests\bin" />
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\Atomic.Tests\obj" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.PerfTests\bin" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.PerfTests\obj" />
     <RemoveDir Directories="$(MSBuildProjectDirectory)\Disruptor.Tests\bin" />
@@ -74,11 +70,6 @@
       ToolPath="$(NUnitToolPath)"
       OutputXmlFile="$(UnitReportDir)\Disruptor.Tests.xml"
       />
-    <NUnit
-      Assemblies="$(BinDir)\Atomic.Tests.dll"
-      ToolPath="$(NUnitToolPath)"
-      OutputXmlFile="$(UnitReportDir)\Atomic.Tests.xml"
-      />
   </Target>
 
   <!-- Run performance tests (Using MSBuild.Community) -->
@@ -96,9 +87,6 @@
       <DisruptorZip Include="$(BinDir)Disruptor.dll" />
       <DisruptorZip Include="$(BinDir)Disruptor.pdb" />
       <DisruptorZip Include="$(BinDir)Disruptor.XML" />
-      <DisruptorZip Include="$(BinDir)Atomic.dll" />
-      <DisruptorZip Include="$(BinDir)Atomic.pdb" />
-      <DisruptorZip Include="$(BinDir)Atomic.XML" />
       <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.dll" />
       <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.pdb" />
       <DisruptorZip Include="$(BinDir)Disruptor.Scheduler.XML" />
@@ -112,9 +100,6 @@
       <DisruptorPerfZip Include="$(BinDir)Disruptor.XML" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.PerfTests.exe" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.PerfTests.pdb" />
-      <DisruptorPerfZip Include="$(BinDir)Atomic.dll" />
-      <DisruptorPerfZip Include="$(BinDir)Atomic.pdb" />
-      <DisruptorPerfZip Include="$(BinDir)Atomic.XML" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.Scheduler.dll" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.Scheduler.pdb" />
       <DisruptorPerfZip Include="$(BinDir)Disruptor.Scheduler.XML" />
