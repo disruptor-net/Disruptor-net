@@ -43,6 +43,16 @@ namespace Disruptor
         }
 
         /// <summary>
+        /// Performs a volatile write of this sequence.  The intent is a Store/Store barrier between this write and any previous
+        /// write and a Store/Load barrier between this write and any subsequent volatile read. 
+        /// </summary>
+        /// <param name="value"></param>
+        public virtual void SetValueVolatile(long value)
+        {
+            Volatile.Write(ref _fields.Value, value);
+        }
+
+        /// <summary>
         /// Atomically set the value to the given updated value if the current value == the expected value.
         /// </summary>
         /// <param name="expectedSequence">the expected value for the sequence</param>

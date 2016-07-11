@@ -31,6 +31,15 @@ namespace Disruptor
         }
 
         /// <summary>
+        /// Not supported
+        /// </summary>
+        /// <param name="value"></param>
+        public override void SetValueVolatile(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <summary>
         /// Not supported.
         /// </summary>
         public override bool CompareAndSet(long expectedValue, long newValue)

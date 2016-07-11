@@ -40,6 +40,20 @@ namespace Disruptor
         }
 
         /// <summary>
+        /// Performs a volatile write of this sequence.  The intent is a Store/Store barrier between this write and any previous
+        /// write and a Store/Load barrier between this write and any subsequent volatile read. 
+        /// </summary>
+        /// <param name="value"></param>
+        public override void SetValueVolatile(long value)
+        {
+            var sequences = Volatile.Read(ref _sequences);
+            for (var i = 0; i < sequences.Length; i++)
+            {
+                sequences[i].SetValueVolatile(value);
+            }
+        }
+
+        /// <summary>
         /// Add a <see cref="Sequence"/> into this aggregate. This should only be used during
         /// initialisation. Use <see cref="SequenceGroup.AddWhileRunning"/>.
         /// </summary>
