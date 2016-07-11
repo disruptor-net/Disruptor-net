@@ -23,6 +23,7 @@ namespace Disruptor
         {
             if (cursor.Value < sequence) // volatile read
             {
+                // TODO: Use TryEnter
                 Monitor.Enter(_gate);
                 try
                 {

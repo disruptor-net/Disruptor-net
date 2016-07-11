@@ -44,10 +44,10 @@ namespace Disruptor.PerfTests.Sequenced
     {
         private const int _numEventProcessors = 3;
         private const int _bufferSize = 1024 * 8;
-        private const long _iterations = 1000L * 1000L;// * 100L;
+        private const long _iterations = 1000L * 1000L * 100L;
 
         private readonly RingBuffer<ValueEvent> _ringBuffer;
-        private readonly ManualResetEvent _mru;
+        private readonly ManualResetEvent _latch;
         private readonly BatchEventProcessor<ValueEvent>[] _batchEventProcessors = new BatchEventProcessor<ValueEvent>[_numEventProcessors];
         private readonly long[] _results = new long[_numEventProcessors];
         private readonly ValueMutationEventHandler[] _handlers = new ValueMutationEventHandler[_numEventProcessors];
@@ -55,34 +55,37 @@ namespace Disruptor.PerfTests.Sequenced
         
         public OneToThreeSequencedThroughputTest()
         {
-            _mru = new ManualResetEvent(false);
-
-            _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(), _bufferSize, new YieldingWaitStrategy());
-            var barrier = _ringBuffer.NewBarrier();
-
-            _handlers[0] = new ValueMutationEventHandler(Operation.Addition, _iterations, _mru);
-            _handlers[1] = new ValueMutationEventHandler(Operation.Subtraction, _iterations, _mru);
-            _handlers[2] = new ValueMutationEventHandler(Operation.And, _iterations, _mru);
-
-            for (int i = 0; i < _numEventProcessors; i++)
-            {
-                _batchEventProcessors[i] = new BatchEventProcessor<ValueEvent>(_ringBuffer, barrier, _handlers[i]);
-            }
-            _ringBuffer.AddGatingSequences(_batchEventProcessors.Select(x => x.Sequence).ToArray());
-
             for (long i = 0; i < _iterations; i++)
             {
                 _results[0] = Operation.Addition.Op(_results[0], i);
                 _results[1] = Operation.Subtraction.Op(_results[1], i);
                 _results[2] = Operation.And.Op(_results[2], i);
             }
+
+            _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(), _bufferSize, new YieldingWaitStrategy());
+            var sequenceBarrier = _ringBuffer.NewBarrier();
+
+            _handlers[0] = new ValueMutationEventHandler(Operation.Addition);
+            _handlers[1] = new ValueMutationEventHandler(Operation.Subtraction);
+            _handlers[2] = new ValueMutationEventHandler(Operation.And);
+
+            _latch = new ManualResetEvent(false);
+
+            for (var i = 0; i < _numEventProcessors; i++)
+            {
+                _batchEventProcessors[i] = new BatchEventProcessor<ValueEvent>(_ringBuffer, sequenceBarrier, _handlers[i]);
+            }
+            _ringBuffer.AddGatingSequences(_batchEventProcessors.Select(x => x.Sequence).ToArray());
+
         }
 
         public long Run(Stopwatch stopwatch)
         {
-            for (int i = 0; i < _numEventProcessors; i++)
+            _latch.Reset();
+
+            for (var i = 0; i < _numEventProcessors; i++)
             {
-                _handlers[i].Reset(_mru, _batchEventProcessors[i].Sequence.Value + _iterations);
+                _handlers[i].Reset(_latch, _batchEventProcessors[i].Sequence.Value + _iterations);
                 _executor.Execute(_batchEventProcessors[i].Run);
             }
 
@@ -90,15 +93,15 @@ namespace Disruptor.PerfTests.Sequenced
 
             for (long i = 0; i < _iterations; i++)
             {
-                long sequence = _ringBuffer.Next();
+                var sequence = _ringBuffer.Next();
                 _ringBuffer[sequence].Value = i;
                 _ringBuffer.Publish(sequence);
             }
 
-            _mru.WaitOne();
+            _latch.WaitOne();
             stopwatch.Stop();
 
-            for (int i = 0; i < _numEventProcessors; i++)
+            for (var i = 0; i < _numEventProcessors; i++)
             {
                 _batchEventProcessors[i].Halt();
                 PerfTestUtil.FailIfNot(_results[i], _handlers[i].Value, $"Result {_results[i]} != {_handlers[i].Value}");

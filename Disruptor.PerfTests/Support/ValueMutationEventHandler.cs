@@ -1,33 +1,32 @@
 using System.Threading;
+using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Support
 {
     public class ValueMutationEventHandler : IEventHandler<ValueEvent>
     {
         private readonly Operation _operation;
-        private long _value;
+        private PaddedLong _value;
         private long _iterations;
         private ManualResetEvent _latch;
 
-        public ValueMutationEventHandler(Operation operation, long iterations, ManualResetEvent latch)
+        public ValueMutationEventHandler(Operation operation)
         {
             _operation = operation;
-            _iterations = iterations;
-            _latch = latch;
         }
 
-        public long Value => _value;
+        public long Value => _value.Value;
 
         public void Reset(ManualResetEvent latch, long expectedCount)
         {
-            _value = 0L;
+            _value.Value = 0L;
             _latch = latch;
             _iterations = expectedCount;
         }
 
         public void OnEvent(ValueEvent data, long sequence, bool endOfBatch)
         {
-            _value = _operation.Op(_value, data.Value);
+            _value.Value = _operation.Op(_value.Value, data.Value);
 
             if (sequence == _iterations)
             {

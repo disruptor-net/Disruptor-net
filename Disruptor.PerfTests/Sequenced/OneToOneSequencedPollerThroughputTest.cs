@@ -25,6 +25,7 @@ namespace Disruptor.PerfTests.Sequenced
         {
             _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(), _bufferSize, new YieldingWaitStrategy());
             _poller = _ringBuffer.NewPoller();
+            _ringBuffer.AddGatingSequences(_poller.Sequence);
             _pollRunnable = new PollRunnable(_poller);
         }
 
@@ -92,9 +93,9 @@ namespace Disruptor.PerfTests.Sequenced
 
         public long Run(Stopwatch stopwatch)
         {
-            var signal = new ManualResetEvent(false);
+            var latch = new ManualResetEvent(false);
             var expectedCount = _poller.Sequence.Value + _iterations;
-            _pollRunnable.Reset(signal, expectedCount);
+            _pollRunnable.Reset(latch, expectedCount);
             _executor.Execute(_pollRunnable.Run);
             stopwatch.Start();
 
@@ -106,7 +107,7 @@ namespace Disruptor.PerfTests.Sequenced
                 rb.Publish(next);
             }
 
-            signal.WaitOne();
+            latch.WaitOne();
             stopwatch.Stop();
             WaitForEventProcessorSequence(expectedCount);
             _pollRunnable.Halt();

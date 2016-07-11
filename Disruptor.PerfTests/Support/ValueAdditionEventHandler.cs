@@ -6,17 +6,15 @@ namespace Disruptor.PerfTests.Support
     public class ValueAdditionEventHandler : IEventHandler<ValueEvent>
     {
         private PaddedLong _value;
-
         public long Count { get; private set; }
-
-        public ManualResetEvent Signal { get; private set; }
+        private ManualResetEvent Latch { get; set; }
 
         public long Value => _value.Value;
 
-        public void Reset(ManualResetEvent signal, long expectedCount)
+        public void Reset(ManualResetEvent latch, long expectedCount)
         {
             _value.Value = 0;
-            Signal = signal;
+            Latch = latch;
             Count = expectedCount;
         }
 
@@ -26,7 +24,7 @@ namespace Disruptor.PerfTests.Support
 
             if(Count == sequence)
             {
-                Signal?.Set();
+                Latch?.Set();
             }
         }
     }
