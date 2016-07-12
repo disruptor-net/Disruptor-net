@@ -40,7 +40,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// EP2 - EventProcessor 2
     /// EP3 - EventProcessor 3
     /// </summary>
-    public class OneToThreeSequencedThroughputTest : IPerfTest
+    public class OneToThreeSequencedThroughputTest : IThroughputfTest
     {
         private const int _numEventProcessors = 3;
         private const int _bufferSize = 1024 * 8;

@@ -13,21 +13,21 @@ namespace Disruptor.PerfTests
         private readonly ComputerSpecifications _computerSpecifications;
         private readonly List<ThroughputTestSessionResult> _results = new List<ThroughputTestSessionResult>(Runs);
         private readonly Type _perfTestType;
-        private IPerfTest _test;
+        private IThroughputfTest _test;
 
         public ThroughputTestSession(ComputerSpecifications computerSpecifications, Type perfTestType)
         {
             _computerSpecifications = computerSpecifications;
             _perfTestType = perfTestType;
-            Console.WriteLine($"Test to run => {_perfTestType.FullName}, Runs => {Runs}");
+            Console.WriteLine($"Throughput Test to run => {_perfTestType.FullName}, Runs => {Runs}");
         }
 
         public void Run()
         {
-            _test = (IPerfTest)Activator.CreateInstance(_perfTestType);
+            _test = (IThroughputfTest)Activator.CreateInstance(_perfTestType);
             CheckProcessorsRequirements(_test);
 
-            Console.WriteLine("Starting perf tests");
+            Console.WriteLine("Starting throughput tests");
             var stopwatch = new Stopwatch();
             for (var i = 0; i < Runs; i++)
             {
@@ -64,13 +64,12 @@ namespace Disruptor.PerfTests
                     result = new ThroughputTestSessionResult(totalOperationsInRun, stopwatch.Elapsed, gen0Count, gen1Count, gen2Count);
                 }
 
-                
                 Console.WriteLine(result);
                 _results.Add(result);
             }
         }
 
-        private void CheckProcessorsRequirements(IPerfTest test)
+        private void CheckProcessorsRequirements(IThroughputfTest test)
         {
             var availableProcessors = Environment.ProcessorCount;
             if (test.RequiredProcessorCount <= availableProcessors)

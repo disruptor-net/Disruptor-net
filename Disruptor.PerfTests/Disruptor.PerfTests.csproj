@@ -64,7 +64,7 @@
     </Compile>
     <Compile Include="LatencyTestSession.cs" />
     <Compile Include="LatencyTestSessionResult.cs" />
-    <Compile Include="PerfTest.cs" />
+    <Compile Include="IThroughputfTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Queue\OneToOneQueueBatchedThroughputTest.cs" />
     <Compile Include="Queue\OneToOneQueueThroughputTest.cs" />
@@ -75,6 +75,7 @@
     <Compile Include="Sequenced\OneToThreePipelineSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\OneToThreeSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\ThreeToOneSequencedThroughputTest.cs" />
+    <Compile Include="Sequenced\PingPongSequencedLatencyTest.cs" />
     <Compile Include="Sequenced\ThreeToThreeSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\ValueAdditionBatchQueueProcessor.cs" />
     <Compile Include="Support\EventCountingQueueProcessor.cs" />

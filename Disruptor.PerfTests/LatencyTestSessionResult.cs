@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Text;
+using HdrHistogram;
 
 namespace Disruptor.PerfTests
 {
@@ -7,15 +9,15 @@ namespace Disruptor.PerfTests
     {
         private readonly Exception _exception;
 
-        public long TotalOperationsInRun { get; set; }
+        public LongHistogram Histogram { get; }
         public TimeSpan Duration { get; set; }
         public int Gen0 { get; set; }
         public int Gen1 { get; set; }
         public int Gen2 { get; set; }
 
-        public LatencyTestSessionResult(long totalOperationsInRun, TimeSpan duration, int gen0, int gen1, int gen2)
+        public LatencyTestSessionResult(LongHistogram histogram, TimeSpan duration, int gen0, int gen1, int gen2)
         {
-            TotalOperationsInRun = totalOperationsInRun;
+            Histogram = histogram;
             Duration = duration;
             Gen0 = gen0;
             Gen1 = gen1;
@@ -42,14 +44,19 @@ namespace Disruptor.PerfTests
             {
                 stringBuilder.AppendLine(" <tr>");
                 stringBuilder.AppendLine($"     <td>{runId}</td>");
-                stringBuilder.AppendLine($"     <td>{TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###}</td>");
+                stringBuilder.AppendLine($"     <td><pre>");
+                using (var writer = new StringWriter(stringBuilder))
+                {
+                    Histogram.OutputPercentileDistribution(writer, 1, 1000.0);
+                }
+                stringBuilder.AppendLine($"</pre></td>");
                 stringBuilder.AppendLine($"     <td>{Duration.TotalMilliseconds:N0} (ms)</td>");
                 stringBuilder.AppendLine($"     <td>{Gen0} - {Gen1} - {Gen2}</td>");
                 stringBuilder.AppendLine(" </tr>");
             }
         }
 
-        public override string ToString() => _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Ops: {TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###} - Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2}";
+        public override string ToString() => _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2}";
 
     }
 }

@@ -32,7 +32,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// EP1 - EventProcessor 1    
     /// </code>
     /// </summary>
-    public class OneToOneSequencedLongArrayThroughputTest : IPerfTest
+    public class OneToOneSequencedLongArrayThroughputTest : IThroughputfTest
     {
         private const int _bufferSize = 1024 * 1;
         private const long _iterations = 1000L * 1000L * 1L;

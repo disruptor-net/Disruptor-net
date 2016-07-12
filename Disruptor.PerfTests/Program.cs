@@ -14,8 +14,8 @@ namespace Disruptor.PerfTests
                 return;
             }
 
-            var computerSpecifications = new ComputerSpecifications();
-            Console.WriteLine(computerSpecifications.ToString());
+            var isThroughputTest = args[0].Contains("Throughput");
+            var isLatencyTest = args[0].Contains("Latency");
 
             var perfTestType = Type.GetType(args[0]);
             if (perfTestType == null)
@@ -23,15 +23,33 @@ namespace Disruptor.PerfTests
                 Console.WriteLine($"Could not find the type '{args[0]}'");
                 return;
             }
+            
+            if (!isThroughputTest && !isLatencyTest)
+            {
+                Console.WriteLine($"*** ERROR *** Unable to determine the runner to use for this type ({args[0]})");
+                return;
+            }
 
             var session = new PerformanceTestSession(computerSpecifications, perfTestType);
 
             //Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
 
-            session.Run();
+            var computerSpecifications = new ComputerSpecifications();
+            Console.WriteLine(computerSpecifications.ToString());
 
-            session.GenerateAndOpenReport();
-            Console.ReadKey();
+            if (isThroughputTest)
+            {
+                var session = new ThroughputTestSession(computerSpecifications, Type.GetType(args[0]));
+                session.Run();
+                session.GenerateAndOpenReport();
+            }
+
+            if (isLatencyTest)
+            {
+                var session = new LatencyTestSession(computerSpecifications, Type.GetType(args[0]));
+                session.Run();
+                session.GenerateAndOpenReport();
+            }
         }
 
         private static void PrintUsage()

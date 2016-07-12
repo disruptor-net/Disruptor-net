@@ -45,7 +45,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// SB2 - SequenceBarrier 2
     /// EP3 - EventProcessor 3
     /// </summary>
-    public class OneToThreeDiamondSequencedThroughputTest : IPerfTest
+    public class OneToThreeDiamondSequencedThroughputTest : IThroughputfTest
     {
         private const int _bufferSize = 1024 * 8;
         private const long _iterations = 1000L * 1000L * 100L;

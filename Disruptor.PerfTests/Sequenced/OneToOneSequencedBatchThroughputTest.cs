@@ -34,7 +34,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// EP1 - EventProcessor 1
     /// </code>
     /// </summary>
-    public class OneToOneSequencedBatchThroughputTest : IPerfTest
+    public class OneToOneSequencedBatchThroughputTest : IThroughputfTest
     {
         private const int _batchSize = 10;
         private const int _bufferSize = 1024 * 64;
