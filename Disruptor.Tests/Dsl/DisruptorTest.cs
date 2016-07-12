@@ -519,7 +519,7 @@ namespace Disruptor.Tests.Dsl
                 _sequenceLength = sequenceLength;
             }
 
-            public IEventProcessor CreateEventProcessor(RingBuffer<TestEvent> ringBuffer, Sequence[] barrierSequences)
+            public IEventProcessor CreateEventProcessor(RingBuffer<TestEvent> ringBuffer, ISequence[] barrierSequences)
             {
                 Assert.AreEqual(_sequenceLength, barrierSequences.Length, "Should not have had any barrier sequences");
                 return new BatchEventProcessor<TestEvent>(_disruptor.RingBuffer, ringBuffer.NewBarrier(barrierSequences), _eventHandler);

@@ -1317,7 +1317,7 @@ namespace Disruptor.Tests
                 _sequenceBarrier = sequenceBarrier;
             }
 
-            public Sequence Sequence { get; } = new Sequence(Sequence.InitialCursorValue);
+            public ISequence Sequence { get; } = new Sequence();
 
             public void Halt()
             {

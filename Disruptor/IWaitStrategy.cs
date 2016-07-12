@@ -17,7 +17,7 @@
         /// <param name="dependentSequence">on which to wait.</param>
         /// <param name="barrier">barrier the <see cref="IEventProcessor"/> is waiting on.</param>
         /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
-        long WaitFor(long sequence, Sequence cursor, Sequence dependentSequence, ISequenceBarrier barrier);
+        long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier);
 
         /// <summary>
         /// Signal those <see cref="IEventProcessor"/> waiting that the cursor has advanced.

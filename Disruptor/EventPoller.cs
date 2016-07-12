@@ -17,13 +17,13 @@ namespace Disruptor
     {
         private readonly IDataProvider<T> _dataProvider;
         private readonly ISequencer _sequencer;
-        private readonly Sequence _sequence;
-        private readonly Sequence _gatingSequence;
+        private readonly ISequence _sequence;
+        private readonly ISequence _gatingSequence;
 
         public EventPoller(IDataProvider<T> dataProvider,
                            ISequencer sequencer,
-                           Sequence sequence,
-                           Sequence gatingSequence)
+                           ISequence sequence,
+                           ISequence gatingSequence)
         {
             _dataProvider = dataProvider;
             _sequencer = sequencer;
@@ -72,11 +72,11 @@ namespace Disruptor
 
         public static EventPoller<T> NewInstance(IDataProvider<T> dataProvider,
                                                     ISequencer sequencer,
-                                                    Sequence sequence,
-                                                    Sequence cursorSequence,
-                                                    params Sequence[] gatingSequences)
+                                                    ISequence sequence,
+                                                    ISequence cursorSequence,
+                                                    params ISequence[] gatingSequences)
         {
-            Sequence gatingSequence;
+            ISequence gatingSequence;
             if (gatingSequences.Length == 0)
             {
                 gatingSequence = cursorSequence;
@@ -93,6 +93,6 @@ namespace Disruptor
             return new EventPoller<T>(dataProvider, sequencer, sequence, gatingSequence);
         }
 
-        public Sequence Sequence => _sequence;
+        public ISequence Sequence => _sequence;
     }
 }

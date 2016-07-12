@@ -8,16 +8,16 @@ namespace Disruptor
     /// </summary>
     internal static class SequenceGroups
     {
-        public static void AddSequences(ref Sequence[] sequences, ICursored cursor, params Sequence[] sequencesToAdd) 
+        public static void AddSequences(ref ISequence[] sequences, ICursored cursor, params ISequence[] sequencesToAdd) 
         {
             long cursorSequence;
-            Sequence[] updatedSequences;
-            Sequence[] currentSequences;
+            ISequence[] updatedSequences;
+            ISequence[] currentSequences;
 
             do
             {
                 currentSequences = Volatile.Read(ref sequences);
-                updatedSequences = new Sequence[currentSequences.Length + sequencesToAdd.Length];
+                updatedSequences = new ISequence[currentSequences.Length + sequencesToAdd.Length];
                 Array.Copy(currentSequences, updatedSequences, currentSequences.Length);
                 cursorSequence = cursor.Cursor;
 
@@ -37,11 +37,11 @@ namespace Disruptor
             }
         }
 
-        public static bool RemoveSequence(ref Sequence[] sequences, Sequence sequence)
+        public static bool RemoveSequence(ref ISequence[] sequences, ISequence sequence)
         {
             int numToRemove;
-            Sequence[] oldSequences;
-            Sequence[] newSequences;
+            ISequence[] oldSequences;
+            ISequence[] newSequences;
 
             do
             {
@@ -53,7 +53,7 @@ namespace Disruptor
                     break;
 
                 var oldSize = oldSequences.Length;
-                newSequences = new Sequence[oldSize - numToRemove];
+                newSequences = new ISequence[oldSize - numToRemove];
 
                 for (int i = 0, pos = 0; i < oldSize; i++)
                 {
@@ -69,7 +69,7 @@ namespace Disruptor
             return numToRemove != 0;
         }
 
-        private static int CountMatching(Sequence[] values, Sequence toMatch)
+        private static int CountMatching(ISequence[] values, ISequence toMatch)
         {
             var numToRemove = 0;
             foreach (var value in values)

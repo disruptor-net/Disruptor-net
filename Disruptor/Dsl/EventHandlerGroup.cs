@@ -12,9 +12,9 @@ namespace Disruptor.Dsl
     {
         private readonly Disruptor<T> _disruptor;
         private readonly ConsumerRepository<T> _consumerRepository;
-        private readonly Sequence[] _sequences;
+        private readonly ISequence[] _sequences;
 
-        internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository<T> consumerRepository, IEnumerable<Sequence> sequences)
+        internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository<T> consumerRepository, IEnumerable<ISequence> sequences)
         {
             _disruptor = disruptor;
             _consumerRepository = consumerRepository;

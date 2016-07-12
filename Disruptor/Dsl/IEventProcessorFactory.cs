@@ -12,6 +12,6 @@
         /// </summary>
         /// <param name="barrierSequences">barrierSequences the sequences to gate on</param>
         /// <returns>a new EventProcessor that gates on <code>barrierSequences</code> before processing events</returns>
-        IEventProcessor CreateEventProcessor(RingBuffer<T> ringBuffer, Sequence[] barrierSequences);
+        IEventProcessor CreateEventProcessor(RingBuffer<T> ringBuffer, ISequence[] barrierSequences);
     }
 }

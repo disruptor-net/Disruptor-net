@@ -15,6 +15,6 @@ namespace Disruptor
         /// Call by the <see cref="BatchEventProcessor{T}"/> to setup the callback.
         /// </summary>
         /// <param name="sequenceCallback">callback on which to notify the <see cref="BatchEventProcessor{T}"/> that the sequence has progressed.</param>
-       void SetSequenceCallback(Sequence sequenceCallback);
+        void SetSequenceCallback(ISequence sequenceCallback);
     }
 }

@@ -17,7 +17,7 @@ namespace Disruptor
         private readonly IDataProvider<T> _dataProvider;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IEventHandler<T> _eventHandler;
-        private readonly Sequence _sequence = new Sequence(Sequence.InitialCursorValue);
+        private readonly Sequence _sequence = new Sequence();
         private readonly ITimeoutHandler _timeoutHandler;
         private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler();
 
@@ -38,7 +38,7 @@ namespace Disruptor
             _timeoutHandler = eventHandler as ITimeoutHandler;
         }
 
-        public Sequence Sequence => _sequence;
+        public ISequence Sequence => _sequence;
 
         /// <summary>
         /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.

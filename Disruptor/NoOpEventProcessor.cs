@@ -35,7 +35,7 @@ namespace Disruptor
         /// <summary>
         /// 
         /// </summary>
-        public Sequence Sequence => _sequence;
+        public ISequence Sequence => _sequence;
 
         /// <summary>
         /// NoOp
@@ -47,17 +47,39 @@ namespace Disruptor
 
         public bool IsRunning => _running == 1;
 
-        private sealed class SequencerFollowingSequence : Sequence
+        private sealed class SequencerFollowingSequence : ISequence
         {
             private readonly RingBuffer<T> _sequencer;
 
             public SequencerFollowingSequence(RingBuffer<T> sequencer)
-                : base(InitialCursorValue)
             {
                 _sequencer = sequencer;
             }
 
-            public override long Value => _sequencer.Cursor;
+            public long Value => _sequencer.Cursor;
+
+            public void SetValue(long value)
+            {
+            }
+
+            public void SetValueVolatile(long value)
+            {
+            }
+
+            public bool CompareAndSet(long expectedSequence, long nextSequence)
+            {
+                return false;
+            }
+
+            public long IncrementAndGet()
+            {
+                return 0;
+            }
+
+            public long AddAndGet(long value)
+            {
+                return 0;
+            }
         }
     }
 }

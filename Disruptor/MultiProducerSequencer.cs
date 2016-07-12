@@ -41,7 +41,7 @@ namespace Disruptor
             return HasAvailableCapacity(Volatile.Read(ref _gatingSequences), requiredCapacity, _cursor.Value);
         }
 
-        private bool HasAvailableCapacity(Sequence[] gatingSequences, int requiredCapacity, long cursorValue)
+        private bool HasAvailableCapacity(ISequence[] gatingSequences, int requiredCapacity, long cursorValue)
         {
             var wrapPoint = (cursorValue + requiredCapacity) - _bufferSize;
             var cachedGatingSequence = _gatingSequenceCache.Value;
@@ -275,7 +275,6 @@ namespace Disruptor
 
         private int CalculateAvailabilityFlag(long sequence)
         {
-            // TODO: Check correctness
             return (int)((ulong)sequence >> _indexShift);
         }
 

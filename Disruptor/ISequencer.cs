@@ -24,21 +24,21 @@ namespace Disruptor
         /// safely and atomically added to the list of gating sequences. 
         /// </summary>
         /// <param name="gatingSequences">The sequences to add.</param>
-        void AddGatingSequences(params Sequence[] gatingSequences);
+        void AddGatingSequences(params ISequence[] gatingSequences);
 
         /// <summary>
         /// Remove the specified sequence from this sequencer.
         /// </summary>
         /// <param name="sequence">to be removed.</param>
         /// <returns>true if this sequence was found, false otherwise.</returns>
-        bool RemoveGatingSequence(Sequence sequence);
+        bool RemoveGatingSequence(ISequence sequence);
 
         /// <summary>
         /// Create a <see cref="ISequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
         /// </summary>
         /// <param name="sequencesToTrack"></param>
         /// <returns></returns>
-        ISequenceBarrier NewBarrier(params Sequence[] sequencesToTrack);
+        ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack);
 
         /// <summary>
         /// Get the minimum sequence value from all of the gating sequences
@@ -60,6 +60,6 @@ namespace Disruptor
         /// <returns>The highest value that can be safely read, will be at least <code>nextSequence - 1</code>.</returns>
         long GetHighestPublishedSequence(long nextSequence, long availableSequence);
 
-        EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences);
+        EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences);
     }
 }

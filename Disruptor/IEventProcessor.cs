@@ -8,7 +8,7 @@
         /// <summary>
         /// Return a reference to the <see cref="Sequence"/> being used by this <see cref="IEventProcessor"/>
         /// </summary>
-        Sequence Sequence { get; }
+        ISequence Sequence { get; }
 
         /// <summary>
         /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.

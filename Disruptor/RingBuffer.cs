@@ -178,7 +178,7 @@ namespace Disruptor
             return _sequencer.IsAvailable(sequence);
         }
 
-        public void AddGatingSequences(params Sequence[] gatingSequences)
+        public void AddGatingSequences(params ISequence[] gatingSequences)
         {
             _sequencer.AddGatingSequences(gatingSequences);
         }
@@ -193,7 +193,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">sequence to be removed.</param>
         /// <returns><tt>true</tt> if this sequence was found, <tt>false</tt> otherwise.</returns>
-        public bool RemoveGatingSequence(Sequence sequence)
+        public bool RemoveGatingSequence(ISequence sequence)
         {
             return _sequencer.RemoveGatingSequence(sequence);
         }
@@ -204,7 +204,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequencesToTrack">the additional sequences to track</param>
         /// <returns>A sequence barrier that will track the specified sequences.</returns>
-        public ISequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
+        public ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
         {
             return _sequencer.NewBarrier(sequencesToTrack);
         }
@@ -214,7 +214,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="gatingSequences"></param>
         /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
-        public EventPoller<T> NewPoller(params Sequence[] gatingSequences)
+        public EventPoller<T> NewPoller(params ISequence[] gatingSequences)
         {
             return _sequencer.NewPoller(this, gatingSequences);
         }

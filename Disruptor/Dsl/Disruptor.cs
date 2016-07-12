@@ -82,7 +82,7 @@ namespace Disruptor.Dsl
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
         public EventHandlerGroup<T> HandleEventsWith(params IEventHandler<T>[] handlers)
         {
-            return CreateEventProcessors(new Sequence[0], handlers);
+            return CreateEventProcessors(new ISequence[0], handlers);
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace Disruptor.Dsl
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
         public EventHandlerGroup<T> HandleEventsWith(params IEventProcessorFactory<T>[] eventProcessorFactories)
         {
-            return CreateEventProcessors(new Sequence[0], eventProcessorFactories);
+            return CreateEventProcessors(new ISequence[0], eventProcessorFactories);
         }
         
         /// <summary>
@@ -133,7 +133,7 @@ namespace Disruptor.Dsl
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
         public EventHandlerGroup<T> HandleEventsWithWorkerPool(params IWorkHandler<T>[] workHandlers)
         {
-            return CreateWorkerPool(new Sequence[0], workHandlers);
+            return CreateWorkerPool(new ISequence[0], workHandlers);
         }
 
         /// <summary>
@@ -337,11 +337,11 @@ namespace Disruptor.Dsl
             return false;
         }
 
-        internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IEventHandler<T>[] eventHandlers)
+        internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IEventHandler<T>[] eventHandlers)
         {
             CheckNotStarted();
 
-            var processorSequences = new List<Sequence>(eventHandlers.Length);
+            var processorSequences = new List<ISequence>(eventHandlers.Length);
             var barrier = _ringBuffer.NewBarrier(barrierSequences);
 
             foreach (var eventHandler in eventHandlers)
@@ -362,12 +362,12 @@ namespace Disruptor.Dsl
             return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
         }
 
-        internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IEventProcessorFactory<T>[] processorFactories)
+        internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IEventProcessorFactory<T>[] processorFactories)
         {
             return HandleEventsWith(processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, barrierSequences)).ToArray());
         }
 
-        internal EventHandlerGroup<T> CreateWorkerPool(Sequence[] barrierSequences, IWorkHandler<T>[] workHandlers)
+        internal EventHandlerGroup<T> CreateWorkerPool(ISequence[] barrierSequences, IWorkHandler<T>[] workHandlers)
         {
             var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
             var workerPool = new WorkerPool<T>(_ringBuffer, sequenceBarrier, _exceptionHandler, workHandlers);

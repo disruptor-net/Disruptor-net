@@ -10,21 +10,21 @@ namespace Disruptor
     /// The <see cref="SequenceGroup.Value"/> get and set methods are lock free and can be
     /// concurrently called with the <see cref="SequenceGroup.Add"/> and <see cref="SequenceGroup.Remove"/>.
     /// </summary>
-    public class SequenceGroup : Sequence
+    public class SequenceGroup : ISequence
     {
         /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
-        private Sequence[] _sequences = new Sequence[0];
+        private ISequence[] _sequences = new ISequence[0];
 
         /// <summary>
         /// Get the minimum sequence value for the group.
         /// </summary>
-        public override long Value => Util.GetMinimumSequence(Volatile.Read(ref _sequences));
+        public long Value => Util.GetMinimumSequence(Volatile.Read(ref _sequences));
 
         /// <summary>
         /// Set all <see cref="Sequence"/>s in the group to a given value.
         /// </summary>
         /// <param name="value">value to set the group of sequences to.</param>
-        public override void SetValue(long value)
+        public void SetValue(long value)
         {
             var sequences = Volatile.Read(ref _sequences);
             for (var i = 0; i < sequences.Length; i++)
@@ -38,7 +38,7 @@ namespace Disruptor
         /// write and a Store/Load barrier between this write and any subsequent volatile read. 
         /// </summary>
         /// <param name="value"></param>
-        public override void SetValueVolatile(long value)
+        public void SetValueVolatile(long value)
         {
             var sequences = Volatile.Read(ref _sequences);
             for (var i = 0; i < sequences.Length; i++)
@@ -47,20 +47,35 @@ namespace Disruptor
             }
         }
 
+        public bool CompareAndSet(long expectedSequence, long nextSequence)
+        {
+            throw new NotImplementedException();
+        }
+
+        public long IncrementAndGet()
+        {
+            throw new NotImplementedException();
+        }
+
+        public long AddAndGet(long value)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Add a <see cref="Sequence"/> into this aggregate. This should only be used during
         /// initialisation. Use <see cref="SequenceGroup.AddWhileRunning"/>.
         /// </summary>
         /// <param name="sequence">sequence to be added to the aggregate.</param>
-        public void Add(Sequence sequence)
+        public void Add(ISequence sequence)
         {
-            Sequence[] oldSequences;
-            Sequence[] newSequences;
+            ISequence[] oldSequences;
+            ISequence[] newSequences;
             do
             {
                 oldSequences = Volatile.Read(ref _sequences);
                 var oldSize = oldSequences.Length;
-                newSequences = new Sequence[oldSize + 1];
+                newSequences = new ISequence[oldSize + 1];
                 Array.Copy(oldSequences, newSequences, oldSize);
                 newSequences[oldSize] = sequence;
             }
@@ -72,7 +87,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">sequence to be removed from this aggregate.</param>
         /// <returns>true if the sequence was removed otherwise false.</returns>
-        public bool Remove(Sequence sequence)
+        public bool Remove(ISequence sequence)
         {
             return SequenceGroups.RemoveSequence(ref _sequences, sequence);
         }

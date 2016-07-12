@@ -7,7 +7,7 @@ namespace Disruptor
     internal sealed class ProcessingSequenceBarrier : ISequenceBarrier
     {
         private readonly IWaitStrategy _waitStrategy;
-        private readonly Sequence _dependentSequence;
+        private readonly ISequence _dependentSequence;
         private readonly Sequence _cursorSequence;
         private readonly Sequencer _sequencer;
 
@@ -16,13 +16,13 @@ namespace Disruptor
         public ProcessingSequenceBarrier(Sequencer sequencer, 
                                          IWaitStrategy waitStrategy, 
                                          Sequence cursorSequence, 
-                                         Sequence[] dependentSequences)
+                                         ISequence[] dependentSequences)
         {
             _waitStrategy = waitStrategy;
             _cursorSequence = cursorSequence;
             _sequencer = sequencer;
 
-            _dependentSequence = 0 == dependentSequences.Length ? cursorSequence : new FixedSequenceGroup(dependentSequences);
+            _dependentSequence = 0 == dependentSequences.Length ? (ISequence)cursorSequence : new FixedSequenceGroup(dependentSequences);
         }
 
         public long WaitFor(long sequence)

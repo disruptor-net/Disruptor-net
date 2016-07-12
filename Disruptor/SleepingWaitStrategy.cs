@@ -35,7 +35,7 @@ namespace Disruptor
         /// <param name="dependentSequence">dependents further back the chain that must advance first</param>
         /// <param name="barrier">barrier the <see cref="IEventProcessor"/> is waiting on.</param>
         /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
-        public long WaitFor(long sequence, Sequence cursor, Sequence dependentSequence, ISequenceBarrier barrier)
+        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
             var spinWait = default(SpinWait);
             long availableSequence;

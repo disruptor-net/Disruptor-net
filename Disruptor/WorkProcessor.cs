@@ -12,12 +12,12 @@ namespace Disruptor
     public sealed class WorkProcessor<T> : IEventProcessor, IEventReleaser where T : class 
     {
         private volatile int _running;
-        private readonly Sequence _sequence = new Sequence(Sequence.InitialCursorValue);
+        private readonly Sequence _sequence = new Sequence();
         private readonly RingBuffer<T> _ringBuffer;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IWorkHandler<T> _workHandler;
         private readonly IExceptionHandler<T> _exceptionHandler;
-        private readonly Sequence _workSequence;
+        private readonly ISequence _workSequence;
 
         /// <summary>
         /// Construct a <see cref="WorkProcessor{T}"/>.
@@ -28,7 +28,7 @@ namespace Disruptor
         /// <param name="exceptionHandler">exceptionHandler to be called back when an error occurs</param>
         /// <param name="workSequence">workSequence from which to claim the next event to be worked on.  It should always be initialised
         /// as <see cref="Disruptor.Sequence.InitialCursorValue"/></param>
-        public WorkProcessor(RingBuffer<T> ringBuffer, ISequenceBarrier sequenceBarrier, IWorkHandler<T> workHandler, IExceptionHandler<T> exceptionHandler, Sequence workSequence)
+        public WorkProcessor(RingBuffer<T> ringBuffer, ISequenceBarrier sequenceBarrier, IWorkHandler<T> workHandler, IExceptionHandler<T> exceptionHandler, ISequence workSequence)
         {
             _ringBuffer = ringBuffer;
             _sequenceBarrier = sequenceBarrier;
@@ -42,7 +42,7 @@ namespace Disruptor
         /// <summary>
         /// Return a reference to the <see cref="IEventProcessor.Sequence"/> being used by this <see cref="IEventProcessor"/>
         /// </summary>
-        public Sequence Sequence => _sequence;
+        public ISequence Sequence => _sequence;
 
         /// <summary>
         /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.

@@ -12,7 +12,7 @@
 
         public IEventProcessor EventProcessor { get; }
 
-        public Sequence[] Sequences => new[] { EventProcessor.Sequence };
+        public ISequence[] Sequences => new[] { EventProcessor.Sequence };
 
         public IEventHandler<T> Handler { get; }
 

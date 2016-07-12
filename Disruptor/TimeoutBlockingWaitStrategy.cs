@@ -13,7 +13,7 @@ namespace Disruptor
             _timeout = timeout;
         }
 
-        public long WaitFor(long sequence, Sequence cursor, Sequence dependentSequence, ISequenceBarrier barrier)
+        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
             var timeSpan = _timeout;
             if (cursor.Value < sequence) // volatile read

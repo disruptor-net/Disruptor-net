@@ -2,7 +2,7 @@
 {
     public interface IConsumerInfo
     {
-        Sequence[] Sequences { get; }
+        ISequence[] Sequences { get; }
 
         ISequenceBarrier Barrier { get; }
 

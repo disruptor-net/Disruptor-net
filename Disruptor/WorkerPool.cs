@@ -12,7 +12,7 @@ namespace Disruptor
     public sealed class WorkerPool<T> where T : class 
     {
         private volatile int _running;
-        private readonly Sequence _workSequence = new Sequence(Sequence.InitialCursorValue);
+        private readonly Sequence _workSequence = new Sequence();
         private readonly RingBuffer<T> _ringBuffer;
         // WorkProcessors are created to wrap each of the provided WorkHandlers
         private readonly WorkProcessor<T>[] _workProcessors;
@@ -77,11 +77,11 @@ namespace Disruptor
         /// <summary>
         /// Get an array of <see cref="Sequence"/>s representing the progress of the workers.
         /// </summary>
-        public Sequence[] WorkerSequences
+        public ISequence[] WorkerSequences
         {
             get
             {
-                var sequences = new Sequence[_workProcessors.Length + 1];
+                var sequences = new ISequence[_workProcessors.Length + 1];
                 for (var i = 0; i < _workProcessors.Length; i++)
                 {
                     sequences[i] = _workProcessors[i].Sequence;

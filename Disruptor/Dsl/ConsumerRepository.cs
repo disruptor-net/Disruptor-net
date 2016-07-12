@@ -8,13 +8,13 @@ namespace Disruptor.Dsl
     internal class ConsumerRepository<T> : IEnumerable<IConsumerInfo> where T : class
     {
         private readonly Dictionary<IEventHandler<T>, EventProcessorInfo<T>> _eventProcessorInfoByEventHandler;
-        private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence;
+        private readonly Dictionary<ISequence, IConsumerInfo> _eventProcessorInfoBySequence;
         private readonly List<IConsumerInfo> _consumerInfos = new List<IConsumerInfo>();
 
         public ConsumerRepository()
         {
             _eventProcessorInfoByEventHandler = new Dictionary<IEventHandler<T>, EventProcessorInfo<T>>(new IdentityComparer<IEventHandler<T>>());
-            _eventProcessorInfoBySequence = new Dictionary<Sequence, IConsumerInfo>(new IdentityComparer<Sequence>());
+            _eventProcessorInfoBySequence = new Dictionary<ISequence, IConsumerInfo>(new IdentityComparer<ISequence>());
         }
 
         public void Add(IEventProcessor eventProcessor, IEventHandler<T> eventHandler, ISequenceBarrier sequenceBarrier)
@@ -42,9 +42,9 @@ namespace Disruptor.Dsl
             }
         }
 
-        public Sequence[] GetLastSequenceInChain(bool includeStopped)
+        public ISequence[] GetLastSequenceInChain(bool includeStopped)
         {
-            var lastSequence = new List<Sequence>();
+            var lastSequence = new List<ISequence>();
             foreach (var consumerInfo in _consumerInfos)
             {
                 if ((includeStopped || consumerInfo.IsRunning) && consumerInfo.IsEndOfChain)
@@ -69,12 +69,12 @@ namespace Disruptor.Dsl
             return eventprocessorInfo.EventProcessor;
         }
 
-        public Sequence GetSequenceFor(IEventHandler<T> eventHandler)
+        public ISequence GetSequenceFor(IEventHandler<T> eventHandler)
         {
             return GetEventProcessorFor(eventHandler).Sequence;
         }
 
-        public void UnMarkEventProcessorsAsEndOfChain(params Sequence[] barrierEventProcessors)
+        public void UnMarkEventProcessorsAsEndOfChain(params ISequence[] barrierEventProcessors)
         {
             foreach (var barrierEventProcessor in barrierEventProcessors)
             {

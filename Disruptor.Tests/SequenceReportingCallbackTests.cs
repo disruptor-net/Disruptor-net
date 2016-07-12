@@ -37,7 +37,7 @@ namespace Disruptor.Tests
 
         private class TestSequenceReportingEventHandler : ISequenceReportingEventHandler<StubEvent>
         {
-            private Sequence _sequenceCallback;
+            private ISequence _sequenceCallback;
             private readonly ManualResetEvent _callbackSignal;
             private readonly ManualResetEvent _onEndOfBatchSignal;
 
@@ -47,7 +47,7 @@ namespace Disruptor.Tests
                 _onEndOfBatchSignal = onEndOfBatchSignal;
             }
 
-            public void SetSequenceCallback(Sequence sequenceTrackerCallback)
+            public void SetSequenceCallback(ISequence sequenceTrackerCallback)
             {
                 _sequenceCallback = sequenceTrackerCallback;
             }

@@ -13,7 +13,7 @@ namespace Disruptor
         protected readonly Sequence _cursor = new Sequence();
 
         /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
-        protected Sequence[] _gatingSequences = new Sequence[0];
+        protected ISequence[] _gatingSequences = new ISequence[0];
 
         /// <summary>
         /// Construct a Sequencer with the selected strategies.
@@ -40,7 +40,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequencesToTrack"></param>
         /// <returns></returns>
-        public ISequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
+        public ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
         {
             return new ProcessingSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
         }
@@ -148,7 +148,7 @@ namespace Disruptor
         /// safely and atomically added to the list of gating sequences. 
         /// </summary>
         /// <param name="gatingSequences">The sequences to add.</param>
-        public void AddGatingSequences(params Sequence[] gatingSequences)
+        public void AddGatingSequences(params ISequence[] gatingSequences)
         {
             SequenceGroups.AddSequences(ref _gatingSequences, this, gatingSequences);
         }
@@ -158,7 +158,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">to be removed.</param>
         /// <returns>true if this sequence was found, false otherwise.</returns>
-        public bool RemoveGatingSequence(Sequence sequence)
+        public bool RemoveGatingSequence(ISequence sequence)
         {
             return SequenceGroups.RemoveSequence(ref _gatingSequences, sequence);
         }
@@ -181,7 +181,7 @@ namespace Disruptor
         /// <param name="provider">The data source for users of this event poller</param>
         /// <param name="gatingSequences">Sequence to be gated on.</param>
         /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
-        public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
+        public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
         {
             return EventPoller<T>.NewInstance(provider, this, new Sequence(), _cursor, gatingSequences);
         }

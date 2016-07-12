@@ -192,7 +192,7 @@ namespace Disruptor.Tests
 
             public bool IsRunning => _running == 1;
 
-            public Sequence Sequence => _sequence;
+            public ISequence Sequence => _sequence;
 
             public void Halt()
             {
@@ -200,24 +200,51 @@ namespace Disruptor.Tests
             }
         }
 
-        private class CountDownEventSequence : Sequence
+        private class CountDownEventSequence : ISequence
         {
             private readonly CountdownEvent _signal;
+            private readonly ISequence _sequenceImplementation;
 
             public CountDownEventSequence(long initialValue, CountdownEvent signal)
-                : base(initialValue)
             {
+                _sequenceImplementation = new Sequence(initialValue);
                 _signal = signal;
             }
 
-            public override long Value
+            public long Value
             {
                 get
                 {
                     if (_signal.CurrentCount > 0)
                         _signal.Signal();
-                    return base.Value;
+
+                    return _sequenceImplementation.Value;
                 }
+            }
+
+            public void SetValue(long value)
+            {
+                _sequenceImplementation.SetValue(value);
+            }
+
+            public void SetValueVolatile(long value)
+            {
+                _sequenceImplementation.SetValueVolatile(value);
+            }
+
+            public bool CompareAndSet(long expectedSequence, long nextSequence)
+            {
+                return _sequenceImplementation.CompareAndSet(expectedSequence, nextSequence);
+            }
+
+            public long IncrementAndGet()
+            {
+                return _sequenceImplementation.IncrementAndGet();
+            }
+
+            public long AddAndGet(long value)
+            {
+                return _sequenceImplementation.AddAndGet(value);
             }
         }
     }

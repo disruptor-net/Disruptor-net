@@ -7,7 +7,7 @@ namespace Disruptor
     /// Cache line padded sequence counter.
     /// Can be used across threads without worrying about false sharing if a located adjacent to another counter in memory.
     /// </summary>
-    public class Sequence
+    public class Sequence : ISequence
     {
         /// <summary>
         /// Set to -1 as sequence starting point
@@ -28,7 +28,7 @@ namespace Disruptor
         /// <summary>
         /// Current sequence number
         /// </summary>
-        public virtual long Value => Volatile.Read(ref _fields.Value);
+        public long Value => Volatile.Read(ref _fields.Value);
 
         /// <summary>
         /// Perform an ordered write of this sequence.  The intent is
@@ -36,7 +36,7 @@ namespace Disruptor
         /// store.
         /// </summary>
         /// <param name="value">The new value for the sequence.</param>
-        public virtual void SetValue(long value)
+        public void SetValue(long value)
         {
             // no synchronization required, the CLR memory model prevents Store/Store re-ordering
             _fields.Value = value;
@@ -47,7 +47,7 @@ namespace Disruptor
         /// write and a Store/Load barrier between this write and any subsequent volatile read. 
         /// </summary>
         /// <param name="value"></param>
-        public virtual void SetValueVolatile(long value)
+        public void SetValueVolatile(long value)
         {
             Volatile.Write(ref _fields.Value, value);
         }
@@ -58,7 +58,7 @@ namespace Disruptor
         /// <param name="expectedSequence">the expected value for the sequence</param>
         /// <param name="nextSequence">the new value for the sequence</param>
         /// <returns>true if successful. False return indicates that the actual value was not equal to the expected value.</returns>
-        public virtual bool CompareAndSet(long expectedSequence, long nextSequence)
+        public bool CompareAndSet(long expectedSequence, long nextSequence)
         {
             return Interlocked.CompareExchange(ref _fields.Value, nextSequence, expectedSequence) == expectedSequence;
         }
@@ -76,7 +76,7 @@ namespace Disruptor
         /// Increments the sequence and stores the result, as an atomic operation.
         ///</summary>
         ///<returns>incremented sequence</returns>
-        public virtual long IncrementAndGet()
+        public long IncrementAndGet()
         {
             return Interlocked.Increment(ref _fields.Value);
         }
@@ -85,7 +85,7 @@ namespace Disruptor
         /// Increments the sequence and stores the result, as an atomic operation.
         ///</summary>
         ///<returns>incremented sequence</returns>
-        public virtual long AddAndGet(long value)
+        public long AddAndGet(long value)
         {
             return Interlocked.Add(ref _fields.Value, value);
         }
