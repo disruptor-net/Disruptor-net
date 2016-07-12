@@ -60,6 +60,7 @@
     </Compile>
     <Compile Include="PerfTest.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Queue\OneToOneQueueThroughputTest.cs" />
     <Compile Include="Raw\OneToOneRawBatchThroughputTest.cs" />
     <Compile Include="Raw\OneToOneRawThroughputTest.cs" />
     <Compile Include="Sequenced\OneToOneSequencedPollerThroughputTest.cs" />
@@ -90,6 +91,7 @@
     <Compile Include="Support\OperationExtensions.cs" />
     <Compile Include="Support\ValueAdditionEventHandler.cs" />
     <Compile Include="Support\ValueAdditionQueueEventProcessor.cs" />
+    <Compile Include="Support\ValueAdditionQueueProcessor.cs" />
     <Compile Include="Support\ValueEvent.cs" />
     <Compile Include="Support\ValueMutationEventHandler.cs" />
     <Compile Include="Support\ValueMutationQueueEventProcessor.cs" />
