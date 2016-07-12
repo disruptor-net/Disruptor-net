@@ -216,9 +216,7 @@ namespace Disruptor
         {
             fixed (int* buffer = _availableBuffer)
             {
-                // TODO: check if memory barrier is necessary
                 buffer[index] = flag;
-                //UNSAFE.putOrderedInt(_availableBuffer, bufferAddress, flag);
             }
         }
 
@@ -244,8 +242,7 @@ namespace Disruptor
             int flag = CalculateAvailabilityFlag(sequence);
             fixed (int* buffer = _availableBuffer)
             {
-                return buffer[index] == flag;
-//                return UNSAFE.getIntVolatile(availableBuffer, bufferAddress) == flag;
+                return Volatile.Read(ref buffer[index]) == flag;
             }
         }
 
