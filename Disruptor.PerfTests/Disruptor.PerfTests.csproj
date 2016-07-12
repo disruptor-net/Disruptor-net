@@ -38,6 +38,10 @@
     <StartupObject>Disruptor.PerfTests.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HdrHistogram, Version=1.0.0.0, Culture=neutral, PublicKeyToken=56a8eed952212876, processorArchitecture=MSIL">
+      <HintPath>..\packages\HdrHistogram.1.7.0\lib\net45\HdrHistogram.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\Lib\nunit.framework.dll</HintPath>
     </Reference>
@@ -58,6 +62,8 @@
     <Compile Include="..\Version.cs">
       <Link>Version.cs</Link>
     </Compile>
+    <Compile Include="LatencyTestSession.cs" />
+    <Compile Include="LatencyTestSessionResult.cs" />
     <Compile Include="PerfTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Queue\OneToOneQueueBatchedThroughputTest.cs" />
@@ -102,7 +108,7 @@
     <Compile Include="Support\ValueProducer.cs" />
     <Compile Include="Support\ValueQueueProducer.cs" />
     <Compile Include="ComputerSpecifications.cs" />
-    <Compile Include="PerformanceTestSession.cs" />
+    <Compile Include="ThroughputTestSession.cs" />
     <Compile Include="ThroughputTestSessionResult.cs" />
     <Compile Include="Translator\OneToOneTranslatorThroughputTest.cs" />
     <Compile Include="WorkHandler\OneToThreeWorkerPoolThroughputTest.cs" />
@@ -123,6 +129,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

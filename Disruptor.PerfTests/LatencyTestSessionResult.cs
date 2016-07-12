@@ -1,10 +1,9 @@
-using System;
-using System.Runtime.InteropServices;
+﻿using System;
 using System.Text;
 
 namespace Disruptor.PerfTests
 {
-    internal class ThroughputTestSessionResult
+    public class LatencyTestSessionResult
     {
         private readonly Exception _exception;
 
@@ -14,7 +13,7 @@ namespace Disruptor.PerfTests
         public int Gen1 { get; set; }
         public int Gen2 { get; set; }
 
-        public ThroughputTestSessionResult(long totalOperationsInRun, TimeSpan duration, int gen0, int gen1, int gen2)
+        public LatencyTestSessionResult(long totalOperationsInRun, TimeSpan duration, int gen0, int gen1, int gen2)
         {
             TotalOperationsInRun = totalOperationsInRun;
             Duration = duration;
@@ -23,7 +22,7 @@ namespace Disruptor.PerfTests
             Gen2 = gen2;
         }
 
-        public ThroughputTestSessionResult(Exception exception)
+        public LatencyTestSessionResult(Exception exception)
         {
             _exception = exception;
         }
@@ -50,9 +49,7 @@ namespace Disruptor.PerfTests
             }
         }
 
-        public override string ToString()
-        {
-            return _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Ops: {TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###} - Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2}";
-        }
+        public override string ToString() => _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Ops: {TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###} - Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2}";
+
     }
 }

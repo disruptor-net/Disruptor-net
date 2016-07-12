@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Disruptor.PerfTests
 {
-    public class PerformanceTestSession
+    public class ThroughputTestSession
     {
         public const int Runs = 7;
 
@@ -15,7 +15,7 @@ namespace Disruptor.PerfTests
         private readonly Type _perfTestType;
         private IPerfTest _test;
 
-        public PerformanceTestSession(ComputerSpecifications computerSpecifications, Type perfTestType)
+        public ThroughputTestSession(ComputerSpecifications computerSpecifications, Type perfTestType)
         {
             _computerSpecifications = computerSpecifications;
             _perfTestType = perfTestType;
