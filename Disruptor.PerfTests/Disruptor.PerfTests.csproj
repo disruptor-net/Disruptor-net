@@ -66,6 +66,7 @@
     <Compile Include="Sequenced\OneToThreeDiamondSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\OneToThreePipelineSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\OneToThreeSequencedThroughputTest.cs" />
+    <Compile Include="Sequenced\ThreeToOneSequencedThroughputTest.cs" />
     <Compile Include="Support\ExecutorService.cs" />
     <Compile Include="Support\LongArrayEventHandler.cs" />
     <Compile Include="Sequenced\OneToOneSequencedBatchThroughputTest.cs" />
