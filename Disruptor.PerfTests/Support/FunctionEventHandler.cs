@@ -6,17 +6,22 @@ namespace Disruptor.PerfTests.Support
     public class FunctionEventHandler : IEventHandler<FunctionEvent>
     {
         private readonly FunctionStep _functionStep;
-        private PaddedLong _stepThreeCounter;
-        private readonly long _iterations;
-        private readonly ManualResetEvent _mru;
+        private PaddedLong _counter;
+        private long _iterations;
+        private ManualResetEvent _latch;
 
-        public long StepThreeCounter => _stepThreeCounter.Value;
+        public long StepThreeCounter => _counter.Value;
 
-        public FunctionEventHandler(FunctionStep functionStep, long iterations, ManualResetEvent mru)
+        public FunctionEventHandler(FunctionStep functionStep)
         {
             _functionStep = functionStep;
+        }
+
+        public void Reset(ManualResetEvent latch, long iterations)
+        {
+            _counter.Value = 0;
             _iterations = iterations;
-            _mru = mru;
+            _latch = latch;
         }
 
         public void OnEvent(FunctionEvent data, long sequence, bool endOfBatch)
@@ -33,14 +38,14 @@ namespace Disruptor.PerfTests.Support
                 case FunctionStep.Three:
                     if ((data.StepTwoResult & 4L) == 4L)
                     {
-                        _stepThreeCounter.Value = _stepThreeCounter.Value + 1;
+                        _counter.Value = _counter.Value + 1;
                     }
                     break;
             }
 
             if(sequence == _iterations-1)
             {
-                _mru.Set();
+                _latch.Set();
             }
         }
     }
