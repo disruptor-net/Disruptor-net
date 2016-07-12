@@ -17,7 +17,14 @@ namespace Disruptor.PerfTests
             var computerSpecifications = new ComputerSpecifications();
             Console.WriteLine(computerSpecifications.ToString());
 
-            var session = new PerformanceTestSession(computerSpecifications, Type.GetType(args[0]));
+            var perfTestType = Type.GetType(args[0]);
+            if (perfTestType == null)
+            {
+                Console.WriteLine($"Could not find the type '{args[0]}'");
+                return;
+            }
+
+            var session = new PerformanceTestSession(computerSpecifications, perfTestType);
 
             //Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
 

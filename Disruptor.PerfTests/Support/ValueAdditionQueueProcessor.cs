@@ -36,14 +36,14 @@ namespace Disruptor.PerfTests.Support
             _running = false;
         }
 
-        public void Run()
+        public void Run(CancellationToken cancellationToken)
         {
             _running = true;
             while (true)
             {
                 try
                 {
-                    var value = _blockingQueue.Take();
+                    var value = _blockingQueue.Take(cancellationToken);
                     _value += value;
 
                     if (_sequence++ == _count)

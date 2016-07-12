@@ -60,6 +60,7 @@
     </Compile>
     <Compile Include="PerfTest.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Queue\OneToOneQueueBatchedThroughputTest.cs" />
     <Compile Include="Queue\OneToOneQueueThroughputTest.cs" />
     <Compile Include="Raw\OneToOneRawBatchThroughputTest.cs" />
     <Compile Include="Raw\OneToOneRawThroughputTest.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="Sequenced\OneToThreeSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\ThreeToOneSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\ThreeToThreeSequencedThroughputTest.cs" />
+    <Compile Include="Sequenced\ValueAdditionBatchQueueProcessor.cs" />
     <Compile Include="Support\ExecutorService.cs" />
     <Compile Include="Support\LongArrayEventHandler.cs" />
     <Compile Include="Sequenced\OneToOneSequencedBatchThroughputTest.cs" />
