@@ -27,7 +27,7 @@ namespace Disruptor.PerfTests.Support
                 _value.Value = _value.Value + value[i];
             }
             
-            if (--Count == sequence)
+            if (--Count == 0)
             {
                 Signal?.Set();
             }

@@ -62,7 +62,7 @@ namespace Disruptor.PerfTests.Sequenced
         {
             var signal = new ManualResetEvent(false);
             var expectedCount = _batchEventProcessor.Sequence.Value + _iterations;
-            _handler.Reset(signal, expectedCount);
+            _handler.Reset(signal, _iterations);
             _executor.Execute(_batchEventProcessor.Run);
             stopwatch.Start();
 
