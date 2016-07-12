@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Runtime;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
@@ -14,12 +16,14 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldHandleLotsOfThreads()
         {
+
             var disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 1 << 16, TaskScheduler.Current, ProducerType.Multi, new BusySpinWaitStrategy());
             var ringBuffer = disruptor.RingBuffer;
             disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler());
 
             var threads = Max(1, Environment.ProcessorCount / 2);
 
+            // TODO: Why does this take a minute to run and only use half the cpu capacity
             const int iterations = 20000000;
             var publisherCount = threads;
             var handlerCount = threads;
@@ -86,10 +90,11 @@ namespace Disruptor.Tests
 
             public void OnEvent(TestEvent @event, long sequence, bool endOfBatch)
             {
-                if (@event.Sequence != sequence ||
-                    @event.A != sequence + 13 ||
-                    @event.B != sequence - 7 ||
-                    !("wibble-" + sequence).Equals(@event.S))
+                if (@event.Sequence != sequence 
+                    || @event.A != sequence + 13
+                    || @event.B != sequence - 7 
+                    //|| !("wibble-" + sequence).Equals(@event.S.ToString())
+                    )
                 {
                     FailureCount++;
                 }
@@ -130,7 +135,7 @@ namespace Disruptor.Tests
                         testEvent.Sequence = next;
                         testEvent.A = next + 13;
                         testEvent.B = next - 7;
-                        testEvent.S = "wibble-" + next;
+                        //testEvent.S = "wibble-" + next;
                         _ringBuffer.Publish(next);
                     }
                 }
