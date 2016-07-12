@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
 
 namespace Disruptor.PerfTests.Sequenced
@@ -118,14 +117,6 @@ namespace Disruptor.PerfTests.Sequenced
             PerfTestUtil.FailIfNot(_expectedResult, _stepThreeFunctionHandler.StepThreeCounter);
 
             return _iterations;
-        }
-    }
-
-    class ExecutorService<T> where T : class
-    {
-        public void Submit(BatchEventProcessor<T> eventProcessor)
-        {
-            Task.Factory.StartNew(eventProcessor.Run);
         }
     }
 }

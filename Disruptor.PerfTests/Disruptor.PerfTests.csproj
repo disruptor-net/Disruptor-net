@@ -60,10 +60,13 @@
     </Compile>
     <Compile Include="PerfTest.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Raw\OneToOneRawBatchThroughputTest.cs" />
+    <Compile Include="Raw\OneToOneRawThroughputTest.cs" />
     <Compile Include="Sequenced\OneToOneSequencedPollerThroughputTest.cs" />
     <Compile Include="Sequenced\OneToThreeDiamondSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\OneToThreePipelineSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\OneToThreeSequencedThroughputTest.cs" />
+    <Compile Include="Support\ExecutorService.cs" />
     <Compile Include="Support\LongArrayEventHandler.cs" />
     <Compile Include="Sequenced\OneToOneSequencedBatchThroughputTest.cs" />
     <Compile Include="Sequenced\OneToOneSequencedLongArrayThroughputTest.cs" />
