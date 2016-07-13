@@ -100,6 +100,10 @@ namespace Disruptor.PerfTests
             {
                 sb.AppendFormat("        <b><font color='red'>Your computer has {0} physical core(s) but most of the tests require at least 4 cores</font></b><br>", _computerSpecifications.NumberOfCores);
             }
+            if (!Stopwatch.IsHighResolution)
+            {
+                sb.AppendFormat("        <b><font color='red'>Your computer does not support synchronized TSC, measured latencies might be wrong on multicore CPU architectures.</font></b><br>", _computerSpecifications.NumberOfCores);
+            }
             if (_computerSpecifications.IsHyperThreaded)
             {
                 sb.AppendLine("        <b><font color='red'>Hyperthreading can degrade performance, you should turn it off.</font></b><br>");
