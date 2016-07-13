@@ -132,7 +132,7 @@ namespace Disruptor.PerfTests
         public void GenerateAndOpenReport()
         {
             var path = Path.Combine(Environment.CurrentDirectory,
-                                    "TestReport-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
+                                    _perfTestType.Name + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
 
             File.WriteAllText(path, BuildReport());
 
