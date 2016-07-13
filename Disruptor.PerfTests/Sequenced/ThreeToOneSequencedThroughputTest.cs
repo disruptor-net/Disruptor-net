@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
+using Disruptor.Scheduler;
 using ValuePublisher = System.Action<System.Threading.CountdownEvent, Disruptor.RingBuffer<Disruptor.PerfTests.Support.ValueEvent>, long>;
 
 namespace Disruptor.PerfTests.Sequenced
@@ -48,9 +49,10 @@ namespace Disruptor.PerfTests.Sequenced
         private const int _numPublishers = 3;
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 20L;
-        private readonly CountdownEvent _cyclicBarrier = new CountdownEvent(_numPublishers + 1);
 
+        private readonly CountdownEvent _cyclicBarrier = new CountdownEvent(_numPublishers + 1);
         private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateMultiProducer(() => new ValueEvent(), _bufferSize, new BusySpinWaitStrategy());
+        private readonly TaskScheduler _scheduler = new RoundRobinThreadAffinedTaskScheduler(5);
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly ValueAdditionEventHandler _handler = new ValueAdditionEventHandler();
         private readonly BatchEventProcessor<ValueEvent> _batchEventProcessor;
@@ -79,9 +81,9 @@ namespace Disruptor.PerfTests.Sequenced
             for (var i = 0; i < _numPublishers; i++)
             {
                 var index = i;
-                futures[i] = Task.Run(() => _valuePublishers[index](_cyclicBarrier, _ringBuffer, _iterations));
+                futures[i] = Task.Factory.StartNew(() => _valuePublishers[index](_cyclicBarrier, _ringBuffer, _iterations), CancellationToken.None, TaskCreationOptions.None, _scheduler);
             }
-            Task.Factory.StartNew(() => _batchEventProcessor.Run(), TaskCreationOptions.LongRunning);
+            Task.Factory.StartNew(() => _batchEventProcessor.Run(), CancellationToken.None, TaskCreationOptions.None, _scheduler);
 
             stopwatch.Start();
             _cyclicBarrier.Signal();
