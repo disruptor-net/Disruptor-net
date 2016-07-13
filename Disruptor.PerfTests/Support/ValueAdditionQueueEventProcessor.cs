@@ -1,48 +1,52 @@
+using System;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Disruptor.PerfTests.Support
 {
     public class ValueAdditionQueueEventProcessor
     {
+        private volatile bool _running;
         private long _value;
-        private readonly BlockingCollection<long> _queue;
-        private readonly long _iterations;
-        private volatile bool _done;
+        private long _sequence;
+        private ManualResetEvent _signal;
 
-        public ValueAdditionQueueEventProcessor(BlockingCollection<long> queue, long iterations)
+        private readonly BlockingCollection<long> _queue;
+        private readonly long _count;
+
+        public ValueAdditionQueueEventProcessor(BlockingCollection<long> queue, long count)
         {
             _queue = queue;
-            _iterations = iterations;
+            _count = count;
         }
 
-        public long Value
-        {
-            get { return _value; }
-        }
+        public long Value => _value;
 
-        public void Reset()
+        public void Reset(ManualResetEvent signal)
         {
             _value = 0L;
-
-            _done = false;
+            _sequence = 0L;
+            _signal = signal;
         }
 
-        public bool Done
-        {
-            get
-            {
-                return _done;
-            }
-        }
+        public void Halt() => _running = false;
 
         public void Run()
         {
-            for(long i = 0; i<_iterations;i++)
+            _running = true;
+            while (_running)
             {
-                var value = _queue.Take();
+                long value;
+                if (!_queue.TryTake(out value))
+                    continue;
+
                 _value += value;
+
+                if (_sequence++ == _count)
+                {
+                    _signal.Set();
+                }
             }
-            _done = true;
         }
     }
 }

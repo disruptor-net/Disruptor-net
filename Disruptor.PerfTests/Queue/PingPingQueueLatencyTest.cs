@@ -82,7 +82,7 @@ namespace Disruptor.PerfTests.Queue
                 while (response < _maxEvents)
                 {
                     var t0 = Stopwatch.GetTimestamp();
-                    _pingQueue.Add(_counter++);
+                    _pingQueue.TryAdd(_counter++);
                     response = _pongQueue.Take();
                     var t1 = Stopwatch.GetTimestamp();
 
@@ -129,7 +129,7 @@ namespace Disruptor.PerfTests.Queue
                     while (!_cancellationToken.IsCancellationRequested)
                     {
                         var value = _pingQueue.Take(_cancellationToken);
-                        _pongQueue.Add(value);
+                        _pongQueue.TryAdd(value);
                     }
                 }
                 catch (OperationCanceledException) { }

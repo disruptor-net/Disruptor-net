@@ -21,7 +21,7 @@ namespace Disruptor.PerfTests.Support
             _barrier.SignalAndWait();
             for (long i = 0; i < _iterations; i++)
             {
-                _blockingQueue.Add(i);
+                _blockingQueue.TryAdd(i);
             }
         }
     }

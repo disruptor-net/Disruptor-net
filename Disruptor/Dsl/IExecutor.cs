@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Disruptor.Dsl
 {
@@ -11,6 +12,6 @@ namespace Disruptor.Dsl
         /// Execute the given command in an other thread
         /// </summary>
         /// <param name="command">The command to execute</param>
-        void Execute(Action command);
+        Task Execute(Action command);
     }
 }
