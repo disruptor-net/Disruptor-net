@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
+using Disruptor.PerfTests.Support;
 using HdrHistogram;
 
 namespace Disruptor.PerfTests.Queue
@@ -15,8 +16,8 @@ namespace Disruptor.PerfTests.Queue
         private const long _pauseDurationInNano = 1000;
         private static readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
-        private readonly BlockingCollection<long> _pingQueue = new BlockingCollection<long>(_bufferSize);
-        private readonly BlockingCollection<long> _pongQueue = new BlockingCollection<long>(_bufferSize);
+        private readonly BlockingCollection<long> _pingQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
+        private readonly BlockingCollection<long> _pongQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
         private readonly QueuePinger _pinger;
         private readonly QueuePonger _ponger;
 
