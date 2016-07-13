@@ -78,7 +78,6 @@
     <Compile Include="Sequenced\ThreeToOneSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\PingPongSequencedLatencyTest.cs" />
     <Compile Include="Sequenced\ThreeToThreeSequencedThroughputTest.cs" />
-    <Compile Include="Sequenced\ValueAdditionBatchQueueProcessor.cs" />
     <Compile Include="Support\EventCountingQueueProcessor.cs" />
     <Compile Include="Support\EventCountingWorkHandler.cs" />
     <Compile Include="Support\ExecutorService.cs" />
@@ -102,6 +101,7 @@
     <Compile Include="Support\LatencyStepQueueEventProcessor.cs" />
     <Compile Include="Support\Operation.cs" />
     <Compile Include="Support\OperationExtensions.cs" />
+    <Compile Include="Support\ValueAdditionBatchQueueProcessor.cs" />
     <Compile Include="Support\ValueAdditionEventHandler.cs" />
     <Compile Include="Support\ValueAdditionQueueEventProcessor.cs" />
     <Compile Include="Support\ValueAdditionQueueProcessor.cs" />

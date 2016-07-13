@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Disruptor.PerfTests.Sequenced
+namespace Disruptor.PerfTests.Support
 {
     class ValueAdditionBatchQueueProcessor
     {
