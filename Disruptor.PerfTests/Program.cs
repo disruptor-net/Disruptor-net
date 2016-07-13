@@ -14,23 +14,21 @@ namespace Disruptor.PerfTests
                 return;
             }
 
-            var isThroughputTest = args[0].Contains("Throughput");
-            var isLatencyTest = args[0].Contains("Latency");
-
             var perfTestType = Type.GetType(args[0]);
             if (perfTestType == null)
             {
                 Console.WriteLine($"Could not find the type '{args[0]}'");
                 return;
             }
-            
+
+            var isThroughputTest = args[0].Contains("Throughput");
+            var isLatencyTest = args[0].Contains("Latency");
+
             if (!isThroughputTest && !isLatencyTest)
             {
                 Console.WriteLine($"*** ERROR *** Unable to determine the runner to use for this type ({args[0]})");
                 return;
             }
-
-            var session = new PerformanceTestSession(computerSpecifications, perfTestType);
 
             //Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
 
