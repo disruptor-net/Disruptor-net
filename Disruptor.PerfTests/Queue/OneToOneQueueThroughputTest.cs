@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
+using Disruptor.PerfTests.WorkHandler;
 
 namespace Disruptor.PerfTests.Queue
 {
@@ -27,26 +28,16 @@ namespace Disruptor.PerfTests.Queue
     /// </summary>
     class OneToOneQueueThroughputTest : IThroughputTest
     {
-        private const int BufferSize = 1024*64;
-        private const long Iterations = 1000L*1000L*10L;
-        private const long _expectedResult = Iterations*3L;
+        private const int _bufferSize = 1024*64;
+        private const long _iterations = 1000L*1000L*10L;
+        private const long _expectedResult = _iterations*3L;
 
-        private readonly BlockingCollection<long> _blockingQueue = new BlockingCollection<long>(BufferSize);
+        private readonly BlockingCollection<long> _blockingQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
         private readonly ValueAdditionQueueProcessor _queueProcessor;
-        private static readonly ConcurrentQueue<long> _concurrentQueue = new ConcurrentQueue<long>();
 
         public OneToOneQueueThroughputTest()
         {
-            _queueProcessor = new ValueAdditionQueueProcessor(_blockingQueue, Iterations - 1);
-            foreach (var i in Enumerable.Range(0, BufferSize))
-            {
-                _concurrentQueue.Enqueue(i);
-            }
-            while (!_concurrentQueue.IsEmpty)
-            {
-                long value;
-                _concurrentQueue.TryDequeue(out value);
-            }
+            _queueProcessor = new ValueAdditionQueueProcessor(_blockingQueue, _iterations - 1);
         }
 
         public int RequiredProcessorCount => 2;
@@ -58,7 +49,7 @@ namespace Disruptor.PerfTests.Queue
             var future = Task.Run(() => _queueProcessor.Run());
             stopwatch.Start();
 
-            for (long i = 0; i < Iterations; i++)
+            for (long i = 0; i < _iterations; i++)
             {
                 _blockingQueue.Add(3L);
             }
@@ -70,7 +61,7 @@ namespace Disruptor.PerfTests.Queue
 
             PerfTestUtil.FailIf(_expectedResult, 0);
 
-            return Iterations;
+            return _iterations;
         }
 
     }

@@ -76,7 +76,7 @@ namespace Disruptor.PerfTests.WorkHandler
             throw new NotImplementedException();
         }
 
-        public int Count { get { throw new NotImplementedException(); } }
+        public int Count => (int)(_headPointer - _tailPointer);
         public object SyncRoot { get; } = new object();
         public bool IsSynchronized { get; } = false;
     }
