@@ -7,7 +7,7 @@ using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.WorkHandler
 {
-    public class OneToThreeWorkerPoolThroughputTest : IPerfTest
+    public class OneToThreeWorkerPoolThroughputTest : IThroughputTest
     {
         private const int _numWorkers = 3;
         private const int _bufferSize = 1024 * 8;

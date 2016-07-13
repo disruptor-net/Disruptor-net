@@ -7,7 +7,7 @@ using Disruptor.PerfTests.Support;
 
 namespace Disruptor.PerfTests.Queue
 {
-    public class OneToOneQueueBatchedThroughputTest : IPerfTest
+    public class OneToOneQueueBatchedThroughputTest : IThroughputTest
     {
         private const int BufferSize = 1024 * 64;
         private const long Iterations = 1000L * 1000L * 10L;

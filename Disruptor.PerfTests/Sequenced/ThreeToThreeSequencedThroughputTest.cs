@@ -33,7 +33,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// SB - SequenceBarrier
     /// EP - EventProcessor
     /// </summary>
-    public class ThreeToThreeSequencedThroughputTest : IPerfTest
+    public class ThreeToThreeSequencedThroughputTest : IThroughputTest
     {
         private const int _numPublishers = 3;
         private const int _arraySize = 3;

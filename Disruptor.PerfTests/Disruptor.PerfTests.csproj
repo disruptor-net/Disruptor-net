@@ -62,9 +62,10 @@
     <Compile Include="..\Version.cs">
       <Link>Version.cs</Link>
     </Compile>
+    <Compile Include="ILatencyTest.cs" />
     <Compile Include="LatencyTestSession.cs" />
     <Compile Include="LatencyTestSessionResult.cs" />
-    <Compile Include="IThroughputfTest.cs" />
+    <Compile Include="IThroughputTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Queue\OneToOneQueueBatchedThroughputTest.cs" />
     <Compile Include="Queue\OneToOneQueueThroughputTest.cs" />

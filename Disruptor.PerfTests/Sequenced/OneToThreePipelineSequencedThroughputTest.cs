@@ -34,7 +34,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// SB3 - SequenceBarrier 3
     /// EP3 - EventProcessor 3
     /// </summary>
-    public class OneToThreePipelineSequencedThroughputTest : IPerfTest
+    public class OneToThreePipelineSequencedThroughputTest : IThroughputTest
     {
         private const int _bufferSize = 1024 * 8;
         private const long _iterations = 1000L * 1000L * 100L;

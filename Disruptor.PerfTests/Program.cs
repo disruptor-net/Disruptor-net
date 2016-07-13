@@ -21,8 +21,8 @@ namespace Disruptor.PerfTests
                 return;
             }
 
-            var isThroughputTest = args[0].Contains("Throughput");
-            var isLatencyTest = args[0].Contains("Latency");
+            var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType);
+            var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
 
             if (!isThroughputTest && !isLatencyTest)
             {

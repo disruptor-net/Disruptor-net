@@ -41,7 +41,7 @@ namespace Disruptor.PerfTests.Raw
     /// SB  - SequenceBarrier
     /// EP1 - EventProcessor 1
     /// </summary>
-    public class OneToOneRawBatchThroughputTest : IPerfTest
+    public class OneToOneRawBatchThroughputTest : IThroughputTest
     {
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 200L;
