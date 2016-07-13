@@ -71,6 +71,8 @@
     <Compile Include="Sequenced\ThreeToOneSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\ThreeToThreeSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\ValueAdditionBatchQueueProcessor.cs" />
+    <Compile Include="Support\EventCountingQueueProcessor.cs" />
+    <Compile Include="Support\EventCountingWorkHandler.cs" />
     <Compile Include="Support\ExecutorService.cs" />
     <Compile Include="Support\LongArrayEventHandler.cs" />
     <Compile Include="Sequenced\OneToOneSequencedBatchThroughputTest.cs" />
@@ -103,6 +105,7 @@
     <Compile Include="PerformanceTestSession.cs" />
     <Compile Include="ThroughputTestSessionResult.cs" />
     <Compile Include="Translator\OneToOneTranslatorThroughputTest.cs" />
+    <Compile Include="WorkHandler\OneToThreeWorkerPoolThroughputTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Disruptor.Scheduler\Disruptor.Scheduler.csproj">
