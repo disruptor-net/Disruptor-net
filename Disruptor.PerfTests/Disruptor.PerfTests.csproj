@@ -102,6 +102,7 @@
     <Compile Include="ComputerSpecifications.cs" />
     <Compile Include="PerformanceTestSession.cs" />
     <Compile Include="ThroughputTestSessionResult.cs" />
+    <Compile Include="Translator\OneToOneTranslatorThroughputTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Disruptor.Scheduler\Disruptor.Scheduler.csproj">
