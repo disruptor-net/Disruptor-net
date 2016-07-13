@@ -22,7 +22,7 @@ namespace Disruptor.PerfTests.WorkHandler
     /// WP1 - EventProcessor 1
     /// WP2 - EventProcessor 2
     /// </summary>
-    public class TwoToTwoWorkProcessorThroughputTest : IPerfTest
+    public class TwoToTwoWorkProcessorThroughputTest : IThroughputTest
     {
         private const int _numPublishers = 2;
         private const int _bufferSize = 1024 * 64;
