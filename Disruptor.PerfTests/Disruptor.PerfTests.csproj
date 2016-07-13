@@ -113,7 +113,9 @@
     <Compile Include="ThroughputTestSession.cs" />
     <Compile Include="ThroughputTestSessionResult.cs" />
     <Compile Include="Translator\OneToOneTranslatorThroughputTest.cs" />
+    <Compile Include="WorkHandler\LockFreeBoundedQueue.cs" />
     <Compile Include="WorkHandler\OneToThreeWorkerPoolThroughputTest.cs" />
+    <Compile Include="WorkHandler\TwoToTwoWorkProcessorThroughputTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Disruptor.Scheduler\Disruptor.Scheduler.csproj">

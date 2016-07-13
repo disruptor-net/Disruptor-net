@@ -41,7 +41,7 @@ namespace Disruptor.PerfTests
 
                 long totalOperationsInRun = 0;
                 Exception exception = null;
-                ThroughputTestSessionResult result = null;
+                ThroughputTestSessionResult result;
                 try
                 {
                     totalOperationsInRun = _test.Run(stopwatch);
