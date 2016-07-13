@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Disruptor.PerfTests.WorkHandler
+namespace Disruptor.PerfTests.Support
 {
     class LockFreeBoundedQueue<T> : IProducerConsumerCollection<T>
     {
