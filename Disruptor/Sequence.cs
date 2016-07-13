@@ -93,21 +93,13 @@ namespace Disruptor
         [StructLayout(LayoutKind.Explicit, Size = 120)]
         private struct Fields
         {
-            [FieldOffset(0)]
-            private Padding56 _beforePadding;
-
             /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
-            [FieldOffset(56)]
-            public long Value;
-
             [FieldOffset(64)]
-            private Padding56 _afterPadding;
+            public long Value;
 
             public Fields(long value)
             {
-                _beforePadding = default(Padding56);
                 Value = value;
-                _afterPadding = default(Padding56);
             }
         }
     }

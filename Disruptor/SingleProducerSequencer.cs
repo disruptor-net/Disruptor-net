@@ -194,21 +194,15 @@ namespace Disruptor
         [StructLayout(LayoutKind.Explicit, Size = 128)]
         private struct Fields
         {
-            [FieldOffset(0)]
-            private Padding56 _beforePadding;
             [FieldOffset(56)]
             public long NextValue;
             [FieldOffset(64)]
             public long CachedValue;
-            [FieldOffset(72)]
-            private Padding56 _afterPadding;
 
             public Fields(long nextValue, long cachedValue)
             {
-                _beforePadding = default(Padding56);
                 NextValue = nextValue;
                 CachedValue = cachedValue;
-                _afterPadding = default(Padding56);
             }
         }
     }
