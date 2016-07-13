@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
@@ -30,12 +31,22 @@ namespace Disruptor.PerfTests.Queue
         private const long Iterations = 1000L*1000L*10L;
         private const long _expectedResult = Iterations*3L;
 
-        private readonly BlockingCollection<long> _blockingQueue = new BlockingCollection<long>(new ConcurrentQueue<long>(), BufferSize);
+        private readonly BlockingCollection<long> _blockingQueue = new BlockingCollection<long>(BufferSize);
         private readonly ValueAdditionQueueProcessor _queueProcessor;
+        private static readonly ConcurrentQueue<long> _concurrentQueue = new ConcurrentQueue<long>();
 
         public OneToOneQueueThroughputTest()
         {
             _queueProcessor = new ValueAdditionQueueProcessor(_blockingQueue, Iterations - 1);
+            foreach (var i in Enumerable.Range(0, BufferSize))
+            {
+                _concurrentQueue.Enqueue(i);
+            }
+            while (!_concurrentQueue.IsEmpty)
+            {
+                long value;
+                _concurrentQueue.TryDequeue(out value);
+            }
         }
 
         public int RequiredProcessorCount => 2;
@@ -44,20 +55,17 @@ namespace Disruptor.PerfTests.Queue
         {
             var latch = new ManualResetEvent(false);
             _queueProcessor.Reset(latch);
-            var tokenSource = new CancellationTokenSource();
-            var cancellationToken = tokenSource.Token;
-            var future = Task.Run(() => _queueProcessor.Run(cancellationToken), cancellationToken);
+            var future = Task.Run(() => _queueProcessor.Run());
             stopwatch.Start();
 
             for (long i = 0; i < Iterations; i++)
             {
-                _blockingQueue.Add(3L, cancellationToken);
+                _blockingQueue.Add(3L);
             }
 
             latch.WaitOne();
             stopwatch.Stop();
             _queueProcessor.Halt();
-            tokenSource.Cancel();
             future.Wait();
 
             PerfTestUtil.FailIf(_expectedResult, 0);

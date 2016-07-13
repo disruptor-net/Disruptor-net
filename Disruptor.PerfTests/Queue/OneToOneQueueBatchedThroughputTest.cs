@@ -27,20 +27,17 @@ namespace Disruptor.PerfTests.Queue
         {
             var latch = new ManualResetEvent(false);
             _queueProcessor.Reset(latch);
-            var tokenSource = new CancellationTokenSource();
-            var cancellationToken = tokenSource.Token;
-            var future = Task.Run(() => _queueProcessor.Run(cancellationToken), cancellationToken);
+            var future = Task.Run(() => _queueProcessor.Run());
             stopwatch.Start();
 
             for (long i = 0; i < Iterations; i++)
             {
-                _blockingQueue.Add(3L, cancellationToken);
+                _blockingQueue.Add(3L);
             }
 
             latch.WaitOne();
             stopwatch.Stop();
             _queueProcessor.Halt();
-            tokenSource.Cancel();
             future.Wait();
 
             PerfTestUtil.FailIf(_expectedResult, 0);

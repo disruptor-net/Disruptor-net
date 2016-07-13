@@ -36,28 +36,19 @@ namespace Disruptor.PerfTests.Support
             _running = false;
         }
 
-        public void Run(CancellationToken cancellationToken)
+        public void Run()
         {
             _running = true;
-            while (true)
+            while (_running)
             {
-                try
-                {
-                    var value = _blockingQueue.Take(cancellationToken);
-                    _value += value;
+                long value;
+                if (!_blockingQueue.TryTake(out value))
+                    continue;
 
-                    if (_sequence++ == _count)
-                    {
-                        _latch.Set();
-                    }
-                }
-                catch
-                {
-                    if (!_running)
-                    {
-                        break;
-                    }
-                }
+                _value += value;
+
+                if (_sequence++ == _count)
+                    _latch.Set();
             }
         }
     }

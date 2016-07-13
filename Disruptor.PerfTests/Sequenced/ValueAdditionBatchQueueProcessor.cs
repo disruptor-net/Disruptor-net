@@ -39,54 +39,39 @@ namespace Disruptor.PerfTests.Sequenced
             _running = false;
         }
 
-        public void Run(CancellationToken cancellationToken)
+        public void Run()
         {
             _running = true;
-            while (true)
+            while (_running)
             {
-                try
+                long value;
+                if (!_blockingQueue.TryTake(out value))
+                    continue;
+
+                _sequence++;
+
+                _value += value;
+
+                var batchSize = _blockingQueue.Count;
+                var cappedBatchSize = Math.Min(batchSize, 100);
+                for (var i = 0; i < cappedBatchSize; i++)
                 {
-                    var v = 0L;
-                    if (!_blockingQueue.TryTake(out v, 10))
-                    {
-                        if (!_running)
-                            return;
-
-                        continue;
-                    }
-
-                    _sequence++;
-
-                    _value += v;
-
-                    var taken = 0;
-
-                    var batchSize = _blockingQueue.Count;
-                    var cappedBatchSize = Math.Min(batchSize, 100);
-                    for (int i = 0; i < cappedBatchSize; i++)
-                    {
-                        _batch.Add(_blockingQueue.Take(cancellationToken));
-                    }
-                    _sequence += cappedBatchSize;
-
-                    v = 0;
-                    for (int i = 0, n = _batch.Count; i < n; i++)
-                    {
-                        v += _batch[i];
-                    }
-
-                    _value += v;
-
-                    _batch.Clear();
-
-                    if (_sequence == _count)
-                        _latch.Set();
+                    _batch.Add(_blockingQueue.Take());
                 }
-                catch
+                _sequence += cappedBatchSize;
+
+                value = 0;
+                for (int i = 0, n = _batch.Count; i < n; i++)
                 {
-                    if (!_running)
-                        return;
+                    value += _batch[i];
                 }
+
+                _value += value;
+
+                _batch.Clear();
+
+                if (_sequence == _count)
+                    _latch.Set();
             }
         }
 
