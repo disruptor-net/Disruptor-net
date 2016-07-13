@@ -75,6 +75,7 @@
     <Compile Include="Sequenced\OneToThreeDiamondSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\OneToThreePipelineSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\OneToThreeSequencedThroughputTest.cs" />
+    <Compile Include="Sequenced\ThreeToOneSequencedBatchThroughputTest.cs" />
     <Compile Include="Sequenced\ThreeToOneSequencedThroughputTest.cs" />
     <Compile Include="Sequenced\PingPongSequencedLatencyTest.cs" />
     <Compile Include="Sequenced\ThreeToThreeSequencedThroughputTest.cs" />
