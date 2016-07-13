@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
 using Disruptor.PerfTests.Sequenced;
 
 namespace Disruptor.PerfTests
@@ -14,19 +16,38 @@ namespace Disruptor.PerfTests
                 return;
             }
 
-            var perfTestType = Type.GetType(args[0]);
-            if (perfTestType == null)
+
+            Type[] perfTestTypes;
+            if (args[0] == "ALL")
             {
-                Console.WriteLine($"Could not find the type '{args[0]}'");
-                return;
+                perfTestTypes = Assembly.GetAssembly(typeof(Program)).GetTypes().Where(x => !x.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(x) || typeof(ILatencyTest).IsAssignableFrom(x))).ToArray();
+            }
+            else
+            {
+                var type = Type.GetType(args[0]);
+                if (type == null)
+                {
+                    Console.WriteLine($"Could not find the type '{args[0]}'");
+                    return;
+                }
+                perfTestTypes = new[] { type };
             }
 
+            foreach (var perfTestType in perfTestTypes)
+            {
+                RunTestForType(perfTestType);
+            }
+        }
+
+        private static void RunTestForType(Type perfTestType)
+        {
             var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType);
             var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
 
+            var typeName = perfTestType.Name;
             if (!isThroughputTest && !isLatencyTest)
             {
-                Console.WriteLine($"*** ERROR *** Unable to determine the runner to use for this type ({args[0]})");
+                Console.WriteLine($"*** ERROR *** Unable to determine the runner to use for this type ({typeName})");
                 return;
             }
 
@@ -37,14 +58,14 @@ namespace Disruptor.PerfTests
 
             if (isThroughputTest)
             {
-                var session = new ThroughputTestSession(computerSpecifications, Type.GetType(args[0]));
+                var session = new ThroughputTestSession(computerSpecifications, perfTestType);
                 session.Run();
                 session.GenerateAndOpenReport();
             }
 
             if (isLatencyTest)
             {
-                var session = new LatencyTestSession(computerSpecifications, Type.GetType(args[0]));
+                var session = new LatencyTestSession(computerSpecifications, perfTestType);
                 session.Run();
                 session.GenerateAndOpenReport();
             }
@@ -52,7 +73,7 @@ namespace Disruptor.PerfTests
 
         private static void PrintUsage()
         {
-            Console.WriteLine("Usage: Disruptor.PerfTests TestTypeFullName [ie. Disruptor.PerfTests.Sequenced.OneToOneSequencedBatchThroughputTest]");
+            Console.WriteLine("Usage: Disruptor.PerfTests TestTypeFullName|ALL [ie. Disruptor.PerfTests.Sequenced.OneToOneSequencedBatchThroughputTest]");
         }
     }
 }
