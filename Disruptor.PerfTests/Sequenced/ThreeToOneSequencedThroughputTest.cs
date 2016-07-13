@@ -81,7 +81,7 @@ namespace Disruptor.PerfTests.Sequenced
                 var index = i;
                 futures[i] = Task.Run(() => _valuePublishers[index](_cyclicBarrier, _ringBuffer, _iterations));
             }
-            Task.Run(() => _batchEventProcessor.Run());
+            Task.Factory.StartNew(() => _batchEventProcessor.Run(), TaskCreationOptions.LongRunning);
 
             stopwatch.Start();
             _cyclicBarrier.Signal();
