@@ -24,7 +24,7 @@ namespace Disruptor.PerfTests.Queue
     /// 
     /// P1  - Publisher 1
     /// Q1  - Queue 1
-    /// EP1 - EventProcessor 1
+    /// EP1 - EventeProcessor 1
     /// </summary>
     class OneToOneQueueThroughputTest : IThroughputTest
     {
@@ -51,7 +51,7 @@ namespace Disruptor.PerfTests.Queue
 
             for (long i = 0; i < _iterations; i++)
             {
-                _blockingQueue.Add(3L);
+                _blockingQueue.TryAdd(3L);
             }
 
             latch.WaitOne();

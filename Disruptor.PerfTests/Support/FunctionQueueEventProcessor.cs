@@ -59,14 +59,14 @@ namespace Disruptor.PerfTests.Support
                         case FunctionStep.One:
                             {
                                 var values = _stepOneQueue.Take();
-                                _stepTwoQueue.Add(values[0] + values[1]);
+                                _stepTwoQueue.TryAdd(values[0] + values[1]);
                                 break;
                             }
 
                         case FunctionStep.Two:
                             {
                                 var value = _stepTwoQueue.Take();
-                                _stepThreeQueue.Add(value + 3);
+                                _stepThreeQueue.TryAdd(value + 3);
                                 break;
                             }
 

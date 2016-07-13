@@ -52,7 +52,7 @@ namespace Disruptor.PerfTests.Support
                         case FunctionStep.One:
                         case FunctionStep.Two:
                             {
-                                _outputQueue.Add(_inputQueue.Take());
+                                _outputQueue.TryAdd(_inputQueue.Take());
                                 break;
                             }
 

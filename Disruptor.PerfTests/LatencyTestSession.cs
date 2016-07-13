@@ -147,5 +147,16 @@ namespace Disruptor.PerfTests
 
             Process.Start(path);
         }
+
+        public static long ConvertStopwatchTicksToNano(double durationInTicks)
+        {
+            var durationInNano = (durationInTicks / Stopwatch.Frequency) * Math.Pow(10, 9);
+            return (long)durationInNano;
+        }
+
+        public static double ConvertNanoToStopwatchTicks(long pauseDurationInNanos)
+        {
+            return pauseDurationInNanos * Math.Pow(10, -9) * Stopwatch.Frequency;
+        }
     }
 }

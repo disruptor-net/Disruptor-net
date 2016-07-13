@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Dsl;
 using NUnit.Framework;
 
@@ -12,7 +13,7 @@ namespace Disruptor.Tests.Dsl.Stubs
         private bool _ignoreExecutions;
         private int _executionCount;
 
-        public void Execute(Action command)
+        public Task Execute(Action command)
         {
             Interlocked.Increment(ref _executionCount);
             if (!Volatile.Read(ref _ignoreExecutions))
@@ -22,6 +23,8 @@ namespace Disruptor.Tests.Dsl.Stubs
                 _threads.Add(t);
                 t.Start();
             }
+
+            return Task.CompletedTask;
         }
 
         public void JoinAllThreads()

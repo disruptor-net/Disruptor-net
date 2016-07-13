@@ -66,14 +66,14 @@ namespace Disruptor.PerfTests.Support
                         case FizzBuzzStep.Fizz:
                             {
                                 var value = _fizzInputQueue.Take();
-                                _fizzOutputQueue.Add((value % 3) == 0);
+                                _fizzOutputQueue.TryAdd((value % 3) == 0);
                                 break;
                             }
 
                         case FizzBuzzStep.Buzz:
                             {
                                 var value = _buzzInputQueue.Take();
-                                _buzzOutputQueue.Add((value % 5) == 0);
+                                _buzzOutputQueue.TryAdd((value % 5) == 0);
                                 break;
                             }
 

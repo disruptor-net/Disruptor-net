@@ -33,7 +33,7 @@ namespace Disruptor.PerfTests.Queue
 
             for (long i = 0; i < _iterations; i++)
             {
-                _blockingQueue.Add(3L);
+                _blockingQueue.TryAdd(3L);
             }
 
             latch.WaitOne();

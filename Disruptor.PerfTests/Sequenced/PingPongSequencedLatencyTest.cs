@@ -50,7 +50,7 @@ namespace Disruptor.PerfTests.Sequenced
 
         public void Run(Stopwatch stopwatch, HistogramBase histogram)
         {
-            var globalSignal = new CountdownEvent(2);
+            var globalSignal = new CountdownEvent(3);
             var signal = new ManualResetEvent(false);
             _pinger.Reset(globalSignal, signal, histogram);
             _ponger.Reset(globalSignal);
@@ -58,6 +58,7 @@ namespace Disruptor.PerfTests.Sequenced
             _executor.Execute(_pongProcessor.Run);
             _executor.Execute(_pingProcessor.Run);
 
+            globalSignal.Signal();
             globalSignal.Wait();
             stopwatch.Start();
             // running here
@@ -88,14 +89,14 @@ namespace Disruptor.PerfTests.Sequenced
                 _maxEvents = maxEvents;
 
                 _pauseDurationInNanos = pauseDurationInNanos;
-                _pauseDurationInStopwatchTicks = pauseDurationInNanos * Math.Pow(10, -9) * Stopwatch.Frequency;
+                _pauseDurationInStopwatchTicks = LatencyTestSession.ConvertNanoToStopwatchTicks(pauseDurationInNanos);
             }
 
             public void OnEvent(ValueEvent data, long sequence, bool endOfBatch)
             {
                 var t1 = Stopwatch.GetTimestamp();
 
-                _histogram.RecordValueWithExpectedInterval(ConvertStopwatchTicksToNano(t1 - _t0), _pauseDurationInNanos);
+                _histogram.RecordValueWithExpectedInterval(LatencyTestSession.ConvertStopwatchTicksToNano(t1 - _t0), _pauseDurationInNanos);
 
                 if (data.Value < _maxEvents)
                 {
@@ -141,12 +142,6 @@ namespace Disruptor.PerfTests.Sequenced
                 _signal = signal;
 
                 _counter = 0;
-            }
-
-            private long ConvertStopwatchTicksToNano(double durationInTicks)
-            {
-                var durationInNano = (durationInTicks / Stopwatch.Frequency) * Math.Pow(10, 9);
-                return (long)durationInNano;
             }
         }
 
