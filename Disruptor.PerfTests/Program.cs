@@ -20,7 +20,11 @@ namespace Disruptor.PerfTests
             Type[] perfTestTypes;
             if (args[0] == "ALL")
             {
-                perfTestTypes = Assembly.GetAssembly(typeof(Program)).GetTypes().Where(x => !x.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(x) || typeof(ILatencyTest).IsAssignableFrom(x))).ToArray();
+                perfTestTypes = Assembly.GetAssembly(typeof(Program))
+                                        .GetTypes()
+                                        .Where(x => !x.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(x) || typeof(ILatencyTest).IsAssignableFrom(x)))
+                                        .OrderBy(x => x.Name)
+                                        .ToArray();
             }
             else
             {

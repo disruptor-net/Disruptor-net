@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using HdrHistogram;
 
@@ -15,7 +16,7 @@ namespace Disruptor.PerfTests
         private readonly List<LatencyTestSessionResult> _results = new List<LatencyTestSessionResult>(Runs);
         private readonly Type _perfTestType;
         private ILatencyTest _test;
-
+        
         public LatencyTestSession(ComputerSpecifications computerSpecifications, Type perfTestType)
         {
             _computerSpecifications = computerSpecifications;
@@ -137,10 +138,12 @@ namespace Disruptor.PerfTests
 
         public void GenerateAndOpenReport()
         {
-            var path = Path.Combine(Environment.CurrentDirectory,
-                                    "TestReport-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
+            var path = Path.Combine(Environment.CurrentDirectory, _perfTestType.Name + "-" + DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
 
             File.WriteAllText(path, BuildReport());
+
+            var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd HH}.csv");
+            File.AppendAllText(totalsPath, $"{_perfTestType.Name},{_results.Max(x => x.Histogram.GetValueAtPercentile(99))}");
 
             Process.Start(path);
         }

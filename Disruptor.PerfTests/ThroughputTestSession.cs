@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Disruptor.PerfTests
@@ -131,10 +132,12 @@ namespace Disruptor.PerfTests
 
         public void GenerateAndOpenReport()
         {
-            var path = Path.Combine(Environment.CurrentDirectory,
-                                    _perfTestType.Name + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
+            var path = Path.Combine(Environment.CurrentDirectory, _perfTestType.Name + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
 
             File.WriteAllText(path, BuildReport());
+
+            var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd HH}.csv");
+            File.AppendAllText(totalsPath, $"{_perfTestType.Name},{_results.Average(x => x.TotalOperationsInRun / x.Duration.TotalSeconds)}");
 
             Process.Start(path);
         }
