@@ -105,7 +105,6 @@
     <Compile Include="NoOpEventProcessor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RingBuffer.cs" />
-    <Compile Include="RingBufferFields.cs" />
     <Compile Include="Sequence.cs" />
     <Compile Include="SequenceGroup.cs" />
     <Compile Include="SequenceGroups.cs" />
