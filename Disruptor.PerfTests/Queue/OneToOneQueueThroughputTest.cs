@@ -32,7 +32,7 @@ namespace Disruptor.PerfTests.Queue
         private const long _iterations = 1000L*1000L*10L;
         private const long _expectedResult = _iterations*3L;
 
-        private readonly BlockingCollection<long> _blockingQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
+        private readonly IProducerConsumerCollection<long> _blockingQueue = new LockFreeBoundedQueue<long>(_bufferSize);
         private readonly ValueAdditionQueueProcessor _queueProcessor;
 
         public OneToOneQueueThroughputTest()
@@ -51,7 +51,8 @@ namespace Disruptor.PerfTests.Queue
 
             for (long i = 0; i < _iterations; i++)
             {
-                _blockingQueue.TryAdd(3L);
+                while (!_blockingQueue.TryAdd(3L))
+                    Thread.Yield();
             }
 
             latch.WaitOne();

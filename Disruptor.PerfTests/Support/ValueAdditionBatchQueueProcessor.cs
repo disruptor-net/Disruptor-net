@@ -12,11 +12,11 @@ namespace Disruptor.PerfTests.Support
         private long _sequence;
         private ManualResetEvent _latch;
 
-        private readonly BlockingCollection<long> _blockingQueue;
+        private readonly IProducerConsumerCollection<long> _blockingQueue;
         private readonly List<long> _batch = new List<long>(100);
         private readonly long _count;
 
-        public ValueAdditionBatchQueueProcessor(BlockingCollection<long> blockingQueue, long count)
+        public ValueAdditionBatchQueueProcessor(IProducerConsumerCollection<long> blockingQueue, long count)
         {
             _blockingQueue = blockingQueue;
             _count = count;
@@ -49,23 +49,23 @@ namespace Disruptor.PerfTests.Support
                     continue;
 
                 _sequence++;
-
                 _value += value;
 
-                var batchSize = _blockingQueue.Count;
-                var cappedBatchSize = Math.Min(batchSize, 100);
-                for (var i = 0; i < cappedBatchSize; i++)
+                for (var i = 0; i < 100; i++)
                 {
-                    _batch.Add(_blockingQueue.Take());
+                    long item;
+                    if (!_blockingQueue.TryTake(out item))
+                        break;
+
+                    _batch.Add(item);
                 }
-                _sequence += cappedBatchSize;
+                _sequence += _batch.Count;
 
                 value = 0;
                 for (int i = 0, n = _batch.Count; i < n; i++)
                 {
                     value += _batch[i];
                 }
-
                 _value += value;
 
                 _batch.Clear();

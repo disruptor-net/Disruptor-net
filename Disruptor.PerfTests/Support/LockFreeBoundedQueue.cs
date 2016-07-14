@@ -2,52 +2,41 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace Disruptor.PerfTests.Support
 {
     class LockFreeBoundedQueue<T> : IProducerConsumerCollection<T>
     {
-        private readonly T[] _values;
-        private long _tailPointer;
-        private long _headPointer;
+        private readonly T[] _queue;
+        private volatile int _tail;
+        private volatile int _head;
 
-        public LockFreeBoundedQueue(int size)
+        public LockFreeBoundedQueue(int capacity)
         {
-            _values = new T[size];
+            _queue = new T[capacity + 1];
+            _tail = _head = 0;
         }
 
-        public bool TryAdd(T e)
+        public bool TryAdd(T item)
         {
-            var curTail = _tailPointer;
-            var diff = curTail - _values.Length;
-            if (_headPointer <= diff)
+            var newtail = (_tail + 1) % _queue.Length;
+            if (newtail == _head)
                 return false;
 
-            _values[(int)(curTail % _values.Length)] = e;
-            Interlocked.Increment(ref _tailPointer);
+            _queue[_tail] = item;
+            _tail = newtail;
             return true;
         }
 
-        public bool TryTake(out T value)
+        public bool TryTake(out T item)
         {
-            var curHead = _headPointer;
-            if (curHead >= _tailPointer)
-            {
-                value = default(T);
+            item = default(T);
+            if (_head == _tail)
                 return false;
-            }
 
-            if (Interlocked.CompareExchange(ref _headPointer, curHead + 1, curHead) != curHead)
-            {
-                value = default(T);
-                return false;
-            }
-
-            var index = (int)curHead % _values.Length;
-
-            value = _values[index];
-            _values[index] = default(T);
+            item = _queue[_head];
+            _queue[_head] = default(T);
+            _head = (_head + 1) % _queue.Length;
             return true;
         }
 
@@ -76,7 +65,8 @@ namespace Disruptor.PerfTests.Support
             throw new NotImplementedException();
         }
 
-        public int Count => (int)(_headPointer - _tailPointer);
+        public int Count => 0;
+
         public object SyncRoot { get; } = new object();
         public bool IsSynchronized { get; } = false;
     }
