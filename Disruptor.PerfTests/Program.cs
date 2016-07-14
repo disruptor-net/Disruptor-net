@@ -26,7 +26,7 @@ namespace Disruptor.PerfTests
                                         .GetTypes()
                                         .Where(x => !x.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(x) || typeof(ILatencyTest).IsAssignableFrom(x)) && !typeof(IQueueTest).IsAssignableFrom(x))
                                         .OrderBy(x => x.Name)
-                                        .SkipWhile(type => startAt != null && type.Name == startAt)
+                                        .SkipWhile(type => startAt != null && type.Name != startAt)
                                         .ToArray();
             }
             else
