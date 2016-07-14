@@ -47,7 +47,6 @@ namespace Disruptor.PerfTests.Sequenced
         private const long _iterations = 1000L * 1000L * 100L;
 
         private readonly RingBuffer<ValueEvent> _ringBuffer;
-        private readonly ManualResetEvent _latch;
         private readonly BatchEventProcessor<ValueEvent>[] _batchEventProcessors = new BatchEventProcessor<ValueEvent>[_numEventProcessors];
         private readonly long[] _results = new long[_numEventProcessors];
         private readonly ValueMutationEventHandler[] _handlers = new ValueMutationEventHandler[_numEventProcessors];
@@ -69,7 +68,6 @@ namespace Disruptor.PerfTests.Sequenced
             _handlers[1] = new ValueMutationEventHandler(Operation.Subtraction);
             _handlers[2] = new ValueMutationEventHandler(Operation.And);
 
-            _latch = new ManualResetEvent(false);
 
             for (var i = 0; i < _numEventProcessors; i++)
             {
@@ -81,11 +79,11 @@ namespace Disruptor.PerfTests.Sequenced
 
         public long Run(Stopwatch stopwatch)
         {
-            _latch.Reset();
-
+            var latch = new Barrier(_numEventProcessors + 1);
+            
             for (var i = 0; i < _numEventProcessors; i++)
             {
-                _handlers[i].Reset(_latch, _batchEventProcessors[i].Sequence.Value + _iterations);
+                _handlers[i].Reset(latch, _batchEventProcessors[i].Sequence.Value + _iterations);
                 _executor.Execute(_batchEventProcessors[i].Run);
             }
 
@@ -98,7 +96,7 @@ namespace Disruptor.PerfTests.Sequenced
                 _ringBuffer.Publish(sequence);
             }
 
-            _latch.WaitOne();
+            latch.SignalAndWait();
             stopwatch.Stop();
 
             for (var i = 0; i < _numEventProcessors; i++)

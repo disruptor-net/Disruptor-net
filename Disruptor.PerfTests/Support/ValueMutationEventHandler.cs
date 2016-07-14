@@ -8,7 +8,7 @@ namespace Disruptor.PerfTests.Support
         private readonly Operation _operation;
         private PaddedLong _value;
         private long _iterations;
-        private ManualResetEvent _latch;
+        private Barrier _latch;
 
         public ValueMutationEventHandler(Operation operation)
         {
@@ -17,7 +17,7 @@ namespace Disruptor.PerfTests.Support
 
         public long Value => _value.Value;
 
-        public void Reset(ManualResetEvent latch, long expectedCount)
+        public void Reset(Barrier latch, long expectedCount)
         {
             _value.Value = 0L;
             _latch = latch;
@@ -30,7 +30,7 @@ namespace Disruptor.PerfTests.Support
 
             if (sequence == _iterations)
             {
-                _latch.Set();
+                _latch.SignalAndWait();
             }
         }
     }
