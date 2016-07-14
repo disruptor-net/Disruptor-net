@@ -2,7 +2,7 @@
 
 namespace Disruptor.PerfTests.Queue
 {
-    public class OneToThreeDiamondQueueThroughputTest : IThroughputTest
+    public class OneToThreeDiamondQueueThroughputTest : IThroughputTest, IQueueTest
     {
         public long Run(Stopwatch stopwatch)
         {

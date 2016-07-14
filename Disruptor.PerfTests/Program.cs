@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using Disruptor.PerfTests.Queue;
 using Disruptor.PerfTests.Sequenced;
 
 namespace Disruptor.PerfTests
@@ -9,7 +10,7 @@ namespace Disruptor.PerfTests
     {
         static void Main(string[] args)
         {
-            if (args == null || args.Length != 1)
+            if (args == null || args.Length > 2)
             {
                 PrintUsage();
                 Console.ReadKey();
@@ -20,10 +21,12 @@ namespace Disruptor.PerfTests
             Type[] perfTestTypes;
             if (args[0] == "ALL")
             {
+                var startAt = args.Length == 2 ? args[1] : null;
                 perfTestTypes = Assembly.GetAssembly(typeof(Program))
                                         .GetTypes()
-                                        .Where(x => !x.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(x) || typeof(ILatencyTest).IsAssignableFrom(x)))
+                                        .Where(x => !x.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(x) || typeof(ILatencyTest).IsAssignableFrom(x)) && !typeof(IQueueTest).IsAssignableFrom(x))
                                         .OrderBy(x => x.Name)
+                                        .SkipWhile(type => startAt != null && type.Name == startAt)
                                         .ToArray();
             }
             else

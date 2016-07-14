@@ -7,14 +7,14 @@ using Disruptor.PerfTests.Support;
 
 namespace Disruptor.PerfTests.Queue
 {
-    public class ThreeToOneQueueThroughputTest : IThroughputTest
+    public class ThreeToOneQueueThroughputTest : IThroughputTest, IQueueTest
     {
         private const int _publisherCount = 3;
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000 * 1000 * 20;
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
         private readonly Barrier _signal = new Barrier(_publisherCount + 1);
-        private readonly BlockingCollection<long> _blockingQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
+        private readonly IProducerConsumerCollection<long> _blockingQueue = new LockFreeBoundedQueue<long>(_bufferSize);
         private readonly ValueAdditionQueueEventProcessor _queueProcessor;
         private readonly ValueQueueProducer[] _valueQueueProducers = new ValueQueueProducer[_publisherCount];
 

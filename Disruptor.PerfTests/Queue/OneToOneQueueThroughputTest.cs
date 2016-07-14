@@ -26,7 +26,7 @@ namespace Disruptor.PerfTests.Queue
     /// Q1  - Queue 1
     /// EP1 - EventeProcessor 1
     /// </summary>
-    class OneToOneQueueThroughputTest : IThroughputTest
+    class OneToOneQueueThroughputTest : IThroughputTest, IQueueTest
     {
         private const int _bufferSize = 1024*64;
         private const long _iterations = 1000L*1000L*10L;

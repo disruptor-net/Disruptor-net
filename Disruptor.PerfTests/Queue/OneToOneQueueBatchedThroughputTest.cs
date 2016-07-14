@@ -6,13 +6,13 @@ using Disruptor.PerfTests.Support;
 
 namespace Disruptor.PerfTests.Queue
 {
-    public class OneToOneQueueBatchedThroughputTest : IThroughputTest
+    public class OneToOneQueueBatchedThroughputTest : IThroughputTest, IQueueTest
     {
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 10L;
         private const long _expectedResult = _iterations * 3L;
 
-        private readonly IProducerConsumerCollection<long> _blockingQueue = new LockFreeBoundedQueue<long>(_bufferSize);
+        private readonly IProducerConsumerCollection<long> _blockingQueue = new ConcurrentQueue<long>();
         private readonly ValueAdditionBatchQueueProcessor _queueProcessor;
         
         public OneToOneQueueBatchedThroughputTest()

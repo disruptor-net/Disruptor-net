@@ -9,7 +9,7 @@ using HdrHistogram;
 
 namespace Disruptor.PerfTests.Queue
 {
-    public class PingPingQueueLatencyTest : ILatencyTest
+    public class PingPingQueueLatencyTest : ILatencyTest, IQueueTest
     {
         private const int _bufferSize = 1024;
         private const long _iterations = 1000 * 1000 * 30;

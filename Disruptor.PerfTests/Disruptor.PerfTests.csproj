@@ -67,6 +67,7 @@
     <Compile Include="LatencyTestSessionResult.cs" />
     <Compile Include="IThroughputTest.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Queue\IQueueTest.cs" />
     <Compile Include="Queue\OneToOneQueueBatchedThroughputTest.cs" />
     <Compile Include="Queue\OneToOneQueueThroughputTest.cs" />
     <Compile Include="Queue\OneToThreeDiamondQueueThroughputTest.cs" />

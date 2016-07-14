@@ -11,10 +11,10 @@ namespace Disruptor.PerfTests.Support
         private long _sequence;
         private ManualResetEvent _signal;
 
-        private readonly BlockingCollection<long> _queue;
+        private readonly IProducerConsumerCollection<long> _queue;
         private readonly long _count;
 
-        public ValueAdditionQueueEventProcessor(BlockingCollection<long> queue, long count)
+        public ValueAdditionQueueEventProcessor(IProducerConsumerCollection<long> queue, long count)
         {
             _queue = queue;
             _count = count;
