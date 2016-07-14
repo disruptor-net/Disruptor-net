@@ -96,7 +96,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Support\FizzBuzzEvent.cs" />
     <Compile Include="Support\FizzBuzzEventHandler.cs" />
-    <Compile Include="Support\FizzBuzzQueueEventProcessor.cs" />
+    <Compile Include="Support\FizzBuzzQueueProcessor.cs" />
     <Compile Include="Support\FizzBuzzStep.cs" />
     <Compile Include="Support\FunctionEvent.cs" />
     <Compile Include="Support\FunctionEventHandler.cs" />
