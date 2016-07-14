@@ -71,6 +71,7 @@
     <Compile Include="Queue\OneToOneQueueBatchedThroughputTest.cs" />
     <Compile Include="Queue\OneToOneQueueThroughputTest.cs" />
     <Compile Include="Queue\OneToThreeDiamondQueueThroughputTest.cs" />
+    <Compile Include="Queue\OneToThreePipelineQueueThroughputTest.cs" />
     <Compile Include="Queue\PingPingQueueLatencyTest.cs" />
     <Compile Include="Queue\ThreeToOneQueueThroughputTest.cs" />
     <Compile Include="Raw\OneToOneRawBatchThroughputTest.cs" />
@@ -100,7 +101,7 @@
     <Compile Include="Support\FizzBuzzStep.cs" />
     <Compile Include="Support\FunctionEvent.cs" />
     <Compile Include="Support\FunctionEventHandler.cs" />
-    <Compile Include="Support\FunctionQueueEventProcessor.cs" />
+    <Compile Include="Support\FunctionQueueProcessor.cs" />
     <Compile Include="Support\FunctionStep.cs" />
     <Compile Include="Support\LatencyStepEventHandler.cs" />
     <Compile Include="Support\LatencyStepQueueEventProcessor.cs" />
