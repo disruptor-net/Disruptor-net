@@ -103,8 +103,6 @@
     <Compile Include="Support\FunctionEventHandler.cs" />
     <Compile Include="Support\FunctionQueueProcessor.cs" />
     <Compile Include="Support\FunctionStep.cs" />
-    <Compile Include="Support\LatencyStepEventHandler.cs" />
-    <Compile Include="Support\LatencyStepQueueEventProcessor.cs" />
     <Compile Include="Support\Operation.cs" />
     <Compile Include="Support\OperationExtensions.cs" />
     <Compile Include="Support\ValueAdditionBatchQueueProcessor.cs" />
@@ -113,8 +111,6 @@
     <Compile Include="Support\ValueAdditionQueueProcessor.cs" />
     <Compile Include="Support\ValueEvent.cs" />
     <Compile Include="Support\ValueMutationEventHandler.cs" />
-    <Compile Include="Support\ValueMutationQueueEventProcessor.cs" />
-    <Compile Include="Support\ValueProducer.cs" />
     <Compile Include="Support\ValueQueueProducer.cs" />
     <Compile Include="ComputerSpecifications.cs" />
     <Compile Include="ThroughputTestSession.cs" />
