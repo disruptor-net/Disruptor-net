@@ -7,7 +7,6 @@ namespace Disruptor
     /// Cache line padded sequence counter.
     /// Can be used across threads without worrying about false sharing if a located adjacent to another counter in memory.
     /// </summary>
-    [StructLayout(LayoutKind.Explicit, Size = 120)]
     public class Sequence : ISequence
     {
         /// <summary>
@@ -15,8 +14,7 @@ namespace Disruptor
         /// </summary>
         public const long InitialCursorValue = -1;
 
-        [FieldOffset(56)]
-        private long _value;
+        private Fields _fields;
 
         /// <summary>
         /// Construct a new sequence counter that can be tracked across threads.
@@ -24,13 +22,13 @@ namespace Disruptor
         /// <param name="initialValue">initial value for the counter</param>
         public Sequence(long initialValue = InitialCursorValue)
         {
-            _value = initialValue;
+            _fields = new Fields(initialValue);
         }
 
         /// <summary>
         /// Current sequence number
         /// </summary>
-        public long Value => Volatile.Read(ref _value);
+        public long Value => Volatile.Read(ref _fields.Value);
 
         /// <summary>
         /// Perform an ordered write of this sequence.  The intent is
@@ -41,7 +39,7 @@ namespace Disruptor
         public void SetValue(long value)
         {
             // no synchronization required, the CLR memory model prevents Store/Store re-ordering
-            _value = value;
+            _fields.Value = value;
         }
 
         /// <summary>
@@ -51,7 +49,7 @@ namespace Disruptor
         /// <param name="value"></param>
         public void SetValueVolatile(long value)
         {
-            Volatile.Write(ref _value, value);
+            Volatile.Write(ref _fields.Value, value);
         }
 
         /// <summary>
@@ -62,7 +60,7 @@ namespace Disruptor
         /// <returns>true if successful. False return indicates that the actual value was not equal to the expected value.</returns>
         public bool CompareAndSet(long expectedSequence, long nextSequence)
         {
-            return Interlocked.CompareExchange(ref _value, nextSequence, expectedSequence) == expectedSequence;
+            return Interlocked.CompareExchange(ref _fields.Value, nextSequence, expectedSequence) == expectedSequence;
         }
 
         /// <summary>
@@ -71,7 +69,7 @@ namespace Disruptor
         /// <returns>String representation of the sequence.</returns>
         public override string ToString()
         {
-            return _value.ToString();
+            return _fields.Value.ToString();
         }
 
         ///<summary>
@@ -80,7 +78,7 @@ namespace Disruptor
         ///<returns>incremented sequence</returns>
         public long IncrementAndGet()
         {
-            return Interlocked.Increment(ref _value);
+            return Interlocked.Increment(ref _fields.Value);
         }
 
         ///<summary>
@@ -89,7 +87,20 @@ namespace Disruptor
         ///<returns>incremented sequence</returns>
         public long AddAndGet(long value)
         {
-            return Interlocked.Add(ref _value, value);
+            return Interlocked.Add(ref _fields.Value, value);
+        }
+
+        [StructLayout(LayoutKind.Explicit, Size = 120)]
+        private struct Fields
+        {
+            /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
+            [FieldOffset(64)]
+            public long Value;
+
+            public Fields(long value)
+            {
+                Value = value;
+            }
         }
     }
 }

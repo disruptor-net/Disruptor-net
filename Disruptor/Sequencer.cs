@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Disruptor
@@ -7,20 +6,13 @@ namespace Disruptor
     /// <summary>
     /// Coordinator for claiming sequences for access to a data structure while tracking dependent <see cref="Sequence"/>s
     /// </summary>
-    [StructLayout(LayoutKind.Explicit, Size = 32)]
     public abstract class Sequencer : ISequencer
     {
-        [FieldOffset(0)]
         protected readonly int _bufferSize;
-
-        [FieldOffset(8)]
         protected readonly IWaitStrategy _waitStrategy;
-
-        [FieldOffset(16)]
         protected readonly Sequence _cursor = new Sequence();
 
         /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
-        [FieldOffset(24)]
         protected ISequence[] _gatingSequences = new ISequence[0];
 
         /// <summary>
