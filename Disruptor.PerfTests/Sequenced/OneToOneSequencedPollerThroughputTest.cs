@@ -96,7 +96,7 @@ namespace Disruptor.PerfTests.Sequenced
             var latch = new ManualResetEvent(false);
             var expectedCount = _poller.Sequence.Value + _iterations;
             _pollRunnable.Reset(latch, expectedCount);
-            _executor.Execute(_pollRunnable.Run);
+            var processorTask = _executor.Execute(_pollRunnable.Run);
             stopwatch.Start();
 
             var rb = _ringBuffer;
@@ -111,6 +111,7 @@ namespace Disruptor.PerfTests.Sequenced
             stopwatch.Stop();
             WaitForEventProcessorSequence(expectedCount);
             _pollRunnable.Halt();
+            processorTask.Wait(2000);
 
             PerfTestUtil.FailIfNot(_expectedResult, _pollRunnable.Value, $"Poll runnable should have processed {_expectedResult} but was {_pollRunnable.Value}");
 

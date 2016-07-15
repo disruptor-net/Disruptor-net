@@ -83,7 +83,7 @@ namespace Disruptor.PerfTests.Sequenced
                 var index = i;
                 futures[i] = Task.Factory.StartNew(() => _valuePublishers[index](_cyclicBarrier, _ringBuffer, _iterations), CancellationToken.None, TaskCreationOptions.None, _scheduler);
             }
-            Task.Factory.StartNew(() => _batchEventProcessor.Run(), CancellationToken.None, TaskCreationOptions.None, _scheduler);
+            var processorTask = Task.Factory.StartNew(() => _batchEventProcessor.Run(), CancellationToken.None, TaskCreationOptions.None, _scheduler);
 
             stopwatch.Start();
             _cyclicBarrier.Signal();
@@ -98,6 +98,7 @@ namespace Disruptor.PerfTests.Sequenced
 
             stopwatch.Stop();
             _batchEventProcessor.Halt();
+            processorTask.Wait(2000);
 
             return _iterations;
         }

@@ -57,7 +57,6 @@ namespace Disruptor.PerfTests.WorkHandler
 
             // Workaround to ensure that the last worker(s) have completed after releasing their events
             Thread.Sleep(1);
-
             stopwatch.Stop();
 
             PerfTestUtil.FailIfNot(_iterations, SumCounters());

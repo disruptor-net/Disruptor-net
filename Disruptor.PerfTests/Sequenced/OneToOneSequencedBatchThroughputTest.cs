@@ -66,7 +66,7 @@ namespace Disruptor.PerfTests.Sequenced
             var signal = new ManualResetEvent(false);
             var expectedCount = _batchEventProcessor.Sequence.Value + _iterations * _batchSize;
             _handler.Reset(signal, expectedCount);
-            _executor.Execute(_batchEventProcessor.Run);
+            var processorTask = _executor.Execute(_batchEventProcessor.Run);
             stopwatch.Start();
 
             var rb = _ringBuffer;
@@ -85,6 +85,7 @@ namespace Disruptor.PerfTests.Sequenced
             stopwatch.Stop();
             PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _batchEventProcessor);
             _batchEventProcessor.Halt();
+            processorTask.Wait(2000);
 
             PerfTestUtil.FailIfNot(_expectedResult, _handler.Value, $"Handler should have processed {_expectedResult} events, but was: {_handler.Value}");
 

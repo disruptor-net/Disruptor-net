@@ -55,8 +55,8 @@ namespace Disruptor.PerfTests.Sequenced
             _pinger.Reset(globalSignal, signal, histogram);
             _ponger.Reset(globalSignal);
 
-            _executor.Execute(_pongProcessor.Run);
-            _executor.Execute(_pingProcessor.Run);
+            var processorTask1 = _executor.Execute(_pongProcessor.Run);
+            var processorTask2 = _executor.Execute(_pingProcessor.Run);
 
             globalSignal.Signal();
             globalSignal.Wait();
@@ -67,6 +67,7 @@ namespace Disruptor.PerfTests.Sequenced
 
             _pingProcessor.Halt();
             _pongProcessor.Halt();
+            Task.WaitAll(processorTask1, processorTask2);
         }
 
         public int RequiredProcessorCount { get; } = 2;

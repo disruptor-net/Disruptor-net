@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
 
 namespace Disruptor.PerfTests.Sequenced
@@ -90,9 +91,9 @@ namespace Disruptor.PerfTests.Sequenced
             var latch = new ManualResetEvent(false);
             _stepThreeFunctionHandler.Reset(latch, _stepThreeBatchProcessor.Sequence.Value + _iterations);
 
-            _executor.Submit(_stepOneBatchProcessor);
-            _executor.Submit(_stepTwoBatchProcessor);
-            _executor.Submit(_stepThreeBatchProcessor);
+            var processorTask1 = _executor.Submit(_stepOneBatchProcessor);
+            var processorTask2 = _executor.Submit(_stepTwoBatchProcessor);
+            var processorTask3 = _executor.Submit(_stepThreeBatchProcessor);
 
             stopwatch.Start();
 
@@ -113,6 +114,7 @@ namespace Disruptor.PerfTests.Sequenced
             _stepOneBatchProcessor.Halt();
             _stepTwoBatchProcessor.Halt();
             _stepThreeBatchProcessor.Halt();
+            Task.WaitAll(processorTask1, processorTask2, processorTask3);
 
             PerfTestUtil.FailIfNot(_expectedResult, _stepThreeFunctionHandler.StepThreeCounter);
 

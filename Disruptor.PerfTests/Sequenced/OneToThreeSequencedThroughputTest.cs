@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -80,11 +81,12 @@ namespace Disruptor.PerfTests.Sequenced
         public long Run(Stopwatch stopwatch)
         {
             var latch = new Barrier(_numEventProcessors + 1);
-            
+
+            var processorTasks = new List<Task>();
             for (var i = 0; i < _numEventProcessors; i++)
             {
                 _handlers[i].Reset(latch, _batchEventProcessors[i].Sequence.Value + _iterations);
-                _executor.Execute(_batchEventProcessors[i].Run);
+                processorTasks.Add(_executor.Execute(_batchEventProcessors[i].Run));
             }
 
             stopwatch.Start();
@@ -104,6 +106,7 @@ namespace Disruptor.PerfTests.Sequenced
                 _batchEventProcessors[i].Halt();
                 PerfTestUtil.FailIfNot(_results[i], _handlers[i].Value, $"Result {_results[i]} != {_handlers[i].Value}");
             }
+            Task.WaitAll(processorTasks.ToArray());
 
             return _numEventProcessors * _iterations;
         }

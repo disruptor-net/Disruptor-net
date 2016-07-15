@@ -80,7 +80,7 @@ namespace Disruptor.PerfTests.Sequenced
                 var index = i;
                 futures[i] = Task.Run(() => _valuePublishers[index](_cyclicBarrier, _buffers[index], _iterations / _numPublishers, _arraySize));
             }
-            Task.Run(() => _batchEventProcessor.Run());
+            var processorTask = Task.Run(() => _batchEventProcessor.Run());
 
             stopwatch.Start();
             _cyclicBarrier.Signal();
@@ -95,6 +95,7 @@ namespace Disruptor.PerfTests.Sequenced
 
             stopwatch.Stop();
             _batchEventProcessor.Halt();
+            processorTask.Wait(2000);
 
             return _iterations * _arraySize;
         }

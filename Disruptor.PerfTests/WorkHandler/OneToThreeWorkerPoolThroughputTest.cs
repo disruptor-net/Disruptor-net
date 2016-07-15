@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
@@ -65,6 +66,9 @@ namespace Disruptor.PerfTests.WorkHandler
             }
 
             _workerPool.DrainAndHalt();
+
+            // Workaround to ensure that the last worker(s) have completed after releasing their events
+            Thread.Sleep(1);
             stopwatch.Stop();
 
             PerfTestUtil.FailIfNot(_iterations, SumCounters());
