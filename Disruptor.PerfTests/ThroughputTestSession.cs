@@ -130,7 +130,7 @@ namespace Disruptor.PerfTests
             return sb.ToString();
         }
 
-        public void GenerateAndOpenReport()
+        public void GenerateAndOpenReport(bool shouldOpen)
         {
             var path = Path.Combine(Environment.CurrentDirectory, _perfTestType.Name + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
 
@@ -139,7 +139,8 @@ namespace Disruptor.PerfTests
             var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
             File.AppendAllText(totalsPath, $"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{_results.Average(x => x.TotalOperationsInRun / x.Duration.TotalSeconds)}\n");
 
-            Process.Start(path);
+            if (shouldOpen)
+                Process.Start(path);
         }
     }
 }

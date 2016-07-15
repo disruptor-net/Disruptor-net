@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Reflection;
 using Disruptor.PerfTests.Queue;
-using Disruptor.PerfTests.Sequenced;
 
 namespace Disruptor.PerfTests
 {
@@ -16,10 +15,9 @@ namespace Disruptor.PerfTests
                 Console.ReadKey();
                 return;
             }
-
-
+            
             Type[] perfTestTypes;
-            if (args[0] == "ALL")
+            if (string.Equals(args[0], "ALL", StringComparison.OrdinalIgnoreCase))
             {
                 var startAt = args.Length == 2 ? args[1] : null;
                 perfTestTypes = Assembly.GetAssembly(typeof(Program))
@@ -42,11 +40,11 @@ namespace Disruptor.PerfTests
 
             foreach (var perfTestType in perfTestTypes)
             {
-                RunTestForType(perfTestType);
+                RunTestForType(perfTestType, perfTestTypes.Length == 1);
             }
         }
 
-        private static void RunTestForType(Type perfTestType)
+        private static void RunTestForType(Type perfTestType, bool shouldOpen)
         {
             var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType);
             var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
@@ -67,14 +65,14 @@ namespace Disruptor.PerfTests
             {
                 var session = new ThroughputTestSession(computerSpecifications, perfTestType);
                 session.Run();
-                session.GenerateAndOpenReport();
+                session.GenerateAndOpenReport(shouldOpen);
             }
 
             if (isLatencyTest)
             {
                 var session = new LatencyTestSession(computerSpecifications, perfTestType);
                 session.Run();
-                session.GenerateAndOpenReport();
+                session.GenerateAndOpenReport(shouldOpen);
             }
         }
 
