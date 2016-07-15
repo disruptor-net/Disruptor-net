@@ -143,7 +143,7 @@ namespace Disruptor.PerfTests
             File.WriteAllText(path, BuildReport());
 
             var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
-            File.AppendAllText(totalsPath, $"{DateTime.Now:HH:ms:ss},{_perfTestType.Name},{_results.Max(x => x.Histogram.GetValueAtPercentile(99))}\n");
+            File.AppendAllText(totalsPath, $"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{_results.Max(x => x.Histogram.GetValueAtPercentile(99))}\n");
 
             if (shouldOpen)
                 Process.Start(path);
