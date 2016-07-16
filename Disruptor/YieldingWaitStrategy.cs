@@ -26,7 +26,7 @@ namespace Disruptor
             long availableSequence;
             var counter = SpinTries;
 
-            while ((availableSequence = dependentSequence.Value) < sequence) // volatile read
+            while ((availableSequence = dependentSequence.Value) < sequence)
             {
                 counter = ApplyWaitMethod(barrier, counter);
             }

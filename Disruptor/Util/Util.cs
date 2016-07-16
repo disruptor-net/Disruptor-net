@@ -60,7 +60,7 @@ namespace Disruptor
         {
             for (var i = 0; i < sequences.Length; i++)
             {
-                var sequence = sequences[i].Value; // volatile read
+                var sequence = sequences[i].Value;
                 minimum = Math.Min(minimum, sequence);
             }
             return minimum;

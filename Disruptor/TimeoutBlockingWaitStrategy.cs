@@ -16,12 +16,12 @@ namespace Disruptor
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
             var timeSpan = _timeout;
-            if (cursor.Value < sequence) // volatile read
+            if (cursor.Value < sequence)
             {
                 Monitor.Enter(_gate);
                 try
                 {
-                    while (cursor.Value < sequence) // volatile read
+                    while (cursor.Value < sequence)
                     {
                         barrier.CheckAlert();
                         if (!Monitor.Wait(_gate, timeSpan))

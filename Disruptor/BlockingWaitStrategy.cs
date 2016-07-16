@@ -21,13 +21,13 @@ namespace Disruptor
         /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
-            if (cursor.Value < sequence) // volatile read
+            if (cursor.Value < sequence)
             {
                 // TODO: Use TryEnter
                 Monitor.Enter(_gate);
                 try
                 {
-                    while (cursor.Value < sequence) // volatile read
+                    while (cursor.Value < sequence)
                     {
                         barrier.CheckAlert();
                         Monitor.Wait(_gate);
