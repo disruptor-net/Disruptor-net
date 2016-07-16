@@ -18,8 +18,7 @@ namespace Disruptor
             var timeSpan = _timeout;
             if (cursor.Value < sequence)
             {
-                Monitor.Enter(_gate);
-                try
+                lock (_gate)
                 {
                     while (cursor.Value < sequence)
                     {
@@ -27,10 +26,6 @@ namespace Disruptor
                         if (!Monitor.Wait(_gate, timeSpan))
                             throw TimeoutException.Instance;
                     }
-                }
-                finally
-                {
-                    Monitor.Exit(_gate);
                 }
             }
 

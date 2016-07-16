@@ -23,19 +23,13 @@ namespace Disruptor
         {
             if (cursor.Value < sequence)
             {
-                // TODO: Use TryEnter
-                Monitor.Enter(_gate);
-                try
+                lock (_gate)
                 {
                     while (cursor.Value < sequence)
                     {
                         barrier.CheckAlert();
                         Monitor.Wait(_gate);
                     }
-                }
-                finally
-                {
-                    Monitor.Exit(_gate);
                 }
             }
 
