@@ -36,7 +36,7 @@ namespace Disruptor.Dsl
         {
             var workerPoolInfo = new WorkerPoolInfo<T>(workerPool, sequenceBarrier);
             _consumerInfos.Add(workerPoolInfo);
-            foreach (var sequence in workerPool.WorkerSequences)
+            foreach (var sequence in workerPool.GetWorkerSequences())
             {
                 _eventProcessorInfoBySequence[sequence] = workerPoolInfo;
             }

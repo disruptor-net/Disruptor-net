@@ -35,7 +35,7 @@ namespace Disruptor.PerfTests.WorkHandler
                                                     new FatalExceptionHandler(),
                                                     _handlers);
 
-            _ringBuffer.AddGatingSequences(_workerPool.WorkerSequences);
+            _ringBuffer.AddGatingSequences(_workerPool.GetWorkerSequences());
         }
 
         public int RequiredProcessorCount => 4;

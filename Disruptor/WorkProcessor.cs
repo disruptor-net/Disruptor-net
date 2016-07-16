@@ -117,7 +117,7 @@ namespace Disruptor
             _running = 0;
         }
 
-        public void Release()
+        void IEventReleaser.Release()
         {
             _sequence.SetValue(long.MaxValue);
         }

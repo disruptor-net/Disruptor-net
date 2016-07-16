@@ -9,7 +9,7 @@ namespace Disruptor
     /// Each of the <see cref="WorkProcessor{T}"/> manage and calls a <see cref="IWorkHandler{T}"/> to process the events.
     /// </summary>
     /// <typeparam name="T">event to be processed by a pool of workers</typeparam>
-    public sealed class WorkerPool<T> where T : class 
+    public sealed class WorkerPool<T> where T : class
     {
         private volatile int _running;
         private readonly Sequence _workSequence = new Sequence();
@@ -71,25 +71,22 @@ namespace Disruptor
                                                           _workSequence);
             }
 
-            _ringBuffer.AddGatingSequences(WorkerSequences);
+            _ringBuffer.AddGatingSequences(GetWorkerSequences());
         }
 
         /// <summary>
         /// Get an array of <see cref="Sequence"/>s representing the progress of the workers.
         /// </summary>
-        public ISequence[] WorkerSequences
+        public ISequence[] GetWorkerSequences()
         {
-            get
+            var sequences = new ISequence[_workProcessors.Length + 1];
+            for (var i = 0; i < _workProcessors.Length; i++)
             {
-                var sequences = new ISequence[_workProcessors.Length + 1];
-                for (var i = 0; i < _workProcessors.Length; i++)
-                {
-                    sequences[i] = _workProcessors[i].Sequence;
-                }
-                sequences[sequences.Length - 1] = _workSequence;
-
-                return sequences;
+                sequences[i] = _workProcessors[i].Sequence;
             }
+            sequences[sequences.Length - 1] = _workSequence;
+
+            return sequences;
         }
 
         /// <summary>
@@ -107,11 +104,9 @@ namespace Disruptor
             var cursor = _ringBuffer.Cursor;
             _workSequence.SetValue(cursor);
 
-            for (var i = 0; i < _workProcessors.Length; i++)
+            foreach (var workProcessor in _workProcessors)
             {
-                var workProcessor = _workProcessors[i];
                 workProcessor.Sequence.SetValue(cursor);
-
                 executor.Execute(workProcessor.Run);
             }
 
@@ -123,7 +118,7 @@ namespace Disruptor
        /// </summary>
         public void DrainAndHalt()
         {
-            var workerSequences = WorkerSequences;
+            var workerSequences = GetWorkerSequences();
             while (_ringBuffer.Cursor > Util.GetMinimumSequence(workerSequences))
             {
                 Thread.Sleep(0);

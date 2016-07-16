@@ -373,7 +373,7 @@ namespace Disruptor.Dsl
             var workerPool = new WorkerPool<T>(_ringBuffer, sequenceBarrier, _exceptionHandler, workHandlers);
             _consumerRepository.Add(workerPool, sequenceBarrier);
 
-            return new EventHandlerGroup<T>(this, _consumerRepository, workerPool.WorkerSequences);
+            return new EventHandlerGroup<T>(this, _consumerRepository, workerPool.GetWorkerSequences());
         }
 
         private void CheckNotStarted()

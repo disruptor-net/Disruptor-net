@@ -11,7 +11,7 @@
             IsEndOfChain = true;
         }
 
-        public ISequence[] Sequences => _workerPool.WorkerSequences;
+        public ISequence[] Sequences => _workerPool.GetWorkerSequences();
 
         public ISequenceBarrier Barrier { get; }
 
