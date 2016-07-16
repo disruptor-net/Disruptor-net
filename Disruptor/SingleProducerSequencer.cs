@@ -121,9 +121,10 @@ namespace Disruptor
                 throw InsufficientCapacityException.Instance;
             }
 
-            var newValue = _fields.NextValue + n;
-            _fields.NextValue = newValue;
-            return newValue;
+            var nextSequence = _fields.NextValue + n;
+            _fields.NextValue = nextSequence;
+
+            return nextSequence;
         }
 
         /// <summary>
@@ -132,8 +133,9 @@ namespace Disruptor
         public override long GetRemainingCapacity()
         {
             var nextValue = _fields.NextValue;
-            long consumed = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
-            long produced = nextValue;
+
+            var consumed = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
+            var produced = nextValue;
             return BufferSize - (produced - consumed);
         }
 
@@ -141,11 +143,9 @@ namespace Disruptor
         /// Claim a specific sequence when only one publisher is involved.
         /// </summary>
         /// <param name="sequence">sequence to be claimed.</param>
-        /// <returns>sequence just claimed.</returns>
-        public override long Claim(long sequence)
+        public override void Claim(long sequence)
         {
             _fields.NextValue = sequence;
-            return sequence;
         }
 
         /// <summary>

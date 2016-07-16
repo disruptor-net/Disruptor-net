@@ -9,8 +9,7 @@ namespace Disruptor
         /// Claim a specific sequence when only one publisher is involved.
         /// </summary>
         /// <param name="sequence">sequence to be claimed.</param>
-        /// <returns>sequence just claimed.</returns>
-        long Claim(long sequence);
+        void Claim(long sequence);
 
         /// <summary>
         /// Confirms if a sequence is published and the event is available for use; non-blocking.

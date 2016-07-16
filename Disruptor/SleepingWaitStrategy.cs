@@ -17,12 +17,7 @@ namespace Disruptor
         private const int _defaultRetries = 200;
         private readonly int _retries;
 
-        public SleepingWaitStrategy()
-            : this(_defaultRetries)
-        {
-        }
-
-        public SleepingWaitStrategy(int retries)
+        public SleepingWaitStrategy(int retries = _defaultRetries)
         {
             _retries = retries;
         }

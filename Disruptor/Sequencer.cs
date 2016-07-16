@@ -104,8 +104,7 @@ namespace Disruptor
         /// Claim a specific sequence when only one publisher is involved.
         /// </summary>
         /// <param name="sequence">sequence to be claimed.</param>
-        /// <returns>sequence just claimed.</returns>
-        public abstract long Claim(long sequence);
+        public abstract void Claim(long sequence);
 
         /// <summary>
         /// Publish an event and make it visible to <see cref="IEventProcessor"/>s

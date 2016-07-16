@@ -61,6 +61,15 @@ namespace Disruptor
         }
 
         /// <summary>
+        /// Claim a specific sequence when only one publisher is involved.
+        /// </summary>
+        /// <param name="sequence">sequence to be claimed.</param>
+        public override void Claim(long sequence)
+        {
+            _cursor.SetValue(sequence);
+        }
+
+        /// <summary>
         /// Claim the next event in sequence for publishing.
         /// </summary>
         /// <returns></returns>
@@ -170,7 +179,7 @@ namespace Disruptor
         /// </summary>
         public override long GetRemainingCapacity()
         {
-            var consumed = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences));
+            var consumed = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
             var produced = _cursor.Value;
             return BufferSize - (produced - consumed);
         }
@@ -218,17 +227,6 @@ namespace Disruptor
             {
                 buffer[index] = flag;
             }
-        }
-
-        /// <summary>
-        /// Claim a specific sequence when only one publisher is involved.
-        /// </summary>
-        /// <param name="sequence">sequence to be claimed.</param>
-        /// <returns>sequence just claimed.</returns>
-        public override long Claim(long sequence)
-        {
-            _cursor.SetValue(sequence);
-            return sequence;
         }
 
         /// <summary>
