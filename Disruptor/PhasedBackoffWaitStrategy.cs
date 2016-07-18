@@ -9,43 +9,44 @@ namespace Disruptor
     /// 
     /// <para>This strategy can be used when throughput and low-latency are not as important as CPU resource.
     /// Spins, then yields, then waits using the configured fallback WaitStrategy.</para>
-    /// 
-    /// TODO Create two versions, one that uses the precise system time (100 nano precision) and another that uses DateTime.UtcNow (1ms precision)
     /// </summary>
     public class PhasedBackoffWaitStrategy : IWaitStrategy
     {
         [DllImport("Kernel32.dll", CallingConvention = CallingConvention.Winapi)]
         private static extern void GetSystemTimePreciseAsFileTime(out long filetime);
 
+        private static readonly bool _isSystemTimePreciseAsFileTimeAvailable;
+
         private const int _spinTries = 10000;
         private readonly IWaitStrategy _fallbackStrategy;
-        private readonly long _spinDurationInTicks;
-        private readonly long _yieldDurationInTicks;
+        private readonly long _spinTimeoutTicks;
+        private readonly long _yieldTimeoutTicks;
 
-        public PhasedBackoffWaitStrategy(TimeSpan spinDuration, TimeSpan yieldDuration, IWaitStrategy fallbackStrategy)
+        static PhasedBackoffWaitStrategy()
         {
-            _fallbackStrategy = fallbackStrategy;
-            _spinDurationInTicks = spinDuration.Ticks;
-            _yieldDurationInTicks = yieldDuration.Ticks;
-
             try
             {
                 long fileTime;
                 GetSystemTimePreciseAsFileTime(out fileTime);
+                _isSystemTimePreciseAsFileTimeAvailable = true;
             }
             catch (EntryPointNotFoundException)
             {
-                // Not running Windows 8 or higher.
-                throw new ApplicationException("Precise system time is not available so sub-millisecond resolution is not available and this wait strategy is not recommended");
             }
         }
-        
+
+        public PhasedBackoffWaitStrategy(TimeSpan spinTimeout, TimeSpan yieldTimeout, IWaitStrategy fallbackStrategy)
+        {
+            _spinTimeoutTicks = spinTimeout.Ticks;
+            _yieldTimeoutTicks = yieldTimeout.Ticks;
+            _fallbackStrategy = fallbackStrategy;
+        }
+
         /// <summary>
         /// Block with wait/notifyAll semantics
         /// </summary>
         /// <param name="spinTimeout"></param>
         /// <param name="yieldTimeout"></param>
-        /// <param name="units"></param>
         /// <returns></returns>
         public static PhasedBackoffWaitStrategy WithLock(TimeSpan spinTimeout, TimeSpan yieldTimeout)
         {
@@ -63,6 +64,9 @@ namespace Disruptor
             return new PhasedBackoffWaitStrategy(spinTimeout, yieldTimeout, new SleepingWaitStrategy(0));
         }
 
+        /// <summary>
+        /// <see cref="IWaitStrategy.WaitFor"/>
+        /// </summary>
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
             long startTime = 0;
@@ -78,18 +82,20 @@ namespace Disruptor
                 {
                     if (0 == startTime)
                     {
-                        GetSystemTimePreciseAsFileTime(out startTime);
+                        startTime = GetSystemTimeTicks();
                     }
                     else
                     {
-                        long fileTime;
-                        GetSystemTimePreciseAsFileTime(out fileTime);
-                        var timeDelta = fileTime - startTime;
-                        if (timeDelta > _yieldDurationInTicks)
+                        var timeDelta = GetSystemTimeTicks() - startTime;
+                        if (timeDelta > _yieldTimeoutTicks)
+                        {
                             return _fallbackStrategy.WaitFor(sequence, cursor, dependentSequence, barrier);
+                        }
 
-                        if (timeDelta > _spinDurationInTicks)
+                        if (timeDelta > _spinTimeoutTicks)
+                        {
                             Thread.Yield();
+                        }
                     }
                     counter = _spinTries;
                 }
@@ -97,9 +103,26 @@ namespace Disruptor
             while (true);
         }
 
+        /// <summary>
+        /// <see cref="IWaitStrategy.SignalAllWhenBlocking"/>
+        /// </summary>
         public void SignalAllWhenBlocking()
         {
             _fallbackStrategy.SignalAllWhenBlocking();
+        }
+
+        private static long GetSystemTimeTicks()
+        {
+            long ticks;
+            if (_isSystemTimePreciseAsFileTimeAvailable)
+            {
+                GetSystemTimePreciseAsFileTime(out ticks);
+            }
+            else
+            {
+                ticks = DateTime.UtcNow.Ticks;
+            }
+            return ticks;
         }
     }
 }

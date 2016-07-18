@@ -3,14 +3,14 @@
 namespace Disruptor
 {
     /// <summary>
-    /// Yielding strategy that uses a Thread.Sleep(0) for <see cref="IEventProcessor"/>s waiting on a barrier
+    /// Yielding strategy that uses a Thread.Yield() for <see cref="IEventProcessor"/>s waiting on a barrier
     /// after an initially spinning.
     /// 
     /// This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.
     /// </summary>
     public sealed class YieldingWaitStrategy : IWaitStrategy
     {
-        private const int SpinTries = 100;
+        private const int _spinTries = 100;
 
         /// <summary>
         /// Wait for the given sequence to be available
@@ -24,7 +24,7 @@ namespace Disruptor
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
             long availableSequence;
-            var counter = SpinTries;
+            var counter = _spinTries;
 
             while ((availableSequence = dependentSequence.Value) < sequence)
             {
@@ -47,7 +47,7 @@ namespace Disruptor
 
             if(counter == 0)
             {
-                Thread.Sleep(0); // Thread.yield(); in java
+                Thread.Yield();
             }
             else
             {

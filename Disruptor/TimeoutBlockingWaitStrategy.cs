@@ -13,6 +13,9 @@ namespace Disruptor
             _timeout = timeout;
         }
 
+        /// <summary>
+        /// <see cref="IWaitStrategy.WaitFor"/>
+        /// </summary>
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
             var timeSpan = _timeout;
@@ -38,6 +41,9 @@ namespace Disruptor
             return availableSequence;
         }
 
+        /// <summary>
+        /// <see cref="IWaitStrategy.SignalAllWhenBlocking"/>
+        /// </summary>
         public void SignalAllWhenBlocking()
         {
             lock (_gate)

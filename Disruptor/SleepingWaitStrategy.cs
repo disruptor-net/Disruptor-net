@@ -3,12 +3,11 @@
 namespace Disruptor
 {
     /// <summary>
-    /// Sleeping strategy that initially spins, then uses a <see cref="Thread.Sleep(int)"/>, and
-    /// eventually sleep(<see cref="SpinWait"/>) for the minimum
+    /// Sleeping strategy that initially spins, then uses a Thread.Yield(), and
+    /// eventually sleep(<code>Thread.Sleep(0)</code>) for the minimum
     /// number of nanos the OS and JVM will allow while the
-    /// {@link com.lmax.disruptor.EventProcessor}
-    /// s are waiting on a barrier.
-    /// <para/>
+    /// {@link com.lmax.disruptor.EventProcessor}s are waiting on a barrier.
+    /// <p>
     /// This strategy is a good compromise between performance and CPU resource.
     /// Latency spikes can occur after quiet periods.
     /// </summary>
@@ -23,35 +22,29 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Wait for the given sequence to be available
+        /// <see cref="IWaitStrategy.WaitFor"/>
         /// </summary>
-        /// <param name="sequence">sequence to be waited on.</param>
-        /// <param name="cursor">Ring buffer cursor on which to wait.</param>
-        /// <param name="dependentSequence">dependents further back the chain that must advance first</param>
-        /// <param name="barrier">barrier the <see cref="IEventProcessor"/> is waiting on.</param>
-        /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
-            var spinWait = default(SpinWait);
             long availableSequence;
             int counter = _retries;
 
             while ((availableSequence = dependentSequence.Value) < sequence)
             {
-                counter = ApplyWaitMethod(barrier, counter, spinWait);
+                counter = ApplyWaitMethod(barrier, counter);
             }
 
             return availableSequence;
         }
 
         /// <summary>
-        /// Signal those <see cref="IEventProcessor"/> waiting that the cursor has advanced.
+        /// <see cref="IWaitStrategy.SignalAllWhenBlocking"/>
         /// </summary>
         public void SignalAllWhenBlocking()
         {
         }
 
-        private static int ApplyWaitMethod(ISequenceBarrier barrier, int counter, SpinWait spinWait)
+        private static int ApplyWaitMethod(ISequenceBarrier barrier, int counter)
         {
             barrier.CheckAlert();
 
@@ -62,11 +55,11 @@ namespace Disruptor
             else if (counter > 0)
             {
                 --counter;
-                Thread.Sleep(0);
+                Thread.Yield();
             }
             else
             {
-                spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
+                Thread.Sleep(0);
             }
 
             return counter;

@@ -9,13 +9,8 @@
     public sealed class BusySpinWaitStrategy : IWaitStrategy
     {
         /// <summary>
-        /// Wait for the given sequence to be available
+        /// <see cref="IWaitStrategy.WaitFor"/>
         /// </summary>
-        /// <param name="sequence">sequence to be waited on.</param>
-        /// <param name="cursor">Ring buffer cursor on which to wait.</param>
-        /// <param name="dependentSequence">dependents further back the chain that must advance first</param>
-        /// <param name="barrier">barrier the <see cref="IEventProcessor"/> is waiting on.</param>
-        /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
             long availableSequence;
@@ -29,7 +24,7 @@
         }
 
         /// <summary>
-        /// Signal those <see cref="IEventProcessor"/> waiting that the cursor has advanced.
+        /// <see cref="IWaitStrategy.SignalAllWhenBlocking"/>
         /// </summary>
         public void SignalAllWhenBlocking()
         {
