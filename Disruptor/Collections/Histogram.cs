@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -31,35 +32,41 @@ namespace Disruptor.Collections
         {
             ValidateBounds(upperBounds);
 
-            _upperBounds = new long[upperBounds.Length];
-
-            Array.Copy(upperBounds, _upperBounds, upperBounds.Length);
+            _upperBounds = upperBounds.ToArray();
             _counts = new long[upperBounds.Length];
+        }
+
+        /// <summary>
+        /// Validates the input bounds; used by constructor only.
+        /// </summary>
+        /// <param name="upperBounds"></param>
+        private static void ValidateBounds(long[] upperBounds)
+        {
+            long lastBound = -1L;
+            if (upperBounds.Length <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(upperBounds), "Must provide at least one interval");
+            }
+            foreach (long bound in upperBounds)
+            {
+                if (bound <= 0L)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(upperBounds), "Bounds must be positive values");
+                }
+
+                if (bound <= lastBound)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(upperBounds), "bound " + bound + " is not greater than " + lastBound);
+                }
+
+                lastBound = bound;
+            }
         }
 
         /// <summary>
         /// Size of the list of interval bars (ie: count of interval bars).
         /// </summary>
         public int Size => _upperBounds.Length;
-
-        /// <summary>
-        /// Count total number of recorded observations.
-        /// </summary>
-        /// <returns>the total number of recorded observations.</returns>
-        public long Count
-        {
-            get
-            {
-                var count = 0L;
-
-                for (var i = 0; i < _counts.Length; i++)
-                {
-                    count += _counts[i];
-                }
-
-                return count;
-            }
-        }
 
         /// <summary>
         /// Get the minimum observed value.
@@ -83,7 +90,7 @@ namespace Disruptor.Collections
         {
             get
             {
-                if (Count == 0)
+                if (GetCount() == 0)
                 {
                     return 0;
                 }
@@ -105,7 +112,7 @@ namespace Disruptor.Collections
                     lowerBound = Math.Max(_upperBounds[i] + 1L, Min);
                 }
 
-                return Math.Round(total / Count, 2, MidpointRounding.AwayFromZero);
+                return Math.Round(total / GetCount(), 2, MidpointRounding.AwayFromZero);
             }
         }
 
@@ -118,29 +125,6 @@ namespace Disruptor.Collections
         ///     Calculate the upper bound within which 99.99% of observations fall.
         /// </summary>
         public long FourNinesUpperBound => GetUpperBoundForFactor(0.9999d);
-
-        private static void ValidateBounds(long[] upperBounds)
-        {
-            long lastBound = -1L;
-            if (upperBounds.Length <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(upperBounds), "Must provide at least one interval");
-            }
-            foreach (long bound in upperBounds)
-            {
-                if (bound <= 0L)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(upperBounds), "Bounds must be positive values");
-                }
-
-                if (bound <= lastBound)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(upperBounds), "bound " + bound + " is not greater than " + lastBound);
-                }
-
-                lastBound = bound;
-            }
-        }
 
         /// <summary>
         ///     Get the upper bound of an interval for an index.
@@ -247,6 +231,22 @@ namespace Disruptor.Collections
         }
 
         /// <summary>
+        /// Count total number of recorded observations.
+        /// </summary>
+        /// <returns>the total number of recorded observations.</returns>
+        public long GetCount()
+        {
+            var count = 0L;
+
+            for (var i = 0; i < _counts.Length; i++)
+            {
+                count += _counts[i];
+            }
+
+            return count;
+        }
+
+        /// <summary>
         ///     Get the interval upper bound for a given factor of the observation population.
         /// </summary>
         /// <param name="factor">factor representing the size of the population.</param>
@@ -258,7 +258,7 @@ namespace Disruptor.Collections
                 throw new ArgumentException("factor must be > 0.0 and < 1.0", nameof(factor));
             }
 
-            var totalCount = Count;
+            var totalCount = GetCount();
             var tailTotal = (long)(totalCount - Math.Round(totalCount * factor));
             var tailCount = 0L;
 

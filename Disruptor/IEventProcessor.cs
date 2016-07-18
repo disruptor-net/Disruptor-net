@@ -6,7 +6,7 @@
     public interface IEventProcessor
     {
         /// <summary>
-        /// Return a reference to the <see cref="Sequence"/> being used by this <see cref="IEventProcessor"/>
+        /// Return a reference to the <see cref="ISequence"/> being used by this <see cref="IEventProcessor"/>
         /// </summary>
         ISequence Sequence { get; }
 

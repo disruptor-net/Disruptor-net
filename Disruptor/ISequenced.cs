@@ -9,6 +9,7 @@
         /// The capacity of the data structure to hold entries.
         /// </summary>
         int BufferSize { get; }
+
         /// <summary>
         /// Has the buffer got capacity to allocate another sequence.  This is a concurrent
         /// method so the response should only be taken as an indication of available capacity.
@@ -27,6 +28,7 @@
         /// </summary>
         /// <returns>the claimed sequence value</returns>
         long Next();
+
         /// <summary>
         /// Claim the next n events in sequence for publishing.  This is for batch event producing.  Using batch producing requires a little care and some math.
         /// <code>
@@ -42,11 +44,13 @@
         /// <param name="n">the number of sequences to claim</param>
         /// <returns>the highest claimed sequence value</returns>
         long Next(int n);
+
         /// <summary>
         /// Attempt to claim the next event in sequence for publishing.  Will return the number of the slot if there is at least<code>requiredCapacity</code> slots available.
         /// </summary>
         /// <returns>the claimed sequence value</returns>
         long TryNext();
+
         /// <summary>
         /// Attempt to claim the next n events in sequence for publishing.  Will return the highest numbered slot if there is at least &lt;code&gt;requiredCapacity&lt;/code&gt; slots
         /// available.  Have a look at <see cref="Next"/> for a description on how to use this method.
@@ -54,11 +58,13 @@
         /// <param name="n">the number of sequences to claim</param>
         /// <returns>the claimed sequence value</returns>
         long TryNext(int n);
+
         /// <summary>
         /// Publishes a sequence. Call when the event has been filled.
         /// </summary>
         /// <param name="sequence"></param>
         void Publish(long sequence);
+
         /// <summary>
         /// Batch publish sequences.  Called when all of the events have been filled.
         /// </summary>

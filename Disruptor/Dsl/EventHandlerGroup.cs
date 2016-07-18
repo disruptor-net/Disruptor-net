@@ -95,7 +95,7 @@ namespace Disruptor.Dsl
 
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The Disruptor will
-        /// automatically start these processors when {@link Disruptor#start()} is called.
+        /// automatically start these processors when <see cref="Disruptor{T}.Start"/> is called.
         /// 
         /// This method is generally used as part of a chain. For example if <code>A</code> must
         /// process events before<code> B</code>:

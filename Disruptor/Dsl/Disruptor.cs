@@ -174,7 +174,7 @@ namespace Disruptor.Dsl
         /// For example if the handler <code>A</code> must process events before handler <code>B</code>:
         /// <code>dw.After(A).HandleEventsWith(B);</code>
         /// </summary>
-        /// <param name="handlers">handlers the event handlers, previously set up with {@link #handleEventsWith(com.lmax.disruptor.EventHandler[])},
+        /// <param name="handlers">handlers the event handlers, previously set up with <see cref="HandleEventsWith(Disruptor.IEventHandler{T}[])"/>,
         /// that will form the barrier for subsequent handlers or processors.</param>
         /// <returns>an <see cref="EventHandlerGroup{T}"/> that can be used to setup a dependency barrier over the specified event handlers.</returns>
         public EventHandlerGroup<T> After(params IEventHandler<T>[] handlers)

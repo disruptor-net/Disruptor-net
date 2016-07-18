@@ -6,7 +6,7 @@ namespace Disruptor
     /// Sleeping strategy that initially spins, then uses a Thread.Yield(), and
     /// eventually sleep(<code>Thread.Sleep(0)</code>) for the minimum
     /// number of nanos the OS and JVM will allow while the
-    /// {@link com.lmax.disruptor.EventProcessor}s are waiting on a barrier.
+    /// <see cref="IEventProcessor"/>s are waiting on a barrier.
     /// <p>
     /// This strategy is a good compromise between performance and CPU resource.
     /// Latency spikes can occur after quiet periods.

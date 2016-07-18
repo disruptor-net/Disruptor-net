@@ -59,7 +59,7 @@ namespace Disruptor.Tests.Collections
         public void ShouldAddObservation()
         {
             Assert.IsTrue(_histogram.AddObservation(10L));
-            Assert.AreEqual(1L, _histogram.Count);
+            Assert.AreEqual(1L, _histogram.GetCount());
         }
 
         [Test]
@@ -79,7 +79,7 @@ namespace Disruptor.Tests.Collections
 
             _histogram.AddObservations(histogram2);
 
-            Assert.AreEqual(6L, _histogram.Count);
+            Assert.AreEqual(6L, _histogram.GetCount());
         }
 
         [Test]
@@ -107,7 +107,7 @@ namespace Disruptor.Tests.Collections
         {
             AddObservations(_histogram, 1L, 7L, 10L, 3000L);
 
-            Assert.AreEqual(4L, _histogram.Count);
+            Assert.AreEqual(4L, _histogram.GetCount());
         }
 
         [Test]

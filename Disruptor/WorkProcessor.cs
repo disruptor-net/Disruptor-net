@@ -54,6 +54,9 @@ namespace Disruptor
             _sequenceBarrier.Alert();
         }
 
+        /// <summary>
+        /// <see cref="IEventProcessor.IsRunning"/>
+        /// </summary>
         public bool IsRunning => _running == 1;
 
         /// <summary>

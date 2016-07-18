@@ -99,7 +99,7 @@ namespace Disruptor
         }
 
         /// <summary>
-        ///     Create a new single producer RingBuffer using the default wait strategy  {@link BlockingWaitStrategy}.
+        ///     Create a new single producer RingBuffer using the default wait strategy <see cref="BlockingWaitStrategy"/>.
         /// </summary>
         /// <param name="factory">used to create the events within the ring buffer.</param>
         /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
@@ -226,7 +226,7 @@ namespace Disruptor
 
         /// <summary>
         /// Get the current cursor value for the ring buffer.  The actual value recieved
-        /// will depend on the type of {@link Sequencer} that is being used.
+        /// will depend on the type of <see cref="ISequencer"/> that is being used.
         /// </summary>
         public long Cursor => _fields.Sequencer.Cursor;
 

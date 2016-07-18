@@ -33,7 +33,7 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// 
+        /// <see cref="IEventProcessor.Sequence"/>
         /// </summary>
         public ISequence Sequence => _sequence;
 
@@ -45,6 +45,9 @@ namespace Disruptor
             _running = 0;
         }
 
+        /// <summary>
+        /// <see cref="IEventProcessor.IsRunning"/>
+        /// </summary>
         public bool IsRunning => _running == 1;
 
         private sealed class SequencerFollowingSequence : ISequence

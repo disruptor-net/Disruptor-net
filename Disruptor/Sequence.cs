@@ -4,8 +4,12 @@ using System.Threading;
 namespace Disruptor
 {
     /// <summary>
-    /// Cache line padded sequence counter.
-    /// Can be used across threads without worrying about false sharing if a located adjacent to another counter in memory.
+    /// <p>Concurrent sequence class used for tracking the progress of
+    /// the ring buffer and event processors.Support a number
+    /// of concurrent operations including CAS and order writes.</p>
+    ///
+    /// <p>Also attempts to be more efficient with regards to false
+    /// sharing by adding padding around the volatile field.</p>
     /// </summary>
     public class Sequence : ISequence
     {

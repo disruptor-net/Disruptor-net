@@ -38,6 +38,9 @@ namespace Disruptor
             _timeoutHandler = eventHandler as ITimeoutHandler;
         }
 
+        /// <summary>
+        /// <see cref="IEventProcessor.Sequence"/>
+        /// </summary>
         public ISequence Sequence => _sequence;
 
         /// <summary>
@@ -50,6 +53,9 @@ namespace Disruptor
             _sequenceBarrier.Alert();
         }
 
+        /// <summary>
+        /// <see cref="IEventProcessor.IsRunning"/>
+        /// </summary>
         public bool IsRunning => _running == 1;
 
         /// <summary>
