@@ -10,6 +10,7 @@ namespace Disruptor
     /// <p>
     /// This strategy is a good compromise between performance and CPU resource.
     /// Latency spikes can occur after quiet periods.
+    /// </p>
     /// </summary>
     public sealed class SleepingWaitStrategy : IWaitStrategy
     {

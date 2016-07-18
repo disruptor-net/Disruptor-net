@@ -107,6 +107,7 @@
     <Compile Include="SequencerTests.cs" />
     <Compile Include="SequenceUpdater.cs" />
     <Compile Include="ShutdownOnFatalExceptionTest.cs" />
+    <Compile Include="SpinWaitWaitStrategyTests.cs" />
     <Compile Include="SleepingWaitStrategyTests.cs" />
     <Compile Include="Support\AtomicReference.cs" />
     <Compile Include="Support\LongEvent.cs" />

@@ -27,7 +27,9 @@ namespace Disruptor
                     {
                         barrier.CheckAlert();
                         if (!Monitor.Wait(_gate, timeSpan))
+                        {
                             throw TimeoutException.Instance;
+                        }
                     }
                 }
             }
