@@ -58,19 +58,16 @@ namespace Disruptor.PerfTests
 
             //Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
 
-            var computerSpecifications = new ComputerSpecifications();
-            Console.WriteLine(computerSpecifications.ToString());
-
             if (isThroughputTest)
             {
-                var session = new ThroughputTestSession(computerSpecifications, perfTestType);
+                var session = new ThroughputTestSession(perfTestType);
                 session.Run();
                 session.GenerateAndOpenReport(shouldOpen);
             }
 
             if (isLatencyTest)
             {
-                var session = new LatencyTestSession(computerSpecifications, perfTestType);
+                var session = new LatencyTestSession(perfTestType);
                 session.Run();
                 session.GenerateAndOpenReport(shouldOpen);
             }

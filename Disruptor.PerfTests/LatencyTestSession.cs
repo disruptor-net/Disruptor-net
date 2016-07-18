@@ -12,14 +12,12 @@ namespace Disruptor.PerfTests
     {
         public const int Runs = 3;
 
-        private readonly ComputerSpecifications _computerSpecifications;
         private readonly List<LatencyTestSessionResult> _results = new List<LatencyTestSessionResult>(Runs);
         private readonly Type _perfTestType;
         private ILatencyTest _test;
         
-        public LatencyTestSession(ComputerSpecifications computerSpecifications, Type perfTestType)
+        public LatencyTestSession(Type perfTestType)
         {
-            _computerSpecifications = computerSpecifications;
             _perfTestType = perfTestType;
             Console.WriteLine($"Latency Test to run => {_perfTestType.FullName}, Runs => {Runs}");
         }
@@ -82,7 +80,7 @@ namespace Disruptor.PerfTests
             Console.WriteLine($"Processors required = {test.RequiredProcessorCount}, available = {availableProcessors}");
         }
 
-        public string BuildReport()
+        public string BuildReport(ComputerSpecifications computerSpecifications)
         {
             var sb = new StringBuilder();
             sb.AppendLine("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">")
@@ -95,17 +93,17 @@ namespace Disruptor.PerfTests
                 .AppendLine("        UTC time: " + DateTime.UtcNow);
 
             sb.AppendLine("        <h2>Host configuration</h2>");
-            _computerSpecifications.AppendHtml(sb);
+            computerSpecifications.AppendHtml(sb);
 
-            if (_computerSpecifications.NumberOfCores < 4)
+            if (computerSpecifications.NumberOfCores < 4)
             {
-                sb.AppendFormat("        <b><font color='red'>Your computer has {0} physical core(s) but most of the tests require at least 4 cores</font></b><br>", _computerSpecifications.NumberOfCores);
+                sb.AppendFormat("        <b><font color='red'>Your computer has {0} physical core(s) but most of the tests require at least 4 cores</font></b><br>", computerSpecifications.NumberOfCores);
             }
             if (!Stopwatch.IsHighResolution)
             {
-                sb.AppendFormat("        <b><font color='red'>Your computer does not support synchronized TSC, measured latencies might be wrong on multicore CPU architectures.</font></b><br>", _computerSpecifications.NumberOfCores);
+                sb.AppendFormat("        <b><font color='red'>Your computer does not support synchronized TSC, measured latencies might be wrong on multicore CPU architectures.</font></b><br>", computerSpecifications.NumberOfCores);
             }
-            if (_computerSpecifications.IsHyperThreaded)
+            if (computerSpecifications.IsHyperThreaded)
             {
                 sb.AppendLine("        <b><font color='red'>Hyperthreading can degrade performance, you should turn it off.</font></b><br>");
             }
@@ -140,7 +138,10 @@ namespace Disruptor.PerfTests
         {
             var path = Path.Combine(Environment.CurrentDirectory, _perfTestType.Name + "-" + DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
 
-            File.WriteAllText(path, BuildReport());
+            var computerSpecifications = new ComputerSpecifications();
+            Console.WriteLine(computerSpecifications.ToString());
+
+            File.WriteAllText(path, BuildReport(computerSpecifications));
 
             var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
             File.AppendAllText(totalsPath, $"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{_results.Max(x => x.Histogram.GetValueAtPercentile(99))}\n");

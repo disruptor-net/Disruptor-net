@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime;
 using System.Text;
 
 namespace Disruptor.PerfTests
@@ -11,14 +12,12 @@ namespace Disruptor.PerfTests
     {
         public const int Runs = 7;
 
-        private readonly ComputerSpecifications _computerSpecifications;
         private readonly List<ThroughputTestSessionResult> _results = new List<ThroughputTestSessionResult>(Runs);
         private readonly Type _perfTestType;
         private IThroughputTest _test;
 
-        public ThroughputTestSession(ComputerSpecifications computerSpecifications, Type perfTestType)
+        public ThroughputTestSession(Type perfTestType)
         {
-            _computerSpecifications = computerSpecifications;
             _perfTestType = perfTestType;
             Console.WriteLine($"Throughput Test to run => {_perfTestType.FullName}, Runs => {Runs}");
         }
@@ -32,10 +31,11 @@ namespace Disruptor.PerfTests
             var stopwatch = new Stopwatch();
             for (var i = 0; i < Runs; i++)
             {
-                stopwatch.Reset();
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
-                
+
+                stopwatch.Reset();
+
                 var beforeGen0Count = GC.CollectionCount(0);
                 var beforeGen1Count = GC.CollectionCount(1);
                 var beforeGen2Count = GC.CollectionCount(2);
@@ -80,7 +80,7 @@ namespace Disruptor.PerfTests
             Console.WriteLine($"Processors required = {test.RequiredProcessorCount}, available = {availableProcessors}");
         }
 
-        public string BuildReport()
+        public string BuildReport(ComputerSpecifications computerSpecifications)
         {
             var sb = new StringBuilder();
             sb.AppendLine("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">")
@@ -93,13 +93,13 @@ namespace Disruptor.PerfTests
                 .AppendLine("        UTC time: " + DateTime.UtcNow);
 
             sb.AppendLine("        <h2>Host configuration</h2>");
-            _computerSpecifications.AppendHtml(sb);
 
-            if(_computerSpecifications.NumberOfCores < 4)
+            computerSpecifications.AppendHtml(sb);
+            if(computerSpecifications.NumberOfCores < 4)
             {
-                sb.AppendFormat("        <b><font color='red'>Your computer has {0} physical core(s) but most of the tests require at least 4 cores</font></b><br>", _computerSpecifications.NumberOfCores);
+                sb.AppendFormat("        <b><font color='red'>Your computer has {0} physical core(s) but most of the tests require at least 4 cores</font></b><br>", computerSpecifications.NumberOfCores);
             }
-            if (_computerSpecifications.IsHyperThreaded)
+            if (computerSpecifications.IsHyperThreaded)
             {
                 sb.AppendLine("        <b><font color='red'>Hyperthreading can degrade performance, you should turn it off.</font></b><br>");
             }
@@ -134,7 +134,10 @@ namespace Disruptor.PerfTests
         {
             var path = Path.Combine(Environment.CurrentDirectory, _perfTestType.Name + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
 
-            File.WriteAllText(path, BuildReport());
+            var computerSpecifications = new ComputerSpecifications();
+            Console.WriteLine(computerSpecifications.ToString());
+
+            File.WriteAllText(path, BuildReport(computerSpecifications));
 
             var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
             File.AppendAllText(totalsPath, $"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{_results.Average(x => x.TotalOperationsInRun / x.Duration.TotalSeconds)}\n");
