@@ -98,7 +98,7 @@ namespace Disruptor
         private struct Fields
         {
             /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
-            [FieldOffset(64)]
+            [FieldOffset(56)]
             public long Value;
 
             public Fields(long value)
