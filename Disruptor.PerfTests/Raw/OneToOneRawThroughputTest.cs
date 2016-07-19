@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Scheduler;
 
 namespace Disruptor.PerfTests.Raw
 {
@@ -48,9 +50,11 @@ namespace Disruptor.PerfTests.Raw
 
         private readonly Sequencer _sequencer = new SingleProducerSequencer(_bufferSize, new YieldingWaitStrategy());
         private readonly MyRunnable _myRunnable;
+        private readonly RoundRobinThreadAffinedTaskScheduler _taskScheduler;
 
         public OneToOneRawThroughputTest()
         {
+            _taskScheduler = new RoundRobinThreadAffinedTaskScheduler(2);
             _myRunnable = new MyRunnable(_sequencer);
             _sequencer.AddGatingSequences(_myRunnable.Sequence);
         }
@@ -62,20 +66,27 @@ namespace Disruptor.PerfTests.Raw
             var latch = new ManualResetEvent(false);
             var expectedCount = _myRunnable.Sequence.Value + _iterations;
             _myRunnable.Reset(latch, expectedCount);
-            Task.Run(() => _myRunnable.Run());
+            var consumerTask = Task.Factory.StartNew(() => _myRunnable.Run(), CancellationToken.None, TaskCreationOptions.None, _taskScheduler);
             stopwatch.Start();
 
             var sequencer = _sequencer;
 
-            for (long i = 0; i < _iterations; i++)
+            var producerTask = Task.Factory.StartNew(() =>
             {
-                var next = sequencer.Next();
-                sequencer.Publish(next);
-            }
+                for (long i = 0; i < _iterations; i++)
+                {
+                    var next = sequencer.Next();
+                    sequencer.Publish(next);
+                }
 
-            latch.WaitOne();
+                latch.WaitOne();
+            }, CancellationToken.None, TaskCreationOptions.None, _taskScheduler);
+
+            producerTask.Wait();
             stopwatch.Stop();
             WaitForEventProcessorSequence(expectedCount);
+
+            consumerTask.Wait();
 
             return _iterations;
         }
