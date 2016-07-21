@@ -17,10 +17,9 @@ namespace Disruptor.Tests
             _eventHandlerMock2 = new Mock<ILifecycleAwareEventHandler<int[]>>();
             _eventHandlerMock3 = new Mock<ILifecycleAwareEventHandler<int[]>>();
         }
-
             
         [Test]
-        public void ShouldCallOnEvent()
+        public void ShouldCallOnEventInSequence()
         {
             var evt = new[] {7};
             const long sequence = 3L;
@@ -30,11 +29,11 @@ namespace Disruptor.Tests
                                                                          _eventHandlerMock2.Object,
                                                                          _eventHandlerMock3.Object);
 
-            _eventHandlerMock1.Setup(eh => eh.OnNext(evt, sequence, endOfBatch)).Verifiable("event handler 1 was not called");
-            _eventHandlerMock2.Setup(eh => eh.OnNext(evt, sequence, endOfBatch)).Verifiable("event handler 2 was not called");
-            _eventHandlerMock3.Setup(eh => eh.OnNext(evt, sequence, endOfBatch)).Verifiable("event handler 3 was not called");
+            _eventHandlerMock1.Setup(eh => eh.OnEvent(evt, sequence, endOfBatch)).Verifiable("event handler 1 was not called");
+            _eventHandlerMock2.Setup(eh => eh.OnEvent(evt, sequence, endOfBatch)).Verifiable("event handler 2 was not called");
+            _eventHandlerMock3.Setup(eh => eh.OnEvent(evt, sequence, endOfBatch)).Verifiable("event handler 3 was not called");
 
-            aggregateEventHandler.OnNext(evt, sequence, endOfBatch);
+            aggregateEventHandler.OnEvent(evt, sequence, endOfBatch);
 
             _eventHandlerMock1.Verify();
             _eventHandlerMock2.Verify();
@@ -42,7 +41,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldCallOnStart()
+        public void ShouldCallOnStartInSequence()
         {
             var aggregateEventHandler = new AggregateEventHandler<int[]>(_eventHandlerMock1.Object,
                                                                          _eventHandlerMock2.Object,
@@ -60,7 +59,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldCallOnShutdown()
+        public void ShouldCallOnShutdownInSequence()
         {
             var aggregateEventHandler = new AggregateEventHandler<int[]>(_eventHandlerMock1.Object,
                                                                          _eventHandlerMock2.Object,
@@ -82,7 +81,7 @@ namespace Disruptor.Tests
         {
             var aggregateEventHandler = new AggregateEventHandler<int[]>();
 
-            aggregateEventHandler.OnNext(new[]{7}, 0L, true);
+            aggregateEventHandler.OnEvent(new[]{7}, 0L, true);
             aggregateEventHandler.OnStart();
             aggregateEventHandler.OnShutdown();
         }

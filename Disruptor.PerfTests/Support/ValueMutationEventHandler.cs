@@ -1,33 +1,36 @@
 using System.Threading;
+using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Support
 {
     public class ValueMutationEventHandler : IEventHandler<ValueEvent>
     {
         private readonly Operation _operation;
-        private Volatile.PaddedLong _value = new Volatile.PaddedLong(0);
-        private readonly long _iterations;
-        private readonly CountdownEvent _latch;
+        private PaddedLong _value;
+        private long _iterations;
+        private Barrier _latch;
 
-        public ValueMutationEventHandler(Operation operation, long iterations, CountdownEvent latch)
+        public ValueMutationEventHandler(Operation operation)
         {
             _operation = operation;
-            _iterations = iterations;
+        }
+
+        public long Value => _value.Value;
+
+        public void Reset(Barrier latch, long expectedCount)
+        {
+            _value.Value = 0L;
             _latch = latch;
+            _iterations = expectedCount;
         }
 
-        public long Value
+        public void OnEvent(ValueEvent data, long sequence, bool endOfBatch)
         {
-            get { return _value.ReadUnfenced(); }
-        }
+            _value.Value = _operation.Op(_value.Value, data.Value);
 
-        public void OnNext(ValueEvent data, long sequence, bool endOfBatch)
-        {
-            _value.WriteUnfenced(_operation.Op(_value.ReadUnfenced(), data.Value));
-
-            if (sequence == _iterations - 1)
+            if (sequence == _iterations)
             {
-                _latch.Signal();
+                _latch.SignalAndWait();
             }
         }
     }

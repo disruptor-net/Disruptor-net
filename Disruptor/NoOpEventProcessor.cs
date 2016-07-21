@@ -1,18 +1,22 @@
-﻿namespace Disruptor
+﻿using System;
+using System.Threading;
+
+namespace Disruptor
 {
     /// <summary>
-    /// No operation version of a <see cref="IEventProcessor"/> that simply tracks a <see cref="Sequencer"/>.
+    /// No operation version of a <see cref="IEventProcessor"/> that simply tracks a <see cref="Disruptor.Sequence"/>.
     /// This is useful in tests or for pre-filling a <see cref="RingBuffer{T}"/> from a producer.
     /// </summary>
-    public sealed class NoOpEventProcessor : IEventProcessor
+    public sealed class NoOpEventProcessor<T> : IEventProcessor where T : class 
     {
         private readonly SequencerFollowingSequence _sequence;
+        private volatile int _running;
 
         /// <summary>
-        /// Construct a <see cref="IEventProcessor"/> that simply tracks a <see cref="Sequencer"/>.
+        /// Construct a <see cref="IEventProcessor"/> that simply tracks a <see cref="Disruptor.Sequence"/>.
         /// </summary>
         /// <param name="sequencer">sequencer to track.</param>
-        public NoOpEventProcessor(Sequencer sequencer)
+        public NoOpEventProcessor(RingBuffer<T> sequencer)
         {
             _sequence = new SequencerFollowingSequence(sequencer);
         }
@@ -22,37 +26,63 @@
         /// </summary>
         public void Run()
         {
+            if (Interlocked.Exchange(ref _running, 1) != 0)
+            {
+                throw new InvalidOperationException("Thread is already running");
+            }
         }
 
         /// <summary>
-        /// 
+        /// <see cref="IEventProcessor.Sequence"/>
         /// </summary>
-        public Sequence Sequence
-        {
-            get { return _sequence; }
-        }
+        public ISequence Sequence => _sequence;
 
         /// <summary>
         /// NoOp
         /// </summary>
         public void Halt()
         {
+            _running = 0;
         }
 
-	    private sealed class SequencerFollowingSequence : Sequence
-	    {
-	        private readonly Sequencer _sequencer;
+        /// <summary>
+        /// <see cref="IEventProcessor.IsRunning"/>
+        /// </summary>
+        public bool IsRunning => _running == 1;
 
-            public SequencerFollowingSequence(Sequencer sequencer)
-                : base(Sequencer.InitialCursorValue)
-	        {
-                _sequencer = sequencer;
-	        }
+        private sealed class SequencerFollowingSequence : ISequence
+        {
+            private readonly RingBuffer<T> _sequencer;
 
-            public override long Value
+            public SequencerFollowingSequence(RingBuffer<T> sequencer)
             {
-                get { return _sequencer.Cursor; }
-            } 
-	    }
+                _sequencer = sequencer;
+            }
+
+            public long Value => _sequencer.Cursor;
+
+            public void SetValue(long value)
+            {
+            }
+
+            public void SetValueVolatile(long value)
+            {
+            }
+
+            public bool CompareAndSet(long expectedSequence, long nextSequence)
+            {
+                return false;
+            }
+
+            public long IncrementAndGet()
+            {
+                return 0;
+            }
+
+            public long AddAndGet(long value)
+            {
+                return 0;
+            }
+        }
     }
 }

@@ -1,45 +1,38 @@
 ﻿using System;
+using System.Threading;
 
 namespace Disruptor
 {
     /// <summary>
     /// Coordinator for claiming sequences for access to a data structure while tracking dependent <see cref="Sequence"/>s
     /// </summary>
-    public class Sequencer
+    public abstract class Sequencer : ISequencer
     {
-        /// <summary>
-        /// Set to -1 as sequence starting point
-        /// </summary>
-        public const long InitialCursorValue = -1;
+        protected readonly int _bufferSize;
+        protected readonly IWaitStrategy _waitStrategy;
+        protected readonly Sequence _cursor = new Sequence();
 
-        private readonly Sequence _cursor = new Sequence(InitialCursorValue);
-        private Sequence[] _gatingSequences;
-
-        private readonly IClaimStrategy _claimStrategy;
-        private readonly IWaitStrategy _waitStrategy;
-        private readonly TimeoutException _timeoutExceptionInstance = new TimeoutException();
+        /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
+        protected ISequence[] _gatingSequences = new ISequence[0];
 
         /// <summary>
         /// Construct a Sequencer with the selected strategies.
         /// </summary>
-        /// <param name="claimStrategy">claimStrategy for those claiming sequences.</param>
+        /// <param name="bufferSize"></param>
         /// <param name="waitStrategy">waitStrategy for those waiting on sequences.</param>
-        public Sequencer(IClaimStrategy claimStrategy, IWaitStrategy waitStrategy)
+        public Sequencer(int bufferSize, IWaitStrategy waitStrategy)
         {
-            _claimStrategy = claimStrategy;
-            _waitStrategy = waitStrategy;
-        }
+            if (bufferSize < 1)
+            {
+                throw new ArgumentException("bufferSize must not be less than 1");
+            }
+            if (!bufferSize.IsPowerOf2())
+            {
+                throw new ArgumentException("bufferSize must be a power of 2");
+            }
 
-        /// <summary>
-        /// Set the sequences that will gate publishers to prevent the buffer wrapping.
-        /// 
-        /// This method must be called prior to claiming sequences otherwise
-        /// a <see cref="NullReferenceException"/> will be thrown.
-        /// </summary>
-        /// <param name="sequences">sequences to be to be gated on.</param>
-        public void SetGatingSequences(params Sequence[] sequences)
-        {
-            _gatingSequences = sequences;
+            _bufferSize = bufferSize;
+            _waitStrategy = waitStrategy;
         }
 
         /// <summary>
@@ -47,163 +40,149 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequencesToTrack"></param>
         /// <returns></returns>
-        public ISequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
+        public ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
         {
-            return new ProcessingSequenceBarrier(_waitStrategy, _cursor, sequencesToTrack);
+            return new ProcessingSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
         }
-
-        /// <summary>
-        /// Create a new {@link BatchDescriptor} that is the minimum of the requested size
-        /// and the buffer size.
-        /// </summary>
-        /// <param name="size">size for the batch</param>
-        /// <returns>the new <see cref="BatchDescriptor"/></returns>
-        public BatchDescriptor NewBatchDescriptor(int size)
-        {
-            return new BatchDescriptor(Math.Min(size, _claimStrategy.BufferSize));
-        }
-
+        
         /// <summary>
         /// The capacity of the data structure to hold entries.
         /// </summary>
-        public int BufferSize
-        {
-            get { return _claimStrategy.BufferSize; }
-        }
+        public int BufferSize => _bufferSize;
 
         /// <summary>
         /// Get the value of the cursor indicating the published sequence.
         /// </summary>
-        public long Cursor
-        {
-            get { return _cursor.Value; }
-        }
+        public long Cursor => _cursor.Value;
 
         /// <summary>
         /// Has the buffer got capacity to allocate another sequence.  This is a concurrent
         /// method so the response should only be taken as an indication of available capacity.
         /// </summary>
-        /// <param name="availableCapacity">availableCapacity in the buffer</param>
+        /// <param name="requiredCapacity">requiredCapacity in the buffer</param>
         /// <returns>true if the buffer has the capacity to allocate the next sequence otherwise false.</returns>
-        public bool HasAvailableCapacity(int availableCapacity)
-        {
-            return _claimStrategy.HasAvailableCapacity(availableCapacity, _gatingSequences);
-        }
-
+        public abstract bool HasAvailableCapacity(int requiredCapacity);
 
         /// <summary>
         /// Claim the next event in sequence for publishing.
         /// </summary>
         /// <returns></returns>
-        public long Next()
-        {
-            if (_gatingSequences == null)
-            {
-                throw new NullReferenceException("gatingSequences must be set before claiming sequences");
-            }
+        public abstract long Next();
 
-            return _claimStrategy.IncrementAndGet(_gatingSequences);
-        }
+        /// <summary>
+        /// Claim the next n events in sequence for publishing.  This is for batch event producing.  Using batch producing requires a little care and some math.
+        /// <code>
+        ///     int n = 10;
+        ///     long hi = sequencer.next(n);
+        ///     long lo = hi - (n - 1);
+        ///     for (long sequence = lo; sequence ~&lt;= hi; sequence++) {
+        ///        // Do work.
+        ///     }
+        ///     sequencer.publish(lo, hi);
+        /// </code>
+        /// </summary>
+        /// <param name="n">the number of sequences to claim</param>
+        /// <returns>the highest claimed sequence value</returns>
+        public abstract long Next(int n);
 
-       
+        /// <summary>
+        /// Attempt to claim the next event in sequence for publishing.  Will return the number of the slot if there is at least<code>requiredCapacity</code> slots available.
+        /// </summary>
+        /// <returns>the claimed sequence value</returns>
+        public abstract long TryNext();
+
         /// <summary>
         /// Attempt to claim the next event in sequence for publishing.  Will return the
-        /// number of the slot if there is at least <param name="availableCapacity"></param> slots
+        /// number of the slot if there is at least n slots
         /// available. 
         /// </summary>
-        /// <param name="availableCapacity"></param>
+        /// <param name="n">the number of sequences to claim</param>
         /// <returns>the claimed sequence value</returns>
-        public long TryNext(int availableCapacity)
-        {
-            if (_gatingSequences == null)
-            {
-                throw new NullReferenceException("_gatingSequences must be set before claiming sequences");
-            }
-
-            if (availableCapacity < 1)
-            {
-                throw new ArgumentOutOfRangeException("availableCapacity", "Available capacity must be greater than 0");
-            }
-        
-            return _claimStrategy.CheckAndIncrement(availableCapacity, 1, _gatingSequences);
-        }
-
-        /// <summary>
-        /// Claim the next batch of sequence numbers for publishing.
-        /// </summary>
-        /// <param name="batchDescriptor">batchDescriptor to be updated for the batch range.</param>
-        /// <returns>the updated batchDescriptor.</returns>
-        public BatchDescriptor Next(BatchDescriptor batchDescriptor)
-        {
-            if (_gatingSequences == null)
-            {
-                throw new NullReferenceException("gatingSequences must be set before claiming sequences");
-            }
-
-            long sequence = _claimStrategy.IncrementAndGet(batchDescriptor.Size, _gatingSequences);
-            batchDescriptor.End = sequence;
-            return batchDescriptor;
-        }
+        public abstract long TryNext(int n);
 
         /// <summary>
         /// Claim a specific sequence when only one publisher is involved.
         /// </summary>
         /// <param name="sequence">sequence to be claimed.</param>
-        /// <returns>sequence just claimed.</returns>
-        public long Claim(long sequence)
-        {
-            if (_gatingSequences == null)
-            {
-                throw new NullReferenceException("gatingSequences must be set before claiming sequences");
-            }
-
-            _claimStrategy.SetSequence(sequence, _gatingSequences);
-
-            return sequence;
-        }
+        public abstract void Claim(long sequence);
 
         /// <summary>
         /// Publish an event and make it visible to <see cref="IEventProcessor"/>s
         /// </summary>
         /// <param name="sequence">sequence to be published</param>
-        public void Publish(long sequence)
+        public abstract void Publish(long sequence);
+
+        /// <summary>
+        /// Publish an event and make it visible to <see cref="IEventProcessor"/>s
+        /// </summary>
+        public abstract void Publish(long lo, long hi);
+
+        /// <summary>
+        /// Get the remaining capacity for this sequencer. return The number of slots remaining.
+        /// </summary>
+        public abstract long GetRemainingCapacity();
+
+        /// <summary>
+        /// Confirms if a sequence is published and the event is available for use; non-blocking.
+        /// </summary>
+        /// <param name="sequence">sequence of the buffer to check</param>
+        /// <returns>true if the sequence is available for use, false if not</returns>
+        public abstract bool IsAvailable(long sequence);
+
+        /// <summary>
+        /// Get the highest sequence number that can be safely read from the ring buffer.  Depending
+        /// on the implementation of the Sequencer this call may need to scan a number of values
+        /// in the Sequencer.  The scan will range from nextSequence to availableSequence.  If
+        /// there are no available values <code>>= nextSequence</code> the return value will be
+        /// <code>nextSequence - 1</code>.  To work correctly a consumer should pass a value that
+        /// it 1 higher than the last sequence that was successfully processed.
+        /// </summary>
+        /// <param name="nextSequence">The sequence to start scanning from.</param>
+        /// <param name="availableSequence">The sequence to scan to.</param>
+        /// <returns>The highest value that can be safely read, will be at least <code>nextSequence - 1</code>.</returns>
+        public abstract long GetHighestPublishedSequence(long nextSequence, long availableSequence);
+
+        /// <summary>
+        /// Add the specified gating sequences to this instance of the Disruptor.  They will
+        /// safely and atomically added to the list of gating sequences. 
+        /// </summary>
+        /// <param name="gatingSequences">The sequences to add.</param>
+        public void AddGatingSequences(params ISequence[] gatingSequences)
         {
-            Publish(sequence, 1);
+            SequenceGroups.AddSequences(ref _gatingSequences, this, gatingSequences);
         }
 
         /// <summary>
-        /// Publish the batch of events in sequence.
+        /// Remove the specified sequence from this sequencer.
         /// </summary>
-        /// <param name="batchDescriptor">batchDescriptor to be published.</param>
-        public void Publish(BatchDescriptor batchDescriptor)
+        /// <param name="sequence">to be removed.</param>
+        /// <returns>true if this sequence was found, false otherwise.</returns>
+        public bool RemoveGatingSequence(ISequence sequence)
         {
-            Publish(batchDescriptor.End, batchDescriptor.Size);
+            return SequenceGroups.RemoveSequence(ref _gatingSequences, sequence);
         }
 
         /// <summary>
-        /// Force the publication of a cursor sequence.
-        /// 
-        /// Only use this method when forcing a sequence and you are sure only one publisher exists.
-        /// This will cause the cursor to advance to this sequence.
+        /// Get the minimum sequence value from all of the gating sequences
+        /// added to this ringBuffer.
         /// </summary>
-        /// <param name="sequence">sequence which is to be forced for publication.</param>
-        public void ForcePublish(long sequence)
+        /// <returns>The minimum gating sequence or the cursor sequence if no sequences have been added.</returns>
+        public long GetMinimumSequence()
         {
-            _cursor.LazySet(sequence);
-            _waitStrategy.SignalAllWhenBlocking();
+            return Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
         }
 
-        private void Publish(long sequence, int batchSize)
+        /// <summary>
+        /// Creates an event poller for this sequence that will use the supplied data provider and
+        /// gating sequences.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="provider">The data source for users of this event poller</param>
+        /// <param name="gatingSequences">Sequence to be gated on.</param>
+        /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
+        public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
         {
-            _claimStrategy.SerialisePublishing(sequence, _cursor, batchSize);
-            _waitStrategy.SignalAllWhenBlocking();
-        }
-
-        public long RemainingCapacity()
-        {
-            long consumed = Util.GetMinimumSequence(_gatingSequences);
-            long produced = _cursor.Value;
-            return BufferSize - (produced - consumed);
+            return EventPoller<T>.NewInstance(provider, this, new Sequence(), _cursor, gatingSequences);
         }
     }
 }

@@ -4,62 +4,82 @@ using System.Threading;
 namespace Disruptor
 {
     /// <summary>
-    /// <see cref="Sequence"/> group that can dynamically have <see cref="Sequence"/>s added and removed while being
+    /// A <see cref="Sequence"/> group that can dynamically have <see cref="Sequence"/>s added and removed while being
     /// thread safe.
     /// 
     /// The <see cref="SequenceGroup.Value"/> get and set methods are lock free and can be
     /// concurrently called with the <see cref="SequenceGroup.Add"/> and <see cref="SequenceGroup.Remove"/>.
     /// </summary>
-    public class SequenceGroup : Sequence
+    public class SequenceGroup : ISequence
     {
-        private Volatile.Reference<Sequence[]> _sequencesRef = new Volatile.Reference<Sequence[]>(new Sequence[0]);
+        /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
+        private ISequence[] _sequences = new ISequence[0];
 
         /// <summary>
-        /// Current sequence number
+        /// Get the minimum sequence value for the group.
         /// </summary>
-        public override long Value
+        public long Value => Util.GetMinimumSequence(Volatile.Read(ref _sequences));
+
+        /// <summary>
+        /// Set all <see cref="Sequence"/>s in the group to a given value.
+        /// </summary>
+        /// <param name="value">value to set the group of sequences to.</param>
+        public void SetValue(long value)
         {
-            get { return Util.GetMinimumSequence(_sequencesRef.ReadFullFence()); }
-            set
+            var sequences = Volatile.Read(ref _sequences);
+            for (var i = 0; i < sequences.Length; i++)
             {
-                var sequences = _sequencesRef.ReadFullFence();
-                for (int i = 0; i < sequences.Length; i++)
-                {
-                    sequences[i].Value = value;
-                }
+                sequences[i].SetValue(value);
             }
         }
 
         /// <summary>
-        /// Eventually sets to the given value.
+        /// Performs a volatile write of this sequence.  The intent is a Store/Store barrier between this write and any previous
+        /// write and a Store/Load barrier between this write and any subsequent volatile read. 
         /// </summary>
-        /// <param name="value">the new value</param>
-        public override void LazySet(long value)
+        /// <param name="value"></param>
+        public void SetValueVolatile(long value)
         {
-            var sequences = _sequencesRef.ReadFullFence();
-            for (int i = 0; i < sequences.Length; i++)
+            var sequences = Volatile.Read(ref _sequences);
+            for (var i = 0; i < sequences.Length; i++)
             {
-                sequences[i].LazySet(value);
+                sequences[i].SetValueVolatile(value);
             }
         }
 
+        public bool CompareAndSet(long expectedSequence, long nextSequence)
+        {
+            throw new NotImplementedException();
+        }
+
+        public long IncrementAndGet()
+        {
+            throw new NotImplementedException();
+        }
+
+        public long AddAndGet(long value)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
-        /// Add a <see cref="Sequence"/> into this aggregate.
+        /// Add a <see cref="Sequence"/> into this aggregate. This should only be used during
+        /// initialisation. Use <see cref="SequenceGroup.AddWhileRunning"/>.
         /// </summary>
         /// <param name="sequence">sequence to be added to the aggregate.</param>
-        public void Add(Sequence sequence)
+        public void Add(ISequence sequence)
         {
-            Sequence[] oldSequences;
-            Sequence[] newSequences;
+            ISequence[] oldSequences;
+            ISequence[] newSequences;
             do
             {
-                oldSequences = _sequencesRef.ReadFullFence();
-                int oldSize = oldSequences.Length;
-                newSequences = new Sequence[oldSize + 1];
+                oldSequences = Volatile.Read(ref _sequences);
+                var oldSize = oldSequences.Length;
+                newSequences = new ISequence[oldSize + 1];
                 Array.Copy(oldSequences, newSequences, oldSize);
                 newSequences[oldSize] = sequence;
             }
-            while (!_sequencesRef.AtomicCompareExchange(newSequences, oldSequences));
+            while (Interlocked.CompareExchange(ref _sequences, newSequences, oldSequences) != oldSequences);
         }
 
         /// <summary>
@@ -67,47 +87,26 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">sequence to be removed from this aggregate.</param>
         /// <returns>true if the sequence was removed otherwise false.</returns>
-        public bool Remove(Sequence sequence)
+        public bool Remove(ISequence sequence)
         {
-            var found = false;
-            Sequence[] oldSequences;
-            Sequence[] newSequences;
-            do
-            {
-                oldSequences = _sequencesRef.ReadFullFence();
-                int oldSize = oldSequences.Length;
-                newSequences = new Sequence[oldSize - 1];
-
-                int pos = 0;
-                for (int i = 0; i < oldSize; i++)
-                {
-                    var testSequence = oldSequences[i];
-                    if (sequence == testSequence && !found)
-                    {
-                        found = true;
-                    }
-                    else
-                    {
-                        newSequences[pos++] = testSequence;
-                    }
-                }
-
-                if (!found)
-                {
-                    break;
-                }
-            }
-            while (!_sequencesRef.AtomicCompareExchange(newSequences, oldSequences));
-
-            return found;
+            return SequenceGroups.RemoveSequence(ref _sequences, sequence);
         }
 
         /// <summary>
         /// Get the size of the group.
         /// </summary>
-        public int Size
+        public int Size => Volatile.Read(ref _sequences).Length;
+        
+        /// <summary>
+        /// Adds a sequence to the sequence group after threads have started to publish to
+        /// the Disruptor.It will set the sequences to cursor value of the ringBuffer
+        /// just after adding them.  This should prevent any nasty rewind/wrapping effects.
+        /// </summary>
+        /// <param name="cursored">The data structure that the owner of this sequence group will be pulling it's events from</param>
+        /// <param name="sequence">The sequence to add</param>
+        public void AddWhileRunning(ICursored cursored, Sequence sequence)
         {
-            get { return _sequencesRef.ReadFullFence().Length; }
+            SequenceGroups.AddSequences(ref _sequences, cursored, sequence);
         }
     }
 }

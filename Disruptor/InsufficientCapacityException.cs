@@ -3,7 +3,9 @@ using System;
 namespace Disruptor
 {
     /// <summary>
-    /// Used to alert <see cref="IEventProcessor"/>s waiting at a <see cref="ISequenceBarrier"/> of status changes.
+    /// Exception thrown when the it is not possible to insert a value into
+    /// the ring buffer without it wrapping the consuming sequenes.Used
+    /// specifically when claiming with the <see cref="RingBuffer{T}.TryNext()"/> call.
     /// </summary>
     public class InsufficientCapacityException : Exception
     {
@@ -17,6 +19,7 @@ namespace Disruptor
         /// </summary>
         private InsufficientCapacityException()
         {
+            // Singleton
         }
     }
 }

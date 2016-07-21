@@ -1,87 +1,34 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading;
+﻿using System.Threading;
 
 namespace Disruptor
 {
     /// <summary>
-    /// Yielding strategy that uses a Thread.Sleep(0) for <see cref="IEventProcessor"/>s waiting on a barrier
+    /// Yielding strategy that uses a Thread.Yield() for <see cref="IEventProcessor"/>s waiting on a barrier
     /// after an initially spinning.
     /// 
     /// This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.
     /// </summary>
     public sealed class YieldingWaitStrategy : IWaitStrategy
     {
-        private const int SpinTries = 100;
+        private const int _spinTries = 100;
 
         /// <summary>
         /// Wait for the given sequence to be available
+        /// <para>This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.</para>
         /// </summary>
         /// <param name="sequence">sequence to be waited on.</param>
         /// <param name="cursor">Ring buffer cursor on which to wait.</param>
-        /// <param name="dependents">dependents further back the chain that must advance first</param>
+        /// <param name="dependentSequence">dependents further back the chain that must advance first</param>
         /// <param name="barrier">barrier the <see cref="IEventProcessor"/> is waiting on.</param>
         /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
-        public long WaitFor(long sequence, Sequence cursor, Sequence[] dependents, ISequenceBarrier barrier)
+        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
             long availableSequence;
-            var counter = SpinTries;
+            var counter = _spinTries;
 
-            if (dependents.Length == 0)
+            while ((availableSequence = dependentSequence.Value) < sequence)
             {
-                while ((availableSequence = cursor.Value) < sequence) // volatile read
-                {
-                    counter = ApplyWaitMethod(barrier, counter);
-                }
-            }
-            else
-            {
-                while ((availableSequence = Util.GetMinimumSequence(dependents)) < sequence)
-                {
-                    counter = ApplyWaitMethod(barrier, counter);
-                }
-            }
-
-            return availableSequence;
-        }
-
-        /// <summary>
-        /// Wait for the given sequence to be available with a timeout specified.
-        /// </summary>
-        /// <param name="sequence">sequence to be waited on.</param>
-        /// <param name="cursor">cursor on which to wait.</param>
-        /// <param name="dependents">dependents further back the chain that must advance first</param>
-        /// <param name="barrier">barrier the processor is waiting on.</param>
-        /// <param name="timeout">timeout value to abort after.</param>
-        /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
-        /// <exception cref="AlertException">AlertException if the status of the Disruptor has changed.</exception>
-        public long WaitFor(long sequence, Sequence cursor, Sequence[] dependents, ISequenceBarrier barrier, TimeSpan timeout)
-        {
-            long availableSequence;
-            var counter = SpinTries;
-            var sw = Stopwatch.StartNew();
-
-            if (dependents.Length == 0)
-            {
-                while ((availableSequence = cursor.Value) < sequence) // volatile read
-                {
-                    counter = ApplyWaitMethod(barrier, counter);
-                    if(sw.Elapsed > timeout)
-                    {
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                while ((availableSequence = Util.GetMinimumSequence(dependents)) < sequence)
-                {
-                    counter = ApplyWaitMethod(barrier, counter);
-                    if (sw.Elapsed > timeout)
-                    {
-                        break;
-                    }
-                }
+                counter = ApplyWaitMethod(barrier, counter);
             }
 
             return availableSequence;
@@ -100,7 +47,7 @@ namespace Disruptor
 
             if(counter == 0)
             {
-                Thread.Sleep(0);
+                Thread.Yield();
             }
             else
             {

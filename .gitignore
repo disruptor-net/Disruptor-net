@@ -20,6 +20,7 @@
 *.sdf
 *.opensdf
 *.unsuccessfulbuild
+*.orig
 ipch/
 obj/
 [Bb]in
@@ -46,3 +47,5 @@ packages/
 
 #Target build folder
 Target/
+*.ncrunchsolution
+*.ncrunchproject

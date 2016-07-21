@@ -1,47 +1,59 @@
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Disruptor
 {
     /// <summary>
-    /// Cache line padded sequence counter.
-    /// Can be used across threads without worrying about false sharing if a located adjacent to another counter in memory.
+    /// <p>Concurrent sequence class used for tracking the progress of
+    /// the ring buffer and event processors.Support a number
+    /// of concurrent operations including CAS and order writes.</p>
+    ///
+    /// <p>Also attempts to be more efficient with regards to false
+    /// sharing by adding padding around the volatile field.</p>
     /// </summary>
-    public class Sequence
+    public class Sequence : ISequence
     {
-        private Volatile.PaddedLong _value = new Volatile.PaddedLong(Sequencer.InitialCursorValue);
-
         /// <summary>
-        /// Default Constructor that uses an initial value of <see cref="Sequencer.InitialCursorValue"/>
+        /// Set to -1 as sequence starting point
         /// </summary>
-        public Sequence()
-        {
-        }
+        public const long InitialCursorValue = -1;
+
+        private Fields _fields;
 
         /// <summary>
         /// Construct a new sequence counter that can be tracked across threads.
         /// </summary>
         /// <param name="initialValue">initial value for the counter</param>
-        public Sequence(long initialValue)
+        public Sequence(long initialValue = InitialCursorValue)
         {
-            _value.WriteCompilerOnlyFence(initialValue);
+            _fields = new Fields(initialValue);
         }
 
         /// <summary>
         /// Current sequence number
         /// </summary>
-        public virtual long Value
+        public long Value => Volatile.Read(ref _fields.Value);
+
+        /// <summary>
+        /// Perform an ordered write of this sequence.  The intent is
+        /// a Store/Store barrier between this write and any previous
+        /// store.
+        /// </summary>
+        /// <param name="value">The new value for the sequence.</param>
+        public void SetValue(long value)
         {
-            get { return _value.ReadFullFence(); }
-            set { _value.WriteFullFence(value); }
+            // no synchronization required, the CLR memory model prevents Store/Store re-ordering
+            _fields.Value = value;
         }
 
         /// <summary>
-        /// Eventually sets to the given value.
+        /// Performs a volatile write of this sequence.  The intent is a Store/Store barrier between this write and any previous
+        /// write and a Store/Load barrier between this write and any subsequent volatile read. 
         /// </summary>
-        /// <param name="value">the new value</param>
-        public virtual void LazySet(long value)
+        /// <param name="value"></param>
+        public void SetValueVolatile(long value)
         {
-            _value.WriteCompilerOnlyFence(value);
+            Volatile.Write(ref _fields.Value, value);
         }
 
         /// <summary>
@@ -50,9 +62,9 @@ namespace Disruptor
         /// <param name="expectedSequence">the expected value for the sequence</param>
         /// <param name="nextSequence">the new value for the sequence</param>
         /// <returns>true if successful. False return indicates that the actual value was not equal to the expected value.</returns>
-        public virtual bool CompareAndSet(long expectedSequence, long nextSequence)
+        public bool CompareAndSet(long expectedSequence, long nextSequence)
         {
-            return _value.AtomicCompareExchange(nextSequence, expectedSequence);
+            return Interlocked.CompareExchange(ref _fields.Value, nextSequence, expectedSequence) == expectedSequence;
         }
 
         /// <summary>
@@ -61,7 +73,7 @@ namespace Disruptor
         /// <returns>String representation of the sequence.</returns>
         public override string ToString()
         {
-            return _value.ToString();
+            return _fields.Value.ToString();
         }
 
         ///<summary>
@@ -70,7 +82,7 @@ namespace Disruptor
         ///<returns>incremented sequence</returns>
         public long IncrementAndGet()
         {
-            return AddAndGet(1);
+            return Interlocked.Increment(ref _fields.Value);
         }
 
         ///<summary>
@@ -79,7 +91,20 @@ namespace Disruptor
         ///<returns>incremented sequence</returns>
         public long AddAndGet(long value)
         {
-            return _value.AtomicAddAndGet(value);
+            return Interlocked.Add(ref _fields.Value, value);
+        }
+
+        [StructLayout(LayoutKind.Explicit, Size = 120)]
+        private struct Fields
+        {
+            /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
+            [FieldOffset(56)]
+            public long Value;
+
+            public Fields(long value)
+            {
+                Value = value;
+            }
         }
     }
 }

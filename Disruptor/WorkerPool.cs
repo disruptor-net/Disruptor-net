@@ -1,22 +1,20 @@
 using System;
 using System.Threading;
-using System.Threading.Tasks;
+using Disruptor.Dsl;
 
 namespace Disruptor
 {
     /// <summary>
-    /// A pool of <see cref="WorkProcessor{T}"/>s that will consume sequences so jobs can be farmed out across a pool of workers
-    /// which are implemented the <see cref="IWorkHandler{T}"/> interface.
+    /// WorkerPool contains a pool of <see cref="WorkProcessor{T}"/> that will consume sequences so jobs can be farmed out across a pool of workers.
+    /// Each of the <see cref="WorkProcessor{T}"/> manage and calls a <see cref="IWorkHandler{T}"/> to process the events.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public sealed class WorkerPool<T> where T : class 
+    /// <typeparam name="T">event to be processed by a pool of workers</typeparam>
+    public sealed class WorkerPool<T> where T : class
     {
-        private const bool Running = true;
-        private const bool Stopped = false;
-
-        private Volatile.Boolean _running = new Volatile.Boolean(Stopped);
-        private readonly Sequence _workSequence = new Sequence(Sequencer.InitialCursorValue);
+        private volatile int _running;
+        private readonly Sequence _workSequence = new Sequence();
         private readonly RingBuffer<T> _ringBuffer;
+        // WorkProcessors are created to wrap each of the provided WorkHandlers
         private readonly WorkProcessor<T>[] _workProcessors;
 
         /// <summary>
@@ -31,20 +29,19 @@ namespace Disruptor
         /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
         public WorkerPool(RingBuffer<T> ringBuffer,
                           ISequenceBarrier sequenceBarrier,
-                          IExceptionHandler exceptionHandler,
+                          IExceptionHandler<T> exceptionHandler,
                           params IWorkHandler<T>[] workHandlers)
         {
             _ringBuffer = ringBuffer;
-            int numWorkers = workHandlers.Length;
-            _workProcessors = new WorkProcessor<T>[numWorkers];
+            _workProcessors = new WorkProcessor<T>[workHandlers.Length];
 
-            for (int i = 0; i < numWorkers; i++)
+            for (var i = 0; i < workHandlers.Length; i++)
             {
                 _workProcessors[i] = new WorkProcessor<T>(ringBuffer,
-                                                         sequenceBarrier,
-                                                         workHandlers[i],
-                                                         exceptionHandler,
-                                                         _workSequence);
+                                                          sequenceBarrier,
+                                                          workHandlers[i],
+                                                          exceptionHandler,
+                                                          _workSequence);
             }
         }
 
@@ -54,49 +51,42 @@ namespace Disruptor
         /// This option does not require <see cref="Sequencer.SetGatingSequences"/> to be called before the work pool is started.
         /// </summary>
         /// <param name="eventFactory">eventFactory for filling the <see cref="RingBuffer{T}"/></param>
-        /// <param name="claimStrategy">claimStrategy for the <see cref="RingBuffer{T}"/></param>
-        /// <param name="waitStrategy">waitStrategy for the <see cref="RingBuffer{T}"/></param>
         /// <param name="exceptionHandler">exceptionHandler to callback when an error occurs which is not handled by the <see cref="IWorkHandler{T}"/>s.</param>
         /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
         public WorkerPool(Func<T> eventFactory,
-                          IClaimStrategy claimStrategy,
-                          IWaitStrategy waitStrategy,
-                          IExceptionHandler exceptionHandler,
+                          IExceptionHandler<T> exceptionHandler,
                           params IWorkHandler<T>[] workHandlers)
 
         {
-            _ringBuffer = new RingBuffer<T>(eventFactory, claimStrategy, waitStrategy);
+            _ringBuffer = RingBuffer<T>.CreateMultiProducer(eventFactory, 1024, new BlockingWaitStrategy());
             var barrier = _ringBuffer.NewBarrier();
-            int numWorkers = workHandlers.Length;
-            _workProcessors = new WorkProcessor<T>[numWorkers];
+            _workProcessors = new WorkProcessor<T>[workHandlers.Length];
 
-            for (int i = 0; i < numWorkers; i++)
+            for (var i = 0; i < workHandlers.Length; i++)
             {
                 _workProcessors[i] = new WorkProcessor<T>(_ringBuffer,
-                                                         barrier,
-                                                         workHandlers[i],
-                                                         exceptionHandler,
-                                                         _workSequence);
+                                                          barrier,
+                                                          workHandlers[i],
+                                                          exceptionHandler,
+                                                          _workSequence);
             }
 
-            _ringBuffer.SetGatingSequences(WorkerSequences);
+            _ringBuffer.AddGatingSequences(GetWorkerSequences());
         }
 
         /// <summary>
         /// Get an array of <see cref="Sequence"/>s representing the progress of the workers.
         /// </summary>
-        public Sequence[] WorkerSequences
+        public ISequence[] GetWorkerSequences()
         {
-            get
+            var sequences = new ISequence[_workProcessors.Length + 1];
+            for (var i = 0; i < _workProcessors.Length; i++)
             {
-                var sequences = new Sequence[_workProcessors.Length];
-                for (int i = 0; i < _workProcessors.Length; i++)
-                {
-                    sequences[i] = _workProcessors[i].Sequence;
-                }
-
-                return sequences;
+                sequences[i] = _workProcessors[i].Sequence;
             }
+            sequences[sequences.Length - 1] = _workSequence;
+
+            return sequences;
         }
 
         /// <summary>
@@ -104,45 +94,42 @@ namespace Disruptor
         /// </summary>
         /// <returns>the <see cref="RingBuffer{T}"/> used for the work queue.</returns>
         /// <exception cref="InvalidOperationException">if the pool has already been started and not halted yet</exception>
-        public RingBuffer<T> Start(TaskScheduler taskScheduler)
+        public RingBuffer<T> Start(IExecutor executor)
         {
-            if (! _running.AtomicCompareExchange(Running, Stopped))
+            if (Interlocked.Exchange(ref _running, 1) != 0)
             {
-                throw new InvalidOperationException("WorkerPool has already been started and cannot be restarted until halted.");
+                throw new InvalidOperationException("WorkerPool has already been started and cannot be restarted until halted");
             }
 
-            long cursor = _ringBuffer.Cursor;
-            _workSequence.Value = cursor;
+            var cursor = _ringBuffer.Cursor;
+            _workSequence.SetValue(cursor);
 
-            for (int i = 0; i < _workProcessors.Length; i++)
+            foreach (var workProcessor in _workProcessors)
             {
-                var workProcessor = _workProcessors[i];
-                workProcessor.Sequence.Value = cursor;
-
-                Task.Factory.StartNew(workProcessor.Run, CancellationToken.None, TaskCreationOptions.None, taskScheduler);
+                workProcessor.Sequence.SetValue(cursor);
+                executor.Execute(workProcessor.Run);
             }
 
             return _ringBuffer;
         }
 
-       /// <summary>
+        /// <summary>
         /// Wait for the <see cref="RingBuffer{T}"/> to drain of published events then halt the workers.
        /// </summary>
         public void DrainAndHalt()
         {
-            var workerSequences = WorkerSequences;
+            var workerSequences = GetWorkerSequences();
             while (_ringBuffer.Cursor > Util.GetMinimumSequence(workerSequences))
             {
                 Thread.Sleep(0);
             }
 
-            for (int i = 0; i < _workProcessors.Length; i++)
+            foreach (var workProcessor in _workProcessors)
             {
-                var workProcessor = _workProcessors[i];
                 workProcessor.Halt();
             }
 
-            _running.WriteFullFence(Stopped);
+            _running = 0;
         }
 
         /// <summary>
@@ -150,13 +137,14 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            for (int i = 0; i < _workProcessors.Length; i++)
+            foreach (var workProcessor in _workProcessors)
             {
-                var workProcessor = _workProcessors[i];
                 workProcessor.Halt();
             }
 
-            _running.WriteFullFence(Stopped);
+            _running = 0;
         }
+
+        public bool IsRunning => _running == 1;
     }
 }

@@ -23,7 +23,7 @@ namespace Disruptor.Tests
             _batchHandlerMock = new Mock<IEventHandler<StubEvent>>();
             _countDownEvent = new CountdownEvent(1);
             _batchEventProcessor = new BatchEventProcessor<StubEvent>(_ringBuffer, _sequenceBarrier, _batchHandlerMock.Object);
-            _ringBuffer.SetGatingSequences(_batchEventProcessor.Sequence);
+            _ringBuffer.AddGatingSequences(_batchEventProcessor.Sequence);
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldCallMethodsInLifecycleOrder()
         {
-            _batchHandlerMock.Setup(bh => bh.OnNext(_ringBuffer[0], 0, true))
+            _batchHandlerMock.Setup(bh => bh.OnEvent(_ringBuffer[0], 0, true))
                              .Callback(() => _countDownEvent.Signal());
 
             var thread = new Thread(_batchEventProcessor.Run);
@@ -50,15 +50,15 @@ namespace Disruptor.Tests
             _batchEventProcessor.Halt();
             thread.Join();
 
-            _batchHandlerMock.Verify(bh => bh.OnNext(_ringBuffer[0], 0, true), Times.Once());
+            _batchHandlerMock.Verify(bh => bh.OnEvent(_ringBuffer[0], 0, true), Times.Once());
         }
 
         [Test]
         public void ShouldCallMethodsInLifecycleOrderForBatch()
         {
-            _batchHandlerMock.Setup(bh => bh.OnNext(_ringBuffer[0], 0, false));
-            _batchHandlerMock.Setup(bh => bh.OnNext(_ringBuffer[1], 1, false));
-            _batchHandlerMock.Setup(bh => bh.OnNext(_ringBuffer[2], 2, true)).Callback(() => _countDownEvent.Signal());
+            _batchHandlerMock.Setup(bh => bh.OnEvent(_ringBuffer[0], 0, false));
+            _batchHandlerMock.Setup(bh => bh.OnEvent(_ringBuffer[1], 1, false));
+            _batchHandlerMock.Setup(bh => bh.OnEvent(_ringBuffer[2], 2, true)).Callback(() => _countDownEvent.Signal());
 
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
@@ -79,10 +79,10 @@ namespace Disruptor.Tests
         public void ShouldCallExceptionHandlerOnUncaughtException()
         {
             var ex = new Exception();
-            var exceptionHandlerMock = new Mock<IExceptionHandler>();
+            var exceptionHandlerMock = new Mock<IExceptionHandler<object>>();
             _batchEventProcessor.SetExceptionHandler(exceptionHandlerMock.Object);
 
-            _batchHandlerMock.Setup(bh => bh.OnNext(_ringBuffer[0], 0, true))
+            _batchHandlerMock.Setup(bh => bh.OnEvent(_ringBuffer[0], 0, true))
                              .Throws(ex); // OnNext raises an expcetion
 
             exceptionHandlerMock.Setup(bh => bh.HandleEventException(ex, 0, _ringBuffer[0]))

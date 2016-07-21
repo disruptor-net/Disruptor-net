@@ -1,60 +1,54 @@
-using System;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class EventPublisherTests
+    public class EventPublisherTests : IEventTranslator<LongEvent>
     {
-        private const int BufferSize = 32;
-        private const long ValueAdd = 29L;
+        private const int _bufferSize = 32;
+        private const long _valueAdd = 29L;
+        private RingBuffer<LongEvent> _ringBuffer;
 
-        private readonly Func<LongEvent, long, LongEvent> _translator = (evt, seq) =>
+        [SetUp]
+        public void SetUp()
         {
-            evt.Value = seq + ValueAdd;
-            return evt;
-        };
-
+            _ringBuffer = RingBuffer<LongEvent>.CreateMultiProducer(() => new LongEvent(), _bufferSize);
+        }
 
         [Test]
         public void ShouldPublishEvent()
         {
+            _ringBuffer.AddGatingSequences(new NoOpEventProcessor<LongEvent>(_ringBuffer).Sequence);
 
-            var ringBuffer = new RingBuffer<LongEvent>(()=>new LongEvent(0), BufferSize);
-            ringBuffer.SetGatingSequences(new NoOpEventProcessor(ringBuffer).Sequence);
-            var eventPublisher = new EventPublisher<LongEvent>(ringBuffer);
+            _ringBuffer.PublishEvent(this);
+            _ringBuffer.PublishEvent(this);
 
-
-            eventPublisher.PublishEvent(_translator);
-            eventPublisher.PublishEvent(_translator);
-
-            Assert.AreEqual(0L + ValueAdd, ringBuffer[0].Value);
-            Assert.AreEqual(1L + ValueAdd, ringBuffer[1].Value);
+            Assert.AreEqual(0L + _valueAdd, _ringBuffer[0].Value);
+            Assert.AreEqual(1L + _valueAdd, _ringBuffer[1].Value);
         }
-
 
         [Test]
         public void ShouldTryPublishEvent()
         {
-            RingBuffer<LongEvent> ringBuffer = new RingBuffer<LongEvent>(()=>new LongEvent(0), BufferSize);
-            ringBuffer.SetGatingSequences(new Sequence());
-            EventPublisher<LongEvent> eventPublisher = new EventPublisher<LongEvent>(ringBuffer);
+            _ringBuffer.AddGatingSequences(new Sequence());
 
-
-
-            for (int i = 0; i < BufferSize; i++)
+            for (var i = 0; i < _bufferSize; i++)
             {
-                Assert.IsTrue(eventPublisher.TryPublishEvent(_translator, 1));
+                Assert.IsTrue(_ringBuffer.TryPublishEvent(this));
             }
 
-            for (int i = 0; i < BufferSize; i++)
+            for (var i = 0; i < _bufferSize; i++)
             {
-                Assert.AreEqual(i + ValueAdd, ringBuffer[i].Value);
+                Assert.That(_ringBuffer[i].Value, Is.EqualTo(i + _valueAdd));
             }
 
-            Assert.IsFalse(eventPublisher.TryPublishEvent(_translator, 1));
-    }
+            Assert.IsFalse(_ringBuffer.TryPublishEvent(this));
+        }
 
+        public void TranslateTo(LongEvent eventData, long sequence)
+        {
+            eventData.Value = sequence + 29;
+        }
     }
 }

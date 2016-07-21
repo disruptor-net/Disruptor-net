@@ -3,6 +3,7 @@ namespace Disruptor
     /// <summary>
     /// An aggregate collection of <see cref="IEventHandler{T}"/> that get called in sequence for each event.
     /// </summary>
+    /// <typeparam name="T">event implementation storing the data for sharing during exchange or parallel coordination of an event</typeparam>
     public class AggregateEventHandler<T> : IEventHandler<T>, ILifecycleAware
     {
         private readonly IEventHandler<T>[] _eventHandlers;
@@ -10,7 +11,7 @@ namespace Disruptor
         /// <summary>
         /// Construct an aggregate collection of <see cref="IEventHandler{T}"/> to be called in sequence.
         /// </summary>
-        /// <param name="eventHandlers"></param>
+        /// <param name="eventHandlers">to be called in sequence</param>
         public AggregateEventHandler(params IEventHandler<T>[] eventHandlers)
         {
             _eventHandlers = eventHandlers;
@@ -22,12 +23,12 @@ namespace Disruptor
         /// <param name="data">Data committed to the <see cref="RingBuffer{T}"/></param>
         /// <param name="sequence">Sequence number committed to the <see cref="RingBuffer{T}"/></param>
         /// <param name="endOfBatch">flag to indicate if this is the last event in a batch from the <see cref="RingBuffer{T}"/></param>
-        public void OnNext(T data, long sequence, bool endOfBatch)
+        public void OnEvent(T data, long sequence, bool endOfBatch)
         {
-            for (int i = 0; i < _eventHandlers.Length; i++)
+            // for loop instead of foreach in order to avoid bound checks, we're here in the critical path
+            for (var i = 0; i < _eventHandlers.Length; i++)
             {
-                var eventHandler = _eventHandlers[i];
-                eventHandler.OnNext(data, sequence, endOfBatch);
+                _eventHandlers[i].OnEvent(data, sequence, endOfBatch);
             }
         }
 
@@ -38,11 +39,7 @@ namespace Disruptor
         {
             foreach (var eventHandler in _eventHandlers)
             {
-                var lifecycleAware = eventHandler as ILifecycleAware;
-                if(lifecycleAware != null)
-                {
-                    lifecycleAware.OnStart();                    
-                }
+                (eventHandler as ILifecycleAware)?.OnStart();
             }
         }
 
@@ -53,11 +50,7 @@ namespace Disruptor
         {
             foreach (var eventHandler in _eventHandlers)
             {
-                var lifecycleAware = eventHandler as ILifecycleAware;
-                if(lifecycleAware != null)
-                {
-                    lifecycleAware.OnShutdown();                    
-                }
+                (eventHandler as ILifecycleAware)?.OnShutdown();
             }
         }
     }

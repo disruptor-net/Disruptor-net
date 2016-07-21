@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,8 +10,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Disruptor.Tests</RootNamespace>
     <AssemblyName>Disruptor.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,6 +32,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Moq">
@@ -39,7 +42,15 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\nunit.framework.dll</HintPath>
     </Reference>
+    <Reference Include="ReadOnlyCollectionsInterfaces, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ReadOnlyCollectionInterfaces.1.0.0\lib\NET40-client\ReadOnlyCollectionsInterfaces.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable.Net40, Version=1.0.27.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Collections.Immutable.Net40.1.0.30.17\lib\net40\System.Collections.Immutable.Net40.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Management" />
     <Reference Include="System.Xml.Linq" />
@@ -53,44 +64,71 @@
       <Link>Version.cs</Link>
     </Compile>
     <Compile Include="AggregateEventHandlerTests.cs" />
-    <Compile Include="BatchPublisherTests.cs" />
+    <Compile Include="BatchEventProcessorTests.cs" />
+    <Compile Include="BatchingTest.cs" />
+    <Compile Include="BusySpinWaitStrategyTests.cs" />
     <Compile Include="Collections\HistogramTests.cs" />
-    <Compile Include="BatchEventProcessorTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MultiThreadedClaimStrategyTests.cs" />
-    <Compile Include="SequenceBarrierTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Example\ConsumerRepositoryTests.cs" />
+    <Compile Include="DisruptorStressTest.cs" />
+    <Compile Include="Dsl\DisruptorTest.cs" />
+    <Compile Include="Dsl\Stubs\DelayedEventHandler.cs" />
+    <Compile Include="Dsl\Stubs\EventHandlerStub.cs" />
+    <Compile Include="Dsl\Stubs\EvilEqualsEventHandler.cs" />
+    <Compile Include="Dsl\Stubs\ExceptionThrowingEventHandler.cs" />
+    <Compile Include="Dsl\Stubs\SleepingEventHandler.cs" />
+    <Compile Include="Dsl\Stubs\StubExceptionHandler.cs" />
+    <Compile Include="Dsl\Stubs\StubExecutor.cs" />
+    <Compile Include="Dsl\Stubs\StubPublisher.cs" />
+    <Compile Include="Dsl\Stubs\TestWorkHandler.cs" />
+    <Compile Include="DummySequenceBarrier.cs" />
+    <Compile Include="EventPollerTest.cs" />
     <Compile Include="EventPublisherTests.cs" />
+    <Compile Include="Example\DynamiclyAddHandler.cs" />
+    <Compile Include="Example\MutliProducerWithTranslator.cs" />
+    <Compile Include="Example\NamedEventHandler.cs" />
+    <Compile Include="Example\PullWithBatchedPoller\BatchedPoller.cs" />
+    <Compile Include="Example\PullWithBatchedPoller\PullWithBatchedPoller.cs" />
+    <Compile Include="Example\PullWithPoller.cs" />
+    <Compile Include="Example\ThreeToOneDisruptor.cs" />
     <Compile Include="FatalExceptionHandlerTests.cs" />
+    <Compile Include="FixedSequenceGroupTest.cs" />
     <Compile Include="IgnoreExceptionHandlerTests.cs" />
     <Compile Include="LifecycleAwareTests.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MultiThreadedLowContentionClaimStrategyTests.cs" />
+    <Compile Include="MultiProducerSequencerTest.cs" />
+    <Compile Include="PhasedBackoffWaitStrategyTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RingBufferTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="RingBufferWithMocksTest.cs" />
+    <Compile Include="SequenceBarrierTests.cs" />
+    <Compile Include="RingBufferTests.cs" />
     <Compile Include="SequenceGroupTests.cs" />
     <Compile Include="SequenceReportingCallbackTests.cs" />
     <Compile Include="SequencerTests.cs" />
-    <Compile Include="SingleThreadedClaimStrategyTests.cs" />
+    <Compile Include="SequenceUpdater.cs" />
+    <Compile Include="ShutdownOnFatalExceptionTest.cs" />
+    <Compile Include="SpinWaitWaitStrategyTests.cs" />
+    <Compile Include="SleepingWaitStrategyTests.cs" />
+    <Compile Include="Support\AtomicReference.cs" />
     <Compile Include="Support\LongEvent.cs" />
     <Compile Include="Support\StubEvent.cs" />
+    <Compile Include="Support\TestEvent.cs" />
     <Compile Include="Support\TestWaiter.cs" />
+    <Compile Include="TimeoutBlockingWaitStrategyTest.cs" />
     <Compile Include="UtilTests.cs" />
+    <Compile Include="Support\PaddedLong.cs" />
+    <Compile Include="WaitStrategyTestUtil.cs" />
+    <Compile Include="WorkerPoolTests.cs" />
+    <Compile Include="YieldingWaitStrategyTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Atomic\Atomic.csproj">
-      <Project>{BDB4336E-54F2-475D-8193-B730C522261F}</Project>
-      <Name>Atomic</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj">
       <Project>{37FBDBE1-8524-4489-B082-CC109B0F5EA3}</Project>
       <Name>Disruptor</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

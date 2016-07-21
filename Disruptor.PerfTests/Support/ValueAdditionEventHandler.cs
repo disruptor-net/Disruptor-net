@@ -1,34 +1,31 @@
 using System.Threading;
+using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Support
 {
     public class ValueAdditionEventHandler : IEventHandler<ValueEvent>
     {
-        private readonly long _iterations;
-        private Volatile.PaddedLong _value;
-        private readonly ManualResetEvent _mru;
+        private PaddedLong _value;
+        public long Count { get; private set; }
+        private ManualResetEvent Latch { get; set; }
 
-        public ValueAdditionEventHandler(long iterations, ManualResetEvent mru)
+        public long Value => _value.Value;
+
+        public void Reset(ManualResetEvent latch, long expectedCount)
         {
-            _iterations = iterations;
-            _mru = mru;
+            _value.Value = 0;
+            Latch = latch;
+            Count = expectedCount;
         }
 
-        public long Value
+        public void OnEvent(ValueEvent value, long sequence, bool endOfBatch)
         {
-            get { return _value.ReadUnfenced(); }
-        }
+            _value.Value = _value.Value + value.Value;
 
-        public void OnNext(ValueEvent value, long sequence, bool endOfBatch)
-        {
-            _value.WriteUnfenced(_value.ReadUnfenced() + value.Value);
-
-            if(sequence == _iterations - 1)
+            if(Count == sequence)
             {
-                _mru.Set();
+                Latch?.Set();
             }
         }
     }
 }
-
-

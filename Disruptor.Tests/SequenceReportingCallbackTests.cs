@@ -7,17 +7,17 @@ namespace Disruptor.Tests
     [TestFixture]
     public class SequenceReportingCallbackTests
     {
-        private readonly ManualResetEvent _callbackLatch = new ManualResetEvent(false);
-        private readonly ManualResetEvent _onEndOfBatchLatch = new ManualResetEvent(false);
+        private readonly ManualResetEvent _callbackSignal = new ManualResetEvent(false);
+        private readonly ManualResetEvent _onEndOfBatchSignal = new ManualResetEvent(false);
 
         [Test]
         public void ShouldReportProgressByUpdatingSequenceViaCallback()
         {
-            var ringBuffer = new RingBuffer<StubEvent>(()=>new StubEvent(0), 16);
+            var ringBuffer = RingBuffer<StubEvent>.CreateMultiProducer(() => new StubEvent(-1), 16);
             var sequenceBarrier = ringBuffer.NewBarrier();
-            var handler = new TestSequenceReportingEventHandler(_callbackLatch);
+            ISequenceReportingEventHandler<StubEvent> handler = new TestSequenceReportingEventHandler(_callbackSignal, _onEndOfBatchSignal);
             var batchEventProcessor = new BatchEventProcessor<StubEvent>(ringBuffer, sequenceBarrier, handler);
-            ringBuffer.SetGatingSequences(batchEventProcessor.Sequence);
+            ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
 
             var thread = new Thread(batchEventProcessor.Run) {IsBackground = true};
             thread.Start();
@@ -25,10 +25,10 @@ namespace Disruptor.Tests
             Assert.AreEqual(-1L, batchEventProcessor.Sequence.Value);
             ringBuffer.Publish(ringBuffer.Next());
 
-            _callbackLatch.WaitOne();
+            _callbackSignal.WaitOne();
             Assert.AreEqual(0L, batchEventProcessor.Sequence.Value);
 
-            _onEndOfBatchLatch.Set();
+            _onEndOfBatchSignal.Set();
             Assert.AreEqual(0L, batchEventProcessor.Sequence.Value);
 
             batchEventProcessor.Halt();
@@ -37,23 +37,30 @@ namespace Disruptor.Tests
 
         private class TestSequenceReportingEventHandler : ISequenceReportingEventHandler<StubEvent>
         {
-            private Sequence _sequenceCallback;
-            private readonly ManualResetEvent _callbackLatch;
+            private ISequence _sequenceCallback;
+            private readonly ManualResetEvent _callbackSignal;
+            private readonly ManualResetEvent _onEndOfBatchSignal;
 
-            public TestSequenceReportingEventHandler(ManualResetEvent callbackLatch)
+            public TestSequenceReportingEventHandler(ManualResetEvent callbackSignal, ManualResetEvent onEndOfBatchSignal)
             {
-                _callbackLatch = callbackLatch;
+                _callbackSignal = callbackSignal;
+                _onEndOfBatchSignal = onEndOfBatchSignal;
             }
 
-            public void SetSequenceCallback(Sequence sequenceTrackerCallback)
+            public void SetSequenceCallback(ISequence sequenceTrackerCallback)
             {
                 _sequenceCallback = sequenceTrackerCallback;
             }
 
-            public void OnNext(StubEvent evt, long sequence, bool endOfBatch)
+            public void OnEvent(StubEvent evt, long sequence, bool endOfBatch)
             {
-                _sequenceCallback.Value = sequence;
-                _callbackLatch.Set();
+                _sequenceCallback.SetValue(sequence);
+                _callbackSignal.Set();
+
+                if (endOfBatch)
+                {
+                    _onEndOfBatchSignal.WaitOne();
+                }
             }
         }
     }

@@ -1,68 +1,81 @@
 ﻿using System;
-using System.Diagnostics;
-using Disruptor.PerfTests.Runner;
+using System.Linq;
+using System.Reflection;
+using Disruptor.PerfTests.Queue;
 
 namespace Disruptor.PerfTests
 {
-    public static class Program
+    public class Program
     {
         static void Main(string[] args)
         {
-            ScenarioType scenarioType;
-            ImplementationType implementationType;
-            int runs;
-
-            if (args == null
-                || args.Length != 3
-                || !Enum.TryParse(args[0], out scenarioType)
-                || !Enum.TryParse(args[1], out implementationType)
-                || !int.TryParse(args[2], out runs)
-                )
+            if (args == null || args.Length > 2)
             {
                 PrintUsage();
+                Console.ReadKey();
                 return;
             }
             
-            Console.WriteLine(new ComputerSpecifications().ToString());
+            Type[] perfTestTypes;
+            if (string.Equals(args[0], "ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                var startAt = args.Length == 2 ? args[1] : null;
+                perfTestTypes = Assembly.GetAssembly(typeof(Program))
+                                        .GetTypes()
+                                        .Where(x => !x.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(x) || typeof(ILatencyTest).IsAssignableFrom(x)) && !typeof(IQueueTest).IsAssignableFrom(x))
+                                        .OrderBy(x => x.Name)
+                                        .SkipWhile(type => startAt != null && type.Name != startAt)
+                                        .ToArray();
+            }
+            else
+            {
+                var type = Type.GetType(args[0]);
+                if (type == null)
+                {
+                    Console.WriteLine($"Could not find the type '{args[0]}'");
+                    return;
+                }
+                perfTestTypes = new[] { type };
+            }
 
-            var session = new PerformanceTestSession(scenarioType, implementationType, runs);
+            foreach (var perfTestType in perfTestTypes)
+            {
+                RunTestForType(perfTestType, perfTestTypes.Length == 1);
+            }
+        }
 
-            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
+        private static void RunTestForType(Type perfTestType, bool shouldOpen)
+        {
+            var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType);
+            var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
 
-            session.Run();
+            var typeName = perfTestType.Name;
+            if (!isThroughputTest && !isLatencyTest)
+            {
+                Console.WriteLine($"*** ERROR *** Unable to determine the runner to use for this type ({typeName})");
+                return;
+            }
 
-            session.GenerateAndOpenReport();
-            Console.ReadKey();
+            //Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
+
+            if (isThroughputTest)
+            {
+                var session = new ThroughputTestSession(perfTestType);
+                session.Run();
+                session.GenerateAndOpenReport(shouldOpen);
+            }
+
+            if (isLatencyTest)
+            {
+                var session = new LatencyTestSession(perfTestType);
+                session.Run();
+                session.GenerateAndOpenReport(shouldOpen);
+            }
         }
 
         private static void PrintUsage()
         {
-            Console.WriteLine("Usage: Disruptor.PerfTests Scenario Implementation Runs");
-            Console.WriteLine();
-            PrintEnum(typeof (ScenarioType));
-            Console.WriteLine();
-            PrintEnum(typeof(ImplementationType));
-            Console.WriteLine();
-            Console.WriteLine("Runs: number of test run to do for each scenario and implementation");
-            Console.WriteLine();
-            Console.WriteLine("Example: Disruptor.PerfTests 0 0 3");
-            Console.WriteLine("will run all performance test scenarios for all implementations 3 times.");
-        }
-
-        private static void PrintEnum(Type enumType)
-        {
-            var names = Enum.GetNames(enumType);
-            var values = Enum.GetValues(enumType);
-
-            Console.WriteLine(enumType.Name + " options:");
-
-            for (var i = 0; i < names.Length; i++)
-            {
-                var name = names[i];
-                var value = (int)values.GetValue(i);
-                Console.WriteLine(" - {0} ({1})", value, name);
-            }
+            Console.WriteLine("Usage: Disruptor.PerfTests TestTypeFullName|ALL [ie. Disruptor.PerfTests.Sequenced.OneToOneSequencedBatchThroughputTest]");
         }
     }
 }
-
