@@ -1,3 +1,3 @@
-c:\WINDOWS\Microsoft.NET\Framework\v4.0.30319\msbuild Build.xml /t:Test
+"C:\Program Files (x86)"\MSBuild\14.0\bin\msbuild Build.xml /t:Test
 
 pause

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <PropertyGroup>
     <MSBuildCommunityTasksPath>$(MSBuildProjectDirectory)\Lib\MSBuild.Community\</MSBuildCommunityTasksPath>
     <SourceDir>$(MSBuildProjectDirectory)</SourceDir>
@@ -46,7 +46,7 @@
   <Target Name="UpdateVersion" Condition=" '$(DisruptorVersion)' != '' " DependsOnTargets="PreBuild">
     <AssemblyInfo CodeLanguage="CS"
       OutputFile="$(MsBuildProjectDirectory)\Version.cs"
-      AssemblyCompany="http://github.com/odeheurles/Disruptor-net/network"
+      AssemblyCompany="https://github.com/disruptor-net/Disruptor-net"
       AssemblyProduct="Disruptor"
       AssemblyCopyright="Copyright © disruptor-net"
       AssemblyVersion="$(DisruptorVersion)"
@@ -56,7 +56,7 @@
   <!-- Compiles the VS solution -->
   <Target Name="Build" DependsOnTargets="UpdateVersion">
     <MSBuild
-		  Projects="NDisruptor.sln"
+		  Projects="Disruptor-net.sln"
 		  Properties="Configuration=Release;OutputPath=$(BinDir);Optimize=true"
 		  StopOnFirstFailure="true"
 		  ContinueOnError="false"

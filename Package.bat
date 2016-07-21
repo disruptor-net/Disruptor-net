@@ -1,3 +1,5 @@
-c:\WINDOWS\Microsoft.NET\Framework\v4.0.30319\msbuild Build.xml /t:Package /p:DisruptorVersion=2.0
+rmdir /S /Q Target
+
+"C:\Program Files (x86)"\MSBuild\14.0\bin\msbuild Build.xml /t:Package /p:DisruptorVersion=3.3.4
 
 pause
