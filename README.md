@@ -2,11 +2,16 @@
 
 This project aims to provide the full functionality of the Disruptor to CLR projects.
 
+## Roadmap
+
+* Include latest changes made to the java 3.3.5 version 
+
 ## What's new?
 
 04/07/2016 (v3.3.4):
 
-* All features available in Java Disruptor **3.3.4** have been ported 
+* All features available in Java Disruptor **3.3.4** have been ported by the team at [ABC Arbitrage](http://abc-arbitrage.com) 
+* Now targeting the .NET 4.6.1 framework and using C# 6 features
 
 11/7/2013 (v2.10.0):
 
