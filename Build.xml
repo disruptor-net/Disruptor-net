@@ -111,7 +111,7 @@
     <ManifestUpdate
       ManifestFile="$(SourceDir)\Package.nuspec"
       WorkingDirectory="$(BinDir)"
-      Version="$(DisruptorVersion)"
+      Version="$(NugetVersion)"
     />
 
     <!-- Create NuGet package -->
