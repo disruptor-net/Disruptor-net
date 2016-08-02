@@ -55,6 +55,7 @@
     <Compile Include="AggregateEventHandler.cs" />
     <Compile Include="AlertException.cs" />
     <Compile Include="BlockingWaitStrategy.cs" />
+    <Compile Include="LiteTimeoutBlockingWaitStrategy.cs" />
     <Compile Include="SpinWaitWaitStrategy.cs" />
     <Compile Include="BusySpinWaitStrategy.cs" />
     <Compile Include="Dsl\BasicExecutor.cs" />

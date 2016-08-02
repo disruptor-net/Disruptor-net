@@ -101,6 +101,7 @@
     <Compile Include="LifecycleAwareTests.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="LiteTimeoutBlockingWaitStrategyTests.cs" />
     <Compile Include="MultiProducerSequencerTest.cs" />
     <Compile Include="PhasedBackoffWaitStrategyTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
