@@ -1,4 +1,4 @@
-# .NET port of LMAX Disruptor
+# .NET port of LMAX Disruptor [![Build status](https://ci.appveyor.com/api/projects/status/g6qixx362mw9jhp1?svg=true)](https://ci.appveyor.com/project/ablanchet/disruptor-net)
 
 This project aims to provide the full functionality of the Disruptor to CLR projects.
 
@@ -24,10 +24,10 @@ The quickest way to get started with the disruptor is by using the [NuGet packag
 ## Build from source and run tests
 
 You may also build disruptor directly from the source:
-* you need Visual Studio 2010
-* run build.bat, it will compile, run the tests and output binaries and results into Target folder
+* you need Visual Studio 2015
+* run `Helper-Build.bat`, it will compile, run the tests and output binaries and results into `\output\build` folder
 
-You can then run the performance tests: runPerfTest.bat
+You can also run all the performance tests by running `Helper-RunAllPerfTestsIsolated.bat`, or run `output\build\Disruptor.PerfTests.exe TestFullName` to run one perf test in particular
 
 [NuGet package]: http://nuget.org/packages/Disruptor
 

@@ -1,0 +1,4 @@
+version: 3.3.4.{build}
+build: off
+test_script:
+- ps: build\build.ps1 -Script build\build.cake
