@@ -9,7 +9,7 @@ namespace Disruptor
     /// Generally, this will be used as part of a <see cref="WorkerPool{T}"/>.
     /// </summary>
     /// <typeparam name="T">event implementation storing the details for the work to processed.</typeparam>
-    public sealed class WorkProcessor<T> : IEventProcessor, IEventReleaser where T : class 
+    public sealed class WorkProcessor<T> : IEventProcessor where T : class 
     {
         private volatile int _running;
         private readonly Sequence _sequence = new Sequence();
@@ -18,6 +18,8 @@ namespace Disruptor
         private readonly IWorkHandler<T> _workHandler;
         private readonly IExceptionHandler<T> _exceptionHandler;
         private readonly ISequence _workSequence;
+        private readonly IEventReleaser _eventReleaser;
+        private readonly ITimeoutHandler _timeoutHandler;
 
         /// <summary>
         /// Construct a <see cref="WorkProcessor{T}"/>.
@@ -35,8 +37,10 @@ namespace Disruptor
             _workHandler = workHandler;
             _exceptionHandler = exceptionHandler;
             _workSequence = workSequence;
+            _eventReleaser = new EventReleaser(this);
 
-            (_workHandler as IEventReleaseAware)?.SetEventReleaser(this);
+            (_workHandler as IEventReleaseAware)?.SetEventReleaser(_eventReleaser);
+            _timeoutHandler = _workHandler as ITimeoutHandler;
         }
 
         /// <summary>
@@ -101,6 +105,10 @@ namespace Disruptor
                         cachedAvailableSequence = _sequenceBarrier.WaitFor(nextSequence);
                     }
                 }
+                catch (TimeoutException)
+                {
+                    NotifyTimeout(_sequence.Value);
+                }
                 catch (AlertException)
                 {
                     if (_running == 0)
@@ -120,9 +128,16 @@ namespace Disruptor
             _running = 0;
         }
 
-        void IEventReleaser.Release()
+        private void NotifyTimeout(long availableSequence)
         {
-            _sequence.SetValue(long.MaxValue);
+            try
+            {
+                _timeoutHandler?.OnTimeout(availableSequence);
+            }
+            catch (Exception ex)
+            {
+                _exceptionHandler.HandleEventException(ex, availableSequence, null);
+            }
         }
 
         private void NotifyStart()
@@ -154,6 +169,21 @@ namespace Disruptor
                 {
                     _exceptionHandler.HandleOnShutdownException(ex);
                 }
+            }
+        }
+
+        private class EventReleaser : IEventReleaser
+        {
+            private readonly WorkProcessor<T> _workProcessor;
+
+            public EventReleaser(WorkProcessor<T> workProcessor)
+            {
+                _workProcessor = workProcessor;
+            }
+
+            public void Release()
+            {
+                _workProcessor._sequence.SetValue(long.MaxValue);
             }
         }
     }
