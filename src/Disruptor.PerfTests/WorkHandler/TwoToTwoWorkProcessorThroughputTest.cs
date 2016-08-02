@@ -29,7 +29,7 @@ namespace Disruptor.PerfTests.WorkHandler
         private const long _iterations = 1000L * 1000L * 1L;
         private readonly CountdownEvent _cyclicBarrier = new CountdownEvent(_numPublishers + 1);
 
-        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateMultiProducer(() => new ValueEvent(), _bufferSize, new BusySpinWaitStrategy());
+        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateMultiProducer(ValueEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
         private readonly Sequence _workSequence = new Sequence();
         private readonly ValueAdditionWorkHandler[] _handlers = new ValueAdditionWorkHandler[2];
         private readonly WorkProcessor<ValueEvent>[] _workProcessors = new WorkProcessor<ValueEvent>[2];

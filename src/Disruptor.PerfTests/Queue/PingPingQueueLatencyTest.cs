@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,12 +11,12 @@ namespace Disruptor.PerfTests.Queue
     public class PingPingQueueLatencyTest : ILatencyTest, IQueueTest
     {
         private const int _bufferSize = 1024;
-        private const long _iterations = 1000 * 1000 * 30;
+        private const long _iterations = 100 * 1000 * 30;
         private const long _pauseDurationInNano = 1000;
         private static readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
-        private readonly BlockingCollection<long> _pingQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
-        private readonly BlockingCollection<long> _pongQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
+        private readonly ArrayConcurrentQueue<long> _pingQueue = new ArrayConcurrentQueue<long>(_bufferSize);
+        private readonly ArrayConcurrentQueue<long> _pongQueue = new ArrayConcurrentQueue<long>(_bufferSize);
         private readonly QueuePinger _pinger;
         private readonly QueuePonger _ponger;
 
@@ -47,12 +46,12 @@ namespace Disruptor.PerfTests.Queue
             cancellationToken.Cancel();
         }
 
-        public int RequiredProcessorCount { get; } = 2;
+        public int RequiredProcessorCount => 2;
 
         private class QueuePinger
         {
-            private readonly BlockingCollection<long> _pingQueue;
-            private readonly BlockingCollection<long> _pongQueue;
+            private readonly ArrayConcurrentQueue<long> _pingQueue;
+            private readonly ArrayConcurrentQueue<long> _pongQueue;
             private readonly long _maxEvents;
             private readonly long _pauseTimeInNano;
             private readonly double _pauseDurationInStopwatchTicks;
@@ -62,7 +61,7 @@ namespace Disruptor.PerfTests.Queue
             private CountdownEvent _globalSignal;
             private long _counter;
 
-            public QueuePinger(BlockingCollection<long> pingQueue, BlockingCollection<long> pongQueue, long maxEvents, long pauseTimeInNano)
+            public QueuePinger(ArrayConcurrentQueue<long> pingQueue, ArrayConcurrentQueue<long> pongQueue, long maxEvents, long pauseTimeInNano)
             {
                 _pingQueue = pingQueue;
                 _pongQueue = pongQueue;
@@ -77,14 +76,13 @@ namespace Disruptor.PerfTests.Queue
                 _globalSignal.Wait();
 
                 Thread.Sleep(1000);
-                long response = -1;
+                long counter = 0;
 
-                while (response < _maxEvents)
+                while (counter < _maxEvents)
                 {
                     var t0 = Stopwatch.GetTimestamp();
-                    while (!_pingQueue.TryAdd(_counter++))
-                        Thread.Yield();
-                    response = _pongQueue.Take();
+                    _pingQueue.Enqueue(1L);
+                    counter += _pongQueue.Dequeue();
                     var t1 = Stopwatch.GetTimestamp();
 
                     _histogram.RecordValueWithExpectedInterval(LatencyTestSession.ConvertStopwatchTicksToNano(t1 - t0), _pauseTimeInNano);
@@ -109,12 +107,12 @@ namespace Disruptor.PerfTests.Queue
 
         public class QueuePonger
         {
-            private readonly BlockingCollection<long> _pingQueue;
-            private readonly BlockingCollection<long> _pongQueue;
+            private readonly ArrayConcurrentQueue<long> _pingQueue;
+            private readonly ArrayConcurrentQueue<long> _pongQueue;
             private CancellationToken _cancellationToken;
             private CountdownEvent _globalSignal;
 
-            public QueuePonger(BlockingCollection<long> pingQueue, BlockingCollection<long> pongQueue)
+            public QueuePonger(ArrayConcurrentQueue<long> pingQueue, ArrayConcurrentQueue<long> pongQueue)
             {
                 _pingQueue = pingQueue;
                 _pongQueue = pongQueue;
@@ -125,16 +123,14 @@ namespace Disruptor.PerfTests.Queue
                 _globalSignal.Signal();
                 _globalSignal.Wait();
 
-                try
+                while (!_cancellationToken.IsCancellationRequested)
                 {
-                    while (!_cancellationToken.IsCancellationRequested)
-                    {
-                        var value = _pingQueue.Take(_cancellationToken);
-                        while (!_pongQueue.TryAdd(value))
-                            Thread.Yield();
-                    }
+                    long value;
+                    if (_pingQueue.TryDequeue(out value))
+                        _pongQueue.Enqueue(value);
+                    else
+                        Thread.Yield();
                 }
-                catch (OperationCanceledException) { }
             }
 
             public void Reset(CountdownEvent globalSignal, CancellationToken cancellationToken)

@@ -16,9 +16,9 @@ namespace Disruptor.PerfTests.Queue
         private readonly long _expectedResult;
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
-        private readonly BlockingCollection<long[]> _stepOneQueue = new BlockingCollection<long[]>(new LockFreeBoundedQueue<long[]>(_bufferSize), _bufferSize);
-        private readonly BlockingCollection<long> _stepTwoQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
-        private readonly BlockingCollection<long> _stepThreeQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
+        private readonly ConcurrentQueue<long[]> _stepOneQueue = new ConcurrentQueue<long[]>();
+        private readonly ConcurrentQueue<long> _stepTwoQueue = new ConcurrentQueue<long>();
+        private readonly ConcurrentQueue<long> _stepThreeQueue = new ConcurrentQueue<long>();
 
         private readonly FunctionQueueProcessor _stepOneQueueProcessor;
         private readonly FunctionQueueProcessor _stepTwoQueueProcessor;
@@ -47,6 +47,8 @@ namespace Disruptor.PerfTests.Queue
             _stepThreeQueueProcessor = new FunctionQueueProcessor(FunctionStep.Three, _stepOneQueue, _stepTwoQueue, _stepThreeQueue, _iterations - 1);
         }
 
+        public int RequiredProcessorCount => 4;
+
         public long Run(Stopwatch stopwatch)
         {
             var signal = new ManualResetEvent(false);
@@ -65,9 +67,7 @@ namespace Disruptor.PerfTests.Queue
                 long[] values = new long[2];
                 values[0] = i;
                 values[1] = operandTwo--;
-
-                while (!_stepOneQueue.TryAdd(values))
-                    Thread.Yield();
+                _stepOneQueue.Enqueue(values);
             }
 
             signal.WaitOne();
@@ -79,9 +79,9 @@ namespace Disruptor.PerfTests.Queue
 
             Task.WaitAll(tasks);
 
+            PerfTestUtil.FailIf(_expectedResult, 0);
+
             return _iterations;
         }
-
-        public int RequiredProcessorCount { get; } = 4;
     }
 }

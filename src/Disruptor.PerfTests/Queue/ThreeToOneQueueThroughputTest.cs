@@ -14,7 +14,7 @@ namespace Disruptor.PerfTests.Queue
         private const long _iterations = 1000 * 1000 * 20;
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
         private readonly Barrier _signal = new Barrier(_publisherCount + 1);
-        private readonly IProducerConsumerCollection<long> _blockingQueue = new LockFreeBoundedQueue<long>(_bufferSize);
+        private readonly ConcurrentQueue<long> _blockingQueue = new ConcurrentQueue<long>();
         private readonly ValueAdditionQueueEventProcessor _queueProcessor;
         private readonly ValueQueueProducer[] _valueQueueProducers = new ValueQueueProducer[_publisherCount];
 
@@ -26,6 +26,8 @@ namespace Disruptor.PerfTests.Queue
                 _valueQueueProducers[i] = new ValueQueueProducer(_signal, _blockingQueue, _iterations / _publisherCount);
             }
         }
+
+        public int RequiredProcessorCount => 4;
 
         public long Run(Stopwatch stopwatch)
         {
@@ -49,7 +51,5 @@ namespace Disruptor.PerfTests.Queue
 
             return _iterations;
         }
-
-        public int RequiredProcessorCount { get; } = 4;
     }
 }

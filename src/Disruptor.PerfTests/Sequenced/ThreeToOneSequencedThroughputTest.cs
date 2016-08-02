@@ -51,7 +51,7 @@ namespace Disruptor.PerfTests.Sequenced
         private const long _iterations = 1000L * 1000L * 20L;
 
         private readonly CountdownEvent _cyclicBarrier = new CountdownEvent(_numPublishers + 1);
-        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateMultiProducer(() => new ValueEvent(), _bufferSize, new BusySpinWaitStrategy());
+        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateMultiProducer(ValueEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
         private readonly TaskScheduler _scheduler = new RoundRobinThreadAffinedTaskScheduler(5);
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly ValueAdditionEventHandler _handler = new ValueAdditionEventHandler();

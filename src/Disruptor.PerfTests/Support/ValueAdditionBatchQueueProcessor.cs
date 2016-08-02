@@ -1,22 +1,20 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 
 namespace Disruptor.PerfTests.Support
 {
-    class ValueAdditionBatchQueueProcessor
+    public class ValueAdditionBatchQueueProcessor
     {
         private volatile bool _running;
         private long _value;
         private long _sequence;
         private ManualResetEvent _latch;
 
-        private readonly IProducerConsumerCollection<long> _blockingQueue;
+        private readonly ArrayConcurrentQueue<long> _blockingQueue;
         private readonly List<long> _batch = new List<long>(100);
         private readonly long _count;
 
-        public ValueAdditionBatchQueueProcessor(IProducerConsumerCollection<long> blockingQueue, long count)
+        public ValueAdditionBatchQueueProcessor(ArrayConcurrentQueue<long> blockingQueue, long count)
         {
             _blockingQueue = blockingQueue;
             _count = count;
@@ -45,7 +43,7 @@ namespace Disruptor.PerfTests.Support
             while (_running)
             {
                 long value;
-                if (!_blockingQueue.TryTake(out value))
+                if (!_blockingQueue.TryDequeue(out value))
                     continue;
 
                 _sequence++;
@@ -54,7 +52,7 @@ namespace Disruptor.PerfTests.Support
                 for (var i = 0; i < 100; i++)
                 {
                     long item;
-                    if (!_blockingQueue.TryTake(out item))
+                    if (!_blockingQueue.TryDequeue(out item))
                         break;
 
                     _batch.Add(item);

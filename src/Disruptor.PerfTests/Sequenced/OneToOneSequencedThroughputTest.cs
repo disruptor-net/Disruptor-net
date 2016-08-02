@@ -49,11 +49,13 @@ namespace Disruptor.PerfTests.Sequenced
         {
             _latch = new ManualResetEvent(false);
             _eventHandler = new ValueAdditionEventHandler();
-            _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(), _bufferSize, new YieldingWaitStrategy());
+            _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
             _batchEventProcessor = new BatchEventProcessor<ValueEvent>(_ringBuffer, sequenceBarrier, _eventHandler);
             _ringBuffer.AddGatingSequences(_batchEventProcessor.Sequence);
         }
+
+        public int RequiredProcessorCount => 2;
 
         public long Run(Stopwatch stopwatch)
         {
@@ -81,7 +83,5 @@ namespace Disruptor.PerfTests.Sequenced
 
             return _iterations;
         }
-
-        public int RequiredProcessorCount => 2;
     }
 }

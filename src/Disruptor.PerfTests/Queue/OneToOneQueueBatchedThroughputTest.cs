@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
@@ -12,7 +11,7 @@ namespace Disruptor.PerfTests.Queue
         private const long _iterations = 1000L * 1000L * 10L;
         private const long _expectedResult = _iterations * 3L;
 
-        private readonly IProducerConsumerCollection<long> _blockingQueue = new ConcurrentQueue<long>();
+        private readonly ArrayConcurrentQueue<long> _blockingQueue = new ArrayConcurrentQueue<long>(_bufferSize);
         private readonly ValueAdditionBatchQueueProcessor _queueProcessor;
         
         public OneToOneQueueBatchedThroughputTest()
@@ -31,8 +30,7 @@ namespace Disruptor.PerfTests.Queue
 
             for (long i = 0; i < _iterations; i++)
             {
-                while (!_blockingQueue.TryAdd(3L))
-                    Thread.Yield();
+                _blockingQueue.Enqueue(3L);
             }
 
             latch.WaitOne();

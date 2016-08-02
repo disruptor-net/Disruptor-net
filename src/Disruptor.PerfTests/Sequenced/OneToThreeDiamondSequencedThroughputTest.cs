@@ -52,7 +52,7 @@ namespace Disruptor.PerfTests.Sequenced
 
         private readonly long _expectedResult;
 
-        private readonly RingBuffer<FizzBuzzEvent> _ringBuffer = RingBuffer<FizzBuzzEvent>.CreateSingleProducer(() => new FizzBuzzEvent(), _bufferSize, new YieldingWaitStrategy());
+        private readonly RingBuffer<FizzBuzzEvent> _ringBuffer = RingBuffer<FizzBuzzEvent>.CreateSingleProducer(FizzBuzzEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
         private readonly BatchEventProcessor<FizzBuzzEvent> _batchProcessorFizz;
         private readonly BatchEventProcessor<FizzBuzzEvent> _batchProcessorBuzz;
         private readonly BatchEventProcessor<FizzBuzzEvent> _batchProcessorFizzBuzz;

@@ -23,11 +23,13 @@ namespace Disruptor.PerfTests.Sequenced
 
         public OneToOneSequencedPollerThroughputTest()
         {
-            _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(), _bufferSize, new YieldingWaitStrategy());
+            _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
             _poller = _ringBuffer.NewPoller();
             _ringBuffer.AddGatingSequences(_poller.Sequence);
             _pollRunnable = new PollRunnable(_poller);
         }
+
+        public int RequiredProcessorCount => 2;
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -88,8 +90,6 @@ namespace Disruptor.PerfTests.Sequenced
                 _running = 1;
             }
         }
-
-        public int RequiredProcessorCount => 2;
 
         public long Run(Stopwatch stopwatch)
         {

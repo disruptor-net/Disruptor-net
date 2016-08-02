@@ -14,7 +14,7 @@ namespace Disruptor.PerfTests.WorkHandler
         private static readonly long _iterations = 1000L * 1000 * 10L;
         private readonly PaddedLong[] _counters = new PaddedLong[_numWorkers];
         private readonly EventCountingAndReleasingWorkHandler[] _handlers = new EventCountingAndReleasingWorkHandler[_numWorkers];
-        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(),
+        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory,
                                                                                                          _bufferSize,
                                                                                                          new YieldingWaitStrategy());
         private readonly WorkerPool<ValueEvent> _workerPool;

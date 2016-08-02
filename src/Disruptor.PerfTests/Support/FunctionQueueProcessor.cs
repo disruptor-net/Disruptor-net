@@ -7,9 +7,9 @@ namespace Disruptor.PerfTests.Support
     public class FunctionQueueProcessor
     {
         private readonly FunctionStep _functionStep;
-        private readonly BlockingCollection<long[]> _stepOneQueue;
-        private readonly BlockingCollection<long> _stepTwoQueue;
-        private readonly BlockingCollection<long> _stepThreeQueue;
+        private readonly ConcurrentQueue<long[]> _stepOneQueue;
+        private readonly ConcurrentQueue<long> _stepTwoQueue;
+        private readonly ConcurrentQueue<long> _stepThreeQueue;
         private readonly long _count;
 
         private volatile bool _running;
@@ -18,9 +18,9 @@ namespace Disruptor.PerfTests.Support
         private ManualResetEvent _signal;
 
         public FunctionQueueProcessor(FunctionStep functionStep,
-                                      BlockingCollection<long[]> stepOneQueue,
-                                      BlockingCollection<long> stepTwoQueue,
-                                      BlockingCollection<long> stepThreeQueue,
+                                      ConcurrentQueue<long[]> stepOneQueue,
+                                      ConcurrentQueue<long> stepTwoQueue,
+                                      ConcurrentQueue<long> stepThreeQueue,
                                       long count)
         {
             _functionStep = functionStep;
@@ -29,6 +29,8 @@ namespace Disruptor.PerfTests.Support
             _stepThreeQueue = stepThreeQueue;
             _count = count;
         }
+
+        public long StepThreeCounter => _stepThreeCounter;
 
         public void Reset(ManualResetEvent signal)
         {
@@ -52,49 +54,36 @@ namespace Disruptor.PerfTests.Support
                     case FunctionStep.One:
                     {
                         long[] values;
-                        while (!_stepOneQueue.TryTake(out values))
+                        while (!_stepOneQueue.TryDequeue(out values))
                         {
                             if (!_running)
-                                break;
+                                return;
                             Thread.Yield();
                         }
-
-                        while (!_stepTwoQueue.TryAdd(values[0] + values[1]))
-                        {
-                            if (!_running)
-                                break;
-                            Thread.Yield();
-                        }
+                        _stepTwoQueue.Enqueue(values[0] + values[1]);
                         break;
                     }
                     case FunctionStep.Two:
                     {
                         long value;
-                        while (!_stepTwoQueue.TryTake(out value))
+                        while (!_stepTwoQueue.TryDequeue(out value))
                         {
                             if (!_running)
-                                break;
+                                return;
                             Thread.Yield();
                         }
-
-                        while (!_stepThreeQueue.TryAdd(value + 3))
-                        {
-                            if (!_running)
-                                break;
-                            Thread.Yield();
-                        }
+                        _stepThreeQueue.Enqueue(value + 3);
                         break;
                     }
                     case FunctionStep.Three:
                     {
                         long value;
-                        while (!_stepThreeQueue.TryTake(out value))
+                        while (!_stepThreeQueue.TryDequeue(out value))
                         {
                             if (!_running)
-                                break;
+                                return;
                             Thread.Yield();
                         }
-
                         if ((value & 4L) == 4L)
                         {
                             ++_stepThreeCounter;

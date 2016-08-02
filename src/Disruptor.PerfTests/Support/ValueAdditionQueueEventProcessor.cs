@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 using System.Threading;
 
@@ -11,10 +10,10 @@ namespace Disruptor.PerfTests.Support
         private long _sequence;
         private ManualResetEvent _signal;
 
-        private readonly IProducerConsumerCollection<long> _queue;
+        private readonly ConcurrentQueue<long> _queue;
         private readonly long _count;
 
-        public ValueAdditionQueueEventProcessor(IProducerConsumerCollection<long> queue, long count)
+        public ValueAdditionQueueEventProcessor(ConcurrentQueue<long> queue, long count)
         {
             _queue = queue;
             _count = count;
@@ -37,7 +36,7 @@ namespace Disruptor.PerfTests.Support
             while (_running)
             {
                 long value;
-                if (!_queue.TryTake(out value))
+                if (!_queue.TryDequeue(out value))
                     continue;
 
                 _value += value;

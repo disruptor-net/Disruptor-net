@@ -40,7 +40,7 @@ namespace Disruptor.PerfTests.Translator
 
         public OneToOneTranslatorThroughputTest()
         {
-            var disruptor = new Disruptor<ValueEvent>(() => new ValueEvent(),
+            var disruptor = new Disruptor<ValueEvent>(ValueEvent.EventFactory,
                                                       _bufferSize, 
                                                       TaskScheduler.Default,
                                                       ProducerType.Single,

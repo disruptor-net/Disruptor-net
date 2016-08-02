@@ -20,7 +20,7 @@ namespace Disruptor.PerfTests.WorkHandler
         private readonly EventCountingQueueProcessor[] _queueWorkers = new EventCountingQueueProcessor[_numWorkers];
         private readonly EventCountingWorkHandler[] _handlers = new EventCountingWorkHandler[_numWorkers];
 
-        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(),
+        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory,
                                                                                                           _bufferSize,
                                                                                                           new YieldingWaitStrategy());
 
