@@ -4,9 +4,13 @@ This project aims to provide the full functionality of the Disruptor to CLR proj
 
 ## Roadmap
 
-* Include latest changes made to the java 3.3.5 version 
+* Include latest changes made to the future java versions
 
 ## What's new?
+
+02/08/2016 (v3.3.5):
+
+* All features available in Java Disruptor **3.3.5** have been ported
 
 04/07/2016 (v3.3.4):
 
