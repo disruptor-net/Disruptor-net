@@ -749,5 +749,13 @@ namespace Disruptor
                 _fields.Sequencer.Publish(initialSequence, finalSequence);
             }
         }
+
+        public override string ToString()
+        {
+            return "RingBuffer{" +
+                   "bufferSize=" + _fields.BufferSize +
+                   ", sequencer=" + _fields.Sequencer +
+                   "}";
+        }
     }
 }

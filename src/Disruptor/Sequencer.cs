@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 
 namespace Disruptor
@@ -183,6 +184,15 @@ namespace Disruptor
         public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
         {
             return EventPoller<T>.NewInstance(provider, this, new Sequence(), _cursor, gatingSequences);
+        }
+
+        public override string ToString()
+        {
+            return "Sequencer{" +
+                   "waitStrategy=" + _waitStrategy +
+                   ", cursor=" + _cursor +
+                   ", gatingSequences=[" + string.Join(", ", _gatingSequences.AsEnumerable()) +
+                   "]}";
         }
     }
 }
