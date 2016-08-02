@@ -5,11 +5,12 @@ namespace Disruptor.PerfTests.Support
 {
     public class MultiBufferBatchEventProcessor<T> : IEventProcessor
     {
-        private int _isRunning;
+        private volatile int _isRunning;
         private readonly IDataProvider<T>[] _providers;
         private readonly ISequenceBarrier[] _barriers;
         private readonly IEventHandler<T> _handler;
         private readonly Sequence[] _sequences;
+        private long _count;
 
         public MultiBufferBatchEventProcessor(IDataProvider<T>[] providers, ISequenceBarrier[] barriers, IEventHandler<T> handler)
         {
@@ -38,11 +39,6 @@ namespace Disruptor.PerfTests.Support
             }
 
             var barrierLength = _barriers.Length;
-            var lastConsumed = new long[barrierLength];
-            for (var i = 0; i < lastConsumed.Length; i++)
-            {
-                lastConsumed[i] = -1L;
-            }
 
             while (true)
             {
@@ -53,14 +49,16 @@ namespace Disruptor.PerfTests.Support
                         var available = _barriers[i].WaitFor(-1);
                         var sequence = _sequences[i];
 
-                        var previous = sequence.Value;
+                        var nextSequence = sequence.Value + 1;
 
-                        for (var seq = previous + 1; seq <= available; seq++)
+                        for (var l = nextSequence; l <= available; l++)
                         {
-                            _handler.OnEvent(_providers[i][seq], seq, previous == available);
+                            _handler.OnEvent(_providers[i][l], l, nextSequence == available);
                         }
 
                         sequence.SetValue(available);
+
+                        _count += available - nextSequence + 1;
                     }
 
                     Thread.Yield();
@@ -82,9 +80,11 @@ namespace Disruptor.PerfTests.Support
             }
         }
 
-        public bool IsRunning => _isRunning == 1;
+        
 
         public ISequence Sequence { get { throw new NotSupportedException(); } }
+
+        public long Count => _count;
 
         public Sequence[] GetSequences()
         {
@@ -96,5 +96,7 @@ namespace Disruptor.PerfTests.Support
             _isRunning = 0;
             _barriers[0].Alert();
         }
+
+        public bool IsRunning => _isRunning == 1;
     }
 }

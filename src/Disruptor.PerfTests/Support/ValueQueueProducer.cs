@@ -6,10 +6,10 @@ namespace Disruptor.PerfTests.Support
     public class ValueQueueProducer
     {
         private readonly Barrier _barrier;
-        private readonly IProducerConsumerCollection<long> _blockingQueue;
+        private readonly ConcurrentQueue<long> _blockingQueue;
         private readonly long _iterations;
 
-        public ValueQueueProducer(Barrier barrier, IProducerConsumerCollection<long> blockingQueue, long iterations)
+        public ValueQueueProducer(Barrier barrier, ConcurrentQueue<long> blockingQueue, long iterations)
         {
             _barrier = barrier;
             _blockingQueue = blockingQueue;
@@ -21,8 +21,7 @@ namespace Disruptor.PerfTests.Support
             _barrier.SignalAndWait();
             for (long i = 0; i < _iterations; i++)
             {
-                while (!_blockingQueue.TryAdd(i))
-                    Thread.Yield();
+                _blockingQueue.Enqueue(i);
             }
         }
     }

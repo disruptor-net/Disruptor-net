@@ -44,7 +44,7 @@ namespace Disruptor.PerfTests.Sequenced
         private const long _operandTwoInitialValue = 777L;
         private readonly long _expectedResult;
 
-        private readonly RingBuffer<FunctionEvent> _ringBuffer = RingBuffer<FunctionEvent>.CreateSingleProducer(() => new FunctionEvent(), _bufferSize, new YieldingWaitStrategy());
+        private readonly RingBuffer<FunctionEvent> _ringBuffer = RingBuffer<FunctionEvent>.CreateSingleProducer(FunctionEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
 
         private readonly BatchEventProcessor<FunctionEvent> _stepOneBatchProcessor;
         private readonly BatchEventProcessor<FunctionEvent> _stepTwoBatchProcessor;

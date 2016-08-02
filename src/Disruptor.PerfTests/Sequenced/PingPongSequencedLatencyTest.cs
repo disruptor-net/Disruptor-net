@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
@@ -12,7 +11,7 @@ namespace Disruptor.PerfTests.Sequenced
     {
         private static readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
         private const int _bufferSize = 1024;
-        private const long _iterations = 1000 * 1000 * 30;
+        private const long _iterations = 100 * 1000 * 30;
         private const int _pauseDurationInNanos = 1000;
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,8 +29,8 @@ namespace Disruptor.PerfTests.Sequenced
 
         public PingPongSequencedLatencyTest()
         {
-            _pingBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(), _bufferSize, new YieldingWaitStrategy());
-            _pongBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(() => new ValueEvent(), _bufferSize, new YieldingWaitStrategy());
+            _pingBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+            _pongBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
 
             _pingBarrier = _pingBuffer.NewBarrier();
             _pongBarrier = _pongBuffer.NewBarrier();
@@ -45,6 +44,8 @@ namespace Disruptor.PerfTests.Sequenced
             _pingBuffer.AddGatingSequences(_pongProcessor.Sequence);
             _pongBuffer.AddGatingSequences(_pingProcessor.Sequence);
         }
+
+        public int RequiredProcessorCount => 2;
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -69,8 +70,6 @@ namespace Disruptor.PerfTests.Sequenced
             _pongProcessor.Halt();
             Task.WaitAll(processorTask1, processorTask2);
         }
-
-        public int RequiredProcessorCount { get; } = 2;
 
         private class Pinger : IEventHandler<ValueEvent>, ILifecycleAware
         {

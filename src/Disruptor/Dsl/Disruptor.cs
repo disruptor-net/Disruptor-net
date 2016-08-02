@@ -391,5 +391,14 @@ namespace Disruptor.Dsl
                 throw new InvalidOperationException("Disruptor.start() must only be called once.");
             }
         }
+
+        public override string ToString()
+        {
+            return "Disruptor{" +
+                   "ringBuffer=" + _ringBuffer +
+                   ", started=" + _started +
+                   ", executor=" + _executor +
+                   "}";
+        }
     }
 }

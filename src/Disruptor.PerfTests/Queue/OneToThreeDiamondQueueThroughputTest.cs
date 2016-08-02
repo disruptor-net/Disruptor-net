@@ -16,10 +16,10 @@ namespace Disruptor.PerfTests.Queue
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
         private readonly long _expectedResult;
-        private readonly BlockingCollection<long> _fizzInputQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
-        private readonly BlockingCollection<long> _buzzInputQueue = new BlockingCollection<long>(new LockFreeBoundedQueue<long>(_bufferSize), _bufferSize);
-        private readonly BlockingCollection<bool> _fizzOutputQueue = new BlockingCollection<bool>(new LockFreeBoundedQueue<bool>(_bufferSize), _bufferSize);
-        private readonly BlockingCollection<bool> _buzzOutputQueue = new BlockingCollection<bool>(new LockFreeBoundedQueue<bool>(_bufferSize), _bufferSize);
+        private readonly ConcurrentQueue<long> _fizzInputQueue = new ConcurrentQueue<long>();
+        private readonly ConcurrentQueue<long> _buzzInputQueue = new ConcurrentQueue<long>();
+        private readonly ConcurrentQueue<bool> _fizzOutputQueue = new ConcurrentQueue<bool>();
+        private readonly ConcurrentQueue<bool> _buzzOutputQueue = new ConcurrentQueue<bool>();
 
         private readonly FizzBuzzQueueProcessor _fizzQueueProcessor;
         private readonly FizzBuzzQueueProcessor _buzzQueueProcessor;
@@ -44,6 +44,8 @@ namespace Disruptor.PerfTests.Queue
             _fizzBuzzQueueProcessor = new FizzBuzzQueueProcessor(FizzBuzzStep.FizzBuzz, _fizzInputQueue, _buzzInputQueue, _fizzOutputQueue, _buzzOutputQueue, _iterations - 1);
         }
 
+        public int RequiredProcessorCount => 4;
+
         public long Run(Stopwatch stopwatch)
         {
             var signal = new ManualResetEvent(false);
@@ -57,10 +59,8 @@ namespace Disruptor.PerfTests.Queue
 
             for (var i = 0; i < _iterations; i++)
             {
-                while (!_fizzInputQueue.TryAdd(i))
-                    Thread.Yield();
-                while (!_buzzInputQueue.TryAdd(i))
-                    Thread.Yield();
+                _fizzInputQueue.Enqueue(i);
+                _buzzInputQueue.Enqueue(i);
             }
 
             signal.WaitOne();
@@ -72,9 +72,9 @@ namespace Disruptor.PerfTests.Queue
 
             Task.WaitAll(tasks);
 
+            PerfTestUtil.FailIf(_expectedResult, 0);
+
             return _iterations;
         }
-
-        public int RequiredProcessorCount { get; } = 4;
     }
 }

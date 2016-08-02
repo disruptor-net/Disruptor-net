@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 using System.Threading;
 
@@ -7,10 +6,10 @@ namespace Disruptor.PerfTests.Support
     public class FizzBuzzQueueProcessor
     {
         private readonly FizzBuzzStep _fizzBuzzStep;
-        private readonly BlockingCollection<long> _fizzInputQueue;
-        private readonly BlockingCollection<long> _buzzInputQueue;
-        private readonly BlockingCollection<bool> _fizzOutputQueue;
-        private readonly BlockingCollection<bool> _buzzOutputQueue;
+        private readonly ConcurrentQueue<long> _fizzInputQueue;
+        private readonly ConcurrentQueue<long> _buzzInputQueue;
+        private readonly ConcurrentQueue<bool> _fizzOutputQueue;
+        private readonly ConcurrentQueue<bool> _buzzOutputQueue;
         private readonly long _count;
 
         private volatile bool _running;
@@ -19,10 +18,10 @@ namespace Disruptor.PerfTests.Support
         private ManualResetEvent _signal;
 
         public FizzBuzzQueueProcessor(FizzBuzzStep fizzBuzzStep,
-                                 BlockingCollection<long> fizzInputQueue,
-                                 BlockingCollection<long> buzzInputQueue,
-                                 BlockingCollection<bool> fizzOutputQueue,
-                                 BlockingCollection<bool> buzzOutputQueue,
+                                 ConcurrentQueue<long> fizzInputQueue,
+                                 ConcurrentQueue<long> buzzInputQueue,
+                                 ConcurrentQueue<bool> fizzOutputQueue,
+                                 ConcurrentQueue<bool> buzzOutputQueue,
                                  long count)
         {
             _fizzBuzzStep = fizzBuzzStep;
@@ -33,6 +32,8 @@ namespace Disruptor.PerfTests.Support
             _buzzOutputQueue = buzzOutputQueue;
             _count = count;
         }
+
+        public long FizzBuzzCounter => _fizzBuzzCounter;
 
         public void Reset(ManualResetEvent signal)
         {
@@ -57,37 +58,27 @@ namespace Disruptor.PerfTests.Support
                     case FizzBuzzStep.Fizz:
                     {
                         long value;
-                        while (!_fizzInputQueue.TryTake(out value))
+                        while (!_fizzInputQueue.TryDequeue(out value))
                         {
                             if (!_running)
-                                break;
+                                return;
                             Thread.Yield();
                         }
-                        while (!_fizzOutputQueue.TryAdd(0 == (value % 3)))
-                        {
-                            if (!_running)
-                                break;
-                            Thread.Yield();
-                        }
+                        _fizzOutputQueue.Enqueue(0 == (value % 3));
                         break;
                     }
-
+                    
                     case FizzBuzzStep.Buzz:
                     {
 
                         long value;
-                        while (!_buzzInputQueue.TryTake(out value))
+                        while (!_buzzInputQueue.TryDequeue(out value))
                         {
                             if (!_running)
-                                break;
+                                return;
                             Thread.Yield();
                         }
-                        while (!_buzzOutputQueue.TryAdd(0 == (value % 5)))
-                        {
-                            if (!_running)
-                                break;
-                            Thread.Yield();
-                        }
+                        _buzzOutputQueue.Enqueue(0 == (value % 5));
                         break;
                     }
 
@@ -95,20 +86,18 @@ namespace Disruptor.PerfTests.Support
                     {
                         bool fizz;
                         bool buzz;
-                        while (!_fizzOutputQueue.TryTake(out fizz))
+                        while (!_fizzOutputQueue.TryDequeue(out fizz))
                         {
                             if (!_running)
-                                break;
+                                return;
                             Thread.Yield();
                         }
-                        while (!_buzzOutputQueue.TryTake(out buzz))
+                        while (!_buzzOutputQueue.TryDequeue(out buzz))
                         {
                             if (!_running)
-                                break;
+                                return;
                             Thread.Yield();
                         }
-
-
                         if (fizz && buzz)
                         {
                             ++_fizzBuzzCounter;

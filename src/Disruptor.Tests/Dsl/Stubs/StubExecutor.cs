@@ -9,18 +9,18 @@ namespace Disruptor.Tests.Dsl.Stubs
 {
     public class StubExecutor : IExecutor
     {
-        private readonly ConcurrentBag<Thread> _threads = new ConcurrentBag<Thread>();
+        private readonly ConcurrentQueue<Thread> _threads = new ConcurrentQueue<Thread>();
         private bool _ignoreExecutions;
         private int _executionCount;
 
         public Task Execute(Action command)
         {
             Interlocked.Increment(ref _executionCount);
+
             if (!Volatile.Read(ref _ignoreExecutions))
             {
                 var t = new Thread(() => command());
-                //t.Name = command.toString();
-                _threads.Add(t);
+                _threads.Enqueue(t);
                 t.Start();
             }
 
@@ -29,7 +29,8 @@ namespace Disruptor.Tests.Dsl.Stubs
 
         public void JoinAllThreads()
         {
-            foreach (Thread thread in _threads)
+            Thread thread;
+            while (_threads.TryDequeue(out thread))
             {
                 if (thread.IsAlive)
                 {
@@ -40,16 +41,11 @@ namespace Disruptor.Tests.Dsl.Stubs
                     }
                     catch (ThreadInterruptedException e)
                     {
-                        System.Console.WriteLine(e);
+                        Console.WriteLine(e);
                     }
                 }
 
                 Assert.IsFalse(thread.IsAlive, "Failed to stop thread: " + thread);
-            }
-
-            Thread t;
-            while (_threads.TryTake(out t))
-            {
             }
         }
 

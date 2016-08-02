@@ -3,17 +3,19 @@ using System.Threading;
 
 namespace Disruptor.PerfTests.Support
 {
-    class ValueAdditionQueueProcessor
+    public class ValueAdditionQueueProcessor
     {
         private volatile bool _running;
         private long _value;
         private long _sequence;
         private ManualResetEvent _latch;
 
-        private readonly IProducerConsumerCollection<long> _blockingQueue;
+        //private readonly ConcurrentQueue<long> _blockingQueue;
+        private readonly ArrayConcurrentQueue<long> _blockingQueue;
         private readonly long _count;
 
-        public ValueAdditionQueueProcessor(IProducerConsumerCollection<long> blockingQueue, long count)
+        //public ValueAdditionQueueProcessor(ConcurrentQueue<long> blockingQueue, long count)
+        public ValueAdditionQueueProcessor(ArrayConcurrentQueue<long> blockingQueue, long count)
         {
             _blockingQueue = blockingQueue;
             _count = count;
@@ -41,9 +43,13 @@ namespace Disruptor.PerfTests.Support
             _running = true;
             while (_running)
             {
+                //long value;
+                //while (!_blockingQueue.TryDequeue(out value))
+                //    break;
+
                 long value;
-                if (!_blockingQueue.TryTake(out value))
-                    continue;
+                while (!_blockingQueue.TryDequeue(out value))
+                    break;
 
                 _value += value;
 

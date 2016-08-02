@@ -1,4 +1,4 @@
-3.3.4
+3.3.5
 -----
 
-[c6a44b42b185b1a4664316de61bb2d11a757cf21](https://github.com/LMAX-Exchange/disruptor/commit/c6a44b42b185b1a4664316de61bb2d11a757cf21)
+[6ac06717feb1632a4451f5b0ee8d1119f30929b1](https://github.com/LMAX-Exchange/disruptor/commit/6ac06717feb1632a4451f5b0ee8d1119f30929b1)
