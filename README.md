@@ -1,4 +1,4 @@
-# .NET port of LMAX Disruptor [![Build status](https://ci.appveyor.com/api/projects/status/g6qixx362mw9jhp1?svg=true)](https://ci.appveyor.com/project/ablanchet/disruptor-net)
+# .NET port of LMAX Disruptor [![Build status](https://ci.appveyor.com/api/projects/status/pwgyxwrgglkbr6md/branch/master?svg=true)](https://ci.appveyor.com/project/MendelMonteiro/disruptor-net/branch/master)
 
 This project aims to provide the full functionality of the Disruptor to CLR projects.
 
