@@ -225,7 +225,7 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Get the current cursor value for the ring buffer.  The actual value recieved
+        /// Get the current cursor value for the ring buffer.  The actual value received
         /// will depend on the type of <see cref="ISequencer"/> that is being used.
         /// </summary>
         public long Cursor => _fields.Sequencer.Cursor;
