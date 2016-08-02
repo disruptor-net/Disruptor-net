@@ -70,12 +70,12 @@
     </Compile>
     <Compile Include="AggregateEventHandlerTests.cs" />
     <Compile Include="BatchEventProcessorTests.cs" />
-    <Compile Include="BatchingTest.cs" />
+    <Compile Include="BatchingTests.cs" />
     <Compile Include="BusySpinWaitStrategyTests.cs" />
     <Compile Include="Collections\HistogramTests.cs" />
     <Compile Include="Example\ConsumerRepositoryTests.cs" />
     <Compile Include="DisruptorStressTest.cs" />
-    <Compile Include="Dsl\DisruptorTest.cs" />
+    <Compile Include="Dsl\DisruptorTests.cs" />
     <Compile Include="Dsl\Stubs\DelayedEventHandler.cs" />
     <Compile Include="Dsl\Stubs\EventHandlerStub.cs" />
     <Compile Include="Dsl\Stubs\EvilEqualsEventHandler.cs" />
