@@ -33,19 +33,9 @@ _ReSharper*/
 *.resharper
 [Tt]est[Rr]esult*
 
-#Project files
-[Bb]uild/
-
-#Subversion files
-.svn
-
-# Office Temp Files
-~$*
-
-#NuGet
-packages/
-
-#Target build folder
-Target/
+#ncrunch
 *.ncrunchsolution
 *.ncrunchproject
+build/tools/**
+output/**
+src/packages/**
