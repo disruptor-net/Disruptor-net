@@ -2,7 +2,6 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Disruptor</id>
-    <version>3.3.4-pre</version>
     <title>Disruptor-net</title>
     <authors>Olivier Deheurles, Mendel Monteiro Beckerman, Antoine Blanchet, Olivier Coanet</authors>
     <owners>Disruptor-net</owners>

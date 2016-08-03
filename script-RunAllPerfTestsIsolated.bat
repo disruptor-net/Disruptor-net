@@ -16,3 +16,5 @@ output\build\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.ThreeToOneSeq
 output\build\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.ThreeToOneSequencedThroughputTest
 output\build\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.ThreeToThreeSequencedThroughputTest
 output\build\Disruptor.PerfTests.exe Disruptor.PerfTests.WorkHandler.TwoToTwoWorkProcessorThroughputTest
+
+pause
