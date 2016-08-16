@@ -9,6 +9,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Port of LMAX Disruptor to .NET</description>
     <tags>Concurrency Disruptor Latency Throughput</tags>
+	<targetFramework>net461</targetFramework>
     <language />
   </metadata>
   <files>
