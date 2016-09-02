@@ -12,8 +12,8 @@
     <language />
   </metadata>
   <files>
-    <file src="Disruptor.dll" target="lib\net461" />
-    <file src="Disruptor.pdb" target="lib\net461" />
-    <file src="Disruptor.xml" target="lib\net461" />
+    <file src="Disruptor.dll" target="lib\net45" />
+    <file src="Disruptor.pdb" target="lib\net45" />
+    <file src="Disruptor.xml" target="lib\net45" />
   </files>
 </package>
