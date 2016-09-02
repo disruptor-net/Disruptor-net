@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Disruptor", "Disruptor\Disruptor.csproj", "{37FBDBE1-8524-4489-B082-CC109B0F5EA3}"
 EndProject
@@ -70,5 +70,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{759BF0BB-D922-4E85-A4C8-2C9F382E0A79} = {A44B9C7B-781B-4E2B-AA71-FA5A086A6C0F}
 		{BD103699-F540-40C3-99D7-462F53A9DABC} = {A44B9C7B-781B-4E2B-AA71-FA5A086A6C0F}
+		{7B1F3DC3-5DA8-4E36-A03B-837D90D2A51D} = {A44B9C7B-781B-4E2B-AA71-FA5A086A6C0F}
 	EndGlobalSection
 EndGlobal
