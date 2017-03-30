@@ -28,6 +28,8 @@ namespace Disruptor
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
             {
+                _cursor.SetValueVolatile(nextValue);
+
                 long minSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
                 _fields.CachedValue = minSequence;
 
@@ -78,6 +80,8 @@ namespace Disruptor
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
             {
+                _cursor.SetValueVolatile(nextValue);
+
                 var spinWait = default(SpinWait);
                 long minSequence;
                 while (wrapPoint > (minSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue)))
