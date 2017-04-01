@@ -8,6 +8,10 @@ This project aims to provide the full functionality of the Disruptor to CLR proj
 
 ## What's new?
 
+01/04/2017 (v3.3.6):
+
+* All features available in Java Disruptor **3.3.6** have been ported
+
 02/08/2016 (v3.3.5):
 
 * All features available in Java Disruptor **3.3.5** have been ported
