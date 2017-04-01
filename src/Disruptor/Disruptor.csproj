@@ -54,6 +54,7 @@
     </Compile>
     <Compile Include="AggregateEventHandler.cs" />
     <Compile Include="AlertException.cs" />
+    <Compile Include="BlockingSpinWaitWaitStrategy.cs" />
     <Compile Include="BlockingWaitStrategy.cs" />
     <Compile Include="LiteTimeoutBlockingWaitStrategy.cs" />
     <Compile Include="SpinWaitWaitStrategy.cs" />

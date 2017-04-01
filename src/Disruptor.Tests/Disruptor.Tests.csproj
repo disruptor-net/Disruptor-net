@@ -73,6 +73,7 @@
     <Compile Include="BatchingTests.cs" />
     <Compile Include="BusySpinWaitStrategyTests.cs" />
     <Compile Include="Collections\HistogramTests.cs" />
+    <Compile Include="BlockingSpinWaitWaitStrategyTests.cs" />
     <Compile Include="WorkerStressTest.cs" />
     <Compile Include="Dsl\Stubs\TestEventHandler.cs" />
     <Compile Include="Dsl\Stubs\TestEventTranslator.cs" />
