@@ -34,10 +34,12 @@ namespace Disruptor
                 }
             }
 
+            var aggressiveSpinWait = new AggressiveSpinWait();
             long availableSequence;
             while ((availableSequence = dependentSequence.Value) < sequence)
             {
                 barrier.CheckAlert();
+                aggressiveSpinWait.SpinOnce();
             }
 
             return availableSequence;
