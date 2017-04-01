@@ -7,13 +7,12 @@ using NUnit.Framework;
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class DisruptorStressTest
+    public class WorkerStressTest
     {
         [Test]
         public void ShouldHandleLotsOfThreads()
         {
-
-            var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 1 << 16, TaskScheduler.Current, ProducerType.Multi, new BusySpinWaitStrategy());
+            var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 1 << 16, TaskScheduler.Current, ProducerType.Multi, new SleepingWaitStrategy());
             var ringBuffer = disruptor.RingBuffer;
             disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler());
 
@@ -26,8 +25,10 @@ namespace Disruptor.Tests
             var end = new CountdownEvent(publisherCount);
             var start = new CountdownEvent(publisherCount);
 
-            var handlers = Initialise(disruptor, new TestEventHandler[handlerCount]);
+            var handlers = Initialise(new TestWorkHandler[handlerCount]);
             var publishers = Initialise(new Publisher[publisherCount], ringBuffer, iterations, start, end);
+
+            disruptor.HandleEventsWithWorkerPool(handlers);
 
             disruptor.Start();
 
@@ -52,7 +53,6 @@ namespace Disruptor.Tests
             foreach (var handler in handlers)
             {
                 Assert.That(handler.MessagesSeen, Is.Not.EqualTo(0));
-                Assert.That(handler.FailureCount, Is.EqualTo(0));
             }
         }
 
@@ -66,34 +66,23 @@ namespace Disruptor.Tests
             return publishers;
         }
 
-        private TestEventHandler[] Initialise(Disruptor<TestEvent> disruptor, TestEventHandler[] testEventHandlers)
+        private TestWorkHandler[] Initialise(TestWorkHandler[] testWorkHandlers)
         {
-            for (var i = 0; i < testEventHandlers.Length; i++)
+            for (var i = 0; i < testWorkHandlers.Length; i++)
             {
-                var handler = new TestEventHandler();
-                disruptor.HandleEventsWith(handler);
-                testEventHandlers[i] = handler;
+                var handler = new TestWorkHandler();
+                testWorkHandlers[i] = handler;
             }
 
-            return testEventHandlers;
+            return testWorkHandlers;
         }
 
-        private class TestEventHandler : IEventHandler<TestEvent>
+        private class TestWorkHandler : IWorkHandler<TestEvent>
         {
-            public int FailureCount;
             public int MessagesSeen;
 
-            public void OnEvent(TestEvent @event, long sequence, bool endOfBatch)
+            public void OnEvent(TestEvent @event)
             {
-                if (@event.Sequence != sequence 
-                    || @event.A != sequence + 13
-                    || @event.B != sequence - 7 
-                    //|| !("wibble-" + sequence).Equals(@event.S.ToString())
-                    )
-                {
-                    FailureCount++;
-                }
-
                 MessagesSeen++;
             }
         }

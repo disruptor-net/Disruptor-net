@@ -47,6 +47,90 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
+        public void ShouldProcessMessagesPublishedBeforeStartIsCalled()
+        {
+            var eventCounter = new CountdownEvent(2);
+            _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>(() => eventCounter.Signal()));
+
+            _disruptor.PublishEvent(new TestEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
+
+            _disruptor.Start();
+
+            _disruptor.PublishEvent(new TestEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
+
+            if (!eventCounter.Wait(TimeSpan.FromSeconds(5)))
+                Assert.Fail("Did not process event published before start was called. Missed events: " + eventCounter.CurrentCount);
+        }
+
+        [Test]
+        public void ShouldAddEventProcessorsAfterPublishing()
+        {
+            var rb = _disruptor.RingBuffer;
+            var b1 = new BatchEventProcessor<TestEvent>(rb, rb.NewBarrier(), new SleepingEventHandler());
+            var b2 = new BatchEventProcessor<TestEvent>(rb, rb.NewBarrier(b1.Sequence), new SleepingEventHandler());
+            var b3 = new BatchEventProcessor<TestEvent>(rb, rb.NewBarrier(b2.Sequence), new SleepingEventHandler());
+
+            Assert.That(b1.Sequence.Value, Is.EqualTo(-1L));
+            Assert.That(b2.Sequence.Value, Is.EqualTo(-1L));
+            Assert.That(b3.Sequence.Value, Is.EqualTo(-1L));
+
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+
+            _disruptor.HandleEventsWith(b1, b2, b3);
+
+            Assert.That(b1.Sequence.Value, Is.EqualTo(5L));
+            Assert.That(b2.Sequence.Value, Is.EqualTo(5L));
+            Assert.That(b3.Sequence.Value, Is.EqualTo(5L));
+        }
+
+        [Test]
+        public void ShouldSetSequenceForHandlerIfAddedAfterPublish()
+        {
+            var rb = _disruptor.RingBuffer;
+            var b1 = new SleepingEventHandler();
+            var b2 = new SleepingEventHandler();
+            var b3 = new SleepingEventHandler();
+
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+
+            _disruptor.HandleEventsWith(b1, b2, b3);
+
+            Assert.That(_disruptor.GetSequenceValueFor(b1), Is.EqualTo(5L));
+            Assert.That(_disruptor.GetSequenceValueFor(b2), Is.EqualTo(5L));
+            Assert.That(_disruptor.GetSequenceValueFor(b3), Is.EqualTo(5L));
+        }
+
+        [Test]
+        public void ShouldSetSequenceForWorkProcessorIfAddedAfterPublish()
+        {
+            var rb = _disruptor.RingBuffer;
+            var wh1 = CreateTestWorkHandler();
+            var wh2 = CreateTestWorkHandler();
+            var wh3 = CreateTestWorkHandler();
+
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+            rb.Publish(rb.Next());
+
+            _disruptor.HandleEventsWithWorkerPool(wh1, wh2, wh3);
+
+            Assert.That(_disruptor.RingBuffer.GetMinimumGatingSequence(), Is.EqualTo(5L));
+        }
+
+        [Test]
         public void ShouldCreateEventProcessorGroupForFirstEventProcessors()
         {
             _executor.IgnoreExecutions();
@@ -272,7 +356,7 @@ namespace Disruptor.Tests.Dsl
             _disruptor.Start();
             _disruptor.Start();
         }
-        
+
         [Test]
         public void ShouldSupportCustomProcessorsAsDependencies()
         {
@@ -329,8 +413,8 @@ namespace Disruptor.Tests.Dsl
         [Test]
         public void ShouldProvideEventsToWorkHandlers()
         {
-            var workHandler1 = createTestWorkHandler();
-            var workHandler2 = createTestWorkHandler();
+            var workHandler1 = CreateTestWorkHandler();
+            var workHandler2 = CreateTestWorkHandler();
             _disruptor.HandleEventsWithWorkerPool(workHandler1, workHandler2);
 
             PublishEvent();
@@ -341,10 +425,30 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
+        public void ShouldProvideEventsMultipleWorkHandlers()
+        {
+            var workHandler1 = CreateTestWorkHandler();
+            var workHandler2 = CreateTestWorkHandler();
+            var workHandler3 = CreateTestWorkHandler();
+            var workHandler4 = CreateTestWorkHandler();
+            var workHandler5 = CreateTestWorkHandler();
+            var workHandler6 = CreateTestWorkHandler();
+            var workHandler7 = CreateTestWorkHandler();
+            var workHandler8 = CreateTestWorkHandler();
+
+            _disruptor
+                .HandleEventsWithWorkerPool(workHandler1, workHandler2)
+                .ThenHandleEventsWithWorkerPool(workHandler3, workHandler4);
+            _disruptor
+                .HandleEventsWithWorkerPool(workHandler5, workHandler6)
+                .ThenHandleEventsWithWorkerPool(workHandler7, workHandler8);
+        }
+
+        [Test]
         public void ShouldSupportUsingWorkerPoolAsDependency()
         {
-            var workHandler1 = createTestWorkHandler();
-            var workHandler2 = createTestWorkHandler();
+            var workHandler1 = CreateTestWorkHandler();
+            var workHandler2 = CreateTestWorkHandler();
             var delayedEventHandler = CreateDelayedEventHandler();
             _disruptor.HandleEventsWithWorkerPool(workHandler1, workHandler2).Then(delayedEventHandler);
 
@@ -362,8 +466,8 @@ namespace Disruptor.Tests.Dsl
         [Test]
         public void ShouldSupportUsingWorkerPoolAsDependencyAndProcessFirstEventAsSoonAsItIsAvailable()
         {
-            var workHandler1 = createTestWorkHandler();
-            var workHandler2 = createTestWorkHandler();
+            var workHandler1 = CreateTestWorkHandler();
+            var workHandler2 = CreateTestWorkHandler();
             var delayedEventHandler = CreateDelayedEventHandler();
             _disruptor.HandleEventsWithWorkerPool(workHandler1, workHandler2).Then(delayedEventHandler);
 
@@ -380,8 +484,8 @@ namespace Disruptor.Tests.Dsl
         [Test]
         public void ShouldSupportUsingWorkerPoolWithADependency()
         {
-            var workHandler1 = createTestWorkHandler();
-            var workHandler2 = createTestWorkHandler();
+            var workHandler1 = CreateTestWorkHandler();
+            var workHandler2 = CreateTestWorkHandler();
             var delayedEventHandler = CreateDelayedEventHandler();
             _disruptor.HandleEventsWith(delayedEventHandler).ThenHandleEventsWithWorkerPool(workHandler1, workHandler2);
 
@@ -399,7 +503,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldSupportCombiningWorkerPoolWithEventHandlerAsDependencyWhenNotPreviouslyRegistered()
 
         {
-            var workHandler1 = createTestWorkHandler();
+            var workHandler1 = CreateTestWorkHandler();
             var delayedEventHandler1 = CreateDelayedEventHandler();
             var delayedEventHandler2 = CreateDelayedEventHandler();
             _disruptor.HandleEventsWith(delayedEventHandler1).And(_disruptor.HandleEventsWithWorkerPool(workHandler1)).Then(
@@ -537,7 +641,7 @@ namespace Disruptor.Tests.Dsl
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
         }
 
-        private TestWorkHandler createTestWorkHandler()
+        private TestWorkHandler CreateTestWorkHandler()
         {
             var testWorkHandler = new TestWorkHandler();
             _testWorkHandlers.Add(testWorkHandler);

@@ -104,7 +104,7 @@ namespace Disruptor.Dsl
         {
             return CreateEventProcessors(new ISequence[0], eventProcessorFactories);
         }
-        
+
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The Disruptor will
         /// automatically start this processors when <see cref="Start"/> is called.
@@ -121,9 +121,18 @@ namespace Disruptor.Dsl
             {
                 _consumerRepository.Add(processor);
             }
+
+            var sequences = new ISequence[processors.Length];
+            for (int i = 0; i < processors.Length; i++)
+            {
+                sequences[i] = processors[i].Sequence;
+            }
+
+            _ringBuffer.AddGatingSequences(sequences);
+
             return new EventHandlerGroup<T>(this, _consumerRepository, Util.GetSequencesFor(processors));
         }
-        
+
         /// <summary>
         /// Set up a <see cref="WorkerPool{T}"/> to distribute an event to one of a pool of work handler threads.
         /// Each event will only be processed by one of the work handlers.
@@ -157,7 +166,7 @@ namespace Disruptor.Dsl
             CheckNotStarted();
             ((ExceptionHandlerWrapper<T>)_exceptionHandler).SwitchTo(exceptionHandler);
         }
-        
+
         /// <summary>
         /// Override the default exception handler for a specific handler.
         /// <code>disruptorWizard.HandleExceptionsIn(eventHandler).With(exceptionHandler);</code>
@@ -230,8 +239,6 @@ namespace Disruptor.Dsl
         /// <returns>the configured ring buffer</returns>
         public RingBuffer<T> Start()
         {
-            _ringBuffer.AddGatingSequences(_consumerRepository.GetLastSequenceInChain(true));
-
             CheckOnlyStartedOnce();
             foreach (var consumerInfo in _consumerRepository)
             {
@@ -325,7 +332,17 @@ namespace Disruptor.Dsl
         /// <returns>the SequenceBarrier used by the given handler</returns>
         public ISequenceBarrier GetBarrierFor(IEventHandler<T> handler) => _consumerRepository.GetBarrierFor(handler);
 
-        // Confirms if all messages have been consumed by all event processors
+        /// <summary>
+        /// Gets the sequence value for the specified event handlers.
+        /// </summary>
+        /// <param name="handler"></param>
+        /// <returns></returns>
+        public long GetSequenceValueFor(IEventHandler<T> handler) => _consumerRepository.GetSequenceFor(handler).Value;
+
+        /// <summary>
+        /// Confirms if all messages have been consumed by all event processors
+        /// </summary>
+        /// <returns></returns>
         private bool HasBacklog()
         {
             var cursor = _ringBuffer.Cursor;
@@ -341,39 +358,60 @@ namespace Disruptor.Dsl
         {
             CheckNotStarted();
 
-            var processorSequences = new List<ISequence>(eventHandlers.Length);
+            var processorSequences = new ISequence[eventHandlers.Length];
             var barrier = _ringBuffer.NewBarrier(barrierSequences);
 
-            foreach (var eventHandler in eventHandlers)
+            for (int i = 0; i < eventHandlers.Length; i++)
             {
+                var eventHandler = eventHandlers[i];
+
                 var batchEventProcessor = new BatchEventProcessor<T>(_ringBuffer, barrier, eventHandler);
+
                 if (_exceptionHandler != null)
                     batchEventProcessor.SetExceptionHandler(_exceptionHandler);
 
                 _consumerRepository.Add(batchEventProcessor, eventHandler, barrier);
-                processorSequences.Add(batchEventProcessor.Sequence);
+                processorSequences[i] = batchEventProcessor.Sequence;
             }
 
-            if (processorSequences.Count > 0)
-            {
-                _consumerRepository.UnMarkEventProcessorsAsEndOfChain(barrierSequences);
-            }
+            UpdateGatingSequencesForNextInChain(barrierSequences, processorSequences);
 
             return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
         }
 
+        private void UpdateGatingSequencesForNextInChain(ISequence[] barrierSequences, ISequence[] processorSequences)
+        {
+            if (processorSequences.Length > 0)
+            {
+                _ringBuffer.AddGatingSequences(processorSequences);
+                foreach (var barrierSequence in barrierSequences)
+                {
+                    _ringBuffer.RemoveGatingSequence(barrierSequence);
+                }
+
+                _consumerRepository.UnMarkEventProcessorsAsEndOfChain(barrierSequences);
+            }
+        }
+
         internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IEventProcessorFactory<T>[] processorFactories)
         {
-            return HandleEventsWith(processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, barrierSequences)).ToArray());
+            var eventProcessors = processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, barrierSequences)).ToArray();
+
+            return HandleEventsWith(eventProcessors);
         }
 
         internal EventHandlerGroup<T> CreateWorkerPool(ISequence[] barrierSequences, IWorkHandler<T>[] workHandlers)
         {
             var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
             var workerPool = new WorkerPool<T>(_ringBuffer, sequenceBarrier, _exceptionHandler, workHandlers);
+
             _consumerRepository.Add(workerPool, sequenceBarrier);
 
-            return new EventHandlerGroup<T>(this, _consumerRepository, workerPool.GetWorkerSequences());
+            var workerSequences = workerPool.GetWorkerSequences();
+
+            UpdateGatingSequencesForNextInChain(barrierSequences, workerSequences);
+
+            return new EventHandlerGroup<T>(this, _consumerRepository, workerSequences);
         }
 
         private void CheckNotStarted()

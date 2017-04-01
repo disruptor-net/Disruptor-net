@@ -20,42 +20,45 @@ namespace Disruptor
         /// <summary>
         /// Create a worker pool to enable an array of <see cref="IWorkHandler{T}"/>s to consume published sequences.
         /// 
-        /// This option requires a pre-configured <see cref="RingBuffer{T}"/> which must have <see cref="Sequencer.SetGatingSequences"/>
+        /// This option requires a pre-configured <see cref="RingBuffer{T}"/> which must have <see cref="ISequencer.AddGatingSequences"/>
         /// called before the work pool is started.
         /// </summary>
         /// <param name="ringBuffer">ringBuffer of events to be consumed.</param>
         /// <param name="sequenceBarrier">sequenceBarrier on which the workers will depend.</param>
         /// <param name="exceptionHandler">exceptionHandler to callback when an error occurs which is not handled by the <see cref="IWorkHandler{T}"/>s.</param>
         /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
-        public WorkerPool(RingBuffer<T> ringBuffer,
-                          ISequenceBarrier sequenceBarrier,
-                          IExceptionHandler<T> exceptionHandler,
-                          params IWorkHandler<T>[] workHandlers)
+        public WorkerPool(
+            RingBuffer<T> ringBuffer,
+            ISequenceBarrier sequenceBarrier,
+            IExceptionHandler<T> exceptionHandler,
+            params IWorkHandler<T>[] workHandlers)
         {
             _ringBuffer = ringBuffer;
             _workProcessors = new WorkProcessor<T>[workHandlers.Length];
 
             for (var i = 0; i < workHandlers.Length; i++)
             {
-                _workProcessors[i] = new WorkProcessor<T>(ringBuffer,
-                                                          sequenceBarrier,
-                                                          workHandlers[i],
-                                                          exceptionHandler,
-                                                          _workSequence);
+                _workProcessors[i] = new WorkProcessor<T>(
+                    ringBuffer,
+                    sequenceBarrier,
+                    workHandlers[i],
+                    exceptionHandler,
+                    _workSequence);
             }
         }
 
         /// <summary>
         /// Construct a work pool with an internal <see cref="RingBuffer{T}"/> for convenience.
         /// 
-        /// This option does not require <see cref="Sequencer.SetGatingSequences"/> to be called before the work pool is started.
+        /// This option does not require <see cref="ISequencer.AddGatingSequences"/> to be called before the work pool is started.
         /// </summary>
         /// <param name="eventFactory">eventFactory for filling the <see cref="RingBuffer{T}"/></param>
         /// <param name="exceptionHandler">exceptionHandler to callback when an error occurs which is not handled by the <see cref="IWorkHandler{T}"/>s.</param>
         /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
-        public WorkerPool(Func<T> eventFactory,
-                          IExceptionHandler<T> exceptionHandler,
-                          params IWorkHandler<T>[] workHandlers)
+        public WorkerPool(
+            Func<T> eventFactory,
+            IExceptionHandler<T> exceptionHandler,
+            params IWorkHandler<T>[] workHandlers)
 
         {
             _ringBuffer = RingBuffer<T>.CreateMultiProducer(eventFactory, 1024, new BlockingWaitStrategy());
@@ -64,11 +67,12 @@ namespace Disruptor
 
             for (var i = 0; i < workHandlers.Length; i++)
             {
-                _workProcessors[i] = new WorkProcessor<T>(_ringBuffer,
-                                                          barrier,
-                                                          workHandlers[i],
-                                                          exceptionHandler,
-                                                          _workSequence);
+                _workProcessors[i] = new WorkProcessor<T>(
+                    _ringBuffer,
+                    barrier,
+                    workHandlers[i],
+                    exceptionHandler,
+                    _workSequence);
             }
 
             _ringBuffer.AddGatingSequences(GetWorkerSequences());
@@ -115,7 +119,7 @@ namespace Disruptor
 
         /// <summary>
         /// Wait for the <see cref="RingBuffer{T}"/> to drain of published events then halt the workers.
-       /// </summary>
+        /// </summary>
         public void DrainAndHalt()
         {
             var workerSequences = GetWorkerSequences();
