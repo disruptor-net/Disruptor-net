@@ -11,6 +11,8 @@ This project aims to provide the full functionality of the Disruptor to CLR proj
 01/04/2017 (v3.3.6):
 
 * All features available in Java Disruptor **3.3.6** have been ported
+* Use an aggressive spin wait in all blocking wait strategies (#25)
+* Add a new blocking low CPU usage wait strategy
 
 02/08/2016 (v3.3.5):
 
