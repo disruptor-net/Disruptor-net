@@ -64,6 +64,7 @@
       <Link>Properties\Version.cs</Link>
     </Compile>
     <Compile Include="ILatencyTest.cs" />
+    <Compile Include="Issues\HighCpuUsageTests.cs" />
     <Compile Include="LatencyTestSession.cs" />
     <Compile Include="LatencyTestSessionResult.cs" />
     <Compile Include="IThroughputTest.cs" />
