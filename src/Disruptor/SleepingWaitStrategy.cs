@@ -53,11 +53,13 @@ namespace Disruptor
             {
                 --counter;
             }
+#if NETSTANDARD2_0
             else if (counter > 0)
             {
                 --counter;
                 Thread.Yield();
             }
+#endif
             else
             {
                 Thread.Sleep(0);

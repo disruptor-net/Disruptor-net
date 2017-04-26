@@ -20,7 +20,11 @@ namespace Disruptor
             
             Console.WriteLine(message);
 
+#if NETSTANDARD2_0
             throw new ApplicationException(message, ex);
+#else
+            throw new Exception(message, ex);
+#endif
         }
 
         /// <summary>
@@ -33,7 +37,11 @@ namespace Disruptor
 
             Console.WriteLine(message);
 
+#if NETSTANDARD2_0
             throw new ApplicationException(message, ex);
+#else
+            throw new Exception(message, ex);
+#endif
         }
 
         /// <summary>
@@ -46,7 +54,11 @@ namespace Disruptor
 
             Console.WriteLine(message);
 
+#if NETSTANDARD2_0
             throw new ApplicationException(message, ex);
+#else
+            throw new Exception(message, ex);
+#endif
         }
     }
 }

@@ -282,42 +282,32 @@ namespace Disruptor.Collections
         /// <returns></returns>
         public override string ToString()
         {
-            var culture = Thread.CurrentThread.CurrentCulture;
+            var culture = CultureInfo.InvariantCulture;
 
-            try
+            var sb = new StringBuilder();
+
+            sb.Append("Histogram{");
+
+            sb.AppendFormat(culture, "min={0}, ", Min);
+            sb.AppendFormat(culture, "max={0}, ", Max);
+            sb.AppendFormat(culture, "mean={0}, ", Mean);
+            sb.AppendFormat(culture, "99%={0}, ", TwoNinesUpperBound);
+            sb.AppendFormat(culture, "99.99%={0}, ", FourNinesUpperBound);
+
+            sb.Append('[');
+            for (var i = 0; i < _counts.Length; i++)
             {
-                Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-
-                var sb = new StringBuilder();
-
-                sb.Append("Histogram{");
-
-                sb.Append("min=").Append(Min).Append(", ");
-                sb.Append("max=").Append(Max).Append(", ");
-                sb.Append("mean=").Append(Mean).Append(", ");
-                sb.Append("99%=").Append(TwoNinesUpperBound).Append(", ");
-                sb.Append("99.99%=").Append(FourNinesUpperBound).Append(", ");
-
-                sb.Append('[');
-                for (var i = 0; i < _counts.Length; i++)
-                {
-                    sb.Append(_upperBounds[i]).Append('=').Append(_counts[i]).Append(", ");
-                }
-
-                if (_counts.Length > 0)
-                {
-                    sb.Length = (sb.Length - 2);
-                }
-                sb.Append(']');
-
-                sb.Append('}');
-
-                return sb.ToString();
+                sb.AppendFormat(culture, "{0}={1}, ", _upperBounds[i], _counts[i]);
             }
-            finally
+            if (_counts.Length > 0)
             {
-                Thread.CurrentThread.CurrentCulture = culture;
+                sb.Length = (sb.Length - 2);
             }
+            sb.Append(']');
+
+            sb.Append('}');
+
+            return sb.ToString();
         }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Disruptor
 {
+#if NETSTANDARD2_0
     /// <summary>
     /// Yielding strategy that uses a Thread.Yield() for <see cref="IEventProcessor"/>s waiting on a barrier
     /// after an initially spinning.
@@ -57,4 +58,5 @@ namespace Disruptor
             return counter;
         }
     }
+#endif
 }

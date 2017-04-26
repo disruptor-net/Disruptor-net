@@ -9,6 +9,7 @@ namespace Disruptor.Tests.Dsl.Stubs
 {
     public class StubExecutor : IExecutor
     {
+        private static readonly Task _completedTask = Task.FromResult(0);
         private readonly ConcurrentQueue<Thread> _threads = new ConcurrentQueue<Thread>();
         private bool _ignoreExecutions;
         private int _executionCount;
@@ -24,7 +25,7 @@ namespace Disruptor.Tests.Dsl.Stubs
                 t.Start();
             }
 
-            return Task.CompletedTask;
+            return _completedTask;
         }
 
         public void JoinAllThreads()
