@@ -1,4 +1,4 @@
-# .NET port of LMAX Disruptor [![Build status](https://ci.appveyor.com/api/projects/status/pwgyxwrgglkbr6md/branch/master?svg=true)](https://ci.appveyor.com/project/MendelMonteiro/disruptor-net/branch/master)
+# .NET port of LMAX Disruptor [![Build status](https://ci.appveyor.com/api/projects/status/pwgyxwrgglkbr6md/branch/master?svg=true)](https://ci.appveyor.com/project/MendelMonteiro/disruptor-net/branch/master) [![NuGet](https://buildstats.info/nuget/Disruptor)](http://www.nuget.org/packages/Disruptor/)
 
 This project aims to provide the full functionality of the Disruptor to CLR projects.
 
@@ -37,11 +37,11 @@ The quickest way to get started with the disruptor is by using the [NuGet packag
 
 ## Build from source and run tests
 
-You may also build disruptor directly from the source:
-* you need Visual Studio 2015
-* run `Helper-Build.bat`, it will compile, run the tests and output binaries and results into `\output\build` folder
+You may also build the Disruptor directly from the source:
+* You need Visual Studio 2017
+* run `Cake-Build.bat`, it will compile, run the tests and output binaries and results into `\output\assembly` folder
 
-You can also run all the performance tests by running `Helper-RunAllPerfTestsIsolated.bat`, or run `output\build\Disruptor.PerfTests.exe TestFullName` to run one perf test in particular
+You can also run all the performance tests by running `Cake-Perf.bat`.
 
 [NuGet package]: http://nuget.org/packages/Disruptor
 
