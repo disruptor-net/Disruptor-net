@@ -8,7 +8,11 @@ This project aims to provide the full functionality of the Disruptor to CLR proj
 
 ## What's new?
 
-01/04/2017 (v3.3.6):
+02/05/2017 (v3.3.6):
+
+* Support .NET Core 1.1
+
+01/04/2017 (v3.3.6-alpha):
 
 * All features available in Java Disruptor **3.3.6** have been ported
 * Use an aggressive spin wait in all blocking wait strategies (#25)
