@@ -2,12 +2,17 @@
 
   <PropertyGroup>
     <AssemblyName>Disruptor</AssemblyName>
-	<RootNamespace>Disruptor</RootNamespace>
+    <RootNamespace>Disruptor</RootNamespace>
     <Title>Disruptor</Title>
+    <Product>Disruptor</Product>
     <Description>A High Performance Inter-Thread Messaging Library</Description>
+    <Version>3.3.6</Version>
+    <FileVersion>3.3.6.0</FileVersion>
+    <InformationalVersion>3.3.6</InformationalVersion>
+    <LastPortedJavaRevision>b1e425ea7d5f0e4c48af75876e2a50231e8e69eb</LastPortedJavaRevision>
     <TargetFrameworks>netcoreapp1.1;net45</TargetFrameworks>
-	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<DocumentationFile>$(Configuration)\$(TargetFramework)\Disruptor.xml</DocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Disruptor.xml</DocumentationFile>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(TargetFramework)' == 'net45'">

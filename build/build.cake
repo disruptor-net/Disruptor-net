@@ -1,93 +1,91 @@
-#tool "nuget:?package=NUnit.Runners.Net4&version=2.6.4"
-#addin "Cake.Json"
-
-var target = Argument("target", "Default");
+var target = Argument("target", "Run-Tests");
 var configuration = Argument("configuration", "Release");
-
 var paths = new 
 {
-    output = MakeAbsolute(Directory("./../output")),
-    nugetOutput = MakeAbsolute(Directory("./../output/nuget")),
-    solution = MakeAbsolute(File("./../src/Disruptor-net.sln")),
-    nuspec = MakeAbsolute(File("./Disruptor-net.nuspec")),
-    assemblyInfo = MakeAbsolute(File("./../src/Version.cs")),
-    versions = MakeAbsolute(File("./../versions.json"))
+    AssemblyOutput = MakeAbsolute(Directory("../output/assembly")),
+    TestsOutput = MakeAbsolute(Directory("../output/tests")),
+    PerfOutput = MakeAbsolute(Directory("../output/perf")),
+    NugetOutput = MakeAbsolute(Directory("../output/nuget")),
+    AssemblyProject = MakeAbsolute(File("../src/Disruptor/Disruptor.csproj")),
+    TestsProject = MakeAbsolute(File("../src/Disruptor.Tests/Disruptor.Tests.csproj")),
+    PerfProject = MakeAbsolute(File("../src/Disruptor.PerfTests/Disruptor.PerfTests.csproj")),
+    Nuspec = MakeAbsolute(File("Disruptor-net.nuspec")),
+    Projects = GetFiles("../src/**/*.csproj").Select(MakeAbsolute),
 };
 
-Task("Clean")
-    .Does(() =>{
-        CleanDirectory(paths.output);
-        CleanDirectory(paths.nugetOutput);
-    } );
+var nugetVersion = XmlPeek(paths.AssemblyProject, "//InformationalVersion/text()");
+var targetFrameworks = XmlPeek(paths.AssemblyProject, "//TargetFrameworks/text()").Split(';');
 
 Task("Restore-NuGet-Packages")
-    .IsDependentOn("Clean")
-    .Does(() => NuGetRestore(paths.solution));
-
-/// Build tasks
-
-Task("Create-AssemblyInfo")
-    .Does(()=>{
-        var versionDetails = DeserializeJsonFromFile<VersionDetails>(paths.versions.FullPath);
-        CreateAssemblyInfo(paths.assemblyInfo, new AssemblyInfoSettings {
-            Company = "https://github.com/disruptor-net/Disruptor-net",
-            Product = "Disruptor",
-            Copyright = "Copyright © disruptor-net",
-            Version = versionDetails.AssemblyVersion,
-            FileVersion = versionDetails.AssemblyVersion,
-            InformationalVersion = versionDetails.NugetVersion + " (from java commit: " + versionDetails.LastJavaRevisionPortedVersion +")"
-        });
-    });
-
-Task("MSBuild")
-    .Does(() => MSBuild(paths.solution, settings => settings
-                                            .SetConfiguration(configuration)
-                                            .SetPlatformTarget(PlatformTarget.MSIL)
-                                            .WithProperty("OutDir", paths.output.FullPath + "/build")));
-
-Task("Clean-AssemblyInfo")
-    .Does(()=>{
-        DeleteFile(paths.assemblyInfo);
-        System.IO.File.Create(paths.assemblyInfo.FullPath);
-    });
-
-Task("Build")
-    .IsDependentOn("Restore-NuGet-Packages")
-    .IsDependentOn("Create-AssemblyInfo")
-    .IsDependentOn("MSBuild")
-    .IsDependentOn("Clean-AssemblyInfo");
-
-/// Unit test tasks
-
-Task("Run-Unit-Tests")
-    .IsDependentOn("Build")
-    .Does(() => NUnit(paths.output.FullPath + "/build/*.Tests.dll", new NUnitSettings { 
-        Framework = "net-4.6.1",
-        NoResults = true
-    }));
-
-/// Package tasks
-
-Task("Nuget-Pack")
-    .IsDependentOn("Run-Unit-Tests")
     .Does(() => 
     {
-        var versionDetails = DeserializeJsonFromFile<VersionDetails>(paths.versions.FullPath);
-        NuGetPack(paths.nuspec, new NuGetPackSettings {
-            Version = versionDetails.NugetVersion,
-            BasePath = paths.output.FullPath + "/build",
-            OutputDirectory = paths.nugetOutput
+        foreach (var project in paths.Projects)
+        {
+            Information("Restoring {0}", project.FullPath);
+            NuGetRestore(project);
+        }
+    });
+
+Task("Clean-Tests")
+    .Does(() => CleanDirectory(paths.TestsOutput));
+
+Task("Build-Tests")
+    .IsDependentOn("Clean-Tests")
+    .IsDependentOn("Restore-NuGet-Packages")
+    .Does(() =>
+    {
+        var settings = new DotNetCoreBuildSettings { Configuration = configuration, OutputDirectory = paths.TestsOutput.FullPath };
+        DotNetCoreBuild(paths.TestsProject.FullPath, settings);
+    });
+
+Task("Run-Tests")
+    .IsDependentOn("Build-Tests")
+    .Does(() => NUnit(paths.TestsOutput.FullPath + "/*.Tests.dll", new NUnitSettings { Framework = "net-4.6.1", NoResults = true }));
+
+Task("Clean-Perf")
+    .Does(() => CleanDirectory(paths.PerfOutput));
+
+Task("Build-Perf")
+    .IsDependentOn("Clean-Perf")
+    .IsDependentOn("Restore-NuGet-Packages")
+    .Does(() =>
+    {
+        var settings = new DotNetCoreBuildSettings { Configuration = configuration, OutputDirectory = paths.TestsOutput.FullPath };
+        DotNetCoreBuild(paths.PerfProject.FullPath, settings);
+    });
+
+Task("Clean-Assembly")
+    .Does(() => CleanDirectory(paths.AssemblyOutput));
+
+Task("Build-Assembly")
+    .IsDependentOn("Clean-Assembly")
+    .IsDependentOn("Restore-NuGet-Packages")
+    .Does(() =>
+    {
+        foreach (var targetFramework in targetFrameworks)
+        {
+            Information("Building {0}", targetFramework);
+            var settings = new DotNetCoreBuildSettings
+            {
+                Framework = targetFramework,
+                Configuration = configuration,
+                OutputDirectory = paths.AssemblyOutput.FullPath + "/" + targetFramework,
+            };
+            DotNetCoreBuild(paths.AssemblyProject.FullPath, settings);
+        }
+    });
+
+Task("Pack")
+    .IsDependentOn("Build-Assembly")
+    .Does(() => 
+    {
+        Information("Packing {0}", nugetVersion);
+        NuGetPack(paths.Nuspec, new NuGetPackSettings
+        {
+            Version = nugetVersion,
+            BasePath = paths.AssemblyOutput.FullPath,
+            OutputDirectory = paths.NugetOutput
         });
     });
 
-Task("Default")
-    .IsDependentOn("Run-Unit-Tests");
-
 RunTarget(target);
-
-private class VersionDetails 
-{
-    public string LastJavaRevisionPortedVersion { get; set; } 
-    public string AssemblyVersion { get; set; }
-    public string NugetVersion { get; set; }
-}

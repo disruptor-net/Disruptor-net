@@ -1,0 +1,20 @@
+powershell build\build.ps1 -Script build\build.cake -Target Build-Perf
+
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Raw.OneToOneRawBatchThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Raw.OneToOneRawThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.OneToOneSequencedBatchThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.OneToOneSequencedLongArrayThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.OneToOneSequencedPollerThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.OneToOneSequencedThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Translator.OneToOneTranslatorThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.OneToThreeDiamondSequencedThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.OneToThreePipelineSequencedThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.WorkHandler.OneToThreeReleasingWorkerPoolThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.OneToThreeSequencedThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.WorkHandler.OneToThreeWorkerPoolThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.ThreeToOneSequencedBatchThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.ThreeToOneSequencedThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.Sequenced.ThreeToThreeSequencedThroughputTest
+output\perf\Disruptor.PerfTests.exe Disruptor.PerfTests.WorkHandler.TwoToTwoWorkProcessorThroughputTest
+
+pause

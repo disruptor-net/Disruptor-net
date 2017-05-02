@@ -12,6 +12,8 @@ using System.Runtime.InteropServices;
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
+[assembly: AssemblyCopyright("Copyright © disruptor-net")]
+
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("d80ab069-2ad5-46b5-8a6f-60d2e6b3e30d")]
 [assembly: InternalsVisibleTo("Disruptor.Tests")]

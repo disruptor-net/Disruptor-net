@@ -6,6 +6,7 @@
 	<Title>Disruptor.PerfTests</Title>
     <TargetFrameworks>net46</TargetFrameworks>
 	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+	<OutputType>exe</OutputType>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(TargetFramework)' == 'net46'">
