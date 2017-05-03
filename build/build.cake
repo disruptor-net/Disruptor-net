@@ -22,7 +22,7 @@ Task("Restore-NuGet-Packages")
         foreach (var project in paths.Projects)
         {
             Information("Restoring {0}", project.FullPath);
-            NuGetRestore(project);
+            DotNetCoreRestore(project.FullPath);
         }
     });
 
