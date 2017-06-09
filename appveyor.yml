@@ -1,4 +1,6 @@
 version: 3.3.6.{build}
-build: off
+image: Visual Studio 2017
+build_script:
+- ps: build\build.ps1 -Script build\build.cake -Target Build-Assembly
 test_script:
 - ps: build\build.ps1 -Script build\build.cake -Target Run-Tests
