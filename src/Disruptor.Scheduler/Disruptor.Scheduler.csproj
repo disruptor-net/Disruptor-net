@@ -4,7 +4,7 @@
     <AssemblyName>Disruptor.Scheduler</AssemblyName>
 	<RootNamespace>Disruptor.Scheduler</RootNamespace>
 	<Title>Disruptor.Scheduler</Title>
-    <TargetFrameworks>net45</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
 	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   

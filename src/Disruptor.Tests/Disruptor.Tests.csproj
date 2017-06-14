@@ -4,14 +4,11 @@
     <AssemblyName>Disruptor.Tests</AssemblyName>
 	<RootNamespace>Disruptor.Tests</RootNamespace>
 	<Title>Disruptor.Tests</Title>
-    <TargetFrameworks>net45</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
 	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net45'">
-    <DefineConstants>$(DefineConstants);NETSTANDARD2_0</DefineConstants>
-  </PropertyGroup>
-  
+ 
   <ItemGroup>
     <None Remove="Disruptor.Tests.v3.ncrunchproject" />
   </ItemGroup>

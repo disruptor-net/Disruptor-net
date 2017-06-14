@@ -4,15 +4,11 @@
     <AssemblyName>Disruptor.PerfTests</AssemblyName>
 	<RootNamespace>Disruptor.PerfTests</RootNamespace>
 	<Title>Disruptor.PerfTests</Title>
-    <TargetFrameworks>net46</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
 	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
 	<OutputType>exe</OutputType>
   </PropertyGroup>
-  
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net46'">
-    <DefineConstants>$(DefineConstants);NETSTANDARD2_0</DefineConstants>
-  </PropertyGroup>
-  
+    
   <ItemGroup>
     <None Remove="Disruptor.PerfTests.v3.ncrunchproject" />
   </ItemGroup>
