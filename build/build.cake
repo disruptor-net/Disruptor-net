@@ -50,7 +50,7 @@ Task("Build-Perf")
     .IsDependentOn("Restore-NuGet-Packages")
     .Does(() =>
     {
-        var settings = new DotNetCoreBuildSettings { Configuration = configuration, OutputDirectory = paths.TestsOutput.FullPath };
+        var settings = new DotNetCoreBuildSettings { Configuration = configuration, OutputDirectory = paths.PerfOutput.FullPath };
         DotNetCoreBuild(paths.PerfProject.FullPath, settings);
     });
 
