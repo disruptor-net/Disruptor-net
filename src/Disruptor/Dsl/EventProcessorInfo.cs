@@ -1,5 +1,11 @@
 ﻿namespace Disruptor.Dsl
 {
+    /// <summary>
+    /// Wrapper class to tie together a particular event processing stage
+    /// 
+    /// Tracks the event processor instance, the event handler instance, and sequence barrier which the stage is attached to.
+    /// </summary>
+    /// <typeparam name="T">the type of the configured <see cref="IEventHandler{T}"/></typeparam>
     internal class EventProcessorInfo<T> : IConsumerInfo
     {
         public EventProcessorInfo(IEventProcessor eventProcessor, IEventHandler<T> eventHandler, ISequenceBarrier barrier)

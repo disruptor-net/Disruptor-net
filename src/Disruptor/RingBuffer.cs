@@ -4,8 +4,8 @@ using Disruptor.Dsl;
 namespace Disruptor
 {
     /// <summary>
-    ///     Ring based store of reusable entries containing the data representing an event being exchanged between event
-    ///     publisher and <see cref="IEventProcessor" />s.
+    /// Ring based store of reusable entries containing the data representing
+    /// an event being exchanged between event producer and <see cref="IEventProcessor"/>s.
     /// </summary>
     /// <typeparam name="T">implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
     public sealed class RingBuffer<T> : IEventSequencer<T>, IEventSink<T>, ICursored
@@ -140,6 +140,14 @@ namespace Disruptor
 
         public int BufferSize { get { return _fields.BufferSize; } }
 
+        /// <summary>
+        /// Given specified <paramref name="requiredCapacity"/> determines if that amount of space
+        /// is available.  Note, you can not assume that if this method returns <c>true</c>
+        /// that a call to <see cref="Next()"/> will not block.  Especially true if this
+        /// ring buffer is set up to handle multiple producers.
+        /// </summary>
+        /// <param name="requiredCapacity">The capacity to check for.</param>
+        /// <returns><c>true</c> if the specified <paramref name="requiredCapacity"/> is available <c>false</c> if not.</returns>
         public bool HasAvailableCapacity(int requiredCapacity)
         {
             return _fields.Sequencer.HasAvailableCapacity(requiredCapacity);
@@ -197,7 +205,7 @@ namespace Disruptor
         /// Remove the specified sequence from this ringBuffer.
         /// </summary>
         /// <param name="sequence">sequence to be removed.</param>
-        /// <returns><tt>true</tt> if this sequence was found, <tt>false</tt> otherwise.</returns>
+        /// <returns><c>true</c> if this sequence was found, <c>false</c> otherwise.</returns>
         public bool RemoveGatingSequence(ISequence sequence)
         {
             return _fields.Sequencer.RemoveGatingSequence(sequence);

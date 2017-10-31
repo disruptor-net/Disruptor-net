@@ -22,7 +22,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldDelgateNextAndPublish()
+        public void ShouldDelegateNextAndPublish()
         {
             _sequencerMock.Setup(x => x.Next()).Returns(34L);
 
@@ -33,7 +33,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldDelgateTryNextAndPublish()
+        public void ShouldDelegateTryNextAndPublish()
         {
             _sequencerMock.Setup(x => x.TryNext()).Returns(34L);
 
@@ -44,7 +44,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldDelgateNextNAndPublish()
+        public void ShouldDelegateNextNAndPublish()
         {
             _sequencerMock.Setup(x => x.Next(10)).Returns(34L);
 
@@ -56,7 +56,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldDelgateTryNextNAndPublish()
+        public void ShouldDelegateTryNextNAndPublish()
         {
             _sequencerMock.Setup(x => x.TryNext(10)).Returns(34L);
 

@@ -1213,13 +1213,13 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldHandleResetToAndNotWrapUnecessarilySingleProducer()
+        public void ShouldHandleResetToAndNotWrapUnnecessarilySingleProducer()
         {
             AssertHandleResetAndNotWrap(RingBuffer<StubEvent>.CreateSingleProducer(StubEvent.EventFactory, 4));
         }
 
         [Test]
-        public void ShouldHandleResetToAndNotWrapUnecessarilyMultiProducer()
+        public void ShouldHandleResetToAndNotWrapUnnecessarilyMultiProducer()
         {
             AssertHandleResetAndNotWrap(RingBuffer<StubEvent>.CreateMultiProducer(StubEvent.EventFactory, 4));
         }
