@@ -13,6 +13,6 @@
   </metadata>
   <files>
     <file src="net45\*" target="lib\net45" />
-    <file src="netcoreapp1.1\*" target="lib\netcoreapp1.1" />
+    <file src="netstandard2.0.\*" target="lib\netstandard2.0" />
   </files>
 </package>
