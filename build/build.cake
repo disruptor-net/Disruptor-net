@@ -79,6 +79,7 @@ Task("Pack")
     .IsDependentOn("Build-Assembly")
     .Does(() => 
     {
+		CreateDirectory(paths.NugetOutput);
         Information("Packing {0}", nugetVersion);
         NuGetPack(paths.Nuspec, new NuGetPackSettings
         {
