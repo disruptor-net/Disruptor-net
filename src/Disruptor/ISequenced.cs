@@ -1,8 +1,5 @@
 ﻿namespace Disruptor
 {
-    /// <summary>
-    /// 
-    /// </summary>
     public interface ISequenced
     {
         /// <summary>
@@ -49,20 +46,22 @@
         /// Attempt to claim the next event in sequence for publishing.  Will return the number of the slot if there is at least<code>requiredCapacity</code> slots available.
         /// </summary>
         /// <returns>the claimed sequence value</returns>
+        /// <exception cref="InsufficientCapacityException">if there is no space available in the ring buffer.</exception>
         long TryNext();
 
         /// <summary>
         /// Attempt to claim the next n events in sequence for publishing.  Will return the highest numbered slot if there is at least &lt;code&gt;requiredCapacity&lt;/code&gt; slots
-        /// available.  Have a look at <see cref="Next"/> for a description on how to use this method.
+        /// available.  Have a look at <see cref="Next(int)"/> for a description on how to use this method.
         ///  </summary>
         /// <param name="n">the number of sequences to claim</param>
         /// <returns>the claimed sequence value</returns>
+        /// <exception cref="InsufficientCapacityException">if there is no space available in the ring buffer.</exception>
         long TryNext(int n);
 
         /// <summary>
         /// Publishes a sequence. Call when the event has been filled.
         /// </summary>
-        /// <param name="sequence"></param>
+        /// <param name="sequence">the sequence to be published.</param>
         void Publish(long sequence);
 
         /// <summary>

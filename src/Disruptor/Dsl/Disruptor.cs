@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +16,7 @@ namespace Disruptor.Dsl
     /// EventHandler{MyEvent} handler2 = new EventHandler{MyEvent}() { ... };
     /// disruptor.HandleEventsWith(handler1);
     /// disruptor.After(handler1).HandleEventsWith(handler2);
+    /// 
     /// RingBuffer ringBuffer = disruptor.Start();</code>
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
@@ -217,6 +217,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Publish an event to the ring buffer.
         /// </summary>
+        /// <typeparam name="A">Class of the user supplied argument.</typeparam>
         /// <param name="eventTranslator">the translator that will load data into the event</param>
         /// <param name="arg">A single argument to load into the event</param>
         public void PublishEvent<A>(IEventTranslatorOneArg<T, A> eventTranslator, A arg) => _ringBuffer.PublishEvent(eventTranslator, arg);
@@ -224,6 +225,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Publish a batch of events to the ring buffer.
         /// </summary>
+        /// <typeparam name="A">Class of the user supplied argument.</typeparam>
         /// <param name="eventTranslator">the translator that will load data into the event</param>
         /// <param name="arg">An array single arguments to load into the events. One Per event.</param>
         [Obsolete("Use PublishEvents instead")]
@@ -232,6 +234,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Publish a batch of events to the ring buffer.
         /// </summary>
+        /// <typeparam name="A">Class of the user supplied argument.</typeparam>
         /// <param name="eventTranslator">the translator that will load data into the event.</param>
         /// <param name="arg">An array single arguments to load into the events. One Per event.</param>
         public void PublishEvents<A>(IEventTranslatorOneArg<T, A> eventTranslator, A[] arg) => _ringBuffer.PublishEvents(eventTranslator, arg);
@@ -239,6 +242,8 @@ namespace Disruptor.Dsl
         /// <summary>
         ///  Publish an event to the ring buffer.
         /// </summary>
+        /// <typeparam name="A">Class of the user supplied argument.</typeparam>
+        /// <typeparam name="B">Class of the user supplied argument.</typeparam>
         /// <param name="eventTranslator">the translator that will load data into the event.</param>
         /// <param name="arg0">The first argument to load into the event</param>
         /// <param name="arg1">The second argument to load into the event</param>
@@ -247,6 +252,9 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Publish an event to the ring buffer.
         /// </summary>
+        /// <typeparam name="A">Class of the user supplied argument.</typeparam>
+        /// <typeparam name="B">Class of the user supplied argument.</typeparam>
+        /// <typeparam name="C">Class of the user supplied argument.</typeparam>
         /// <param name="eventTranslator">the translator that will load data into the event.</param>
         /// <param name="arg0">The first argument to load into the event</param>
         /// <param name="arg1">The second argument to load into the event</param>
@@ -312,14 +320,16 @@ namespace Disruptor.Dsl
         /// processor threads
         /// </summary>
         /// <param name="timeout">the amount of time to wait for all events to be processed. <code>TimeSpan.MaxValue</code> will give an infinite timeout</param>
+        /// <exception cref="TimeoutException">if a timeout occurs before shutdown completes.</exception>
         public void Shutdown(TimeSpan timeout)
         {
             var timeoutAt = DateTime.UtcNow.Add(timeout);
             while (HasBacklog())
             {
                 if (timeout.Ticks >= 0 && DateTime.UtcNow > timeoutAt)
+                {
                     throw TimeoutException.Instance;
-
+                }
                 // Busy spin
             }
             Halt();
@@ -360,8 +370,8 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Gets the sequence value for the specified event handlers.
         /// </summary>
-        /// <param name="handler"></param>
-        /// <returns></returns>
+        /// <param name="handler">eventHandler to get the sequence for.</param>
+        /// <returns>eventHandler's sequence</returns>
         public long GetSequenceValueFor(IEventHandler<T> handler) => _consumerRepository.GetSequenceFor(handler).Value;
 
         /// <summary>
@@ -457,11 +467,7 @@ namespace Disruptor.Dsl
 
         public override string ToString()
         {
-            return "Disruptor{" +
-                   "ringBuffer=" + _ringBuffer +
-                   ", started=" + _started +
-                   ", executor=" + _executor +
-                   "}";
+            return $"Disruptor{{ringBuffer={_ringBuffer}, started={_started}, executor={_executor}}}";
         }
     }
 }

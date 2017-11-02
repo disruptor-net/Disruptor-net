@@ -16,10 +16,11 @@ namespace Disruptor
         private RingBufferFields _fields;
 
         /// <summary>
-        ///     Construct a RingBuffer with the full option set.
+        /// Construct a RingBuffer with the full option set.
         /// </summary>
         /// <param name="eventFactory">eventFactory to create entries for filling the RingBuffer</param>
-        /// <param name="sequencer">waiting strategy employed by processorsToTrack waiting on entries becoming available.</param>
+        /// <param name="sequencer">sequencer to handle the ordering of events moving through the RingBuffer.</param>
+        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public RingBuffer(Func<T> eventFactory, ISequencer sequencer)
         {
             _fields.Sequencer = sequencer;
@@ -49,24 +50,23 @@ namespace Disruptor
         }
 
         /// <summary>
-        ///     Construct a RingBuffer with default strategies of:
-        ///     <see cref="MultiThreadedLowContentionClaimStrategy" /> and <see cref="BlockingWaitStrategy" />
+        /// Construct a RingBuffer with a <see cref="MultiProducerSequencer"/> sequencer.
         /// </summary>
         /// <param name="eventFactory"> eventFactory to create entries for filling the RingBuffer</param>
         /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
         public RingBuffer(Func<T> eventFactory, int bufferSize)
-            : this(eventFactory,
-                   new MultiProducerSequencer(bufferSize, new BlockingWaitStrategy()))
+            : this(eventFactory, new MultiProducerSequencer(bufferSize, new BlockingWaitStrategy()))
         {
         }
 
         /// <summary>
-        ///     Create a new multiple producer RingBuffer using the default wait strategy  <see cref="BlockingWaitStrategy" />.
+        /// Create a new multiple producer RingBuffer with the specified wait strategy.
         /// </summary>
         /// <param name="factory">used to create the events within the ring buffer.</param>
         /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
         /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
-        /// <returns></returns>
+        /// <returns>a constructed ring buffer.</returns>
+        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public static RingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
         {
             MultiProducerSequencer sequencer = new MultiProducerSequencer(bufferSize, waitStrategy);
@@ -75,22 +75,25 @@ namespace Disruptor
         }
 
         /// <summary>
+        /// Create a new multiple producer RingBuffer using the default wait strategy <see cref="BlockingWaitStrategy"/>.
         /// </summary>
-        /// <param name="factory"></param>
-        /// <param name="bufferSize"></param>
-        /// <returns></returns>
+        /// <param name="factory">used to create the events within the ring buffer.</param>
+        /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
+        /// <returns>a constructed ring buffer.</returns>
+        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public static RingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize)
         {
             return CreateMultiProducer(factory, bufferSize, new BlockingWaitStrategy());
         }
 
         /// <summary>
-        ///     Create a new single producer RingBuffer with the specified wait strategy.
+        /// Create a new single producer RingBuffer with the specified wait strategy.
         /// </summary>
         /// <param name="factory">used to create the events within the ring buffer.</param>
         /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
         /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
-        /// <returns></returns>
+        /// <returns>a constructed ring buffer.</returns>
+        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public static RingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
         {
             SingleProducerSequencer sequencer = new SingleProducerSequencer(bufferSize, waitStrategy);
@@ -99,25 +102,27 @@ namespace Disruptor
         }
 
         /// <summary>
-        ///     Create a new single producer RingBuffer using the default wait strategy <see cref="BlockingWaitStrategy"/>.
+        /// Create a new single producer RingBuffer using the default wait strategy <see cref="BlockingWaitStrategy"/>.
         /// </summary>
         /// <param name="factory">used to create the events within the ring buffer.</param>
         /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
-        /// <returns></returns>
+        /// <returns>a constructed ring buffer.</returns>
+        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public static RingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize)
         {
             return CreateSingleProducer(factory, bufferSize, new BlockingWaitStrategy());
         }
 
         /// <summary>
-        ///     Create a new Ring Buffer with the specified producer type (SINGLE or MULTI)
+        /// Create a new Ring Buffer with the specified producer type (SINGLE or MULTI)
         /// </summary>
         /// <param name="producerType">producer type to use <see cref="ProducerType" /></param>
         /// <param name="factory">used to create the events within the ring buffer.</param>
         /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
         /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        /// <returns>a constructed ring buffer.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">if the producer type is invalid</exception>
+        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public static RingBuffer<T> Create(ProducerType producerType, Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
         {
             switch (producerType)
@@ -132,13 +137,26 @@ namespace Disruptor
         }
 
         /// <summary>
-        ///     Get the event for a given sequence in the RingBuffer.
+        /// Get the event for a given sequence in the RingBuffer.
+        /// 
+        /// This call has 2 uses.  Firstly use this call when publishing to a ring buffer.
+        /// After calling <see cref="Next()"/> use this call to get hold of the
+        /// preallocated event to fill with data before calling <see cref="Publish(long)"/>.
+        /// 
+        /// Secondly use this call when consuming data from the ring buffer.  After calling
+        /// <see cref="ISequenceBarrier.WaitFor"/> call this method with any value greater than
+        /// that your current consumer sequence and less than or equal to the value returned from
+        /// the <see cref="ISequenceBarrier.WaitFor"/> method.
         /// </summary>
         /// <param name="sequence">sequence for the event</param>
+        /// <returns>the event for the given sequence</returns>
         // TODO: Any way to avoid the bounds check?
         public T this[long sequence] => (T)_fields.Entries[_bufferPad + ((int)sequence & _fields.IndexMask)];
 
-        public int BufferSize { get { return _fields.BufferSize; } }
+        /// <summary>
+        /// Gets the size of the buffer.
+        /// </summary>
+        public int BufferSize => _fields.BufferSize;
 
         /// <summary>
         /// Given specified <paramref name="requiredCapacity"/> determines if that amount of space
@@ -153,26 +171,82 @@ namespace Disruptor
             return _fields.Sequencer.HasAvailableCapacity(requiredCapacity);
         }
 
+        /// <summary>
+        /// Increment and return the next sequence for the ring buffer.  Calls of this
+        /// method should ensure that they always publish the sequence afterward. E.g.
+        /// <pre>
+        /// long sequence = ringBuffer.next();
+        /// try
+        /// {
+        ///     Event e = ringBuffer.get(sequence);
+        ///     // Do some work with the event.
+        /// }
+        /// finally
+        /// {
+        ///     ringBuffer.publish(sequence);
+        /// }
+        /// </pre>
+        /// </summary>
+        /// <returns>The next sequence to publish to.</returns>
         public long Next()
         {
             return _fields.Sequencer.Next();
         }
 
+        /// <summary>
+        /// The same functionality as <see cref="Next()"/>, but allows the caller to claim
+        /// the next n sequences.
+        /// </summary>
+        /// <param name="n">number of slots to claim</param>
+        /// <returns>sequence number of the highest slot claimed</returns>
         public long Next(int n)
         {
             return _fields.Sequencer.Next(n);
         }
 
+        /// <summary>
+        /// Increment and return the next sequence for the ring buffer.  Calls of this
+        /// method should ensure that they always publish the sequence afterward. E.g.
+        /// <pre>
+        /// long sequence = ringBuffer.next();
+        /// try
+        /// {
+        ///     Event e = ringBuffer.get(sequence);
+        ///     // Do some work with the event.
+        /// }
+        /// finally
+        /// {
+        ///     ringBuffer.publish(sequence);
+        /// }
+        /// </pre>
+        /// This method will not block if there is not space available in the ring
+        /// buffer, instead it will throw an <see cref="InsufficientCapacityException"/>.
+        /// </summary>
+        /// <returns>The next sequence to publish to.</returns>
+        /// <exception cref="InsufficientCapacityException">if the necessary space in the ring buffer is not available</exception>
         public long TryNext()
         {
             return _fields.Sequencer.TryNext();
         }
 
+        /// <summary>
+        /// The same functionality as <see cref="TryNext()"/>, but allows the caller to attempt
+        /// to claim the next n sequences.
+        /// </summary>
+        /// <param name="n">number of slots to claim</param>
+        /// <returns>sequence number of the highest slot claimed</returns>
+        /// <exception cref="InsufficientCapacityException">if the necessary space in the ring buffer is not available</exception>
         public long TryNext(int n)
         {
             return _fields.Sequencer.TryNext(n);
         }
 
+        /// <summary>
+        /// Resets the cursor to a specific value.  This can be applied at any time, but it is worth noting
+        /// that it can cause a data race and should only be used in controlled circumstances.  E.g. during
+        /// initialisation.
+        /// </summary>
+        /// <param name="sequence">the sequence to reset too.</param>
         [Obsolete]
         public void ResetTo(long sequence)
         {
@@ -180,6 +254,12 @@ namespace Disruptor
             _fields.Sequencer.Publish(sequence);
         }
 
+        /// <summary>
+        /// Sets the cursor to a specific sequence and returns the preallocated entry that is stored there.  This
+        /// can cause a data race and should only be done in controlled circumstances, e.g. during initialisation.
+        /// </summary>
+        /// <param name="sequence">the sequence to claim.</param>
+        /// <returns>the preallocated event.</returns>
         public T ClaimAndGetPreallocated(long sequence)
         {
             _fields.Sequencer.Claim(sequence);
@@ -199,11 +279,21 @@ namespace Disruptor
             return _fields.Sequencer.IsAvailable(sequence);
         }
 
+        /// <summary>
+        /// Add the specified gating sequences to this instance of the Disruptor.  They will
+        /// safely and atomically added to the list of gating sequences.
+        /// </summary>
+        /// <param name="gatingSequences">the sequences to add.</param>
         public void AddGatingSequences(params ISequence[] gatingSequences)
         {
             _fields.Sequencer.AddGatingSequences(gatingSequences);
         }
 
+        /// <summary>
+        /// Get the minimum sequence value from all of the gating sequences
+        /// added to this ringBuffer.
+        /// </summary>
+        /// <returns>the minimum gating sequence or the cursor sequence if no sequences have been added.</returns>
         public long GetMinimumGatingSequence()
         {
             return _fields.Sequencer.GetMinimumSequence();
@@ -233,7 +323,7 @@ namespace Disruptor
         /// <summary>
         /// Creates an event poller for this ring buffer gated on the supplied sequences.
         /// </summary>
-        /// <param name="gatingSequences"></param>
+        /// <param name="gatingSequences">gatingSequences to be gated on.</param>
         /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
         public EventPoller<T> NewPoller(params ISequence[] gatingSequences)
         {
@@ -246,12 +336,18 @@ namespace Disruptor
         /// </summary>
         public long Cursor => _fields.Sequencer.Cursor;
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvent(Disruptor.IEventTranslator{T})"/>
+        /// </summary>
         public void PublishEvent(IEventTranslator<T> translator)
         {
             long sequence = _fields.Sequencer.Next();
             TranslateAndPublish(translator, sequence);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvent(Disruptor.IEventTranslator{T})"/>
+        /// </summary>
         public bool TryPublishEvent(IEventTranslator<T> translator)
         {
             try
@@ -266,12 +362,18 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvent{A}(IEventTranslatorOneArg{T,A},A)"/>
+        /// </summary>
         public void PublishEvent<A>(IEventTranslatorOneArg<T, A> translator, A arg0)
         {
             long sequence = _fields.Sequencer.Next();
             TranslateAndPublish(translator, sequence, arg0);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvent{A}(IEventTranslatorOneArg{T,A},A)"/>
+        /// </summary>
         public bool TryPublishEvent<A>(IEventTranslatorOneArg<T, A> translator, A arg0)
         {
             try
@@ -286,12 +388,18 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvent{A,B}(IEventTranslatorTwoArg{T,A,B},A,B)"/>
+        /// </summary>
         public void PublishEvent<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A arg0, B arg1)
         {
             long sequence = _fields.Sequencer.Next();
             TranslateAndPublish(translator, sequence, arg0, arg1);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvent{A,B}(IEventTranslatorTwoArg{T,A,B},A,B)"/>
+        /// </summary>
         public bool TryPublishEvent<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A arg0, B arg1)
         {
             try
@@ -306,12 +414,18 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvent{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},A,B,C)"/>
+        /// </summary>
         public void PublishEvent<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A arg0, B arg1, C arg2)
         {
             long sequence = _fields.Sequencer.Next();
             TranslateAndPublish(translator, sequence, arg0, arg1, arg2);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvent{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},A,B,C)"/>
+        /// </summary>
         public bool TryPublishEvent<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A arg0, B arg1, C arg2)
         {
             try
@@ -326,12 +440,18 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvent(IEventTranslatorVararg{T},object[])"/>
+        /// </summary>
         public void PublishEvent(IEventTranslatorVararg<T> translator, params object[] args)
         {
             long sequence = _fields.Sequencer.Next();
             TranslateAndPublish(translator, sequence, args);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvent(IEventTranslatorVararg{T},object[])"/>
+        /// </summary>
         public bool TryPublishEvent(IEventTranslatorVararg<T> translator, params object[] args)
         {
             try
@@ -346,11 +466,17 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvents(IEventTranslator{T}[])"/>
+        /// </summary>
         public void PublishEvents(IEventTranslator<T>[] translators)
         {
             PublishEvents(translators, 0, translators.Length);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvents(IEventTranslator{T}[],int,int)"/>
+        /// </summary>
         public void PublishEvents(IEventTranslator<T>[] translators, int batchStartsAt, int batchSize)
         {
             CheckBounds(translators, batchStartsAt, batchSize);
@@ -358,11 +484,17 @@ namespace Disruptor
             TranslateAndPublishBatch(translators, batchStartsAt, batchSize, finalSequence);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvents(IEventTranslator{T}[])"/>
+        /// </summary>
         public bool TryPublishEvents(IEventTranslator<T>[] translators)
         {
             return TryPublishEvents(translators, 0, translators.Length);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvents(IEventTranslator{T}[],int,int)"/>
+        /// </summary>
         public bool TryPublishEvents(IEventTranslator<T>[] translators, int batchStartsAt, int batchSize)
         {
             CheckBounds(translators, batchStartsAt, batchSize);
@@ -378,11 +510,17 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvents{A}(IEventTranslatorOneArg{T,A},A[])"/>
+        /// </summary>
         public void PublishEvents<A>(IEventTranslatorOneArg<T, A> translator, A[] arg0)
         {
             PublishEvents(translator, 0, arg0.Length, arg0);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvents{A}(IEventTranslatorOneArg{T,A},int,int,A[])"/>
+        /// </summary>
         public void PublishEvents<A>(IEventTranslatorOneArg<T, A> translator, int batchStartsAt, int batchSize, A[] arg0)
         {
             CheckBounds(arg0, batchStartsAt, batchSize);
@@ -390,13 +528,18 @@ namespace Disruptor
             TranslateAndPublishBatch(translator, arg0, batchStartsAt, batchSize, finalSequence);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvents{A}(IEventTranslatorOneArg{T,A},A[])"/>
+        /// </summary>
         public bool TryPublishEvents<A>(IEventTranslatorOneArg<T, A> translator, A[] arg0)
         {
             return TryPublishEvents(translator, 0, arg0.Length, arg0);
         }
 
-        public bool TryPublishEvents<A>(
-            IEventTranslatorOneArg<T, A> translator, int batchStartsAt, int batchSize, A[] arg0)
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvents{A}(IEventTranslatorOneArg{T,A},int,int,A[])"/>
+        /// </summary>
+        public bool TryPublishEvents<A>(IEventTranslatorOneArg<T, A> translator, int batchStartsAt, int batchSize, A[] arg0)
         {
             CheckBounds(arg0, batchStartsAt, batchSize);
             try
@@ -411,11 +554,17 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvents{A,B}(IEventTranslatorTwoArg{T,A,B},A[],B[])"/>
+        /// </summary>
         public void PublishEvents<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A[] arg0, B[] arg1)
         {
             PublishEvents(translator, 0, arg0.Length, arg0, arg1);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvents{A,B}(IEventTranslatorTwoArg{T,A,B},int,int,A[],B[])"/>
+        /// </summary>
         public void PublishEvents<A, B>(IEventTranslatorTwoArg<T, A, B> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1)
         {
             CheckBounds(arg0, arg1, batchStartsAt, batchSize);
@@ -423,11 +572,17 @@ namespace Disruptor
             TranslateAndPublishBatch(translator, arg0, arg1, batchStartsAt, batchSize, finalSequence);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvents{A,B}(IEventTranslatorTwoArg{T,A,B},A[],B[])"/>
+        /// </summary>
         public bool TryPublishEvents<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A[] arg0, B[] arg1)
         {
             return TryPublishEvents(translator, 0, arg0.Length, arg0, arg1);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvents{A,B}(IEventTranslatorTwoArg{T,A,B},int,int,A[],B[])"/>
+        /// </summary>
         public bool TryPublishEvents<A, B>(IEventTranslatorTwoArg<T, A, B> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1)
         {
             CheckBounds(arg0, arg1, batchStartsAt, batchSize);
@@ -443,11 +598,17 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvents{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},A[],B[],C[])"/>
+        /// </summary>
         public void PublishEvents<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A[] arg0, B[] arg1, C[] arg2)
         {
             PublishEvents(translator, 0, arg0.Length, arg0, arg1, arg2);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvents{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},int,int,A[],B[],C[])"/>
+        /// </summary>
         public void PublishEvents<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1, C[] arg2)
         {
             CheckBounds(arg0, arg1, arg2, batchStartsAt, batchSize);
@@ -455,11 +616,17 @@ namespace Disruptor
             TranslateAndPublishBatch(translator, arg0, arg1, arg2, batchStartsAt, batchSize, finalSequence);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvents{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},A[],B[],C[])"/>
+        /// </summary>
         public bool TryPublishEvents<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A[] arg0, B[] arg1, C[] arg2)
         {
             return TryPublishEvents(translator, 0, arg0.Length, arg0, arg1, arg2);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.TryPublishEvents{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},int,int,A[],B[],C[])"/>
+        /// </summary>
         public bool TryPublishEvents<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1, C[] arg2)
         {
             CheckBounds(arg0, arg1, arg2, batchStartsAt, batchSize);
@@ -475,11 +642,17 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvents(IEventTranslatorVararg{T},object[][])"/>
+        /// </summary>
         public void PublishEvents(IEventTranslatorVararg<T> translator, params object[][] args)
         {
             PublishEventsInternal(translator, 0, args.Length, args);
         }
 
+        /// <summary>
+        /// <see cref="IEventSink{T}.PublishEvents(IEventTranslatorVararg{T},int,int,object[][])"/>
+        /// </summary>
         public void PublishEvents(IEventTranslatorVararg<T> translator, int batchStartsAt, int batchSize, params object[][] args)
         {
             PublishEventsInternal(translator, batchStartsAt, batchSize, args);
@@ -493,24 +666,16 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// <see cref="EventSink.TryPublishEvents"/>
+        /// <see cref="IEventSink{T}.TryPublishEvents(IEventTranslatorVararg{T},object[][])"/>
         /// </summary>
-        /// <param name="translator"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public bool TryPublishEvents(IEventTranslatorVararg<T> translator, params object[][] args)
         {
             return TryPublishEvents(translator, 0, args.Length, args);
         }
 
         /// <summary>
-        /// <see cref="EventSink.TryPublishEvents"/>
+        /// <see cref="IEventSink{T}.TryPublishEvents(IEventTranslatorVararg{T},int,int,object[][])"/>
         /// </summary>
-        /// <param name="translator"></param>
-        /// <param name="batchStartsAt"></param>
-        /// <param name="batchSize"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public bool TryPublishEvents(IEventTranslatorVararg<T> translator, int batchStartsAt, int batchSize, params object[][] args)
         {
             CheckBounds(args, batchStartsAt, batchSize);
@@ -526,6 +691,11 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// Publish the specified sequence.  This action marks this particular
+        /// message as being available to be read.
+        /// </summary>
+        /// <param name="sequence">the sequence to publish.</param>
         public void Publish(long sequence)
         {
             _fields.Sequencer.Publish(sequence);

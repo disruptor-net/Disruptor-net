@@ -17,6 +17,7 @@
         /// <param name="dependentSequence">on which to wait.</param>
         /// <param name="barrier">barrier the <see cref="IEventProcessor"/> is waiting on.</param>
         /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
+        /// <exception cref="TimeoutException">if a timeout occurs before waiting completes (not used by some strategies)</exception>
         long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier);
 
         /// <summary>

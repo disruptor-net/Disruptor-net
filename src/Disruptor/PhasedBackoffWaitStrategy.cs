@@ -43,22 +43,22 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Block with wait/notifyAll semantics
+        /// Construct <see cref="PhasedBackoffWaitStrategy"/> with fallback to <see cref="BlockingWaitStrategy"/>
         /// </summary>
-        /// <param name="spinTimeout"></param>
-        /// <param name="yieldTimeout"></param>
-        /// <returns></returns>
+        /// <param name="spinTimeout">The maximum time in to busy spin for.</param>
+        /// <param name="yieldTimeout">The maximum time in to yield for.</param>
+        /// <returns>The constructed wait strategy.</returns>
         public static PhasedBackoffWaitStrategy WithLock(TimeSpan spinTimeout, TimeSpan yieldTimeout)
         {
             return new PhasedBackoffWaitStrategy(spinTimeout, yieldTimeout, new BlockingWaitStrategy());
         }
 
         /// <summary>
-        /// Block by sleeping in a loop
+        /// Construct <see cref="PhasedBackoffWaitStrategy"/> with fallback to <see cref="SleepingWaitStrategy"/>
         /// </summary>
-        /// <param name="spinTimeout"></param>
-        /// <param name="yieldTimeout"></param>
-        /// <returns></returns>
+        /// <param name="spinTimeout">The maximum time in to busy spin for.</param>
+        /// <param name="yieldTimeout">The maximum time in to yield for.</param>
+        /// <returns>The constructed wait strategy.</returns>
         public static PhasedBackoffWaitStrategy WithSleep(TimeSpan spinTimeout, TimeSpan yieldTimeout)
         {
             return new PhasedBackoffWaitStrategy(spinTimeout, yieldTimeout, new SleepingWaitStrategy(0));

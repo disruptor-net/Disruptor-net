@@ -5,7 +5,9 @@ using System.Threading;
 namespace Disruptor
 {
     /// <summary>
-    /// Coordinator for claiming sequences for access to a data structure while tracking dependent <see cref="Sequence"/>s
+    /// Base class for the various sequencer types (single/multi).  Provides
+    /// common functionality like the management of gating sequences (add/remove) and
+    /// ownership of the current cursor.
     /// </summary>
     public abstract class Sequencer : ISequencer
     {
@@ -17,10 +19,10 @@ namespace Disruptor
         protected ISequence[] _gatingSequences = new ISequence[0];
 
         /// <summary>
-        /// Construct a Sequencer with the selected strategies.
+        /// Create with the specified buffer size and wait strategy.
         /// </summary>
-        /// <param name="bufferSize"></param>
-        /// <param name="waitStrategy">waitStrategy for those waiting on sequences.</param>
+        /// <param name="bufferSize">The total number of entries, must be a positive power of 2.</param>
+        /// <param name="waitStrategy">The wait strategy used by this sequencer</param>
         public Sequencer(int bufferSize, IWaitStrategy waitStrategy)
         {
             if (bufferSize < 1)

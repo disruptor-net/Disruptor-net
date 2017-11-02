@@ -35,8 +35,8 @@ namespace Disruptor
         /// <summary>
         /// Create a <see cref="ISequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
         /// </summary>
-        /// <param name="sequencesToTrack"></param>
-        /// <returns></returns>
+        /// <param name="sequencesToTrack">All of the sequences that the newly constructed barrier will wait on.</param>
+        /// <returns>A sequence barrier that will track the specified sequences.</returns>
         ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack);
 
         /// <summary>
@@ -59,6 +59,10 @@ namespace Disruptor
         /// <returns>The highest value that can be safely read, will be at least <code>nextSequence - 1</code>.</returns>
         long GetHighestPublishedSequence(long nextSequence, long availableSequence);
 
+        /// <summary>
+        /// Creates an event poller for this sequence that will use the supplied data provider and
+        /// gating sequences.
+        /// </summary>
         EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences);
     }
 }
