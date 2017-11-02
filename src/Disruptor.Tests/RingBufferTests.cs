@@ -3,17 +3,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
-using NUnit.Framework.Constraints;
 using Gen = System.Collections.Generic;
+using static Disruptor.Tests.RingBufferEqualsConstraint;
 
 namespace Disruptor.Tests
 {
     [TestFixture]
     public class RingBufferTests
     {
-        private readonly Func<object, object, IResolveConstraint> _ringBufferWithEvents = (l1, l2) => new RingBufferEquals(l1, l2);
-        private readonly Func<object, object, object, object, IResolveConstraint> _ringBufferWithEvents4 = (l1, l2, l3, l4) => new RingBufferEquals(l1, l2, l3, l4);
-
         private RingBuffer<StubEvent> _ringBuffer;
         private ISequenceBarrier _sequenceBarrier;
 
@@ -205,7 +202,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvent(translator);
             ringBuffer.TryPublishEvent(translator);
 
-            Assert.That(ringBuffer, _ringBufferWithEvents(0L, 1L));
+            Assert.That(ringBuffer, RingBufferWithEvents(0L, 1L));
         }
 
         [Test]
@@ -217,7 +214,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvent(translator, "Foo");
             ringBuffer.TryPublishEvent(translator, "Foo");
 
-            Assert.That(ringBuffer, _ringBufferWithEvents("Foo-0", "Foo-1"));
+            Assert.That(ringBuffer, RingBufferWithEvents("Foo-0", "Foo-1"));
         }
 
         [Test]
@@ -229,7 +226,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvent(translator, "Foo", "Bar");
             ringBuffer.TryPublishEvent(translator, "Foo", "Bar");
 
-            Assert.That(ringBuffer, _ringBufferWithEvents("FooBar-0", "FooBar-1"));
+            Assert.That(ringBuffer, RingBufferWithEvents("FooBar-0", "FooBar-1"));
         }
 
         [Test]
@@ -241,7 +238,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvent(translator, "Foo", "Bar", "Baz");
             ringBuffer.TryPublishEvent(translator, "Foo", "Bar", "Baz");
 
-            Assert.That(ringBuffer, _ringBufferWithEvents("FooBarBaz-0", "FooBarBaz-1"));
+            Assert.That(ringBuffer, RingBufferWithEvents("FooBarBaz-0", "FooBarBaz-1"));
         }
 
         [Test]
@@ -253,7 +250,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvent(translator, "Foo", "Bar", "Baz", "Bam");
             ringBuffer.TryPublishEvent(translator, "Foo", "Bar", "Baz", "Bam");
 
-            Assert.That(ringBuffer, _ringBufferWithEvents("FooBarBazBam-0", "FooBarBazBam-1"));
+            Assert.That(ringBuffer, RingBufferWithEvents("FooBarBazBam-0", "FooBarBazBam-1"));
         }
 
         [Test]
@@ -266,10 +263,10 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translators);
             Assert.IsTrue(ringBuffer.TryPublishEvents(translators));
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4(0L, 1L, 2L, 3L));
+            Assert.That(ringBuffer, RingBufferWithEvents(0L, 1L, 2L, 3L));
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsIfBatchIsLargerThanRingBuffer()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -279,7 +276,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(translators);
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(translators));
             }
             finally
             {
@@ -298,7 +295,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translators, 0, 1);
             Assert.IsTrue(ringBuffer.TryPublishEvents(translators, 0, 1));
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4(0L, 1L, null, null));
+            Assert.That(ringBuffer, RingBufferWithEvents(0L, 1L, null, null));
         }
 
         [Test]
@@ -312,7 +309,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translators, 1, 2);
             Assert.IsTrue(ringBuffer.TryPublishEvents(translators, 1, 2));
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4(0L, 1L, 2L, 3L));
+            Assert.That(ringBuffer, RingBufferWithEvents(0L, 1L, 2L, 3L));
         }
 
         [Test]
@@ -324,10 +321,10 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, new[] { "Foo", "Foo" });
             Assert.IsTrue(ringBuffer.TryPublishEvents(translator, new[] { "Foo", "Foo" }));
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4("Foo-0", "Foo-1", "Foo-2", "Foo-3"));
+            Assert.That(ringBuffer, RingBufferWithEvents("Foo-0", "Foo-1", "Foo-2", "Foo-3"));
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsOneArgIfBatchIsLargerThanRingBuffer()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -335,7 +332,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(translator, new[] { "Foo", "Foo", "Foo", "Foo", "Foo" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(translator, new[] { "Foo", "Foo", "Foo", "Foo", "Foo" }));
             }
             finally
             {
@@ -352,7 +349,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, 0, 1, new[] { "Foo", "Foo" });
             Assert.IsTrue(ringBuffer.TryPublishEvents(translator, 0, 1, new[] { "Foo", "Foo" }));
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4("Foo-0", "Foo-1", null, null));
+            Assert.That(ringBuffer, RingBufferWithEvents("Foo-0", "Foo-1", null, null));
         }
 
         [Test]
@@ -364,7 +361,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, 1, 2, new[] { "Foo", "Foo", "Foo" });
             Assert.IsTrue(ringBuffer.TryPublishEvents(translator, 1, 2, new[] { "Foo", "Foo", "Foo" }));
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4("Foo-0", "Foo-1", "Foo-2", "Foo-3"));
+            Assert.That(ringBuffer, RingBufferWithEvents("Foo-0", "Foo-1", "Foo-2", "Foo-3"));
         }
 
         [Test]
@@ -376,10 +373,10 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
             ringBuffer.TryPublishEvents(translator, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4("FooBar-0", "FooBar-1", "FooBar-2", "FooBar-3"));
+            Assert.That(ringBuffer, RingBufferWithEvents("FooBar-0", "FooBar-1", "FooBar-2", "FooBar-3"));
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsITwoArgIfBatchSizeIsBiggerThanRingBuffer()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -387,10 +384,11 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(
-                    translator,
-                    new[] { "Foo", "Foo", "Foo", "Foo", "Foo" },
-                    new[] { "Bar", "Bar", "Bar", "Bar", "Bar" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator,
+                                                     new[] { "Foo", "Foo", "Foo", "Foo", "Foo" },
+                                                     new[] { "Bar", "Bar", "Bar", "Bar", "Bar" }));
+                ;
             }
             finally
             {
@@ -407,7 +405,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, 0, 1, new[] { "Foo0", "Foo1" }, new[] { "Bar0", "Bar1" });
             ringBuffer.TryPublishEvents(translator, 0, 1, new[] { "Foo2", "Foo3" }, new[] { "Bar2", "Bar3" });
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4("Foo0Bar0-0", "Foo2Bar2-1", null, null));
+            Assert.That(ringBuffer, RingBufferWithEvents("Foo0Bar0-0", "Foo2Bar2-1", null, null));
         }
 
         [Test]
@@ -421,7 +419,7 @@ namespace Disruptor.Tests
             ringBuffer.TryPublishEvents(
                 translator, 1, 2, new[] { "Foo3", "Foo4", "Foo5" }, new[] { "Bar3", "Bar4", "Bar5" });
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4("Foo1Bar1-0", "Foo2Bar2-1", "Foo4Bar4-2", "Foo5Bar5-3"));
+            Assert.That(ringBuffer, RingBufferWithEvents("Foo1Bar1-0", "Foo2Bar2-1", "Foo4Bar4-2", "Foo5Bar5-3"));
         }
 
         [Test]
@@ -435,10 +433,10 @@ namespace Disruptor.Tests
             ringBuffer.TryPublishEvents(
                 translator, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" });
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4("FooBarBaz-0", "FooBarBaz-1", "FooBarBaz-2", "FooBarBaz-3"));
+            Assert.That(ringBuffer, RingBufferWithEvents("FooBarBaz-0", "FooBarBaz-1", "FooBarBaz-2", "FooBarBaz-3"));
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsThreeArgIfBatchIsLargerThanRingBuffer()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -446,11 +444,11 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(
-                    translator,
-                    new[] { "Foo", "Foo", "Foo", "Foo", "Foo" },
-                    new[] { "Bar", "Bar", "Bar", "Bar", "Bar" },
-                    new[] { "Baz", "Baz", "Baz", "Baz", "Baz" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator,
+                                                     new[] { "Foo", "Foo", "Foo", "Foo", "Foo" },
+                                                     new[] { "Bar", "Bar", "Bar", "Bar", "Bar" },
+                                                     new[] { "Baz", "Baz", "Baz", "Baz", "Baz" }));
             }
             finally
             {
@@ -469,7 +467,7 @@ namespace Disruptor.Tests
             ringBuffer.TryPublishEvents(
                 translator, 0, 1, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" });
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4("FooBarBaz-0", "FooBarBaz-1", null, null));
+            Assert.That(ringBuffer, RingBufferWithEvents("FooBarBaz-0", "FooBarBaz-1", null, null));
         }
 
         [Test]
@@ -487,7 +485,7 @@ namespace Disruptor.Tests
                     translator, 1, 2, new[] { "Foo3", "Foo4", "Foo5" }, new[] { "Bar3", "Bar4", "Bar5" },
                     new[] { "Baz3", "Baz4", "Baz5" }));
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4("Foo1Bar1Baz1-0", "Foo2Bar2Baz2-1", "Foo4Bar4Baz4-2", "Foo5Bar5Baz5-3"));
+            Assert.That(ringBuffer, RingBufferWithEvents("Foo1Bar1Baz1-0", "Foo2Bar2Baz2-1", "Foo4Bar4Baz4-2", "Foo5Bar5Baz5-3"));
         }
 
         [Test]
@@ -499,10 +497,10 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, new[] { "Foo", "Bar", "Baz", "Bam" }, new[] { "Foo", "Bar", "Baz", "Bam" });
             Assert.IsTrue(ringBuffer.TryPublishEvents(translator, new[] { "Foo", "Bar", "Baz", "Bam" }, new[] { "Foo", "Bar", "Baz", "Bam" }));
 
-            Assert.That(ringBuffer, _ringBufferWithEvents4("FooBarBazBam-0", "FooBarBazBam-1", "FooBarBazBam-2", "FooBarBazBam-3"));
+            Assert.That(ringBuffer, RingBufferWithEvents("FooBarBazBam-0", "FooBarBazBam-1", "FooBarBazBam-2", "FooBarBazBam-3"));
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsVarArgIfBatchIsLargerThanRingBuffer()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -510,13 +508,13 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(
-                    translator,
-                    new[] { "Foo", "Bar", "Baz", "Bam" },
-                    new[] { "Foo", "Bar", "Baz", "Bam" },
-                    new[] { "Foo", "Bar", "Baz", "Bam" },
-                    new[] { "Foo", "Bar", "Baz", "Bam" },
-                    new[] { "Foo", "Bar", "Baz", "Bam" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator,
+                                                     new[] { "Foo", "Bar", "Baz", "Bam" },
+                                                     new[] { "Foo", "Bar", "Baz", "Bam" },
+                                                     new[] { "Foo", "Bar", "Baz", "Bam" },
+                                                     new[] { "Foo", "Bar", "Baz", "Bam" },
+                                                     new[] { "Foo", "Bar", "Baz", "Bam" }));
             }
             finally
             {
@@ -537,7 +535,7 @@ namespace Disruptor.Tests
                     translator, 0, 1, new object[] { "Foo", "Bar", "Baz", "Bam" }, new object[] { "Foo", "Bar", "Baz", "Bam" }));
 
             Assert.That(
-                ringBuffer, _ringBufferWithEvents4(
+                ringBuffer, RingBufferWithEvents(
                     "FooBarBazBam-0", "FooBarBazBam-1", null, null));
         }
 
@@ -558,11 +556,11 @@ namespace Disruptor.Tests
                     new object[] { "Foo5", "Bar5", "Baz5", "Bam5" }));
 
             Assert.That(
-                ringBuffer, _ringBufferWithEvents4(
+                ringBuffer, RingBufferWithEvents(
                     "Foo1Bar1Baz1Bam1-0", "Foo2Bar2Baz2Bam2-1", "Foo4Bar4Baz4Bam4-2", "Foo5Bar5Baz5Bam5-3"));
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsWhenBatchSizeIs0()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -570,8 +568,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(new[] { translator, translator, translator, translator }, 1, 0);
-                ringBuffer.TryPublishEvents(new[] { translator, translator, translator, translator }, 1, 0);
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(new[] { translator, translator, translator, translator }, 1, 0));
             }
             finally
             {
@@ -579,7 +576,23 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
+        public void ShouldNotTryPublishEventsWhenBatchSizeIs0()
+        {
+            var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
+            IEventTranslator<object[]> translator = new NoArgEventTranslator();
+
+            try
+            {
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(new[] { translator, translator, translator, translator }, 1, 0));
+            }
+            finally
+            {
+                AssertEmptyRingBuffer(ringBuffer);
+            }
+        }
+
+        [Test]
         public void ShouldNotPublishEventsWhenBatchExtendsPastEndOfArray()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -587,7 +600,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(new[] { translator, translator, translator }, 1, 3);
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(new[] { translator, translator, translator }, 1, 3));
             }
             finally
             {
@@ -595,7 +608,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsWhenBatchExtendsPastEndOfArray()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -603,7 +616,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(new[] { translator, translator, translator }, 1, 3);
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(new[] { translator, translator, translator }, 1, 3));
             }
             finally
             {
@@ -611,7 +624,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsWhenBatchSizeIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -619,7 +632,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(new[] { translator, translator, translator, translator }, 1, -1);
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(new[] { translator, translator, translator, translator }, 1, -1));
             }
             finally
             {
@@ -627,7 +640,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsWhenBatchSizeIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -635,7 +648,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(new[] { translator, translator, translator, translator }, 1, -1);
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(new[] { translator, translator, translator, translator }, 1, -1));
             }
             finally
             {
@@ -643,14 +656,14 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsWhenBatchStartsAtIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
             IEventTranslator<object[]> translator = new NoArgEventTranslator();
             try
             {
-                ringBuffer.PublishEvents(new[] { translator, translator, translator, translator }, -1, 2);
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(new[] { translator, translator, translator, translator }, -1, 2));
             }
             finally
             {
@@ -658,7 +671,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsWhenBatchStartsAtIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -666,7 +679,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(new[] { translator, translator, translator, translator }, -1, 2);
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(new[] { translator, translator, translator, translator }, -1, 2));
             }
             finally
             {
@@ -674,7 +687,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsOneArgWhenBatchSizeIs0()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -682,8 +695,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(translator, 1, 0, new[] { "Foo", "Foo" });
-                Assert.IsFalse(ringBuffer.TryPublishEvents(translator, 1, 0, new[] { "Foo", "Foo" }));
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(translator, 1, 0, new[] { "Foo", "Foo" }));
             }
             finally
             {
@@ -691,7 +703,23 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
+        public void ShouldNotTryPublishEventsOneArgWhenBatchSizeIs0()
+        {
+            var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
+            IEventTranslatorOneArg<object[], string> translator = new OneArgEventTranslator();
+
+            try
+            {
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(translator, 1, 0, new[] { "Foo", "Foo" }));
+            }
+            finally
+            {
+                AssertEmptyRingBuffer(ringBuffer);
+            }
+        }
+
+        [Test]
         public void ShouldNotPublishEventsOneArgWhenBatchExtendsPastEndOfArray()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -699,7 +727,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(translator, 1, 3, new[] { "Foo", "Foo" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(translator, 1, 3, new[] { "Foo", "Foo" }));
             }
             finally
             {
@@ -707,7 +735,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsOneArgWhenBatchSizeIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -715,7 +743,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(translator, 1, -1, new[] { "Foo", "Foo" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(translator, 1, -1, new[] { "Foo", "Foo" }));
             }
             finally
             {
@@ -723,14 +751,14 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsOneArgWhenBatchStartsAtIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
             IEventTranslatorOneArg<object[], string> translator = new OneArgEventTranslator();
             try
             {
-                ringBuffer.PublishEvents(translator, -1, 2, new[] { "Foo", "Foo" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(translator, -1, 2, new[] { "Foo", "Foo" }));
             }
             finally
             {
@@ -738,7 +766,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsOneArgWhenBatchExtendsPastEndOfArray()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -746,7 +774,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(translator, 1, 3, new[] { "Foo", "Foo" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(translator, 1, 3, new[] { "Foo", "Foo" }));
             }
             finally
             {
@@ -754,7 +782,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsOneArgWhenBatchSizeIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -762,7 +790,7 @@ namespace Disruptor.Tests
 
             try
             {
-                Assert.IsFalse(ringBuffer.TryPublishEvents(translator, 1, -1, new[] { "Foo", "Foo" }));
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(translator, 1, -1, new[] { "Foo", "Foo" }));
             }
             finally
             {
@@ -770,7 +798,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsOneArgWhenBatchStartsAtIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -778,7 +806,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(translator, -1, 2, new[] { "Foo", "Foo" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(translator, -1, 2, new[] { "Foo", "Foo" }));
             }
             finally
             {
@@ -786,7 +814,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsTwoArgWhenBatchSizeIs0()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -794,11 +822,9 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(translator, 1, 0, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
-                Assert.IsFalse(
-                    ringBuffer.TryPublishEvents(
-                        translator, 1, 0, new[] { "Foo", "Foo" },
-                        new[] { "Bar", "Bar" }));
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(
+                                                     translator, 1, 0, new[] { "Foo", "Foo" },
+                                                     new[] { "Bar", "Bar" }));
             }
             finally
             {
@@ -806,7 +832,25 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
+        public void ShouldNotTryPublishEventsTwoArgWhenBatchSizeIs0()
+        {
+            var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
+            IEventTranslatorTwoArg<object[], string, string> translator = new TwoArgEventTranslator();
+
+            try
+            {
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator, 1, 0, new[] { "Foo", "Foo" },
+                                                     new[] { "Bar", "Bar" }));
+            }
+            finally
+            {
+                AssertEmptyRingBuffer(ringBuffer);
+            }
+        }
+
+        [Test]
         public void ShouldNotPublishEventsTwoArgWhenBatchExtendsPastEndOfArray()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -814,7 +858,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(translator, 1, 3, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(translator, 1, 3, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" }));
             }
             finally
             {
@@ -822,7 +866,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsTwoArgWhenBatchSizeIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -830,7 +874,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(translator, 1, -1, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(translator, 1, -1, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" }));
             }
             finally
             {
@@ -838,14 +882,14 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsTwoArgWhenBatchStartsAtIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
             IEventTranslatorTwoArg<object[], string, string> translator = new TwoArgEventTranslator();
             try
             {
-                ringBuffer.PublishEvents(translator, -1, 2, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(translator, -1, 2, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" }));
             }
             finally
             {
@@ -853,7 +897,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsTwoArgWhenBatchExtendsPastEndOfArray()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -861,7 +905,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(translator, 1, 3, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(translator, 1, 3, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" }));
             }
             finally
             {
@@ -869,7 +913,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsTwoArgWhenBatchSizeIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -877,7 +921,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(translator, 1, -1, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(translator, 1, -1, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" }));
             }
             finally
             {
@@ -885,7 +929,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsTwoArgWhenBatchStartsAtIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -893,7 +937,7 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(translator, -1, 2, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(translator, -1, 2, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" }));
             }
             finally
             {
@@ -901,7 +945,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsThreeArgWhenBatchSizeIs0()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -909,13 +953,9 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(
-                    translator, 1, 0, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" },
-                    new[] { "Baz", "Baz" });
-                Assert.IsFalse(
-                    ringBuffer.TryPublishEvents(
-                        translator, 1, 0, new[] { "Foo", "Foo" },
-                        new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" }));
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(
+                                                     translator, 1, 0, new[] { "Foo", "Foo" },
+                                                     new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" }));
             }
             finally
             {
@@ -923,7 +963,25 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
+        public void ShouldNotTryPublishEventsThreeArgWhenBatchSizeIs0()
+        {
+            var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
+            IEventTranslatorThreeArg<object[], string, string, string> translator = new ThreeArgEventTranslator();
+
+            try
+            {
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator, 1, 0, new[] { "Foo", "Foo" },
+                                                     new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" }));
+            }
+            finally
+            {
+                AssertEmptyRingBuffer(ringBuffer);
+            }
+        }
+
+        [Test]
         public void ShouldNotPublishEventsThreeArgWhenBatchExtendsPastEndOfArray()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -931,9 +989,9 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(
-                    translator, 1, 3, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" },
-                    new[] { "Baz", "Baz" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(
+                                                     translator, 1, 3, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" },
+                                                     new[] { "Baz", "Baz" }));
             }
             finally
             {
@@ -941,7 +999,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsThreeArgWhenBatchSizeIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -949,9 +1007,9 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(
-                    translator, 1, -1, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" },
-                    new[] { "Baz", "Baz" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(
+                                                     translator, 1, -1, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" },
+                                                     new[] { "Baz", "Baz" }));
             }
             finally
             {
@@ -959,7 +1017,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsThreeArgWhenBatchStartsAtIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -967,9 +1025,9 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(
-                    translator, -1, 2, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" },
-                    new[] { "Baz", "Baz" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(
+                                                     translator, -1, 2, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" },
+                                                     new[] { "Baz", "Baz" }));
             }
             finally
             {
@@ -977,7 +1035,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsThreeArgWhenBatchExtendsPastEndOfArray()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -985,9 +1043,9 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(
-                    translator, 1, 3, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" },
-                    new[] { "Baz", "Baz" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator, 1, 3, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" },
+                                                     new[] { "Baz", "Baz" }));
             }
             finally
             {
@@ -995,7 +1053,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsThreeArgWhenBatchSizeIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -1003,9 +1061,9 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(
-                    translator, 1, -1, new[] { "Foo", "Foo" },
-                    new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator, 1, -1, new[] { "Foo", "Foo" },
+                                                     new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" }));
             }
             finally
             {
@@ -1013,7 +1071,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsThreeArgWhenBatchStartsAtIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -1021,9 +1079,9 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(
-                    translator, -1, 2, new[] { "Foo", "Foo" },
-                    new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator, -1, 2, new[] { "Foo", "Foo" },
+                                                     new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" }));
             }
             finally
             {
@@ -1031,7 +1089,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsVarArgWhenBatchSizeIs0()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -1039,18 +1097,10 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(
-                    translator, 1, 0, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
-                    new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
-                    {
-                        "Foo2", "Bar2",
-                        "Baz2", "Bam2"
-                    });
-                Assert.IsFalse(
-                    ringBuffer.TryPublishEvents(
-                        translator, 1, 0, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
-                        new object[] { "Foo1", "Bar1", "Baz1", "Bam1" },
-                        new object[] { "Foo2", "Bar2", "Baz2", "Bam2" }));
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(
+                                                     translator, 1, 0, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
+                                                     new object[] { "Foo1", "Bar1", "Baz1", "Bam1" },
+                                                     new object[] { "Foo2", "Bar2", "Baz2", "Bam2" }));
             }
             finally
             {
@@ -1058,7 +1108,26 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
+        public void ShouldNotTryPublishEventsVarArgWhenBatchSizeIs0()
+        {
+            var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
+            var translator = new VarArgEventTranslator();
+
+            try
+            {
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator, 1, 0, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
+                                                     new object[] { "Foo1", "Bar1", "Baz1", "Bam1" },
+                                                     new object[] { "Foo2", "Bar2", "Baz2", "Bam2" }));
+            }
+            finally
+            {
+                AssertEmptyRingBuffer(ringBuffer);
+            }
+        }
+
+        [Test]
         public void ShouldNotPublishEventsVarArgWhenBatchExtendsPastEndOfArray()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -1066,13 +1135,13 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(
-                    translator, 1, 3, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
-                    new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
-                    {
-                        "Foo2", "Bar2",
-                        "Baz2", "Bam2"
-                    });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(
+                                                     translator, 1, 3, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
+                                                     new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
+                                                     {
+                                                         "Foo2", "Bar2",
+                                                         "Baz2", "Bam2"
+                                                     }));
             }
             finally
             {
@@ -1080,7 +1149,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsVarArgWhenBatchSizeIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -1088,13 +1157,13 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(
-                    translator, 1, -1, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
-                    new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
-                    {
-                        "Foo2", "Bar2",
-                        "Baz2", "Bam2"
-                    });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(
+                                                     translator, 1, -1, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
+                                                     new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
+                                                     {
+                                                         "Foo2", "Bar2",
+                                                         "Baz2", "Bam2"
+                                                     }));
             }
             finally
             {
@@ -1102,7 +1171,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotPublishEventsVarArgWhenBatchStartsAtIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -1110,13 +1179,13 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.PublishEvents(
-                    translator, -1, 2, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
-                    new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
-                    {
-                        "Foo2", "Bar2",
-                        "Baz2", "Bam2"
-                    });
+                Assert.Throws<ArgumentException>(() => ringBuffer.PublishEvents(
+                                                     translator, -1, 2, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
+                                                     new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
+                                                     {
+                                                         "Foo2", "Bar2",
+                                                         "Baz2", "Bam2"
+                                                     }));
             }
             finally
             {
@@ -1124,7 +1193,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsVarArgWhenBatchExtendsPastEndOfArray()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -1132,13 +1201,13 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(
-                    translator, 1, 3, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
-                    new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
-                    {
-                        "Foo2", "Bar2",
-                        "Baz2", "Bam2"
-                    });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator, 1, 3, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
+                                                     new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
+                                                     {
+                                                         "Foo2", "Bar2",
+                                                         "Baz2", "Bam2"
+                                                     }));
             }
             finally
             {
@@ -1146,7 +1215,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsVarArgWhenBatchSizeIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -1154,13 +1223,13 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(
-                    translator, 1, -1, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
-                    new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
-                    {
-                        "Foo2", "Bar2",
-                        "Baz2", "Bam2"
-                    });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator, 1, -1, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
+                                                     new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
+                                                     {
+                                                         "Foo2", "Bar2",
+                                                         "Baz2", "Bam2"
+                                                     }));
             }
             finally
             {
@@ -1168,7 +1237,7 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Test]
         public void ShouldNotTryPublishEventsVarArgWhenBatchStartsAtIsNegative()
         {
             var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
@@ -1176,13 +1245,13 @@ namespace Disruptor.Tests
 
             try
             {
-                ringBuffer.TryPublishEvents(
-                    translator, -1, 2, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
-                    new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
-                    {
-                        "Foo2", "Bar2",
-                        "Baz2", "Bam2"
-                    });
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(
+                                                     translator, -1, 2, new object[] { "Foo0", "Bar0", "Baz0", "Bam0" },
+                                                     new object[] { "Foo1", "Bar1", "Baz1", "Bam1" }, new object[]
+                                                     {
+                                                         "Foo2", "Bar2",
+                                                         "Baz2", "Bam2"
+                                                     }));
             }
             finally
             {
@@ -1332,33 +1401,6 @@ namespace Disruptor.Tests
             }
 
             public bool IsRunning { get; private set; }
-        }
-
-        private class RingBufferEquals : Constraint
-        {
-            private readonly object[] _values;
-
-            public RingBufferEquals(params object[] values)
-            {
-                _values = values;
-            }
-
-            public override bool Matches(object actual)
-            {
-                var valid = true;
-                var ringBuffer = (RingBuffer<object[]>)actual;
-                for (var i = 0; i < _values.Length; i++)
-                {
-                    var value = _values[i];
-                    valid &= value == null || ringBuffer[i][0].Equals(value);
-                }
-                return valid;
-            }
-
-            public override void WriteDescriptionTo(MessageWriter writer)
-            {
-                writer.WriteExpectedValue(string.Join(", ", _values));
-            }
         }
     }
 }

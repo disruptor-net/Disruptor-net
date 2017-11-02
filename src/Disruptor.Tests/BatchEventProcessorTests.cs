@@ -19,12 +19,12 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentNullException))]
         public void ShouldThrowExceptionOnSettingNullExceptionHandler()
         {
             var eventHandler = new ActionEventHandler<StubEvent>(x => throw new NullReferenceException());
             var batchEventProcessor = new BatchEventProcessor<StubEvent>(_ringBuffer, _sequenceBarrier, eventHandler);
-            batchEventProcessor.SetExceptionHandler(null);
+
+            Assert.Throws<ArgumentNullException>(() => batchEventProcessor.SetExceptionHandler(null));
         }
 
         [Test]

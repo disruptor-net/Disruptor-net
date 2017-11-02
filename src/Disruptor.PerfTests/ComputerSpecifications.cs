@@ -1,5 +1,5 @@
 using System;
-using System.Runtime.InteropServices;
+using System.Management;
 using System.Text;
 
 namespace Disruptor.PerfTests
@@ -17,7 +17,7 @@ namespace Disruptor.PerfTests
 
         public readonly string OperatingSystem;
         public readonly string OperatingSystemVersion;
-        public readonly string OperatingSystemServicePack;
+        public readonly int OperatingSystemServicePack;
 
         public readonly int NumberOfProcessors;
         public readonly string ProcessorName;
@@ -33,11 +33,50 @@ namespace Disruptor.PerfTests
 
         public ComputerSpecifications()
         {
+            var searcher = new ManagementObjectSearcher("Select * from Win32_ComputerSystem");
+
+            foreach (var mo in searcher.Get())
+            {
+                Name = (string)mo["Caption"];
+                Manufacturer = (string)mo["Manufacturer"];
+                Model = (string)mo["Model"];
+                MemoryMBytes = (int)(((ulong)mo["TotalPhysicalMemory"]) / (1024 * 1024));
+            }
+
             NumberOfLogicalProcessors = Environment.ProcessorCount;
 
-            OperatingSystem = RuntimeInformation.OSDescription;
-            OperatingSystemVersion = Environment.OSVersion.VersionString;
-            OperatingSystemServicePack = Environment.OSVersion.ServicePack.ToString();
+            searcher = new ManagementObjectSearcher("Select * from Win32_OperatingSystem");
+            foreach (var mo in searcher.Get())
+            {
+                OperatingSystem = (string)mo["Caption"];
+                OperatingSystemVersion = (string)mo["Version"];
+                OperatingSystemServicePack = (ushort)mo["ServicePackMajorVersion"];
+                break;
+            }
+
+            searcher = new ManagementObjectSearcher("Select * from Win32_Processor");
+            ManagementObjectCollection processors = searcher.Get();
+            NumberOfProcessors = processors.Count;
+            foreach (var mo in processors)
+            {
+                ProcessorName = (string)mo["Name"];
+                ProcessorDescription = (string)mo["Description"];
+                ProcessorClockSpeedMhz = (int)(uint)mo["MaxClockSpeed"];
+                L3KBytes = (int)(uint)mo["L3CacheSize"];
+                NumberOfCores += int.Parse(mo["NumberOfCores"].ToString());
+
+                break;
+            }
+
+            searcher = new ManagementObjectSearcher("Select * from Win32_CacheMemory");
+            foreach (var mo in searcher.Get())
+            {
+                int level = (ushort)mo["Level"] - 2;
+                if (level == 1)
+                    L1KBytes += (int)(uint)mo["InstalledSize"];
+                else if (level == 2)
+                    L2KBytes += (int)(uint)mo["InstalledSize"];
+            }
         }
 
         public bool IsHyperThreaded

@@ -4,12 +4,8 @@
     <AssemblyName>Disruptor.Scheduler</AssemblyName>
 	<RootNamespace>Disruptor.Scheduler</RootNamespace>
 	<Title>Disruptor.Scheduler</Title>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net47</TargetFrameworks>
 	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-  </PropertyGroup>
-  
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net45'">
-    <DefineConstants>$(DefineConstants);NETSTANDARD2_0</DefineConstants>
   </PropertyGroup>
   
   <ItemGroup>

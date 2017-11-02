@@ -4,7 +4,7 @@
     <AssemblyName>Disruptor.PerfTests</AssemblyName>
 	<RootNamespace>Disruptor.PerfTests</RootNamespace>
 	<Title>Disruptor.PerfTests</Title>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net47</TargetFrameworks>
 	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
 	<OutputType>exe</OutputType>
   </PropertyGroup>
@@ -15,7 +15,7 @@
   
   <ItemGroup>
 	<PackageReference Include="HdrHistogram" Version="1.7.0" />
-    <PackageReference Include="NUnit" Version="2.6.4" />
+    <PackageReference Include="NUnit" Version="3.8.1" />
   </ItemGroup>
   
   <ItemGroup>

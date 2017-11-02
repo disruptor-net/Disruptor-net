@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Disruptor.Dsl;
+using Disruptor.Tests.Support;
 
 namespace Disruptor.Tests
 {
@@ -20,17 +21,22 @@ namespace Disruptor.Tests
             _disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler());
         }
 
-        [Test, Timeout(1000)]
+        [Test]
         public void ShouldShutdownGracefulEvenWithFatalExceptionHandler()
         {
-            _disruptor.Start();
-
-            for (var i = 1; i < 10; i++)
+            var task = Task.Run(() =>
             {
-                var bytes = new byte[32];
-                _random.NextBytes(bytes);
-                _disruptor.PublishEvent(new ByteArrayTranslator(bytes));
-            }
+                _disruptor.Start();
+
+                for (var i = 1; i < 10; i++)
+                {
+                    var bytes = new byte[32];
+                    _random.NextBytes(bytes);
+                    _disruptor.PublishEvent(new ByteArrayTranslator(bytes));
+                }
+            });
+
+            Assert.IsTrue(task.Wait(1000));
         }
 
         public class ByteArrayTranslator : IEventTranslator<byte[]>

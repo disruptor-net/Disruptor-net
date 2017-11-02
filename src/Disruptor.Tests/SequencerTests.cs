@@ -92,15 +92,15 @@ namespace Disruptor.Tests
             var expectedFullSequence = Sequence.InitialCursorValue + _sequencer.BufferSize;
             Assert.That(_sequencer.Cursor, Is.EqualTo(expectedFullSequence));
 
-            RunAsync(() =>
-                     {
-                         waitingSignal.Set();
+            Task.Run(() =>
+            {
+                waitingSignal.Set();
 
-                         var next = _sequencer.Next();
-                         _sequencer.Publish(next);
+                var next = _sequencer.Next();
+                _sequencer.Publish(next);
 
-                         doneSignal.Set();
-                     });
+                doneSignal.Set();
+            });
 
             waitingSignal.WaitOne(TimeSpan.FromMilliseconds(500));
             Assert.That(_sequencer.Cursor, Is.EqualTo(expectedFullSequence));
@@ -112,7 +112,6 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        [ExpectedException(typeof(InsufficientCapacityException))]
         public void ShouldThrowInsufficientCapacityExceptionWhenSequencerIsFull()
         {
             _sequencer.AddGatingSequences(_gatingSequence);
@@ -121,7 +120,8 @@ namespace Disruptor.Tests
             {
                 _sequencer.Next();
             }
-            _sequencer.TryNext();
+
+            Assert.Throws<InsufficientCapacityException>(() => _sequencer.TryNext());
         }
 
         [Test]
@@ -236,38 +236,27 @@ namespace Disruptor.Tests
         }
         
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
         public void ShouldNotAllowBulkNextLessThanZero()
         {
-            _sequencer.Next(-1);
+            Assert.Throws<ArgumentException>(() => _sequencer.Next(-1));
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
         public void ShouldNotAllowBulkNextOfZero()
         {
-            _sequencer.Next(0);
+            Assert.Throws<ArgumentException>(() => _sequencer.Next(0));
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
-
         public void ShouldNotAllowBulkTryNextLessThanZero()
         {
-            _sequencer.TryNext(-1);
+            Assert.Throws<ArgumentException>(() => _sequencer.TryNext(-1));
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
-
         public void ShouldNotAllowBulkTryNextOfZero()
         {
-            _sequencer.TryNext(0);
-        }
-
-        private Task RunAsync(Action action)
-        {
-            return Task.Factory.StartNew(action);
+            Assert.Throws<ArgumentException>(() => _sequencer.TryNext(0));
         }
     }
 }

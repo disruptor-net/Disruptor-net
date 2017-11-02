@@ -41,17 +41,15 @@ namespace Disruptor.Tests.Collections
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void ShouldThrowExceptionWhenIntervalLessThanOrEqualToZero()
         {
-            new Histogram(new long[]{-1, 10, 20});
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Histogram(new long[] { -1, 10, 20 }));
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void ShouldThrowExceptionWhenIntervalDoNotIncrease()
         {
-            new Histogram(new long[]{1, 10, 10, 20});
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Histogram(new long[] { 1, 10, 10, 20 }));
         }
 
         [Test]
@@ -82,11 +80,11 @@ namespace Disruptor.Tests.Collections
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
         public void ShouldThrowExceptionWhenIntervalsDoNotMatch()
         {
             var histogram2 = new Histogram(new[]{ 1L, 2L, 3L});
-            _histogram.AddObservations(histogram2);
+
+            Assert.Throws<ArgumentException>(() => _histogram.AddObservations(histogram2));
         }
 
         [Test]

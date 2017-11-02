@@ -202,15 +202,12 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
         public void ShouldThrowExceptionIfHandlerIsNotAlreadyConsuming()
-
         {
-            _disruptor.After(CreateDelayedEventHandler()).HandleEventsWith(CreateDelayedEventHandler());
+            Assert.Throws<ArgumentException>(() => _disruptor.After(CreateDelayedEventHandler()).HandleEventsWith(CreateDelayedEventHandler()));
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
         public void ShouldTrackEventHandlersByIdentityNotEquality()
         {
             var handler1 = new EvilEqualsEventHandler();
@@ -219,7 +216,7 @@ namespace Disruptor.Tests.Dsl
             _disruptor.HandleEventsWith(handler1);
 
             // handler2.equals(handler1) but it hasn't yet been registered so should throw exception.
-            _disruptor.After(handler2);
+            Assert.Throws<ArgumentException>(() => _disruptor.After(handler2));
         }
 
         [Test]
@@ -338,23 +335,23 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
         public void ShouldThrowExceptionWhenAddingEventProcessorsAfterTheProducerBarrierHasBeenCreated()
         {
             _executor.IgnoreExecutions();
             _disruptor.HandleEventsWith(new SleepingEventHandler());
             _disruptor.Start();
-            _disruptor.HandleEventsWith(new SleepingEventHandler());
+
+            Assert.Throws<InvalidOperationException>(() => _disruptor.HandleEventsWith(new SleepingEventHandler()));
         }
 
         [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
         public void ShouldThrowExceptionIfStartIsCalledTwice()
         {
             _executor.IgnoreExecutions();
             _disruptor.HandleEventsWith(new SleepingEventHandler());
             _disruptor.Start();
-            _disruptor.Start();
+
+            Assert.Throws<InvalidOperationException>(() => _disruptor.Start());
         }
 
         [Test]
@@ -523,7 +520,6 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
-        [ExpectedException(typeof(TimeoutException))]
         public void ShouldThrowTimeoutExceptionIfShutdownDoesNotCompleteNormally()
         {
             //Given
@@ -532,9 +528,7 @@ namespace Disruptor.Tests.Dsl
             PublishEvent();
 
             //When
-            _disruptor.Shutdown(TimeSpan.FromSeconds(1));
-
-            //Then
+            Assert.Throws<TimeoutException>(() => _disruptor.Shutdown(TimeSpan.FromSeconds(1)));
         }
 
         [Test]

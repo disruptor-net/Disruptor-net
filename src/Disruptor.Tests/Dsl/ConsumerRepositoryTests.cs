@@ -66,10 +66,9 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
         public void ShouldThrowExceptionWhenHandlerIsNotRegistered()
         {
-            _consumerRepository.GetEventProcessorFor(new SleepingEventHandler());
+            Assert.Throws<ArgumentException>(() => _consumerRepository.GetEventProcessorFor(new SleepingEventHandler()));
         }
 
         [Test]
