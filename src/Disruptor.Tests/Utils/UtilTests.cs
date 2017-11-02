@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-namespace Disruptor.Tests
+namespace Disruptor.Tests.Utils
 {
     [TestFixture]
     public class UtilTests
@@ -8,7 +8,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldReturnNextPowerOfTwo()
         {
-            var powerOfTwo = Util.CeilingNextPowerOfTwo(1000);
+            var powerOfTwo = 1000.CeilingNextPowerOfTwo();
 
             Assert.AreEqual(1024, powerOfTwo);
         }
@@ -16,7 +16,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldReturnExactPowerOfTwo()
         {
-            var powerOfTwo = Util.CeilingNextPowerOfTwo(1024);
+            var powerOfTwo = 1024.CeilingNextPowerOfTwo();
 
             Assert.AreEqual(1024, powerOfTwo);
         }

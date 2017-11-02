@@ -1,5 +1,5 @@
 ﻿using NUnit.Framework;
-using static Disruptor.Tests.WaitStrategyTestUtil;
+using static Disruptor.Tests.Support.WaitStrategyTestUtil;
 
 namespace Disruptor.Tests
 {

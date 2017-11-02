@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using Disruptor.Collections;
 using NUnit.Framework;
 

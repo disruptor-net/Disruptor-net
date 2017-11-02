@@ -1,4 +1,5 @@
 ﻿using System;
+using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests

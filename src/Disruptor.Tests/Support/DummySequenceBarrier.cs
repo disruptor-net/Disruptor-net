@@ -1,4 +1,4 @@
-﻿namespace Disruptor.Tests
+﻿namespace Disruptor.Tests.Support
 {
     public class DummySequenceBarrier : ISequenceBarrier
     {
@@ -9,6 +9,7 @@
 
         public long Cursor => 0;
         public bool IsAlerted => false;
+
         public void Alert()
         {
         }

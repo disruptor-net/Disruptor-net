@@ -1,5 +1,5 @@
 using System;
-using Moq;
+using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
@@ -10,7 +10,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldTimeoutWaitFor()
         {
-            var sequenceBarrier = new Mock<ISequenceBarrier>();
+            var sequenceBarrier = new DummySequenceBarrier();
 
             var theTimeout = TimeSpan.FromMilliseconds(500);
             TimeoutBlockingWaitStrategy waitStrategy = new TimeoutBlockingWaitStrategy(theTimeout);
@@ -21,7 +21,7 @@ namespace Disruptor.Tests
 
             try
             {
-                waitStrategy.WaitFor(6, cursor, dependent, sequenceBarrier.Object);
+                waitStrategy.WaitFor(6, cursor, dependent, sequenceBarrier);
                 throw new ApplicationException("TimeoutException should have been thrown");
             }
             catch (TimeoutException e)
@@ -32,7 +32,6 @@ namespace Disruptor.Tests
 
             var timeWaiting = t1 - t0;
 
-            sequenceBarrier.Verify(x => x.CheckAlert());
             Assert.That(timeWaiting, Is.GreaterThanOrEqualTo(theTimeout));
         }
     }

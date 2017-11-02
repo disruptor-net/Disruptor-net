@@ -50,13 +50,13 @@ namespace Disruptor.Tests.Dsl
         public void ShouldProcessMessagesPublishedBeforeStartIsCalled()
         {
             var eventCounter = new CountdownEvent(2);
-            _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>(() => eventCounter.Signal()));
+            _disruptor.HandleEventsWith(new ActionEventHandler<TestEvent>(e => eventCounter.Signal()));
 
-            _disruptor.PublishEvent(new TestEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
+            _disruptor.PublishEvent(new ActionEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
 
             _disruptor.Start();
 
-            _disruptor.PublishEvent(new TestEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
+            _disruptor.PublishEvent(new ActionEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
 
             if (!eventCounter.Wait(TimeSpan.FromSeconds(5)))
                 Assert.Fail("Did not process event published before start was called. Missed events: " + eventCounter.CurrentCount);

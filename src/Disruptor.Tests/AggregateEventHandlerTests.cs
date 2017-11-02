@@ -1,4 +1,4 @@
-using Moq;
+using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
@@ -6,74 +6,50 @@ namespace Disruptor.Tests
     [TestFixture]
     public class AggregateEventHandlerTests
     {
-        private Mock<ILifecycleAwareEventHandler<int[]>> _eventHandlerMock1;
-        private Mock<ILifecycleAwareEventHandler<int[]>> _eventHandlerMock2;
-        private Mock<ILifecycleAwareEventHandler<int[]>> _eventHandlerMock3;
+        private DummyEventHandler<int[]> _eh1;
+        private DummyEventHandler<int[]> _eh2;
+        private DummyEventHandler<int[]> _eh3;
 
         [SetUp]
         public void SetUp()
         {
-            _eventHandlerMock1 = new Mock<ILifecycleAwareEventHandler<int[]>>();
-            _eventHandlerMock2 = new Mock<ILifecycleAwareEventHandler<int[]>>();
-            _eventHandlerMock3 = new Mock<ILifecycleAwareEventHandler<int[]>>();
+            _eh1 = new DummyEventHandler<int[]>();
+            _eh2 = new DummyEventHandler<int[]>();
+            _eh3 = new DummyEventHandler<int[]>();
         }
-            
+
         [Test]
         public void ShouldCallOnEventInSequence()
         {
-            var evt = new[] {7};
+            var evt = new[] { 7 };
             const long sequence = 3L;
             const bool endOfBatch = true;
 
-            var aggregateEventHandler = new AggregateEventHandler<int[]>(_eventHandlerMock1.Object,
-                                                                         _eventHandlerMock2.Object,
-                                                                         _eventHandlerMock3.Object);
-
-            _eventHandlerMock1.Setup(eh => eh.OnEvent(evt, sequence, endOfBatch)).Verifiable("event handler 1 was not called");
-            _eventHandlerMock2.Setup(eh => eh.OnEvent(evt, sequence, endOfBatch)).Verifiable("event handler 2 was not called");
-            _eventHandlerMock3.Setup(eh => eh.OnEvent(evt, sequence, endOfBatch)).Verifiable("event handler 3 was not called");
+            var aggregateEventHandler = new AggregateEventHandler<int[]>(_eh1, _eh2, _eh3);
 
             aggregateEventHandler.OnEvent(evt, sequence, endOfBatch);
 
-            _eventHandlerMock1.Verify();
-            _eventHandlerMock2.Verify();
-            _eventHandlerMock3.Verify();
+            AssertLastEvent(evt, sequence, _eh1, _eh2, _eh3);
         }
 
         [Test]
         public void ShouldCallOnStartInSequence()
         {
-            var aggregateEventHandler = new AggregateEventHandler<int[]>(_eventHandlerMock1.Object,
-                                                                         _eventHandlerMock2.Object,
-                                                                         _eventHandlerMock3.Object);
-
-            _eventHandlerMock1.Setup(eh => eh.OnStart()).Verifiable("event handler 1 was not called");
-            _eventHandlerMock2.Setup(eh => eh.OnStart()).Verifiable("event handler 2 was not called");
-            _eventHandlerMock3.Setup(eh => eh.OnStart()).Verifiable("event handler 3 was not called");
+            var aggregateEventHandler = new AggregateEventHandler<int[]>(_eh1, _eh2, _eh3);
 
             aggregateEventHandler.OnStart();
 
-            _eventHandlerMock1.Verify();
-            _eventHandlerMock2.Verify();
-            _eventHandlerMock3.Verify();
+            AssertStartCalls(1, _eh1, _eh2, _eh3);
         }
 
         [Test]
         public void ShouldCallOnShutdownInSequence()
         {
-            var aggregateEventHandler = new AggregateEventHandler<int[]>(_eventHandlerMock1.Object,
-                                                                         _eventHandlerMock2.Object,
-                                                                         _eventHandlerMock3.Object);
-
-            _eventHandlerMock1.Setup(eh => eh.OnShutdown()).Verifiable("event handler 1 was not called");
-            _eventHandlerMock2.Setup(eh => eh.OnShutdown()).Verifiable("event handler 2 was not called");
-            _eventHandlerMock3.Setup(eh => eh.OnShutdown()).Verifiable("event handler 3 was not called");
+            var aggregateEventHandler = new AggregateEventHandler<int[]>(_eh1, _eh2, _eh3); ;
 
             aggregateEventHandler.OnShutdown();
 
-            _eventHandlerMock1.Verify();
-            _eventHandlerMock2.Verify();
-            _eventHandlerMock3.Verify();
+            AssertShutdownCalls(1, _eh1, _eh2, _eh3);
         }
 
         [Test]
@@ -81,13 +57,34 @@ namespace Disruptor.Tests
         {
             var aggregateEventHandler = new AggregateEventHandler<int[]>();
 
-            aggregateEventHandler.OnEvent(new[]{7}, 0L, true);
+            aggregateEventHandler.OnEvent(new[] { 7 }, 0L, true);
             aggregateEventHandler.OnStart();
             aggregateEventHandler.OnShutdown();
         }
 
-        public interface ILifecycleAwareEventHandler<in T> : IEventHandler<T>, ILifecycleAware
+        private static void AssertLastEvent(int[] evt, long sequence, params DummyEventHandler<int[]>[] handlers)
         {
+            foreach (var handler in handlers)
+            {
+                Assert.AreSame(handler.LastEvent, evt);
+                Assert.AreEqual(handler.LastSequence, sequence);
+            }
+        }
+
+        private static void AssertStartCalls(int startCalls, params DummyEventHandler<int[]>[] handlers)
+        {
+            foreach (var handler in handlers)
+            {
+                Assert.AreEqual(handler.StartCalls, startCalls);
+            }
+        }
+
+        private static void AssertShutdownCalls(int shutdownCalls, params DummyEventHandler<int[]>[] handlers)
+        {
+            foreach (var handler in handlers)
+            {
+                Assert.AreEqual(handler.ShutdownCalls, shutdownCalls);
+            }
         }
     }
 }

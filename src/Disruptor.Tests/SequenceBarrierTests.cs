@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Tests.Support;
-using Moq;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
@@ -11,19 +10,11 @@ namespace Disruptor.Tests
     public class SequenceBarrierTests
     {
         private RingBuffer<StubEvent> _ringBuffer;
-        private Mock<IEventProcessor> _eventProcessorMock1;
-        private Mock<IEventProcessor> _eventProcessorMock2;
-        private Mock<IEventProcessor> _eventProcessorMock3;
 
         [SetUp]
         public void SetUp()
         {
             _ringBuffer = RingBuffer<StubEvent>.CreateMultiProducer(() => new StubEvent(-1), 64);
-
-            _eventProcessorMock1 = new Mock<IEventProcessor>();
-            _eventProcessorMock2 = new Mock<IEventProcessor>();
-            _eventProcessorMock3 = new Mock<IEventProcessor>();
-
             _ringBuffer.AddGatingSequences(new NoOpEventProcessor<StubEvent>(_ringBuffer).Sequence);
         }
 
@@ -38,20 +29,10 @@ namespace Disruptor.Tests
             var sequence2 = new Sequence(expectedWorkSequence);
             var sequence3 = new Sequence(expectedNumberMessages);
 
-            _eventProcessorMock1.SetupGet(c => c.Sequence).Returns(sequence1);
-            _eventProcessorMock2.SetupGet(c => c.Sequence).Returns(sequence2);
-            _eventProcessorMock3.SetupGet(c => c.Sequence).Returns(sequence3);
+            var sequenceBarrier = _ringBuffer.NewBarrier(sequence1, sequence2, sequence3);
 
-            var dependencyBarrier = _ringBuffer.NewBarrier(_eventProcessorMock1.Object.Sequence, 
-                                                           _eventProcessorMock2.Object.Sequence, 
-                                                           _eventProcessorMock3.Object.Sequence);
-
-            var completedWorkSequence = dependencyBarrier.WaitFor(expectedWorkSequence);
+            var completedWorkSequence = sequenceBarrier.WaitFor(expectedWorkSequence);
             Assert.IsTrue(completedWorkSequence >= expectedWorkSequence);
-
-            _eventProcessorMock1.Verify();
-            _eventProcessorMock2.Verify();
-            _eventProcessorMock3.Verify();
         }
 
         [Test]
@@ -68,18 +49,17 @@ namespace Disruptor.Tests
 
             var dependencyBarrier = _ringBuffer.NewBarrier(Util.GetSequencesFor(workers));
 
-            new Thread(() =>
+            Task.Run(() =>
                     {
                         var sequence = _ringBuffer.Next();
-                        _ringBuffer[sequence].Value = (int) sequence;
+                        _ringBuffer[sequence].Value = (int)sequence;
                         _ringBuffer.Publish(sequence);
 
                         foreach (var stubWorker in workers)
                         {
                             stubWorker.Sequence.SetValue(sequence);
                         }
-                    })
-                    .Start();
+                    });
 
             const long expectedWorkSequence = expectedNumberMessages;
             var completedWorkSequence = dependencyBarrier.WaitFor(expectedNumberMessages);
@@ -97,24 +77,20 @@ namespace Disruptor.Tests
             var sequence2 = new CountDownEventSequence(8L, signal);
             var sequence3 = new CountDownEventSequence(8L, signal);
 
-            _eventProcessorMock1.Setup(x => x.Sequence).Returns(sequence1);
-            _eventProcessorMock2.Setup(x => x.Sequence).Returns(sequence2);
-            _eventProcessorMock3.Setup(x => x.Sequence).Returns(sequence3);
-
-            var sequenceBarrier = _ringBuffer.NewBarrier(Util.GetSequencesFor(_eventProcessorMock1.Object, _eventProcessorMock2.Object, _eventProcessorMock3.Object));
+            var sequenceBarrier = _ringBuffer.NewBarrier(sequence1, sequence2, sequence3);
 
             var alerted = false;
-            var t = Task.Factory.StartNew(() =>
-                                  {
-                                      try
-                                      {
-                                          sequenceBarrier.WaitFor(expectedNumberMessages - 1);
-                                      }
-                                      catch (AlertException)
-                                      {
-                                          alerted = true;
-                                      }
-                                  });
+            var t = Task.Run(() =>
+                            {
+                                try
+                                {
+                                    sequenceBarrier.WaitFor(expectedNumberMessages - 1);
+                                }
+                                catch (AlertException)
+                                {
+                                    alerted = true;
+                                }
+                            });
 
             signal.Wait(TimeSpan.FromSeconds(3));
             sequenceBarrier.Alert();

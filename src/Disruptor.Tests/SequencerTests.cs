@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
-using Moq;
+using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
@@ -161,24 +161,24 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldNotifyWaitStrategyOnPublish()
         {
-            var waitStrategyMock = new Mock<IWaitStrategy>();
-            var sequencer = NewProducer(_producerType, _bufferSize, waitStrategyMock.Object);
+            var waitStrategy = new DummyWaitStrategy();
+            var sequencer = NewProducer(_producerType, _bufferSize, waitStrategy);
 
             sequencer.Publish(sequencer.Next());
 
-            waitStrategyMock.Verify(x => x.SignalAllWhenBlocking(), Times.Once());
+            Assert.That(waitStrategy.SignalAllWhenBlockingCalls, Is.EqualTo(1));
         }
 
         [Test]
         public void ShouldNotifyWaitStrategyOnPublishBatch()
         {
-            var waitStrategyMock = new Mock<IWaitStrategy>();
-            var sequencer = NewProducer(_producerType, _bufferSize, waitStrategyMock.Object);
+            var waitStrategy = new DummyWaitStrategy();
+            var sequencer = NewProducer(_producerType, _bufferSize, waitStrategy);
 
             var next = _sequencer.Next(4);
             sequencer.Publish(next - (4 - 1), next);
 
-            waitStrategyMock.Verify(x => x.SignalAllWhenBlocking(), Times.Once());
+            Assert.That(waitStrategy.SignalAllWhenBlockingCalls, Is.EqualTo(1));
         }
 
         [Test]

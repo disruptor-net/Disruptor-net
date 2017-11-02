@@ -1,5 +1,5 @@
 ﻿using System;
-using Moq;
+using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
@@ -10,74 +10,43 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldPollForEvents()
         {
-            var pollSequence = new Sequence();
-            var bufferSequence = new Sequence();
             var gatingSequence = new Sequence();
-            var sequencerMock = new Mock<ISequencer>();
-            var sequencer = sequencerMock.Object;
-            var handled = false;
-            Func<object, long, bool, bool> handler = (ev, seq, end) =>
-            {
-                handled = true;
-                return false;
-            };
-            var providerMock = new Mock<IDataProvider<object>>();
-            var provider = providerMock.Object;
-            var poller = EventPoller<object>.NewInstance(provider, sequencer, pollSequence, bufferSequence, gatingSequence);
-            var @event = new object();
+            var sequencer = new SingleProducerSequencer(16, new BusySpinWaitStrategy());
 
-            object states = PollState.Idle;
+            bool Handler(object e, long s, bool b) => false;
 
-            sequencerMock.SetupGet(x => x.Cursor)
-                         .Returns(() =>
-                         {
-                             switch ((PollState)states)
-                             {
-                                 case PollState.Processing:
-                                     return 0L;
-                                 case PollState.Gating:
-                                     return 0L;
-                                 case PollState.Idle:
-                                     return -1L;
-                                 default:
-                                     throw new ArgumentOutOfRangeException();
-                             }
-                         });
+            var data = new object[16];
+            var provider = new DataProvider(data);
 
-            sequencerMock.Setup(x => x.GetHighestPublishedSequence(0L, -1L)).Returns(-1L);
-            sequencerMock.Setup(x => x.GetHighestPublishedSequence(0L, 0L)).Returns(0L);
+            var poller = sequencer.NewPoller(provider, gatingSequence);
+            var evt = new object();
+            data[0] = evt;
 
-            providerMock.Setup(x => x[0]).Returns(() => (PollState)states == PollState.Processing ? @event : null);
-        
-            // Initial State - nothing published.
-            states = PollState.Idle;
-            Assert.That(poller.Poll(handler),  Is.EqualTo(PollState.Idle));
+            Assert.That(poller.Poll(Handler), Is.EqualTo(PollState.Idle));
 
             // Publish Event.
-            states = PollState.Gating;
-            bufferSequence.IncrementAndGet();
-            Assert.That(poller.Poll(handler),  Is.EqualTo(PollState.Gating));
+            sequencer.Publish(sequencer.Next());
+            Assert.That(poller.Poll(Handler), Is.EqualTo(PollState.Gating));
 
-            states = PollState.Processing;
             gatingSequence.IncrementAndGet();
-            Assert.That(poller.Poll(handler),  Is.EqualTo(PollState.Processing));
 
-            Assert.That(handled, Is.True);
+            Assert.That(poller.Poll(Handler), Is.EqualTo(PollState.Processing));
         }
 
         [Test]
         public void ShouldSuccessfullyPollWhenBufferIsFull()
         {
-            var handled = 0;
-            Func<byte[], long, bool, bool> handler = (ev, seq, end) =>
+            var events = new List<byte[]>();
+
+            byte[] Factory() => new byte[1];
+
+            bool Handler(byte[] data, long sequence, bool endOfBatch)
             {
-                handled++;
-                return true;
-            };
+                events.Add(data);
+                return !endOfBatch;
+            }
 
-            Func<byte[]> factory = () => new byte[1];
-
-            var ringBuffer = RingBuffer<byte[]>.CreateMultiProducer(factory, 0x4, new SleepingWaitStrategy());
+            var ringBuffer = RingBuffer<byte[]>.CreateMultiProducer(Factory, 4, new SleepingWaitStrategy());
 
             var poller = ringBuffer.NewPoller();
             ringBuffer.AddGatingSequences(poller.Sequence);
@@ -92,9 +61,21 @@ namespace Disruptor.Tests
             }
 
             // think of another thread
-            poller.Poll(handler);
+            poller.Poll(Handler);
 
-            Assert.That(handled, Is.EqualTo(4));
+            Assert.That(events.Count, Is.EqualTo(4));
+        }
+
+        private class DataProvider : IDataProvider<object>
+        {
+            private readonly object[] _data;
+
+            public DataProvider(object[] data)
+            {
+                _data = data;
+            }
+
+            public object this[long sequence] => _data[sequence];
         }
     }
 }

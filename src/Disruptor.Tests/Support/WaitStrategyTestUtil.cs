@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using NUnit.Framework;
 
-namespace Disruptor.Tests
+namespace Disruptor.Tests.Support
 {
     public static class WaitStrategyTestUtil
     {
