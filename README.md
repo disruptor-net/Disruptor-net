@@ -8,6 +8,12 @@ This project aims to provide the full functionality of the Disruptor to CLR proj
 
 ## What's new?
 
+02/11/2017 (v3.3.7):
+
+* All features available in Java Disruptor **3.3.7** have been ported
+* Drop .NET Core 1.1
+* Add .NET Standard 2.0
+
 02/05/2017 (v3.3.6):
 
 * Support .NET Core 1.1
