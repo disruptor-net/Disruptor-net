@@ -18,6 +18,7 @@ namespace Disruptor
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IEventHandler<T> _eventHandler;
         private readonly Sequence _sequence = new Sequence();
+        private readonly IBatchStartAware _batchStartAware;
         private readonly ITimeoutHandler _timeoutHandler;
         private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler();
 
@@ -34,7 +35,10 @@ namespace Disruptor
             _sequenceBarrier = sequenceBarrier;
             _eventHandler = eventHandler;
 
-            (eventHandler as ISequenceReportingEventHandler<T>)?.SetSequenceCallback(_sequence);
+            if (eventHandler is ISequenceReportingEventHandler<T> sequenceReportingEventHandler)
+                sequenceReportingEventHandler.SetSequenceCallback(_sequence);
+
+            _batchStartAware = eventHandler as IBatchStartAware;
             _timeoutHandler = eventHandler as ITimeoutHandler;
         }
 
@@ -91,6 +95,11 @@ namespace Disruptor
                     try
                     {
                         var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
+
+                        if (_batchStartAware != null)
+                        {
+                            _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
+                        }
 
                         while (nextSequence <= availableSequence)
                         {
