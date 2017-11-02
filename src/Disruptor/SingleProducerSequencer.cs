@@ -21,6 +21,11 @@ namespace Disruptor
         /// <returns>true if the buffer has the capacity to allocate the next sequence otherwise false.</returns>
         public override bool HasAvailableCapacity(int requiredCapacity)
         {
+            return HasAvailableCapacity(requiredCapacity, false);
+        }
+
+        private bool HasAvailableCapacity(int requiredCapacity, bool doStore)
+        {
             long nextValue = _fields.NextValue;
 
             long wrapPoint = (nextValue + requiredCapacity) - _bufferSize;
@@ -28,7 +33,10 @@ namespace Disruptor
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
             {
-                _cursor.SetValueVolatile(nextValue);
+                if (doStore)
+                {
+                    _cursor.SetValueVolatile(nextValue);
+                }
 
                 long minSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
                 _fields.CachedValue = minSequence;
@@ -121,7 +129,7 @@ namespace Disruptor
                 throw new ArgumentException("n must be > 0");
             }
 
-            if (!HasAvailableCapacity(n))
+            if (!HasAvailableCapacity(n, true))
             {
                 throw InsufficientCapacityException.Instance;
             }
