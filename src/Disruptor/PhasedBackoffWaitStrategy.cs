@@ -94,11 +94,7 @@ namespace Disruptor
 
                         if (timeDelta > _spinTimeoutTicks)
                         {
-#if NETSTANDARD2_0
                             Thread.Yield();
-#else
-                            Thread.Sleep(0);
-#endif
                         }
                     }
                     counter = _spinTries;

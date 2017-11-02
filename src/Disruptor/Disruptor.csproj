@@ -10,7 +10,7 @@
     <FileVersion>3.3.6.0</FileVersion>
     <InformationalVersion>3.3.6</InformationalVersion>
     <LastPortedJavaRevision>b1e425ea7d5f0e4c48af75876e2a50231e8e69eb</LastPortedJavaRevision>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Disruptor.xml</DocumentationFile>
   </PropertyGroup>
