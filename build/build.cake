@@ -10,6 +10,7 @@ var paths = new
     TestsProject = MakeAbsolute(File("../src/Disruptor.Tests/Disruptor.Tests.csproj")),
     PerfProject = MakeAbsolute(File("../src/Disruptor.PerfTests/Disruptor.PerfTests.csproj")),
     Nuspec = MakeAbsolute(File("Disruptor-net.nuspec")),
+    NUnit = MakeAbsolute(File("../tools/NUnit/nunit3-console.exe")),
     Projects = GetFiles("../src/**/*.csproj").Select(MakeAbsolute),
 };
 
@@ -40,7 +41,7 @@ Task("Build-Tests")
 
 Task("Run-Tests")
     .IsDependentOn("Build-Tests")
-    .Does(() => NUnit(paths.TestsOutput.FullPath + "/*.Tests.dll", new NUnitSettings { Framework = "net-4.6.1", NoResults = true }));
+    .Does(() => NUnit(paths.TestsOutput.FullPath + "/*.Tests.dll", new NUnitSettings { NoResults = true, ToolPath = paths.NUnit }));
 
 Task("Clean-Perf")
     .Does(() => CleanDirectory(paths.PerfOutput));
