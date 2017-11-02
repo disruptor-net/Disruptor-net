@@ -32,6 +32,8 @@ Ankh.NoLoad
 _ReSharper*/
 *.resharper
 [Tt]est[Rr]esult*
+.vs/*
+src/.vs/*
 
 #ncrunch
 *.ncrunchsolution
