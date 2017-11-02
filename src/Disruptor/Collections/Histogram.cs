@@ -2,7 +2,6 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Threading;
 
 namespace Disruptor.Collections
 {
@@ -15,6 +14,7 @@ namespace Disruptor.Collections
     ///     0-10 will fall into the first interval bar, values 11-20 will fall into the
     ///     second bar, and so on.
     /// </summary>
+    [Obsolete]
     public class Histogram
     {
         private readonly long[] _counts;

@@ -186,6 +186,14 @@ namespace Disruptor
             return this[sequence];
         }
 
+        /// <summary>
+        /// Determines if a particular entry is available.  Note that using this when not within a context that is
+        /// maintaining a sequence barrier, it is likely that using this to determine if you can read a value is likely
+        /// to result in a race condition and broken code.
+        /// </summary>
+        /// <param name="sequence">The sequence to identify the entry.</param>
+        /// <returns><c>true</c> if the value can be read, <c>false</c> otherwise.</returns>
+        [Obsolete("Please don't use this method.  It probably won't do what you think that it does.")]
         public bool IsPublished(long sequence)
         {
             return _fields.Sequencer.IsAvailable(sequence);
