@@ -117,7 +117,6 @@ namespace Disruptor
 
                     if (wrapPoint > gatingSequence)
                     {
-                        _waitStrategy.SignalAllWhenBlocking();
                         spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
                         continue;
                     }

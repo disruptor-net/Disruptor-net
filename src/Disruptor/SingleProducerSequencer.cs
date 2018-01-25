@@ -94,7 +94,6 @@ namespace Disruptor
                 long minSequence;
                 while (wrapPoint > (minSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue)))
                 {
-                    _waitStrategy.SignalAllWhenBlocking();
                     spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
                 }
 
