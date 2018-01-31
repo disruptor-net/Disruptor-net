@@ -211,18 +211,65 @@ namespace Disruptor.Tests
 
             for (int i = 0; i < _bufferSize; i++)
             {
-                _sequencer.Publish(_sequencer.TryNext());
+                var sequence = _sequencer.TryNext();
+                Assert.That(sequence, Is.EqualTo(i));
+
+                _sequencer.Publish(i);
             }
 
-            try
+            Assert.Throws<InsufficientCapacityException>(() => _sequencer.TryNext());
+        }
+
+        [Test]
+        public void ShouldTryNextN()
+        {
+            _sequencer.AddGatingSequences(_gatingSequence);
+
+            for (int i = 0; i < _bufferSize; i+=2)
             {
-                _sequencer.TryNext();
-                throw new ApplicationException("Should of thrown: " + nameof(InsufficientCapacityException));
+                var sequence = _sequencer.TryNext(2);
+                Assert.That(sequence, Is.EqualTo(i + 1));
+
+                _sequencer.Publish(i);
+                _sequencer.Publish(i + 1);
             }
-            catch (InsufficientCapacityException e)
+
+            Assert.Throws<InsufficientCapacityException>(() => _sequencer.TryNext(1));
+        }
+
+        [Test]
+        public void ShouldTryNextOut()
+        {
+            _sequencer.AddGatingSequences(_gatingSequence);
+
+            for (int i = 0; i < _bufferSize; i++)
             {
-                // No-op
+                var succeeded = _sequencer.TryNext(out var sequence);
+                Assert.That(succeeded, Is.True);
+                Assert.That(sequence, Is.EqualTo(i));
+
+                _sequencer.Publish(i);
             }
+
+            Assert.That(_sequencer.TryNext(out var _), Is.False);
+        }
+
+        [Test]
+        public void ShouldTryNextNOut()
+        {
+            _sequencer.AddGatingSequences(_gatingSequence);
+
+            for (int i = 0; i < _bufferSize; i += 2)
+            {
+                var succeeded = _sequencer.TryNext(2, out var sequence);
+                Assert.That(succeeded, Is.True);
+                Assert.That(sequence, Is.EqualTo(i + 1));
+
+                _sequencer.Publish(i);
+                _sequencer.Publish(i + 1);
+            }
+
+            Assert.That(_sequencer.TryNext(1, out var _), Is.False);
         }
 
         [Test]

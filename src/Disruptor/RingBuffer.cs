@@ -230,7 +230,7 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// The same functionality as <see cref="TryNext()"/>, but allows the caller to attempt
+        /// The same functionality as <see cref="TryNext(int)"/>, but allows the caller to attempt
         /// to claim the next n sequences.
         /// </summary>
         /// <param name="n">number of slots to claim</param>
@@ -239,6 +239,43 @@ namespace Disruptor
         public long TryNext(int n)
         {
             return _fields.Sequencer.TryNext(n);
+        }
+
+        /// <summary>
+        /// Increment and return the next sequence for the ring buffer.  Calls of this
+        /// method should ensure that they always publish the sequence afterward. E.g.
+        /// <pre>
+        /// long sequence = ringBuffer.next();
+        /// try
+        /// {
+        ///     Event e = ringBuffer.get(sequence);
+        ///     // Do some work with the event.
+        /// }
+        /// finally
+        /// {
+        ///     ringBuffer.publish(sequence);
+        /// }
+        /// </pre>
+        /// This method will not block if there is not space available in the ring
+        /// buffer, instead it will return false.
+        /// </summary>
+        /// <param name="sequence">the next sequence to publish to</param>
+        /// <returns>true if the necessary space in the ring buffer is not available, otherwise false.</returns>
+        public bool TryNext(out long sequence)
+        {
+            return _fields.Sequencer.TryNext(out sequence);
+        }
+
+        /// <summary>
+        /// The same functionality as <see cref="TryNext(out long)"/>, but allows the caller to attempt
+        /// to claim the next n sequences.
+        /// </summary>
+        /// <param name="n">number of slots to claim</param>
+        /// <param name="sequence">sequence number of the highest slot claimed</param>
+        /// <returns>true if the necessary space in the ring buffer is not available, otherwise false.</returns>
+        public bool TryNext(int n, out long sequence)
+        {
+            return _fields.Sequencer.TryNext(n, out sequence);
         }
 
         /// <summary>

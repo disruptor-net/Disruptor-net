@@ -184,6 +184,58 @@ namespace Disruptor
         }
 
         /// <summary>
+        /// Attempt to claim the next event for publishing.  Will return the
+        /// number of the slot if there is at least one slot available.
+        /// 
+        /// Have a look at <see cref="Next()"/> for a description on how to
+        /// use this method.
+        /// </summary>
+        /// <param name="sequence">the claimed sequence value</param>
+        /// <returns>true of there is space available in the ring buffer, otherwise false.</returns>
+        public override bool TryNext(out long sequence)
+        {
+            return TryNext(1, out sequence);
+        }
+
+        /// <summary>
+        /// Attempt to claim the next <code>n</code> events in sequence for publishing.
+        /// Will return the highest numbered slot if there is at least <code>n</code> slots
+        /// available.
+        /// 
+        /// Have a look at <see cref="Next(int)"/> for a description on how to
+        /// use this method.
+        /// </summary>
+        /// <param name="n">the number of sequences to claim</param>
+        /// <param name="sequence">the claimed sequence value</param>
+        /// <returns>true of there is space available in the ring buffer, otherwise false.</returns>
+        public override bool TryNext(int n, out long sequence)
+        {
+            if (n < 1)
+            {
+                throw new ArgumentException("n must be > 0");
+            }
+
+            long current;
+            long next;
+
+            do
+            {
+                current = _cursor.Value;
+                next = current + n;
+
+                if (!HasAvailableCapacity(Volatile.Read(ref _gatingSequences), n, current))
+                {
+                    sequence = default(long);
+                    return false;
+                }
+            }
+            while (!_cursor.CompareAndSet(current, next));
+
+            sequence = next;
+            return true;
+        }
+
+        /// <summary>
         /// Get the remaining capacity for this sequencer. return The number of slots remaining.
         /// </summary>
         public override long GetRemainingCapacity()
