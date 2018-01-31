@@ -174,18 +174,18 @@ namespace Disruptor
         /// <summary>
         /// Increment and return the next sequence for the ring buffer.  Calls of this
         /// method should ensure that they always publish the sequence afterward. E.g.
-        /// <pre>
-        /// long sequence = ringBuffer.next();
+        /// <code>
+        /// long sequence = ringBuffer.Next();
         /// try
         /// {
-        ///     Event e = ringBuffer.get(sequence);
+        ///     Event e = ringBuffer[sequence];
         ///     // Do some work with the event.
         /// }
         /// finally
         /// {
-        ///     ringBuffer.publish(sequence);
+        ///     ringBuffer.Publish(sequence);
         /// }
-        /// </pre>
+        /// </code>
         /// </summary>
         /// <returns>The next sequence to publish to.</returns>
         public long Next()
@@ -207,18 +207,18 @@ namespace Disruptor
         /// <summary>
         /// Increment and return the next sequence for the ring buffer.  Calls of this
         /// method should ensure that they always publish the sequence afterward. E.g.
-        /// <pre>
-        /// long sequence = ringBuffer.next();
+        /// <code>
+        /// long sequence = ringBuffer.TryNext();
         /// try
         /// {
-        ///     Event e = ringBuffer.get(sequence);
+        ///     Event e = ringBuffer[sequence];
         ///     // Do some work with the event.
         /// }
         /// finally
         /// {
-        ///     ringBuffer.publish(sequence);
+        ///     ringBuffer.Publish(sequence);
         /// }
-        /// </pre>
+        /// </code>
         /// This method will not block if there is not space available in the ring
         /// buffer, instead it will throw an <see cref="InsufficientCapacityException"/>.
         /// </summary>
@@ -244,18 +244,22 @@ namespace Disruptor
         /// <summary>
         /// Increment and return the next sequence for the ring buffer.  Calls of this
         /// method should ensure that they always publish the sequence afterward. E.g.
-        /// <pre>
-        /// long sequence = ringBuffer.next();
+        /// <code>
+        /// if (!ringBuffer.TryNext(out var sequence))
+        /// {
+        ///     // Handle full ring buffer
+        ///     return;
+        /// }
         /// try
         /// {
-        ///     Event e = ringBuffer.get(sequence);
+        ///     Event e = ringBuffer[sequence];
         ///     // Do some work with the event.
         /// }
         /// finally
         /// {
-        ///     ringBuffer.publish(sequence);
+        ///     ringBuffer.Publish(sequence);
         /// }
-        /// </pre>
+        /// </code>
         /// This method will not block if there is not space available in the ring
         /// buffer, instead it will return false.
         /// </summary>
