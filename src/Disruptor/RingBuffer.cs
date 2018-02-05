@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Disruptor.Dsl;
 
 namespace Disruptor
@@ -146,8 +147,15 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">sequence for the event</param>
         /// <returns>the event for the given sequence</returns>
-        // TODO: Any way to avoid the bounds check?
-        public T this[long sequence] => (T)_fields.Entries[(int)sequence & (_fields.Entries.Length - 1)];
+        public T this[long sequence]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                ref var firstItem = ref Unsafe.As<object, T>(ref _fields.Entries[0]);
+                return Unsafe.Add(ref firstItem, (int)(sequence & (_fields.Entries.Length - 1)));
+            }
+        }
 
         /// <summary>
         /// Gets the size of the buffer.

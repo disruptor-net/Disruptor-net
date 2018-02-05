@@ -18,5 +18,9 @@
   <ItemGroup>
     <None Remove="Disruptor.v3.ncrunchproject" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0" />
+  </ItemGroup>
 
 </Project>
