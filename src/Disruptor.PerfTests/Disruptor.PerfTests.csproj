@@ -4,7 +4,7 @@
     <AssemblyName>Disruptor.PerfTests</AssemblyName>
 	<RootNamespace>Disruptor.PerfTests</RootNamespace>
 	<Title>Disruptor.PerfTests</Title>
-    <TargetFrameworks>net47</TargetFrameworks>
+    <TargetFramework>net47</TargetFramework>
 	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
 	<OutputType>exe</OutputType>
   </PropertyGroup>

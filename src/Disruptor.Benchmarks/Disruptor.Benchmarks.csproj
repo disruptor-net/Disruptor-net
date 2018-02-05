@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Disruptor.Benchmarks</AssemblyName>
+	<RootNamespace>Disruptor.Benchmarks</RootNamespace>
+	<Title>Disruptor.Benchmarks</Title>
+    <!--<TargetFramework>netcoreapp2.0</TargetFramework>-->
+    <TargetFramework>net47</TargetFramework>
+	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+	<OutputType>exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="BenchmarkDotNet.Artifacts\**" />
+    <EmbeddedResource Remove="BenchmarkDotNet.Artifacts\**" />
+    <None Remove="BenchmarkDotNet.Artifacts\**" />
+  </ItemGroup>
+    
+  <ItemGroup>
+    <None Remove="Disruptor.Benchmarks.v3.ncrunchproject" />
+  </ItemGroup>
+  
+  <ItemGroup>
+	<PackageReference Include="BenchmarkDotNet" Version="0.10.10" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
+  </ItemGroup>
+
+</Project>

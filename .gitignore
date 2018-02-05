@@ -34,6 +34,7 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 .vs/*
 src/.vs/*
+BenchmarkDotNet.Artifacts/
 
 #ncrunch
 *.ncrunchsolution
