@@ -8,6 +8,11 @@ This project aims to provide the full functionality of the Disruptor to CLR proj
 
 ## What's new?
 
+05/02/2018 (v3.3.8):
+
+* Add exception free overloads to ISequenced.TryNext
+* Revert belt and braces WaitStategy signalling.
+
 02/11/2017 (v3.3.7):
 
 * All features available in Java Disruptor **3.3.7** have been ported
