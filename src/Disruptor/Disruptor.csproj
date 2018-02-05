@@ -6,10 +6,10 @@
     <Title>Disruptor</Title>
     <Product>Disruptor</Product>
     <Description>A High Performance Inter-Thread Messaging Library</Description>
-    <Version>3.3.7</Version>
-    <FileVersion>3.3.7.0</FileVersion>
-    <InformationalVersion>3.3.7</InformationalVersion>
-    <LastPortedJavaRevision>1c72f8d7191cc352333c7d5d89503f59c116e6bf</LastPortedJavaRevision>
+    <Version>3.3.8</Version>
+    <InformationalVersion>3.3.8</InformationalVersion>
+    <FileVersion>3.3.8.0</FileVersion>
+    <LastPortedJavaRevision>e493637f11a787bc1baed47cd1bfaea534e2d506</LastPortedJavaRevision>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Disruptor.xml</DocumentationFile>
