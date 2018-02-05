@@ -10,6 +10,9 @@
     <description>Port of LMAX Disruptor to .NET</description>
     <tags>Concurrency Disruptor Latency Throughput</tags>
     <language />
+    <dependencies>
+      <dependency id="System.Runtime.CompilerServices.Unsafe" version="4.4.0" />
+    </dependencies>
   </metadata>
   <files>
     <file src="net45\*" target="lib\net45" />
