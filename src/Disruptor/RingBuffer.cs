@@ -11,8 +11,6 @@ namespace Disruptor
     public sealed class RingBuffer<T> : IEventSequencer<T>, IEventSink<T>, ICursored
         where T : class
     {
-        private static readonly unsafe int _bufferPad = 128 / sizeof(IntPtr);
-
         private RingBufferFields _fields;
 
         /// <summary>
@@ -24,28 +22,26 @@ namespace Disruptor
         public RingBuffer(Func<T> eventFactory, ISequencer sequencer)
         {
             _fields.Sequencer = sequencer;
-            _fields.BufferSize = sequencer.BufferSize;
 
-            if (_fields.BufferSize < 1)
+            if (sequencer.BufferSize < 1)
             {
                 throw new ArgumentException("bufferSize must not be less than 1");
             }
-            if (_fields.BufferSize.CeilingNextPowerOfTwo() != _fields.BufferSize)
+            if (!sequencer.BufferSize.IsPowerOf2())
             {
                 throw new ArgumentException("bufferSize must be a power of 2");
             }
 
-            _fields.IndexMask = _fields.BufferSize - 1;
-            _fields.Entries = new object[_fields.BufferSize + 2 * _bufferPad];
+            _fields.Entries = new object[sequencer.BufferSize];
 
             Fill(eventFactory);
         }
 
         private void Fill(Func<T> eventFactory)
         {
-            for (int i = 0; i < _fields.BufferSize; i++)
+            for (int i = 0; i < _fields.Entries.Length; i++)
             {
-                _fields.Entries[_bufferPad + i] = eventFactory();
+                _fields.Entries[i] = eventFactory();
             }
         }
 
@@ -151,12 +147,12 @@ namespace Disruptor
         /// <param name="sequence">sequence for the event</param>
         /// <returns>the event for the given sequence</returns>
         // TODO: Any way to avoid the bounds check?
-        public T this[long sequence] => (T)_fields.Entries[_bufferPad + ((int)sequence & _fields.IndexMask)];
+        public T this[long sequence] => (T)_fields.Entries[(int)sequence & (_fields.Entries.Length - 1)];
 
         /// <summary>
         /// Gets the size of the buffer.
         /// </summary>
-        public int BufferSize => _fields.BufferSize;
+        public int BufferSize => _fields.Sequencer.BufferSize;
 
         /// <summary>
         /// Given specified <paramref name="requiredCapacity"/> determines if that amount of space
@@ -980,8 +976,7 @@ namespace Disruptor
         public override string ToString()
         {
             return "RingBuffer{" +
-                   "bufferSize=" + _fields.BufferSize +
-                   ", sequencer=" + _fields.Sequencer +
+                   "sequencer=" + _fields.Sequencer +
                    "}";
         }
     }
