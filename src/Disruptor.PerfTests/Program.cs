@@ -9,7 +9,7 @@ namespace Disruptor.PerfTests
     {
         static void Main(string[] args)
         {
-            if (args == null || args.Length > 2)
+            if (args.Length == 0 || args.Length > 2)
             {
                 PrintUsage();
                 Console.ReadKey();
