@@ -46,7 +46,7 @@ namespace Disruptor.PerfTests.Raw
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 200L;
 
-        private readonly Sequencer _sequencer = new SingleProducerSequencer(_bufferSize, new YieldingWaitStrategy());
+        private readonly SingleProducerSequencer _sequencer = new SingleProducerSequencer(_bufferSize, new YieldingWaitStrategy());
         private readonly MyRunnable _myRunnable;
 
         public OneToOneRawBatchThroughputTest()

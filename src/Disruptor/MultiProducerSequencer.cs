@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Disruptor
@@ -11,8 +12,16 @@ namespace Disruptor
     /// to <see cref="Sequencer.Next()"/>, to determine the highest available sequence that can be read, then
     /// <see cref="GetHighestPublishedSequence"/> should be used. 
     /// </summary>
-    public class MultiProducerSequencer : Sequencer
+    public class MultiProducerSequencer : ISequencer
     {
+        private readonly int _bufferSize;
+        private readonly IWaitStrategy _waitStrategy;
+        private readonly bool _isBlockingWaitStrategy;
+        private readonly Sequence _cursor = new Sequence();
+
+        // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.
+        private ISequence[] _gatingSequences = new ISequence[0];
+
         private readonly Sequence _gatingSequenceCache = new Sequence();
 
         // availableBuffer tracks the state of each ringbuffer slot
@@ -22,13 +31,45 @@ namespace Disruptor
         private readonly int _indexShift;
 
         public MultiProducerSequencer(int bufferSize, IWaitStrategy waitStrategy)
-            : base(bufferSize, waitStrategy)
         {
+            if (bufferSize < 1)
+            {
+                throw new ArgumentException("bufferSize must not be less than 1");
+            }
+            if (!bufferSize.IsPowerOf2())
+            {
+                throw new ArgumentException("bufferSize must be a power of 2");
+            }
+
+            _bufferSize = bufferSize;
+            _waitStrategy = waitStrategy;
+            _isBlockingWaitStrategy = !(waitStrategy is INonBlockingWaitStrategy);
             _availableBuffer = new int[bufferSize];
             _indexMask = bufferSize - 1;
             _indexShift = Util.Log2(bufferSize);
+
             InitialiseAvailableBuffer();
         }
+
+        /// <summary>
+        /// Create a <see cref="ISequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
+        /// </summary>
+        /// <param name="sequencesToTrack"></param>
+        /// <returns></returns>
+        public ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
+        {
+            return ProcessingSequenceBarrierFactory.Create(this, _waitStrategy, _cursor, sequencesToTrack);
+        }
+
+        /// <summary>
+        /// The capacity of the data structure to hold entries.
+        /// </summary>
+        public int BufferSize => _bufferSize;
+
+        /// <summary>
+        /// Get the value of the cursor indicating the published sequence.
+        /// </summary>
+        public long Cursor => _cursor.Value;
 
         /// <summary>
         /// Has the buffer got capacity to allocate another sequence.  This is a concurrent
@@ -36,7 +77,8 @@ namespace Disruptor
         /// </summary>
         /// <param name="requiredCapacity">requiredCapacity in the buffer</param>
         /// <returns>true if the buffer has the capacity to allocate the next sequence otherwise false.</returns>
-        public override bool HasAvailableCapacity(int requiredCapacity)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasAvailableCapacity(int requiredCapacity)
         {
             return HasAvailableCapacity(Volatile.Read(ref _gatingSequences), requiredCapacity, _cursor.Value);
         }
@@ -64,7 +106,8 @@ namespace Disruptor
         /// Claim a specific sequence when only one publisher is involved.
         /// </summary>
         /// <param name="sequence">sequence to be claimed.</param>
-        public override void Claim(long sequence)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Claim(long sequence)
         {
             _cursor.SetValue(sequence);
         }
@@ -73,9 +116,10 @@ namespace Disruptor
         /// Claim the next event in sequence for publishing.
         /// </summary>
         /// <returns></returns>
-        public override long Next()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public long Next()
         {
-            return Next(1);
+            return NextInternal(1);
         }
 
         /// <summary>
@@ -92,17 +136,23 @@ namespace Disruptor
         /// </summary>
         /// <param name="n">the number of sequences to claim</param>
         /// <returns>the highest claimed sequence value</returns>
-        public override long Next(int n)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public long Next(int n)
         {
             if (n < 1)
             {
                 throw new ArgumentException("n must be > 0");
             }
 
+            return NextInternal(n);
+        }
+
+        internal long NextInternal(int n)
+        {
             long current;
             long next;
 
-            var spinWait = default(SpinWait);
+            var spinWait = default(AggressiveSpinWait);
             do
             {
                 current = _cursor.Value;
@@ -117,7 +167,7 @@ namespace Disruptor
 
                     if (wrapPoint > gatingSequence)
                     {
-                        spinWait.SpinOnce(); // LockSupport.parkNanos(1L);
+                        spinWait.SpinOnce();
                         continue;
                     }
 
@@ -127,8 +177,7 @@ namespace Disruptor
                 {
                     break;
                 }
-            }
-            while (true);
+            } while (true);
 
             return next;
         }
@@ -142,7 +191,8 @@ namespace Disruptor
         /// </summary>
         /// <returns>the claimed sequence value</returns>
         /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
-        public override long TryNext()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public long TryNext()
         {
             return TryNext(1);
         }
@@ -158,13 +208,19 @@ namespace Disruptor
         /// <param name="n">the number of sequences to claim</param>
         /// <returns>the claimed sequence value</returns>
         /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
-        public override long TryNext(int n)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public long TryNext(int n)
         {
             if (n < 1)
             {
                 throw new ArgumentException("n must be > 0");
             }
 
+            return TryNextInternal(n);
+        }
+
+        internal long TryNextInternal(int n)
+        {
             long current;
             long next;
 
@@ -177,8 +233,7 @@ namespace Disruptor
                 {
                     throw InsufficientCapacityException.Instance;
                 }
-            }
-            while (!_cursor.CompareAndSet(current, next));
+            } while (!_cursor.CompareAndSet(current, next));
 
             return next;
         }
@@ -192,7 +247,8 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">the claimed sequence value</param>
         /// <returns>true of there is space available in the ring buffer, otherwise false.</returns>
-        public override bool TryNext(out long sequence)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryNext(out long sequence)
         {
             return TryNext(1, out sequence);
         }
@@ -208,13 +264,19 @@ namespace Disruptor
         /// <param name="n">the number of sequences to claim</param>
         /// <param name="sequence">the claimed sequence value</param>
         /// <returns>true of there is space available in the ring buffer, otherwise false.</returns>
-        public override bool TryNext(int n, out long sequence)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryNext(int n, out long sequence)
         {
             if (n < 1)
             {
                 throw new ArgumentException("n must be > 0");
             }
 
+            return TryNextInternal(n, out sequence);
+        }
+
+        internal bool TryNextInternal(int n, out long sequence)
+        {
             long current;
             long next;
 
@@ -228,8 +290,7 @@ namespace Disruptor
                     sequence = default(long);
                     return false;
                 }
-            }
-            while (!_cursor.CompareAndSet(current, next));
+            } while (!_cursor.CompareAndSet(current, next));
 
             sequence = next;
             return true;
@@ -238,7 +299,8 @@ namespace Disruptor
         /// <summary>
         /// Get the remaining capacity for this sequencer. return The number of slots remaining.
         /// </summary>
-        public override long GetRemainingCapacity()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public long GetRemainingCapacity()
         {
             var consumed = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
             var produced = _cursor.Value;
@@ -259,7 +321,8 @@ namespace Disruptor
         /// Publish an event and make it visible to <see cref="IEventProcessor"/>s
         /// </summary>
         /// <param name="sequence">sequence to be published</param>
-        public override void Publish(long sequence)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Publish(long sequence)
         {
             SetAvailable(sequence);
 
@@ -272,7 +335,7 @@ namespace Disruptor
         /// <summary>
         /// Publish an event and make it visible to <see cref="IEventProcessor"/>s
         /// </summary>
-        public override void Publish(long lo, long hi)
+        public void Publish(long lo, long hi)
         {
             for (long l = lo; l <= hi; l++)
             {
@@ -303,10 +366,11 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">sequence of the buffer to check</param>
         /// <returns>true if the sequence is available for use, false if not</returns>
-        public override unsafe bool IsAvailable(long sequence)
+        public unsafe bool IsAvailable(long sequence)
         {
             int index = CalculateIndex(sequence);
             int flag = CalculateAvailabilityFlag(sequence);
+
             fixed (int* buffer = _availableBuffer)
             {
                 return Volatile.Read(ref buffer[index]) == flag;
@@ -324,7 +388,7 @@ namespace Disruptor
         /// <param name="nextSequence">The sequence to start scanning from.</param>
         /// <param name="availableSequence">The sequence to scan to.</param>
         /// <returns>The highest value that can be safely read, will be at least <code>nextSequence - 1</code>.</returns>
-        public override long GetHighestPublishedSequence(long lowerBound, long availableSequence)
+        public long GetHighestPublishedSequence(long lowerBound, long availableSequence)
         {
             for (long sequence = lowerBound; sequence <= availableSequence; sequence++)
             {
@@ -345,6 +409,49 @@ namespace Disruptor
         private int CalculateIndex(long sequence)
         {
             return ((int)sequence) & _indexMask;
+        }
+
+        /// <summary>
+        /// Add the specified gating sequences to this instance of the Disruptor.  They will
+        /// safely and atomically added to the list of gating sequences. 
+        /// </summary>
+        /// <param name="gatingSequences">The sequences to add.</param>
+        public void AddGatingSequences(params ISequence[] gatingSequences)
+        {
+            SequenceGroups.AddSequences(ref _gatingSequences, this, gatingSequences);
+        }
+
+        /// <summary>
+        /// Remove the specified sequence from this sequencer.
+        /// </summary>
+        /// <param name="sequence">to be removed.</param>
+        /// <returns>true if this sequence was found, false otherwise.</returns>
+        public bool RemoveGatingSequence(ISequence sequence)
+        {
+            return SequenceGroups.RemoveSequence(ref _gatingSequences, sequence);
+        }
+
+        /// <summary>
+        /// Get the minimum sequence value from all of the gating sequences
+        /// added to this ringBuffer.
+        /// </summary>
+        /// <returns>The minimum gating sequence or the cursor sequence if no sequences have been added.</returns>
+        public long GetMinimumSequence()
+        {
+            return Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
+        }
+
+        /// <summary>
+        /// Creates an event poller for this sequence that will use the supplied data provider and
+        /// gating sequences.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="provider">The data source for users of this event poller</param>
+        /// <param name="gatingSequences">Sequence to be gated on.</param>
+        /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
+        public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
+        {
+            return EventPoller<T>.NewInstance(provider, this, new Sequence(), _cursor, gatingSequences);
         }
     }
 }
