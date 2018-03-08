@@ -13,7 +13,13 @@ namespace Disruptor
     /// <typeparam name="T">Event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
     public sealed class BatchEventProcessor<T> : IEventProcessor where T : class
     {
-        private volatile int _running;
+        private static class RunningStates
+        {
+            public const int Idle = 0;
+            public const int Halted = Idle + 1;
+            public const int Running = Halted + 1;
+        }
+
         private readonly IDataProvider<T> _dataProvider;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IEventHandler<T> _eventHandler;
@@ -21,6 +27,7 @@ namespace Disruptor
         private readonly IBatchStartAware _batchStartAware;
         private readonly ITimeoutHandler _timeoutHandler;
         private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler();
+        private volatile int _running;
 
         /// <summary>
         /// Construct a <see cref="BatchEventProcessor{T}"/> that will automatically track the progress by updating its sequence when
@@ -53,14 +60,14 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running = 0;
+            _running = RunningStates.Halted;
             _sequenceBarrier.Alert();
         }
 
         /// <summary>
         /// <see cref="IEventProcessor.IsRunning"/>
         /// </summary>
-        public bool IsRunning => _running == 1;
+        public bool IsRunning => _running != RunningStates.Idle;
 
         /// <summary>
         /// Set a new <see cref="IExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="BatchEventProcessor{T}"/>
@@ -68,9 +75,7 @@ namespace Disruptor
         /// <param name="exceptionHandler">exceptionHandler to replace the existing exceptionHandler.</param>
         public void SetExceptionHandler(IExceptionHandler<T> exceptionHandler)
         {
-            if (exceptionHandler == null) throw new ArgumentNullException(nameof(exceptionHandler));
-
-            _exceptionHandler = exceptionHandler;
+            _exceptionHandler = exceptionHandler ?? throw new ArgumentNullException(nameof(exceptionHandler));
         }
 
         /// <summary>
@@ -78,7 +83,9 @@ namespace Disruptor
         /// </summary>
         public void Run()
         {
-            if (Interlocked.Exchange(ref _running, 1) != 0)
+#pragma warning disable 420
+            if (Interlocked.CompareExchange(ref _running, RunningStates.Running, RunningStates.Idle) == RunningStates.Running)
+#pragma warning restore 420
             {
                 throw new InvalidOperationException("Thread is already running");
             }
@@ -86,10 +93,16 @@ namespace Disruptor
 
             NotifyStart();
 
-            T evt = null;
-            var nextSequence = _sequence.Value + 1L;
             try
             {
+                if (_running == RunningStates.Halted)
+                {
+                    return;
+                }
+
+                T evt = null;
+                var nextSequence = _sequence.Value + 1L;
+
                 while (true)
                 {
                     try
@@ -116,7 +129,7 @@ namespace Disruptor
                     }
                     catch (AlertException)
                     {
-                        if (_running == 0)
+                        if (_running != RunningStates.Running)
                         {
                             break;
                         }
@@ -132,7 +145,7 @@ namespace Disruptor
             finally
             {
                 NotifyShutdown();
-                _running = 0;
+                _running = RunningStates.Idle;
             }
         }
 

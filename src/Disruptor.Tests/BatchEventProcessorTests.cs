@@ -115,7 +115,84 @@ namespace Disruptor.Tests
                 {
                     _ringBuffer.Publish(_ringBuffer.Next());
                 }
+
                 _signal.Signal();
+            }
+        }
+
+        [Test]
+        public void ShouldAlwaysHalt()
+        {
+            var waitStrategy = new BusySpinWaitStrategy();
+            var sequencer = new SingleProducerSequencer(8, waitStrategy);
+            var barrier = new ProcessingSequenceBarrier(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
+            var dp = new DummyDataProvider<object>();
+
+            var h1 = new LifeCycleHandler();
+            var p1 = new BatchEventProcessor<object>(dp, barrier, h1);
+
+            var t1 = new Thread(p1.Run);
+            p1.Halt();
+            t1.Start();
+
+            Assert.IsTrue(h1.WaitStart(TimeSpan.FromSeconds(2)));
+            Assert.IsTrue(h1.WaitShutdown(TimeSpan.FromSeconds(2)));
+
+            for (int i = 0; i < 1000; i++)
+            {
+                var h2 = new LifeCycleHandler();
+                var p2 = new BatchEventProcessor<object>(dp, barrier, h2);
+                var t2 = new Thread(p2.Run);
+
+                t2.Start();
+                p2.Halt();
+
+                Assert.IsTrue(h2.WaitStart(TimeSpan.FromSeconds(2)));
+                Assert.IsTrue(h2.WaitShutdown(TimeSpan.FromSeconds(2)));
+            }
+
+            for (int i = 0; i < 1000; i++)
+            {
+                var h2 = new LifeCycleHandler();
+                var p2 = new BatchEventProcessor<object>(dp, barrier, h2);
+
+                var t2 = new Thread(p2.Run);
+                t2.Start();
+                Thread.Yield();
+                p2.Halt();
+
+                Assert.IsTrue(h2.WaitStart(TimeSpan.FromSeconds(2)));
+                Assert.IsTrue(h2.WaitShutdown(TimeSpan.FromSeconds(2)));
+            }
+        }
+
+        private class LifeCycleHandler : IEventHandler<object>, ILifecycleAware
+        {
+            private readonly ManualResetEvent _startedSignal = new ManualResetEvent(false);
+            private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
+
+            public void OnEvent(object data, long sequence, bool endOfBatch)
+            {
+            }
+
+            public void OnStart()
+            {
+                _startedSignal.Set();
+            }
+
+            public void OnShutdown()
+            {
+                _shutdownSignal.Set();
+            }
+
+            public bool WaitStart(TimeSpan timeSpan)
+            {
+                return _startedSignal.WaitOne(timeSpan);
+            }
+
+            public bool WaitShutdown(TimeSpan timeSpan)
+            {
+                return _shutdownSignal.WaitOne(timeSpan);
             }
         }
     }
