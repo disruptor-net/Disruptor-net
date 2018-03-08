@@ -1,5 +1,25 @@
 root = true
-[*.cs]
-indent_style = space
+
+[*]
+trim_trailing_whitespace = true
+insert_final_newline = true
+end_of_line = crlf
+
+[*.{cs,csx,xaml,cake}]
 indent_size = 4
-end_of_line = lf
+indent_style = space
+
+[*.{config,nuspec,resx}]
+indent_size = 2
+indent_style = space
+
+[*.{csproj,vcxproj,props,targets}]
+indent_size = 2
+indent_style = space
+insert_final_newline = false
+
+[*.sln]
+indent_style = tab
+
+[*.md]
+trim_trailing_whitespace = false
