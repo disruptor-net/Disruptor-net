@@ -86,7 +86,7 @@ namespace Disruptor.PerfTests.Sequenced
 
         public int RequiredProcessorCount => 4;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             var latch = new ManualResetEvent(false);
             _stepThreeFunctionHandler.Reset(latch, _stepThreeBatchProcessor.Sequence.Value + _iterations);
@@ -95,7 +95,7 @@ namespace Disruptor.PerfTests.Sequenced
             var processorTask2 = _executor.Submit(_stepTwoBatchProcessor);
             var processorTask3 = _executor.Submit(_stepThreeBatchProcessor);
 
-            stopwatch.Start();
+            sessionContext.Start();
 
             var operandTwo = _operandTwoInitialValue;
             for (long i = 0; i < _iterations; i++)
@@ -109,7 +109,7 @@ namespace Disruptor.PerfTests.Sequenced
             }
 
             latch.WaitOne();
-            stopwatch.Stop();
+            sessionContext.Stop();
 
             _stepOneBatchProcessor.Halt();
             _stepTwoBatchProcessor.Halt();

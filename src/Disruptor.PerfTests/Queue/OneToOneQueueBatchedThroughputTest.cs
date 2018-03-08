@@ -21,12 +21,12 @@ namespace Disruptor.PerfTests.Queue
 
         public int RequiredProcessorCount => 2;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             var latch = new ManualResetEvent(false);
             _queueProcessor.Reset(latch);
             var future = Task.Run(() => _queueProcessor.Run());
-            stopwatch.Start();
+            sessionContext.Start();
 
             for (long i = 0; i < _iterations; i++)
             {
@@ -34,7 +34,7 @@ namespace Disruptor.PerfTests.Queue
             }
 
             latch.WaitOne();
-            stopwatch.Stop();
+            sessionContext.Stop();
             _queueProcessor.Halt();
             future.Wait();
 

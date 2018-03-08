@@ -53,7 +53,7 @@ namespace Disruptor.PerfTests.Support
 
                         for (var l = nextSequence; l <= available; l++)
                         {
-                            _handler.OnEvent(_providers[i][l], l, nextSequence == available);
+                            _handler.OnEvent(_providers[i][l], l, l == available);
                         }
 
                         sequence.SetValue(available);

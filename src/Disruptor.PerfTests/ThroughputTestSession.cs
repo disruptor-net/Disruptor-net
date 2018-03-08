@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime;
 using System.Text;
+using Disruptor.PerfTests.Sequenced;
 
 namespace Disruptor.PerfTests
 {
@@ -28,13 +29,13 @@ namespace Disruptor.PerfTests
             CheckProcessorsRequirements(_test);
 
             Console.WriteLine("Starting throughput tests");
-            var stopwatch = new Stopwatch();
+            var context = new ThroughputSessionContext();
             for (var i = 0; i < Runs; i++)
             {
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
 
-                stopwatch.Reset();
+                context.Reset();
 
                 var beforeGen0Count = GC.CollectionCount(0);
                 var beforeGen1Count = GC.CollectionCount(1);
@@ -45,7 +46,7 @@ namespace Disruptor.PerfTests
                 ThroughputTestSessionResult result;
                 try
                 {
-                    totalOperationsInRun = _test.Run(stopwatch);
+                    totalOperationsInRun = _test.Run(context);
                 }
                 catch (Exception ex)
                 {
@@ -62,7 +63,7 @@ namespace Disruptor.PerfTests
                     var gen1Count = GC.CollectionCount(1) - beforeGen1Count;
                     var gen2Count = GC.CollectionCount(2) - beforeGen2Count;
 
-                    result = new ThroughputTestSessionResult(totalOperationsInRun, stopwatch.Elapsed, gen0Count, gen1Count, gen2Count);
+                    result = new ThroughputTestSessionResult(totalOperationsInRun, context.Stopwatch.Elapsed, gen0Count, gen1Count, gen2Count, context);
                 }
 
                 Console.WriteLine(result);
@@ -117,6 +118,8 @@ namespace Disruptor.PerfTests
             sb.AppendLine("                <td>Operations per second</td>");
             sb.AppendLine("                <td>Duration (ms)</td>");
             sb.AppendLine("                <td># GC (0-1-2)</td>");
+            sb.AppendLine("                <td>Batch %</td>");
+            sb.AppendLine("                <td>Average Batch Size<td>");
             sb.AppendLine("            </tr>");
 
             for (var i = 0; i < _results.Count; i++)

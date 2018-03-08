@@ -91,7 +91,7 @@ namespace Disruptor.PerfTests.Sequenced
 
         public int RequiredProcessorCount => 4;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             var latch = new ManualResetEvent(false);
             _fizzBuzzHandler.Reset(latch, _batchProcessorFizzBuzz.Sequence.Value + _iterations);
@@ -100,7 +100,7 @@ namespace Disruptor.PerfTests.Sequenced
             var processorTask2 = Task.Run(() => _batchProcessorBuzz.Run());
             var processorTask3 = Task.Run(() => _batchProcessorFizzBuzz.Run());
 
-            stopwatch.Start();
+            sessionContext.Start();
 
             for (long i = 0; i < _iterations; i++)
             {
@@ -110,7 +110,7 @@ namespace Disruptor.PerfTests.Sequenced
             }
 
             latch.WaitOne();
-            stopwatch.Stop();
+            sessionContext.Stop();
 
             _batchProcessorFizz.Halt();
             _batchProcessorBuzz.Halt();

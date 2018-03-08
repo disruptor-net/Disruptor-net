@@ -79,7 +79,7 @@ namespace Disruptor.PerfTests.Sequenced
 
         public int RequiredProcessorCount => 4;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             var latch = new Barrier(_numEventProcessors + 1);
 
@@ -90,7 +90,7 @@ namespace Disruptor.PerfTests.Sequenced
                 processorTasks.Add(_executor.Execute(_batchEventProcessors[i].Run));
             }
 
-            stopwatch.Start();
+            sessionContext.Start();
 
             for (long i = 0; i < _iterations; i++)
             {
@@ -100,7 +100,7 @@ namespace Disruptor.PerfTests.Sequenced
             }
 
             latch.SignalAndWait();
-            stopwatch.Stop();
+            sessionContext.Stop();
 
             for (var i = 0; i < _numEventProcessors; i++)
             {
@@ -108,6 +108,8 @@ namespace Disruptor.PerfTests.Sequenced
                 PerfTestUtil.FailIfNot(_results[i], _handlers[i].Value, $"Result {_results[i]} != {_handlers[i].Value}");
             }
             Task.WaitAll(processorTasks.ToArray());
+
+            sessionContext.SetBatchData(_handlers.Sum(x => x.BatchesProcessedCount), _numEventProcessors * _iterations);
 
             return _numEventProcessors * _iterations;
         }

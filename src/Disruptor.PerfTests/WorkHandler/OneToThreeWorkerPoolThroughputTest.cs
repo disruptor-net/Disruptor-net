@@ -52,11 +52,11 @@ namespace Disruptor.PerfTests.WorkHandler
 
         public int RequiredProcessorCount => 4;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             ResetCounters();
             RingBuffer<ValueEvent> ringBuffer = _workerPool.Start(new BasicExecutor(TaskScheduler.Default));
-            stopwatch.Start();
+            sessionContext.Start();
 
             for (long i = 0; i < _iterations; i++)
             {
@@ -69,7 +69,7 @@ namespace Disruptor.PerfTests.WorkHandler
 
             // Workaround to ensure that the last worker(s) have completed after releasing their events
             Thread.Sleep(1);
-            stopwatch.Stop();
+            sessionContext.Stop();
 
             PerfTestUtil.FailIfNot(_iterations, SumCounters());
 

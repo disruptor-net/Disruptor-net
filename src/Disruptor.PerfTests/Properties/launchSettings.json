@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Disruptor.PerfTests": {
+      "commandName": "Project",
+      "commandLineArgs": "\"Disruptor.PerfTests.Sequenced.ThreeToThreeSequencedThroughputTest\""
+    }
+  }
+}

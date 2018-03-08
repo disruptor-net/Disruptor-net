@@ -58,13 +58,13 @@ namespace Disruptor.PerfTests.Sequenced
 
         public int RequiredProcessorCount => 2;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             var signal = new ManualResetEvent(false);
             var expectedCount = _batchEventProcessor.Sequence.Value + _iterations;
             _handler.Reset(signal, _iterations);
             var processorTask = _executor.Execute(_batchEventProcessor.Run);
-            stopwatch.Start();
+            sessionContext.Start();
 
             var rb = _ringBuffer;
             for (var i = 0; i < _iterations; i++)
@@ -79,10 +79,12 @@ namespace Disruptor.PerfTests.Sequenced
             }
 
             signal.WaitOne();
-            stopwatch.Stop();
+            sessionContext.Stop();
             WaitForEventProcessorSequence(expectedCount);
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
+
+            sessionContext.SetBatchData(_handler.BatchesProcessedCount, _iterations);
 
             PerfTestUtil.FailIf(0, _handler.Value, "Handler has not processed any event");
 

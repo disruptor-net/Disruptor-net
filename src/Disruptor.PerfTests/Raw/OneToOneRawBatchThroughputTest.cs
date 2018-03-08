@@ -57,14 +57,14 @@ namespace Disruptor.PerfTests.Raw
 
         public int RequiredProcessorCount => 2;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             int batchSize = 10;
             var latch = new ManualResetEvent(false);
             var expectedCount = _myRunnable.Sequence.Value + _iterations * batchSize;
             _myRunnable.Reset(latch, expectedCount);
             Task.Run(() => _myRunnable.Run());
-            stopwatch.Start();
+            sessionContext.Start();
 
             var sequencer = _sequencer;
 
@@ -75,7 +75,7 @@ namespace Disruptor.PerfTests.Raw
             }
 
             latch.WaitOne();
-            stopwatch.Stop();
+            sessionContext.Stop();
             WaitForEventProcessorSequence(expectedCount);
 
             return _iterations * batchSize;

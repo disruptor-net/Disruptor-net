@@ -54,7 +54,7 @@ namespace Disruptor.PerfTests.WorkHandler
 
         public int RequiredProcessorCount => 4;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             _cyclicBarrier.Reset();
 
@@ -71,7 +71,7 @@ namespace Disruptor.PerfTests.WorkHandler
                 Task.Run(() => processor.Run());
             }
 
-            stopwatch.Start();
+            sessionContext.Start();
             _cyclicBarrier.Signal();
             _cyclicBarrier.Wait();
 
@@ -85,7 +85,7 @@ namespace Disruptor.PerfTests.WorkHandler
                 Thread.Yield();
             }
 
-            stopwatch.Stop();
+            sessionContext.Stop();
 
             Thread.Sleep(1000);
 
