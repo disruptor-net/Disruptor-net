@@ -1,7 +1,10 @@
 ﻿namespace Disruptor
 {
     /// <summary>
-    /// <see cref="IEventProcessor"/> waitFor events to become available for consumption from the <see cref="RingBuffer{T}"/>
+    /// An IEventProcessor needs to poll for events from the <see cref="RingBuffer{T}"/>
+    /// using the appropriate wait strategy. It is unlikely that you will need to implement this interface yourself.
+    /// Look at using the <see cref="IEventHandler{T}"/> interface along with the pre-supplied BatchEventProcessor in the first
+    /// instance.
     /// </summary>
     public interface IEventProcessor
     {

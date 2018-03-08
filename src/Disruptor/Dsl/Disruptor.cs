@@ -76,7 +76,10 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Set up event handlers to handle events from the ring buffer. These handlers will process events
         /// as soon as they become available, in parallel.
+        /// 
         /// <code>dw.HandleEventsWith(A).Then(B);</code>
+        /// 
+        /// This call is additive, but generally should only be called once when setting up the Disruptor instance.
         /// </summary>
         /// <param name="handlers">the event handlers that will process events</param>
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
@@ -97,6 +100,8 @@ namespace Disruptor.Dsl
         /// array, so the factory isn't necessary in this case. This method is provided for consistency with
         /// <see cref="EventHandlerGroup{T}.HandleEventsWith(IEventProcessorFactory{T}[])"/> and <see cref="EventHandlerGroup{T}.Then(IEventProcessorFactory{T}[])"/>
         /// which do have barrier sequences to provide.
+        /// 
+        /// This call is additive, but generally should only be called once when setting up the Disruptor instance.
         /// </summary>
         /// <param name="eventProcessorFactories">eventProcessorFactories the event processor factories to use to create the event processors that will process events.</param>
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
