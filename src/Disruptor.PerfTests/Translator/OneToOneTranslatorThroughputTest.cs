@@ -36,7 +36,7 @@ namespace Disruptor.PerfTests.Translator
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
         private readonly ValueAdditionEventHandler _handler = new ValueAdditionEventHandler();
         private readonly RingBuffer<ValueEvent> _ringBuffer;
-        private readonly MutableLong _value = new MutableLong(0);
+        private readonly MutableLong _value = new MutableLong();
 
         public OneToOneTranslatorThroughputTest()
         {
@@ -94,6 +94,11 @@ namespace Disruptor.PerfTests.Translator
             {
                 @event.Value = arg0.Value;
             }
+        }
+
+        private class MutableLong
+        {
+            public long Value { get; set; }
         }
     }
 }
