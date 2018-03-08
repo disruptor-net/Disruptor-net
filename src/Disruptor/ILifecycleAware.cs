@@ -2,7 +2,7 @@ namespace Disruptor
 {
     /// <summary>
     /// Implement this interface in your <see cref="IEventHandler{T}"/> to be notified when a thread for the
-    /// <see cref="BatchEventProcessor{T}"/> starts and shuts down.
+    /// <see cref="IBatchEventProcessor{T}"/> starts and shuts down.
     /// </summary>
     public interface ILifecycleAware
     {

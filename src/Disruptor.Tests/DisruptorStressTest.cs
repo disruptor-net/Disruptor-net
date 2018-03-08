@@ -12,7 +12,6 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldHandleLotsOfThreads()
         {
-
             var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 1 << 16, TaskScheduler.Current, ProducerType.Multi, new BusySpinWaitStrategy());
             var ringBuffer = disruptor.RingBuffer;
             disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler());
@@ -145,7 +144,7 @@ namespace Disruptor.Tests
             }
         }
 
-        private class TestEvent
+        public class TestEvent
         {
             public static readonly Func<TestEvent> Factory = () => new TestEvent();
 

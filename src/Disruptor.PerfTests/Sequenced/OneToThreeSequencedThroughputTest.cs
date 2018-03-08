@@ -49,7 +49,7 @@ namespace Disruptor.PerfTests.Sequenced
         private const long _iterations = 1000L * 1000L * 100L;
 
         private readonly RingBuffer<ValueEvent> _ringBuffer;
-        private readonly BatchEventProcessor<ValueEvent>[] _batchEventProcessors = new BatchEventProcessor<ValueEvent>[_numEventProcessors];
+        private readonly IBatchEventProcessor<ValueEvent>[] _batchEventProcessors = new IBatchEventProcessor<ValueEvent>[_numEventProcessors];
         private readonly long[] _results = new long[_numEventProcessors];
         private readonly ValueMutationEventHandler[] _handlers = new ValueMutationEventHandler[_numEventProcessors];
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
@@ -73,7 +73,7 @@ namespace Disruptor.PerfTests.Sequenced
 
             for (var i = 0; i < _numEventProcessors; i++)
             {
-                _batchEventProcessors[i] = new BatchEventProcessor<ValueEvent>(_ringBuffer, sequenceBarrier, _handlers[i]);
+                _batchEventProcessors[i] = BatchEventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handlers[i]);
             }
             _ringBuffer.AddGatingSequences(_batchEventProcessors.Select(x => x.Sequence).ToArray());
         }

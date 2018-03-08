@@ -47,9 +47,9 @@ namespace Disruptor.PerfTests.Sequenced
 
         private readonly RingBuffer<FunctionEvent> _ringBuffer = RingBuffer<FunctionEvent>.CreateSingleProducer(FunctionEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
 
-        private readonly BatchEventProcessor<FunctionEvent> _stepOneBatchProcessor;
-        private readonly BatchEventProcessor<FunctionEvent> _stepTwoBatchProcessor;
-        private readonly BatchEventProcessor<FunctionEvent> _stepThreeBatchProcessor;
+        private readonly IBatchEventProcessor<FunctionEvent> _stepOneBatchProcessor;
+        private readonly IBatchEventProcessor<FunctionEvent> _stepTwoBatchProcessor;
+        private readonly IBatchEventProcessor<FunctionEvent> _stepThreeBatchProcessor;
         private readonly FunctionEventHandler _stepThreeFunctionHandler;
 
         public OneToThreePipelineSequencedThroughputTest()
@@ -59,13 +59,13 @@ namespace Disruptor.PerfTests.Sequenced
             _stepThreeFunctionHandler = new FunctionEventHandler(FunctionStep.Three);
 
             var stepOneSequenceBarrier = _ringBuffer.NewBarrier();
-            _stepOneBatchProcessor = new BatchEventProcessor<FunctionEvent>(_ringBuffer, stepOneSequenceBarrier, stepOneFunctionHandler);
+            _stepOneBatchProcessor = BatchEventProcessorFactory.Create(_ringBuffer, stepOneSequenceBarrier, stepOneFunctionHandler);
 
             var stepTwoSequenceBarrier = _ringBuffer.NewBarrier(_stepOneBatchProcessor.Sequence);
-            _stepTwoBatchProcessor = new BatchEventProcessor<FunctionEvent>(_ringBuffer, stepTwoSequenceBarrier, stepTwoFunctionHandler);
+            _stepTwoBatchProcessor = BatchEventProcessorFactory.Create(_ringBuffer, stepTwoSequenceBarrier, stepTwoFunctionHandler);
 
             var stepThreeSequenceBarrier = _ringBuffer.NewBarrier(_stepTwoBatchProcessor.Sequence);
-            _stepThreeBatchProcessor = new BatchEventProcessor<FunctionEvent>(_ringBuffer, stepThreeSequenceBarrier, _stepThreeFunctionHandler);
+            _stepThreeBatchProcessor = BatchEventProcessorFactory.Create(_ringBuffer, stepThreeSequenceBarrier, _stepThreeFunctionHandler);
 
             var temp = 0L;
             var operandTwo = _operandTwoInitialValue;

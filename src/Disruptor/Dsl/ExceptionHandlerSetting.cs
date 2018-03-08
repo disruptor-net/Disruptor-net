@@ -23,7 +23,7 @@ namespace Disruptor.Dsl
         /// <param name="exceptionHandler">exceptionHandler the exception handler to use.</param>
         public void With(IExceptionHandler<T> exceptionHandler)
         {
-            ((BatchEventProcessor<T>)_consumerRepository.GetEventProcessorFor(_eventHandler)).SetExceptionHandler(exceptionHandler);
+            ((IBatchEventProcessor<T>)_consumerRepository.GetEventProcessorFor(_eventHandler)).SetExceptionHandler(exceptionHandler);
             _consumerRepository.GetBarrierFor(_eventHandler).Alert();
         }
     }

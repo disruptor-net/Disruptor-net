@@ -56,13 +56,13 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly TaskScheduler _scheduler = new RoundRobinThreadAffinedTaskScheduler(5);
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly ValueAdditionEventHandler _handler = new ValueAdditionEventHandler();
-        private readonly BatchEventProcessor<ValueEvent> _batchEventProcessor;
+        private readonly IBatchEventProcessor<ValueEvent> _batchEventProcessor;
         private readonly ValuePublisher[] _valuePublishers = new ValuePublisher[_numPublishers];
 
         public ThreeToOneSequencedThroughputTest()
         {
             _sequenceBarrier = _ringBuffer.NewBarrier();
-            _batchEventProcessor = new BatchEventProcessor<ValueEvent>(_ringBuffer, _sequenceBarrier, _handler);
+            _batchEventProcessor = BatchEventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, _handler);
             for (var i = 0; i < _numPublishers; i++)
             {
                 _valuePublishers[i] = ValuePublisher;

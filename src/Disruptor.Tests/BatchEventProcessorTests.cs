@@ -7,11 +7,18 @@ using NUnit.Framework;
 
 namespace Disruptor.Tests
 {
-    [TestFixture]
+    [TestFixture(BatchEventProcessorType.Legacy)]
+    [TestFixture(BatchEventProcessorType.Optimized)]
     public class BatchEventProcessorTests
     {
+        private readonly BatchEventProcessorType _targetType;
         private RingBuffer<StubEvent> _ringBuffer;
         private ISequenceBarrier _sequenceBarrier;
+
+        public BatchEventProcessorTests(BatchEventProcessorType targetType)
+        {
+            _targetType = targetType;
+        }
 
         [SetUp]
         public void Setup()
@@ -20,11 +27,27 @@ namespace Disruptor.Tests
             _sequenceBarrier = _ringBuffer.NewBarrier();
         }
 
+        private IBatchEventProcessor<T> CreateBatchEventProcessor<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
+            where T : class
+        {
+            switch (_targetType)
+            {
+                case BatchEventProcessorType.Legacy:
+                    return new BatchEventProcessor<T>(dataProvider, sequenceBarrier, eventHandler);
+
+                case BatchEventProcessorType.Optimized:
+                    return BatchEventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
+
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
         [Test]
         public void ShouldThrowExceptionOnSettingNullExceptionHandler()
         {
             var eventHandler = new ActionEventHandler<StubEvent>(x => throw new NullReferenceException());
-            var batchEventProcessor = new BatchEventProcessor<StubEvent>(_ringBuffer, _sequenceBarrier, eventHandler);
+            var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
             Assert.Throws<ArgumentNullException>(() => batchEventProcessor.SetExceptionHandler(null));
         }
@@ -34,7 +57,7 @@ namespace Disruptor.Tests
         {
             var eventSignal = new CountdownEvent(3);
             var eventHandler = new ActionEventHandler<StubEvent>(x => eventSignal.Signal());
-            var batchEventProcessor = new BatchEventProcessor<StubEvent>(_ringBuffer, _sequenceBarrier, eventHandler);
+            var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
             _ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
 
@@ -57,7 +80,7 @@ namespace Disruptor.Tests
             var exceptionSignal = new CountdownEvent(1);
             var exceptionHandler = new ActionExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
             var eventHandler = new ActionEventHandler<StubEvent>(x => throw new NullReferenceException());
-            var batchEventProcessor = new BatchEventProcessor<StubEvent>(_ringBuffer, _sequenceBarrier, eventHandler);
+            var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
             _ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
 
             batchEventProcessor.SetExceptionHandler(exceptionHandler);
@@ -79,7 +102,7 @@ namespace Disruptor.Tests
             var batchSizes = new List<long>();
             var signal = new CountdownEvent(6);
 
-            var batchEventProcessor = new BatchEventProcessor<StubEvent>(_ringBuffer, _sequenceBarrier, new LoopbackEventHandler(_ringBuffer, batchSizes, signal));
+            var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, new LoopbackEventHandler(_ringBuffer, batchSizes, signal));
 
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
@@ -125,11 +148,11 @@ namespace Disruptor.Tests
         {
             var waitStrategy = new BusySpinWaitStrategy();
             var sequencer = new SingleProducerSequencer(8, waitStrategy);
-            var barrier = new ProcessingSequenceBarrier(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
+            var barrier = ProcessingSequenceBarrierFactory.Create(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
             var dp = new DummyDataProvider<object>();
 
             var h1 = new LifeCycleHandler();
-            var p1 = new BatchEventProcessor<object>(dp, barrier, h1);
+            var p1 = CreateBatchEventProcessor(dp, barrier, h1);
 
             var t1 = new Thread(p1.Run);
             p1.Halt();
@@ -141,7 +164,7 @@ namespace Disruptor.Tests
             for (int i = 0; i < 1000; i++)
             {
                 var h2 = new LifeCycleHandler();
-                var p2 = new BatchEventProcessor<object>(dp, barrier, h2);
+                var p2 = CreateBatchEventProcessor(dp, barrier, h2);
                 var t2 = new Thread(p2.Run);
 
                 t2.Start();
@@ -154,7 +177,7 @@ namespace Disruptor.Tests
             for (int i = 0; i < 1000; i++)
             {
                 var h2 = new LifeCycleHandler();
-                var p2 = new BatchEventProcessor<object>(dp, barrier, h2);
+                var p2 = CreateBatchEventProcessor(dp, barrier, h2);
 
                 var t2 = new Thread(p2.Run);
                 t2.Start();

@@ -14,14 +14,14 @@ namespace Disruptor.Tests
 
         private ISequenceBarrier _sequenceBarrier;
         private LifecycleAwareEventHandler _eventHandler;
-        private BatchEventProcessor<StubEvent> _batchEventProcessor;
+        private IBatchEventProcessor<StubEvent> _batchEventProcessor;
 
         [SetUp]
         public void SetUp()
         {
             _sequenceBarrier = _ringBuffer.NewBarrier();
             _eventHandler = new LifecycleAwareEventHandler(_startSignal, _shutdownSignal);
-            _batchEventProcessor = new BatchEventProcessor<StubEvent>(_ringBuffer, _sequenceBarrier, _eventHandler);
+            _batchEventProcessor = BatchEventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, _eventHandler);
         }
 
         [Test]

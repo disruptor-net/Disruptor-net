@@ -16,7 +16,7 @@ namespace Disruptor.Tests
             var ringBuffer = RingBuffer<StubEvent>.CreateMultiProducer(() => new StubEvent(-1), 16);
             var sequenceBarrier = ringBuffer.NewBarrier();
             ISequenceReportingEventHandler<StubEvent> handler = new TestSequenceReportingEventHandler(_callbackSignal, _onEndOfBatchSignal);
-            var batchEventProcessor = new BatchEventProcessor<StubEvent>(ringBuffer, sequenceBarrier, handler);
+            var batchEventProcessor = BatchEventProcessorFactory.Create(ringBuffer, sequenceBarrier, handler);
             ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
 
             var thread = new Thread(batchEventProcessor.Run) {IsBackground = true};

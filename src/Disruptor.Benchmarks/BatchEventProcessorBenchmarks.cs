@@ -5,14 +5,14 @@ namespace Disruptor.Benchmarks
     public class BatchEventProcessorBenchmarks
     {
         private readonly RingBuffer<TestEvent> _ringBuffer;
-        private readonly BatchEventProcessor<TestEvent> _processor;
+        private readonly IBatchEventProcessor<TestEvent> _processor;
         private readonly TestEventHandler _eventHandler;
 
         public BatchEventProcessorBenchmarks()
         {
             _ringBuffer = new RingBuffer<TestEvent>(() => new TestEvent(), new SingleProducerSequencer(4096, new SpinWaitWaitStrategy()));
             _eventHandler = new TestEventHandler();
-            _processor = new BatchEventProcessor<TestEvent>(_ringBuffer, _ringBuffer.NewBarrier(), _eventHandler);
+            _processor = BatchEventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), _eventHandler);
 
             _eventHandler.Processor = _processor;
             _eventHandler.RingBuffer = _ringBuffer;
@@ -45,7 +45,7 @@ namespace Disruptor.Benchmarks
         {
             public long Sum { get; set; }
             public RingBuffer<TestEvent> RingBuffer { get; set; }
-            public BatchEventProcessor<TestEvent> Processor { get; set; }
+            public IBatchEventProcessor<TestEvent> Processor { get; set; }
 
             public void OnEvent(TestEvent data, long sequence, bool endOfBatch)
             {
