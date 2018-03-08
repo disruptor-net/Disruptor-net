@@ -23,6 +23,7 @@ namespace Disruptor
         public RingBuffer(Func<T> eventFactory, ISequencer sequencer)
         {
             _fields.Sequencer = sequencer;
+            _fields.SequencerType = RingBufferFields.GetSequencerType(sequencer);
 
             if (sequencer.BufferSize < 1)
             {
@@ -192,9 +193,18 @@ namespace Disruptor
         /// </code>
         /// </summary>
         /// <returns>The next sequence to publish to.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next()
         {
-            return _fields.Sequencer.Next();
+            switch (_fields.SequencerType)
+            {
+                case RingBufferFields.RingBufferSequencerType.SingleProducer:
+                    return _fields.SingleProducerSequencer.NextInternal(1);
+                case RingBufferFields.RingBufferSequencerType.MultiProducer:
+                    return _fields.MultiProducerSequencer.NextInternal(1);
+                default:
+                    return _fields.Sequencer.Next();
+            }
         }
 
         /// <summary>
@@ -203,9 +213,23 @@ namespace Disruptor
         /// </summary>
         /// <param name="n">number of slots to claim</param>
         /// <returns>sequence number of the highest slot claimed</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next(int n)
         {
-            return _fields.Sequencer.Next(n);
+            if (n < 1)
+            {
+                throw new ArgumentException("n must be > 0");
+            }
+
+            switch (_fields.SequencerType)
+            {
+                case RingBufferFields.RingBufferSequencerType.SingleProducer:
+                    return _fields.SingleProducerSequencer.NextInternal(n);
+                case RingBufferFields.RingBufferSequencerType.MultiProducer:
+                    return _fields.MultiProducerSequencer.NextInternal(n);
+                default:
+                    return _fields.Sequencer.Next(n);
+            }
         }
 
         /// <summary>
@@ -228,9 +252,18 @@ namespace Disruptor
         /// </summary>
         /// <returns>The next sequence to publish to.</returns>
         /// <exception cref="InsufficientCapacityException">if the necessary space in the ring buffer is not available</exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long TryNext()
         {
-            return _fields.Sequencer.TryNext();
+            switch (_fields.SequencerType)
+            {
+                case RingBufferFields.RingBufferSequencerType.SingleProducer:
+                    return _fields.SingleProducerSequencer.TryNextInternal(1);
+                case RingBufferFields.RingBufferSequencerType.MultiProducer:
+                    return _fields.MultiProducerSequencer.TryNextInternal(1);
+                default:
+                    return _fields.Sequencer.TryNext();
+            }
         }
 
         /// <summary>
@@ -240,9 +273,23 @@ namespace Disruptor
         /// <param name="n">number of slots to claim</param>
         /// <returns>sequence number of the highest slot claimed</returns>
         /// <exception cref="InsufficientCapacityException">if the necessary space in the ring buffer is not available</exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long TryNext(int n)
         {
-            return _fields.Sequencer.TryNext(n);
+            if (n < 1)
+            {
+                throw new ArgumentException("n must be > 0");
+            }
+
+            switch (_fields.SequencerType)
+            {
+                case RingBufferFields.RingBufferSequencerType.SingleProducer:
+                    return _fields.SingleProducerSequencer.TryNextInternal(n);
+                case RingBufferFields.RingBufferSequencerType.MultiProducer:
+                    return _fields.MultiProducerSequencer.TryNextInternal(n);
+                default:
+                    return _fields.Sequencer.TryNext(n);
+            }
         }
 
         /// <summary>
@@ -269,9 +316,18 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">the next sequence to publish to</param>
         /// <returns>true if the necessary space in the ring buffer is not available, otherwise false.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryNext(out long sequence)
         {
-            return _fields.Sequencer.TryNext(out sequence);
+            switch (_fields.SequencerType)
+            {
+                case RingBufferFields.RingBufferSequencerType.SingleProducer:
+                    return _fields.SingleProducerSequencer.TryNextInternal(1, out sequence);
+                case RingBufferFields.RingBufferSequencerType.MultiProducer:
+                    return _fields.MultiProducerSequencer.TryNextInternal(1, out sequence);
+                default:
+                    return _fields.Sequencer.TryNext(out sequence);
+            }
         }
 
         /// <summary>
@@ -281,9 +337,18 @@ namespace Disruptor
         /// <param name="n">number of slots to claim</param>
         /// <param name="sequence">sequence number of the highest slot claimed</param>
         /// <returns>true if the necessary space in the ring buffer is not available, otherwise false.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryNext(int n, out long sequence)
         {
-            return _fields.Sequencer.TryNext(n, out sequence);
+            switch (_fields.SequencerType)
+            {
+                case RingBufferFields.RingBufferSequencerType.SingleProducer:
+                    return _fields.SingleProducerSequencer.TryNextInternal(n, out sequence);
+                case RingBufferFields.RingBufferSequencerType.MultiProducer:
+                    return _fields.MultiProducerSequencer.TryNextInternal(n, out sequence);
+                default:
+                    return _fields.Sequencer.TryNext(n, out sequence);
+            }
         }
 
         /// <summary>
@@ -293,6 +358,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">the sequence to reset too.</param>
         [Obsolete]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ResetTo(long sequence)
         {
             _fields.Sequencer.Claim(sequence);
@@ -305,6 +371,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">the sequence to claim.</param>
         /// <returns>the preallocated event.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T ClaimAndGetPreallocated(long sequence)
         {
             _fields.Sequencer.Claim(sequence);
@@ -339,6 +406,7 @@ namespace Disruptor
         /// added to this ringBuffer.
         /// </summary>
         /// <returns>the minimum gating sequence or the cursor sequence if no sequences have been added.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long GetMinimumGatingSequence()
         {
             return _fields.Sequencer.GetMinimumSequence();
