@@ -12,7 +12,7 @@ namespace Disruptor
     /// Latency spikes can occur after quiet periods.
     /// </p>
     /// </summary>
-    public sealed class SleepingWaitStrategy : IWaitStrategy
+    public sealed class SleepingWaitStrategy : INonBlockingWaitStrategy
     {
         private const int _defaultRetries = 200;
         private readonly int _retries;

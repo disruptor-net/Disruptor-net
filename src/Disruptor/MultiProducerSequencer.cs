@@ -262,7 +262,11 @@ namespace Disruptor
         public override void Publish(long sequence)
         {
             SetAvailable(sequence);
-            _waitStrategy.SignalAllWhenBlocking();
+
+            if (_isBlockingWaitStrategy)
+            {
+                _waitStrategy.SignalAllWhenBlocking();
+            }
         }
 
         /// <summary>
@@ -274,7 +278,11 @@ namespace Disruptor
             {
                 SetAvailable(l);
             }
-            _waitStrategy.SignalAllWhenBlocking();
+
+            if (_isBlockingWaitStrategy)
+            {
+                _waitStrategy.SignalAllWhenBlocking();
+            }
         }
 
         private void SetAvailable(long sequence)

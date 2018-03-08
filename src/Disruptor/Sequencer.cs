@@ -13,6 +13,7 @@ namespace Disruptor
     {
         protected readonly int _bufferSize;
         protected readonly IWaitStrategy _waitStrategy;
+        protected readonly bool _isBlockingWaitStrategy;
         protected readonly Sequence _cursor = new Sequence();
 
         /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
@@ -36,6 +37,7 @@ namespace Disruptor
 
             _bufferSize = bufferSize;
             _waitStrategy = waitStrategy;
+            _isBlockingWaitStrategy = !(waitStrategy is INonBlockingWaitStrategy);
         }
 
         /// <summary>
@@ -47,7 +49,7 @@ namespace Disruptor
         {
             return ProcessingSequenceBarrierFactory.Create(this, _waitStrategy, _cursor, sequencesToTrack);
         }
-        
+
         /// <summary>
         /// The capacity of the data structure to hold entries.
         /// </summary>

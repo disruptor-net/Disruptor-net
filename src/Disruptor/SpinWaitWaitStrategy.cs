@@ -9,7 +9,7 @@ namespace Disruptor
     /// Latency spikes can occur after quiet periods.
     /// </p>
     /// </summary>
-    public sealed class SpinWaitWaitStrategy : IWaitStrategy
+    public sealed class SpinWaitWaitStrategy : INonBlockingWaitStrategy
     {
         /// <summary>
         /// <see cref="IWaitStrategy.WaitFor"/>

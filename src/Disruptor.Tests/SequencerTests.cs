@@ -170,6 +170,17 @@ namespace Disruptor.Tests
         }
 
         [Test]
+        public void ShouldNotNotifyNonBlockingWaitStrategyOnPublish()
+        {
+            var waitStrategy = new DummyNonBlockingWaitStrategy();
+            var sequencer = NewProducer(_producerType, _bufferSize, waitStrategy);
+
+            sequencer.Publish(sequencer.Next());
+
+            Assert.That(waitStrategy.SignalAllWhenBlockingCalls, Is.EqualTo(0));
+        }
+
+        [Test]
         public void ShouldNotifyWaitStrategyOnPublishBatch()
         {
             var waitStrategy = new DummyWaitStrategy();
@@ -179,6 +190,18 @@ namespace Disruptor.Tests
             sequencer.Publish(next - (4 - 1), next);
 
             Assert.That(waitStrategy.SignalAllWhenBlockingCalls, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ShouldNotNotifyNonBlockingWaitStrategyOnPublishBatch()
+        {
+            var waitStrategy = new DummyNonBlockingWaitStrategy();
+            var sequencer = NewProducer(_producerType, _bufferSize, waitStrategy);
+
+            var next = _sequencer.Next(4);
+            sequencer.Publish(next - (4 - 1), next);
+
+            Assert.That(waitStrategy.SignalAllWhenBlockingCalls, Is.EqualTo(0));
         }
 
         [Test]

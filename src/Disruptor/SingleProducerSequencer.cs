@@ -221,7 +221,11 @@ namespace Disruptor
         public override void Publish(long sequence)
         {
             _cursor.SetValue(sequence);
-            _waitStrategy.SignalAllWhenBlocking();
+
+            if (_isBlockingWaitStrategy)
+            {
+                _waitStrategy.SignalAllWhenBlocking();
+            }
         }
 
         /// <summary>
