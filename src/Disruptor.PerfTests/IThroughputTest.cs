@@ -4,7 +4,7 @@ namespace Disruptor.PerfTests
 {
     public interface IThroughputTest
     {
-        long Run(Stopwatch stopwatch);
+        long Run(ThroughputSessionContext sessionContext);
 
         int RequiredProcessorCount { get; }
     }

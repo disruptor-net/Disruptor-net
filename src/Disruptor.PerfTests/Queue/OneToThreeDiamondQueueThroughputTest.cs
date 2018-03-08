@@ -46,7 +46,7 @@ namespace Disruptor.PerfTests.Queue
 
         public int RequiredProcessorCount => 4;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             var signal = new ManualResetEvent(false);
             _fizzBuzzQueueProcessor.Reset(signal);
@@ -55,7 +55,7 @@ namespace Disruptor.PerfTests.Queue
             tasks[1] = _executor.Execute(_buzzQueueProcessor.Run);
             tasks[2] = _executor.Execute(_fizzBuzzQueueProcessor.Run);
 
-            stopwatch.Start();
+            sessionContext.Start();
 
             for (var i = 0; i < _iterations; i++)
             {
@@ -64,7 +64,7 @@ namespace Disruptor.PerfTests.Queue
             }
 
             signal.WaitOne();
-            stopwatch.Stop();
+            sessionContext.Stop();
 
             _fizzQueueProcessor.Halt();
             _buzzQueueProcessor.Halt();

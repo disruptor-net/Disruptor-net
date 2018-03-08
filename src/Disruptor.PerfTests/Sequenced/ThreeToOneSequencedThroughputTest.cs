@@ -71,7 +71,7 @@ namespace Disruptor.PerfTests.Sequenced
 
         public int RequiredProcessorCount => 4;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             _cyclicBarrier.Reset();
             var latch = new ManualResetEvent(false);
@@ -85,7 +85,7 @@ namespace Disruptor.PerfTests.Sequenced
             }
             var processorTask = Task.Factory.StartNew(() => _batchEventProcessor.Run(), CancellationToken.None, TaskCreationOptions.None, _scheduler);
 
-            stopwatch.Start();
+            sessionContext.Start();
             _cyclicBarrier.Signal();
             _cyclicBarrier.Wait();
 
@@ -96,11 +96,13 @@ namespace Disruptor.PerfTests.Sequenced
 
             latch.WaitOne();
 
-            stopwatch.Stop();
+            sessionContext.Stop();
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
 
-            return _iterations;
+            sessionContext.SetBatchData(_handler.BatchesProcessedCount, _iterations * _numPublishers);
+
+            return _iterations * _numPublishers;
         }
 
         private static void ValuePublisher(CountdownEvent countdownEvent, RingBuffer<ValueEvent> ringBuffer, long iterations)

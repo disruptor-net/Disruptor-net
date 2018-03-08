@@ -68,7 +68,7 @@ namespace Disruptor.PerfTests.Sequenced
 
         public int RequiredProcessorCount => 4;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             _cyclicBarrier.Reset();
 
@@ -83,7 +83,7 @@ namespace Disruptor.PerfTests.Sequenced
             }
             var processorTask = Task.Run(() => _batchEventProcessor.Run());
 
-            stopwatch.Start();
+            sessionContext.Start();
             _cyclicBarrier.Signal();
             _cyclicBarrier.Wait();
 
@@ -94,9 +94,11 @@ namespace Disruptor.PerfTests.Sequenced
 
             latch.WaitOne();
 
-            stopwatch.Stop();
+            sessionContext.Stop();
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
+
+            sessionContext.SetBatchData(_handler.BatchesProcessedCount, _iterations);
 
             return _iterations;
         }

@@ -9,14 +9,18 @@ namespace Disruptor.PerfTests
         private readonly Exception _exception;
 
         public long TotalOperationsInRun { get; set; }
+        public double? BatchPercent { get; set; }
+        public double? AverageBatchSize { get; set; }
         public TimeSpan Duration { get; set; }
         public int Gen0 { get; set; }
         public int Gen1 { get; set; }
         public int Gen2 { get; set; }
 
-        public ThroughputTestSessionResult(long totalOperationsInRun, TimeSpan duration, int gen0, int gen1, int gen2)
+        public ThroughputTestSessionResult(long totalOperationsInRun, TimeSpan duration, int gen0, int gen1, int gen2, ThroughputSessionContext sessionContext)
         {
             TotalOperationsInRun = totalOperationsInRun;
+            BatchPercent = sessionContext.BatchPercent;
+            AverageBatchSize = sessionContext.AverageBatchSize;
             Duration = duration;
             Gen0 = gen0;
             Gen1 = gen1;
@@ -37,6 +41,8 @@ namespace Disruptor.PerfTests
                 stringBuilder.AppendLine($"     <td>FAILED</td>");
                 stringBuilder.AppendLine($"     <td>{_exception.Message}</td>");
                 stringBuilder.AppendLine($"     <td></td>");
+                stringBuilder.AppendLine($"     <td></td>");
+                stringBuilder.AppendLine($"     <td></td>");
                 stringBuilder.AppendLine(" </tr>");
             }
             else
@@ -46,13 +52,15 @@ namespace Disruptor.PerfTests
                 stringBuilder.AppendLine($"     <td>{TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###}</td>");
                 stringBuilder.AppendLine($"     <td>{Duration.TotalMilliseconds:N0} (ms)</td>");
                 stringBuilder.AppendLine($"     <td>{Gen0} - {Gen1} - {Gen2}</td>");
+                stringBuilder.AppendLine($"     <td>{BatchPercent:P}</td>");
+                stringBuilder.AppendLine($"     <td>{AverageBatchSize:N0}</td>");
                 stringBuilder.AppendLine(" </tr>");
             }
         }
 
         public override string ToString()
         {
-            return _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Ops: {TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###} - Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2}";
+            return _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Ops: {TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###} - Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2} - Batch %: {BatchPercent:P} - Average Batch Size: {AverageBatchSize:N0}";
         }
     }
 }

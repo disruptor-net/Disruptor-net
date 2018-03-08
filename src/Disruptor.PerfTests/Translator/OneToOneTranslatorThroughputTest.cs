@@ -51,7 +51,7 @@ namespace Disruptor.PerfTests.Translator
 
         public int RequiredProcessorCount => 2;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             var value = _value;
 
@@ -59,7 +59,7 @@ namespace Disruptor.PerfTests.Translator
             var expectedCount = _ringBuffer.GetMinimumGatingSequence() + _iterations;
 
             _handler.Reset(latch, expectedCount);
-            stopwatch.Start();
+            sessionContext.Start();
 
             var rb = _ringBuffer;
 
@@ -70,10 +70,12 @@ namespace Disruptor.PerfTests.Translator
             }
 
             latch.WaitOne();
-            stopwatch.Stop();
+            sessionContext.Stop();
             WaitForEventProcessorSequence(expectedCount);
 
             PerfTestUtil.FailIfNot(_expectedResult, _handler.Value);
+
+            sessionContext.SetBatchData(_handler.BatchesProcessedCount, _iterations);
 
             return _iterations;
         }

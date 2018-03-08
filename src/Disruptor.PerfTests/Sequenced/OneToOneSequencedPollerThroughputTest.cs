@@ -41,6 +41,7 @@ namespace Disruptor.PerfTests.Sequenced
             private PaddedLong _value;
             private ManualResetEvent _signal;
             private long _count;
+            public long BatchesProcessedCount;
 
             public PollRunnable(EventPoller<ValueEvent> poller)
             {
@@ -72,6 +73,9 @@ namespace Disruptor.PerfTests.Sequenced
             {
                 _value.Value = _value.Value + @event.Value;
 
+                if (endOfBatch)
+                    BatchesProcessedCount++;
+
                 if (_count == sequence)
                 {
                     _signal.Set();
@@ -88,16 +92,17 @@ namespace Disruptor.PerfTests.Sequenced
                 _signal = signal;
                 _count = expectedCount;
                 _running = 1;
+                BatchesProcessedCount = 0;
             }
         }
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             var latch = new ManualResetEvent(false);
             var expectedCount = _poller.Sequence.Value + _iterations;
             _pollRunnable.Reset(latch, expectedCount);
             var processorTask = _executor.Execute(_pollRunnable.Run);
-            stopwatch.Start();
+            sessionContext.Start();
 
             var rb = _ringBuffer;
             for (var i = 0; i < _iterations; i++)
@@ -108,10 +113,12 @@ namespace Disruptor.PerfTests.Sequenced
             }
 
             latch.WaitOne();
-            stopwatch.Stop();
+            sessionContext.Stop();
             WaitForEventProcessorSequence(expectedCount);
             _pollRunnable.Halt();
             processorTask.Wait(2000);
+
+            sessionContext.SetBatchData(_pollRunnable.BatchesProcessedCount, _iterations);
 
             PerfTestUtil.FailIfNot(_expectedResult, _pollRunnable.Value, $"Poll runnable should have processed {_expectedResult} but was {_pollRunnable.Value}");
 

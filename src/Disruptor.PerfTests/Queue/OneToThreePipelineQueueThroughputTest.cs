@@ -49,7 +49,7 @@ namespace Disruptor.PerfTests.Queue
 
         public int RequiredProcessorCount => 4;
 
-        public long Run(Stopwatch stopwatch)
+        public long Run(ThroughputSessionContext sessionContext)
         {
             var signal = new ManualResetEvent(false);
             _stepThreeQueueProcessor.Reset(signal);
@@ -59,7 +59,7 @@ namespace Disruptor.PerfTests.Queue
             tasks[1] = _executor.Execute(_stepTwoQueueProcessor.Run);
             tasks[2] = _executor.Execute(_stepThreeQueueProcessor.Run);
 
-            stopwatch.Start();
+            sessionContext.Start();
 
             long operandTwo = _operandTwoInitialValue;
             for (long i = 0; i < _iterations; i++)
@@ -71,7 +71,7 @@ namespace Disruptor.PerfTests.Queue
             }
 
             signal.WaitOne();
-            stopwatch.Stop();
+            sessionContext.Stop();
 
             _stepOneQueueProcessor.Halt();
             _stepTwoQueueProcessor.Halt();
