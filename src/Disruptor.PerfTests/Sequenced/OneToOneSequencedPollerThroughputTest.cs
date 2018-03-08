@@ -37,6 +37,7 @@ namespace Disruptor.PerfTests.Sequenced
         {
             private readonly EventPoller<ValueEvent> _poller;
             private readonly Func<ValueEvent, long, bool, bool> _eventHandler;
+            private readonly AutoResetEvent _started = new AutoResetEvent(false);
             private volatile int _running = 1;
             private PaddedLong _value;
             private ManualResetEvent _signal;
@@ -57,6 +58,7 @@ namespace Disruptor.PerfTests.Sequenced
                 {
                     while (_running == 1)
                     {
+                        _started.Set();
                         if (PollState.Processing != _poller.Poll(_eventHandler))
                         {
                             Thread.Sleep(0);

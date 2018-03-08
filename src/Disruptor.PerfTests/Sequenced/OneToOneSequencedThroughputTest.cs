@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -64,6 +65,7 @@ namespace Disruptor.PerfTests.Sequenced
             _latch.Reset();
             _eventHandler.Reset(_latch, expectedCount);
             var processorTask = _executor.Execute(_batchEventProcessor.Run);
+            _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();
 

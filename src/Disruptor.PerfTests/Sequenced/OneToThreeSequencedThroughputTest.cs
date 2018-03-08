@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -88,6 +89,7 @@ namespace Disruptor.PerfTests.Sequenced
             {
                 _handlers[i].Reset(latch, _batchEventProcessors[i].Sequence.Value + _iterations);
                 processorTasks.Add(_executor.Execute(_batchEventProcessors[i].Run));
+                _batchEventProcessors[i].WaitUntilStarted(TimeSpan.FromSeconds(5));
             }
 
             sessionContext.Start();

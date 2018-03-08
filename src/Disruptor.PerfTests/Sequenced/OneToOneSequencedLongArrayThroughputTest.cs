@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
@@ -64,6 +65,8 @@ namespace Disruptor.PerfTests.Sequenced
             var expectedCount = _batchEventProcessor.Sequence.Value + _iterations;
             _handler.Reset(signal, _iterations);
             var processorTask = _executor.Execute(_batchEventProcessor.Run);
+            _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+
             sessionContext.Start();
 
             var rb = _ringBuffer;

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
@@ -82,6 +83,7 @@ namespace Disruptor.PerfTests.Sequenced
                 futures[i] = Task.Run(() => _valuePublishers[index].Run());
             }
             var processorTask = Task.Run(() => _batchEventProcessor.Run());
+            _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();
             _cyclicBarrier.Signal();

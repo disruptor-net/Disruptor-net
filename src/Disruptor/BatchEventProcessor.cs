@@ -26,6 +26,7 @@ namespace Disruptor
         private readonly Sequence _sequence = new Sequence();
         private readonly IBatchStartAware _batchStartAware;
         private readonly ITimeoutHandler _timeoutHandler;
+        private readonly ManualResetEventSlim _started = new ManualResetEventSlim();
         private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler();
         private volatile int _running;
 
@@ -175,6 +176,8 @@ namespace Disruptor
                     _exceptionHandler.HandleOnStartException(e);
                 }
             }
+            
+            _started.Set();
         }
 
         private void NotifyShutdown()
@@ -191,6 +194,13 @@ namespace Disruptor
                     _exceptionHandler.HandleOnShutdownException(e);
                 }
             }
+
+            _started.Reset();
+        }
+
+        internal void WaitUntilStarted(TimeSpan timeout)
+        {
+            _started.Wait(timeout);
         }
     }
 }

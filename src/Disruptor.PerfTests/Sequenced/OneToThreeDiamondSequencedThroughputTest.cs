@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
@@ -99,6 +100,9 @@ namespace Disruptor.PerfTests.Sequenced
             var processorTask1 = Task.Run(() => _batchProcessorFizz.Run());
             var processorTask2 = Task.Run(() => _batchProcessorBuzz.Run());
             var processorTask3 = Task.Run(() => _batchProcessorFizzBuzz.Run());
+            _batchProcessorFizz.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            _batchProcessorBuzz.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            _batchProcessorFizzBuzz.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();
 

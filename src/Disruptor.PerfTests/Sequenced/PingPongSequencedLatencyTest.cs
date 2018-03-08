@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
@@ -58,6 +59,8 @@ namespace Disruptor.PerfTests.Sequenced
 
             var processorTask1 = _executor.Execute(_pongProcessor.Run);
             var processorTask2 = _executor.Execute(_pingProcessor.Run);
+            _pongProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            _pingProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             globalSignal.Signal();
             globalSignal.Wait();
