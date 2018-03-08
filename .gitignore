@@ -42,3 +42,4 @@ BenchmarkDotNet.Artifacts/
 build/tools/**
 output/**
 src/packages/**
+launchSettings.json
