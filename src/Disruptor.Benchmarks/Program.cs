@@ -1,4 +1,6 @@
-﻿using BenchmarkDotNet.Running;
+﻿using System;
+using BenchmarkDotNet.Running;
+using ObjectLayoutInspector;
 
 namespace Disruptor.Benchmarks
 {
@@ -6,7 +8,13 @@ namespace Disruptor.Benchmarks
     {
         public static void Main()
         {
-            BenchmarkRunner.Run<RingBufferBenchmarks>();
+            //BenchmarkRunner.Run<RingBufferBenchmarks>();
+
+            TypeLayout.PrintLayout<Sequence>();
+            TypeLayout.PrintLayout<RingBuffer<object>>();
+            TypeLayout.PrintLayout<SingleProducerSequencer>();
+
+            Console.ReadLine();
         }
     }
 }

@@ -21,5 +21,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="ObjectLayoutInspector">
+      <HintPath>..\..\tools\ObjectLayoutInspector\ObjectLayoutInspector.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
 </Project>
