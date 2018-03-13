@@ -24,26 +24,28 @@ namespace Disruptor
         {
             _fields.Sequencer = sequencer;
             _fields.SequencerType = RingBufferFields.GetSequencerType(sequencer);
+            _fields.BufferSize = sequencer.BufferSize;
 
-            if (sequencer.BufferSize < 1)
+            if (_fields.BufferSize < 1)
             {
                 throw new ArgumentException("bufferSize must not be less than 1");
             }
-            if (!sequencer.BufferSize.IsPowerOf2())
+            if (!_fields.BufferSize.IsPowerOf2())
             {
                 throw new ArgumentException("bufferSize must be a power of 2");
             }
 
-            _fields.Entries = new object[sequencer.BufferSize];
+            _fields.IndexMask = _fields.BufferSize - 1;
+            _fields.Entries = new object[_fields.BufferSize + 2 * RingBufferFields.BufferPad];
 
             Fill(eventFactory);
         }
 
         private void Fill(Func<T> eventFactory)
         {
-            for (int i = 0; i < _fields.Entries.Length; i++)
+            for (int i = 0; i < _fields.BufferSize; i++)
             {
-                _fields.Entries[i] = eventFactory();
+                _fields.Entries[RingBufferFields.BufferPad + i] = eventFactory();
             }
         }
 
@@ -154,14 +156,14 @@ namespace Disruptor
             get
             {
                 ref var firstItem = ref Unsafe.As<object, T>(ref _fields.Entries[0]);
-                return Unsafe.Add(ref firstItem, (int)(sequence & (_fields.Entries.Length - 1)));
+                return Unsafe.Add(ref firstItem, RingBufferFields.BufferPad + (int)(sequence & _fields.IndexMask));
             }
         }
 
         /// <summary>
         /// Gets the size of the buffer.
         /// </summary>
-        public int BufferSize => _fields.Sequencer.BufferSize;
+        public int BufferSize => _fields.BufferSize;
 
         /// <summary>
         /// Given specified <paramref name="requiredCapacity"/> determines if that amount of space
@@ -1052,6 +1054,7 @@ namespace Disruptor
         public override string ToString()
         {
             return "RingBuffer{" +
+                   "bufferSize=" + _fields.BufferSize +
                    "sequencer=" + _fields.Sequencer +
                    "}";
         }
