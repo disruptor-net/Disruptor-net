@@ -19,7 +19,7 @@ namespace Disruptor
         private readonly bool _isBlockingWaitStrategy;
         private readonly Sequence _cursor = new Sequence();
 
-        // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.
+        // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
         private ISequence[] _gatingSequences = new ISequence[0];
 
         private readonly Sequence _gatingSequenceCache = new Sequence();

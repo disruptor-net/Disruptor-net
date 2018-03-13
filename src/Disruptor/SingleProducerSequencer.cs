@@ -8,23 +8,25 @@ namespace Disruptor
     [StructLayout(LayoutKind.Explicit, Size = 160)]
     public class SingleProducerSequencer : ISequencer
     {
-        [FieldOffset(0)]
+        // padding: 56
+
+        [FieldOffset(56)]
         private readonly IWaitStrategy _waitStrategy;
 
-        [FieldOffset(8)]
+        [FieldOffset(64)]
         private readonly Sequence _cursor = new Sequence();
 
-        [FieldOffset(16)]
-        // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.
+        [FieldOffset(72)]
+        // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
         private ISequence[] _gatingSequences = new ISequence[0];
 
-        [FieldOffset(24)]
+        [FieldOffset(80)]
         private readonly int _bufferSize;
 
-        [FieldOffset(28)]
+        [FieldOffset(84)]
         private readonly bool _isBlockingWaitStrategy;
 
-        // padding: 56
+        // padding: 3
 
         [FieldOffset(88)]
         private long _nextValue = Sequence.InitialCursorValue;

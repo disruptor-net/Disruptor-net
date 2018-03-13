@@ -5,7 +5,7 @@ namespace Disruptor
     [StructLayout(LayoutKind.Explicit, Size = 128)]
     internal struct RingBufferFields
     {
-        // 56: protected long p1, p2, p3, p4, p5, p6, p7;
+        // padding: 56
 
         [FieldOffset(56)]
         public object[] Entries;
@@ -22,7 +22,7 @@ namespace Disruptor
         [FieldOffset(72)]
         public RingBufferSequencerType SequencerType;
 
-        // 56: protected long p1, p2, p3, p4, p5, p6, p7;
+        // padding: 56
 
         public enum RingBufferSequencerType : byte
         {
