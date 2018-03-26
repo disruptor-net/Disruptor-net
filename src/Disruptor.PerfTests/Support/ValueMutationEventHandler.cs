@@ -9,7 +9,7 @@ namespace Disruptor.PerfTests.Support
         private PaddedLong _value;
         private long _iterations;
         private Barrier _latch;
-        public long BatchesProcessedCount;
+        public PaddedLong BatchesProcessedCount;
 
         public ValueMutationEventHandler(Operation operation)
         {
@@ -23,7 +23,7 @@ namespace Disruptor.PerfTests.Support
             _value.Value = 0L;
             _latch = latch;
             _iterations = expectedCount;
-            BatchesProcessedCount = 0;
+            BatchesProcessedCount.Value = 0;
         }
 
         public void OnEvent(ValueEvent data, long sequence, bool endOfBatch)
@@ -31,7 +31,7 @@ namespace Disruptor.PerfTests.Support
             _value.Value = _operation.Op(_value.Value, data.Value);
 
             if (endOfBatch)
-                BatchesProcessedCount++;
+                BatchesProcessedCount.Value = BatchesProcessedCount.Value + 1;
 
             if (sequence == _iterations)
             {

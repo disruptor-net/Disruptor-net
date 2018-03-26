@@ -8,7 +8,7 @@ namespace Disruptor.PerfTests.Support
         private PaddedLong _value;
         public long Count { get; private set; }
         private ManualResetEvent Latch { get; set; }
-        public long BatchesProcessedCount;
+        public PaddedLong BatchesProcessedCount;
 
         public long Value => _value.Value;
 
@@ -17,14 +17,14 @@ namespace Disruptor.PerfTests.Support
             _value.Value = 0;
             Latch = latch;
             Count = expectedCount;
-            BatchesProcessedCount = 0;
+            BatchesProcessedCount.Value = 0;
         }
 
         public void OnEvent(ValueEvent value, long sequence, bool endOfBatch)
         {
             _value.Value = _value.Value + value.Value;
             if (endOfBatch)
-                BatchesProcessedCount++;
+                BatchesProcessedCount.Value = BatchesProcessedCount.Value + 1;
 
             if(Count == sequence)
             {

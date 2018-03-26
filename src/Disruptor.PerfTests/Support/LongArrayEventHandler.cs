@@ -12,14 +12,14 @@ namespace Disruptor.PerfTests.Support
         public ManualResetEvent Signal { get; private set; }
 
         public long Value => _value.Value;
-        public long BatchesProcessedCount;
+        public PaddedLong BatchesProcessedCount;
 
         public void Reset(ManualResetEvent signal, long expectedCount)
         {
             _value.Value = 0L;
             Signal = signal;
             Count = expectedCount;
-            BatchesProcessedCount = 0;
+            BatchesProcessedCount.Value = 0;
         }
 
         public void OnEvent(long[] value, long sequence, bool endOfBatch)
@@ -30,7 +30,7 @@ namespace Disruptor.PerfTests.Support
             }
 
             if (endOfBatch)
-                BatchesProcessedCount++;
+                BatchesProcessedCount.Value = BatchesProcessedCount.Value + 1;
             
             if (--Count == 0)
             {

@@ -90,7 +90,7 @@ namespace Disruptor.PerfTests.Sequenced
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
 
-            sessionContext.SetBatchData(_handler.BatchesProcessedCount, _iterations);
+            sessionContext.SetBatchData(_handler.BatchesProcessedCount.Value, _iterations);
 
             PerfTestUtil.FailIfNot(_expectedResult, _handler.Value, $"Handler should have processed {_expectedResult} events, but was: {_handler.Value}");
 

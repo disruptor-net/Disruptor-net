@@ -102,7 +102,7 @@ namespace Disruptor.PerfTests.Sequenced
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
 
-            sessionContext.SetBatchData(_handler.BatchesProcessedCount, _iterations * _numPublishers);
+            sessionContext.SetBatchData(_handler.BatchesProcessedCount.Value, _iterations * _numPublishers);
 
             return _iterations * _numPublishers;
         }

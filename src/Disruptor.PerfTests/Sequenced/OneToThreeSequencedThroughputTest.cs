@@ -111,7 +111,7 @@ namespace Disruptor.PerfTests.Sequenced
             }
             Task.WaitAll(processorTasks.ToArray());
 
-            sessionContext.SetBatchData(_handlers.Sum(x => x.BatchesProcessedCount), _numEventProcessors * _iterations);
+            sessionContext.SetBatchData(_handlers.Sum(x => x.BatchesProcessedCount.Value), _numEventProcessors * _iterations);
 
             return _numEventProcessors * _iterations;
         }

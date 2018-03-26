@@ -75,7 +75,7 @@ namespace Disruptor.PerfTests.Translator
 
             PerfTestUtil.FailIfNot(_expectedResult, _handler.Value);
 
-            sessionContext.SetBatchData(_handler.BatchesProcessedCount, _iterations);
+            sessionContext.SetBatchData(_handler.BatchesProcessedCount.Value, _iterations);
 
             return _iterations;
         }

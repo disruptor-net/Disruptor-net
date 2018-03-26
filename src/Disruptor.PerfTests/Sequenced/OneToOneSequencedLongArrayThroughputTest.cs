@@ -87,7 +87,7 @@ namespace Disruptor.PerfTests.Sequenced
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
 
-            sessionContext.SetBatchData(_handler.BatchesProcessedCount, _iterations);
+            sessionContext.SetBatchData(_handler.BatchesProcessedCount.Value, _iterations);
 
             PerfTestUtil.FailIf(0, _handler.Value, "Handler has not processed any event");
 

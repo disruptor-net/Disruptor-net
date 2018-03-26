@@ -97,7 +97,7 @@ namespace Disruptor.PerfTests.Sequenced
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
 
-            sessionContext.SetBatchData(_handler.BatchesProcessedCount, _iterations * _arraySize);
+            sessionContext.SetBatchData(_handler.BatchesProcessedCount.Value, _iterations * _arraySize);
 
             return _iterations * _arraySize;
         }
