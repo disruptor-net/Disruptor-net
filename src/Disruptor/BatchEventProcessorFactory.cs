@@ -28,21 +28,6 @@ namespace Disruptor
             return (IBatchEventProcessor<T>)Activator.CreateInstance(batchEventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy);
         }
 
-        public struct BatchStartAware : IBatchStartAware
-        {
-            private readonly IBatchStartAware _eventHandler;
-
-            public BatchStartAware(object eventHandler)
-            {
-                _eventHandler = eventHandler as IBatchStartAware;
-            }
-
-            public void OnBatchStart(long batchSize)
-            {
-                _eventHandler?.OnBatchStart(batchSize);
-            }
-        }
-
         private struct NoopBatchStartAware : IBatchStartAware
         {
             public void OnBatchStart(long batchSize)

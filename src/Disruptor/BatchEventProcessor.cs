@@ -15,7 +15,7 @@ namespace Disruptor
     /// Consider using <see cref="BatchEventProcessorFactory.Create{T}"/> to create your <see cref="IEventProcessor"/>.
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
-    public class BatchEventProcessor<T> : BatchEventProcessor<T, IDataProvider<T>, ISequenceBarrier, IEventHandler<T>, BatchEventProcessorFactory.BatchStartAware>
+    public class BatchEventProcessor<T> : BatchEventProcessor<T, IDataProvider<T>, ISequenceBarrier, IEventHandler<T>, BatchEventProcessor<T>.BatchStartAware>
         where T : class
     {
         /// <summary>
@@ -28,8 +28,23 @@ namespace Disruptor
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
         /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
         public BatchEventProcessor(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
-            : base(dataProvider, sequenceBarrier, eventHandler, new BatchEventProcessorFactory.BatchStartAware(eventHandler))
+            : base(dataProvider, sequenceBarrier, eventHandler, new BatchStartAware(eventHandler))
         {
+        }
+
+        public struct BatchStartAware : IBatchStartAware
+        {
+            private readonly IBatchStartAware _eventHandler;
+
+            public BatchStartAware(object eventHandler)
+            {
+                _eventHandler = eventHandler as IBatchStartAware;
+            }
+
+            public void OnBatchStart(long batchSize)
+            {
+                _eventHandler?.OnBatchStart(batchSize);
+            }
         }
     }
 
