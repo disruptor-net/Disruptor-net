@@ -92,7 +92,7 @@ namespace Disruptor
 
             if (eventHandler is ISequenceReportingEventHandler<T> sequenceReportingEventHandler)
                 sequenceReportingEventHandler.SetSequenceCallback(_sequence);
-            
+
             _timeoutHandler = eventHandler as ITimeoutHandler;
         }
 
@@ -137,69 +137,88 @@ namespace Disruptor
         /// <summary>
         /// It is ok to have another thread rerun this method after a halt().
         /// </summary>
+        /// <exception cref="InvalidOperationException">if this object instance is already running in a thread</exception>
         public void Run()
         {
 #pragma warning disable 420
-            if (Interlocked.CompareExchange(ref _running, RunningStates.Running, RunningStates.Idle) == RunningStates.Running)
+            var previousRunning = Interlocked.CompareExchange(ref _running, RunningStates.Running, RunningStates.Idle);
 #pragma warning restore 420
+
+            if (previousRunning == RunningStates.Running)
             {
                 throw new InvalidOperationException("Thread is already running");
             }
-            _sequenceBarrier.ClearAlert();
 
-            NotifyStart();
-
-            try
+            if (previousRunning == RunningStates.Idle)
             {
-                if (_running == RunningStates.Halted)
+                _sequenceBarrier.ClearAlert();
+
+                NotifyStart();
+                try
                 {
-                    return;
+                    if (_running == RunningStates.Running)
+                    {
+                        ProcessEvents();
+                    }
                 }
-
-                T evt = null;
-                var nextSequence = _sequence.Value + 1L;
-
-                while (true)
+                finally
                 {
-                    try
-                    {
-                        var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
+                    NotifyShutdown();
+                    _running = RunningStates.Idle;
+                }
+            }
+            else
+            {
+                EarlyExit();
+            }
+        }
 
-                        _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
+        private void ProcessEvents()
+        {
+            T evt = null;
+            var nextSequence = _sequence.Value + 1L;
 
-                        while (nextSequence <= availableSequence)
-                        {
-                            evt = _dataProvider[nextSequence];
-                            _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
-                            nextSequence++;
-                        }
+            while (true)
+            {
+                try
+                {
+                    var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
 
-                        _sequence.SetValue(availableSequence);
-                    }
-                    catch (TimeoutException)
+                    _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
+
+                    while (nextSequence <= availableSequence)
                     {
-                        NotifyTimeout(_sequence.Value);
-                    }
-                    catch (AlertException)
-                    {
-                        if (_running != RunningStates.Running)
-                        {
-                            break;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _exceptionHandler.HandleEventException(ex, nextSequence, evt);
-                        _sequence.SetValue(nextSequence);
+                        evt = _dataProvider[nextSequence];
+                        _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
                         nextSequence++;
                     }
+
+                    _sequence.SetValue(availableSequence);
+                }
+                catch (TimeoutException)
+                {
+                    NotifyTimeout(_sequence.Value);
+                }
+                catch (AlertException)
+                {
+                    if (_running != RunningStates.Running)
+                    {
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _exceptionHandler.HandleEventException(ex, nextSequence, evt);
+                    _sequence.SetValue(nextSequence);
+                    nextSequence++;
                 }
             }
-            finally
-            {
-                NotifyShutdown();
-                _running = RunningStates.Idle;
-            }
+        }
+
+        private void EarlyExit()
+        {
+            NotifyStart();
+            NotifyShutdown();
         }
 
         private void NotifyTimeout(long availableSequence)
@@ -214,6 +233,9 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// Notifies the EventHandler when this processor is starting up
+        /// </summary>
         private void NotifyStart()
         {
             var lifecycleAware = _eventHandler as ILifecycleAware;
@@ -228,10 +250,13 @@ namespace Disruptor
                     _exceptionHandler.HandleOnStartException(e);
                 }
             }
-            
+
             _started.Set();
         }
 
+        /// <summary>
+        /// Notifies the EventHandler immediately prior to this processor shutting down
+        /// </summary>
         private void NotifyShutdown()
         {
             var lifecycleAware = _eventHandler as ILifecycleAware;
