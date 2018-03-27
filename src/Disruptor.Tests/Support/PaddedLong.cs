@@ -2,10 +2,15 @@
 
 namespace Disruptor.Tests.Support
 {
-    [StructLayout(LayoutKind.Explicit, Size = 64)]
+    [StructLayout(LayoutKind.Explicit, Size = 72)]
     public struct PaddedLong
     {
-        [FieldOffset(0)]
+        // padding: 12 (java object header)
+        // padding: 4 (java padding)
+
+        [FieldOffset(16)]
         public long Value;
+
+        // padding: 46
     }
 }
