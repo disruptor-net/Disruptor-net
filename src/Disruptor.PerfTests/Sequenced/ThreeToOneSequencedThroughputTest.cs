@@ -82,7 +82,7 @@ namespace Disruptor.PerfTests.Sequenced
             for (var i = 0; i < _numPublishers; i++)
             {
                 var index = i;
-                futures[i] = Task.Factory.StartNew(() => _valuePublishers[index](_cyclicBarrier, _ringBuffer, _iterations), CancellationToken.None, TaskCreationOptions.None, _scheduler);
+                futures[i] = Task.Factory.StartNew(() => _valuePublishers[index](_cyclicBarrier, _ringBuffer, _iterations / _numPublishers), CancellationToken.None, TaskCreationOptions.None, _scheduler);
             }
             var processorTask = Task.Factory.StartNew(() => _batchEventProcessor.Run(), CancellationToken.None, TaskCreationOptions.None, _scheduler);
             _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
@@ -102,9 +102,9 @@ namespace Disruptor.PerfTests.Sequenced
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
 
-            sessionContext.SetBatchData(_handler.BatchesProcessedCount.Value, _iterations * _numPublishers);
+            sessionContext.SetBatchData(_handler.BatchesProcessedCount.Value, _iterations);
 
-            return _iterations * _numPublishers;
+            return _iterations;
         }
 
         private static void ValuePublisher(CountdownEvent countdownEvent, RingBuffer<ValueEvent> ringBuffer, long iterations)
