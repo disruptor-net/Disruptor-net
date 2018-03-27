@@ -1,81 +1,137 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
-using System.Reflection;
+using System.Text.RegularExpressions;
 using Disruptor.PerfTests.Queue;
 
 namespace Disruptor.PerfTests
 {
     public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            if (args.Length == 0 || args.Length > 2)
+            if (!Options.TryParse(args, out var options))
             {
-                PrintUsage();
+                Options.PrintUsage();
                 Console.ReadKey();
                 return;
             }
-            
-            Type[] perfTestTypes;
-            if (string.Equals(args[0], "ALL", StringComparison.OrdinalIgnoreCase))
+
+            if (!TryLoadPerfTestTypes(options.Target, out var perfTestTypes))
             {
-                var startAt = args.Length == 2 ? args[1] : null;
-                perfTestTypes = Assembly.GetAssembly(typeof(Program))
-                                        .GetTypes()
-                                        .Where(x => !x.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(x) || typeof(ILatencyTest).IsAssignableFrom(x)) && !typeof(IQueueTest).IsAssignableFrom(x))
-                                        .OrderBy(x => x.Name)
-                                        .SkipWhile(type => startAt != null && type.Name != startAt)
-                                        .ToArray();
-            }
-            else
-            {
-                var type = Type.GetType(args[0]);
-                if (type == null)
-                {
-                    Console.WriteLine($"Could not find the type '{args[0]}'");
-                    return;
-                }
-                perfTestTypes = new[] { type };
+                Console.WriteLine($"Invalid target: [{options.Target}]");
+                Console.ReadKey();
+                return;
             }
 
             foreach (var perfTestType in perfTestTypes)
             {
-                RunTestForType(perfTestType, perfTestTypes.Length == 1);
+                RunTestForType(perfTestType, options);
             }
         }
 
-        private static void RunTestForType(Type perfTestType, bool shouldOpen)
+        private static bool TryLoadPerfTestTypes(string target, out Type[] perfTestTypes)
+        {
+            if ("all".Equals(target, StringComparison.OrdinalIgnoreCase))
+            {
+                perfTestTypes = typeof(Program).Assembly.GetTypes().Where(x => IsValidTestType(x) && !typeof(IQueueTest).IsAssignableFrom(x)).ToArray();
+                return true;
+            }
+
+            var type = Type.GetType(target);
+            if (type != null && IsValidTestType(type))
+            {
+                perfTestTypes = new[] { type };
+                return true;
+            }
+
+            perfTestTypes = null;
+            return false;
+
+            bool IsValidTestType(Type x) => !x.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(x) || typeof(ILatencyTest).IsAssignableFrom(x));
+        }
+
+        private static void RunTestForType(Type perfTestType, Options options)
         {
             var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType);
             var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
-
-            var typeName = perfTestType.Name;
-            if (!isThroughputTest && !isLatencyTest)
-            {
-                Console.WriteLine($"*** ERROR *** Unable to determine the runner to use for this type ({typeName})");
-                return;
-            }
 
             //Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
 
             if (isThroughputTest)
             {
                 var session = new ThroughputTestSession(perfTestType);
-                session.Run();
-                session.GenerateAndOpenReport(shouldOpen);
+                session.Run(options);
+                session.Report(options);
             }
 
             if (isLatencyTest)
             {
                 var session = new LatencyTestSession(perfTestType);
-                session.Run();
-                session.GenerateAndOpenReport(shouldOpen);
+                session.Run(options);
+                session.Report(options);
             }
         }
 
-        private static void PrintUsage()
+        public class Options
         {
-            Console.WriteLine("Usage: Disruptor.PerfTests TestTypeFullName|ALL [ie. Disruptor.PerfTests.Sequenced.OneToOneSequencedBatchThroughputTest]");
+            public int? RunCount { get; set; }
+            public string Target { get; set; }
+            public bool ShouldPrintComputerSpecifications { get; set; }
+            public bool ShouldGenerateReport { get; set; }
+            public bool ShouldOpenReport { get; set; }
+
+            public static bool TryParse(string[] args, out Options options)
+            {
+                options = new Options
+                {
+                    ShouldPrintComputerSpecifications = true,
+                    ShouldGenerateReport = true,
+                    ShouldOpenReport = false,
+                };
+
+                if (args.Length == 0 || string.IsNullOrEmpty(args[0]))
+                    return false;
+
+                options.Target = args[0];
+
+                foreach (var arg in args.Skip(1))
+                {
+                    switch (arg.ToLowerInvariant())
+                    {
+                        case "--report=false":
+                            options.ShouldGenerateReport = false;
+                            break;
+
+                        case "--openreport=true":
+                            options.ShouldOpenReport = true;
+                            break;
+
+                        case "--printspec=false":
+                            options.ShouldPrintComputerSpecifications = false;
+                            break;
+
+                        case string s when Regex.Match(s, "--runs=(\\d+)") is var m && m.Success:
+                            options.RunCount = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
+                            break;
+
+                        default:
+                            return false;
+                    }
+                }
+
+                return true;
+            }
+
+            public static void PrintUsage()
+            {
+                Console.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} target [--report=false] [--openreport=false] [--printspec=false] [--runs=count]");
+                Console.WriteLine();
+                Console.WriteLine("Options:");
+                Console.WriteLine("     target           Test type full name or \"all\" for all tests");
+                Console.WriteLine("     --runs count     Number of runs");
+                Console.WriteLine();
+            }
         }
     }
 }

@@ -10,27 +10,30 @@ namespace Disruptor.PerfTests
 {
     public class LatencyTestSession
     {
-        public const int Runs = 3;
-
-        private readonly List<LatencyTestSessionResult> _results = new List<LatencyTestSessionResult>(Runs);
+        private readonly List<LatencyTestSessionResult> _results = new List<LatencyTestSessionResult>(10);
         private readonly Type _perfTestType;
         private ILatencyTest _test;
-        
+        private int _runCount;
+
         public LatencyTestSession(Type perfTestType)
         {
             _perfTestType = perfTestType;
-            Console.WriteLine($"Latency Test to run => {_perfTestType.FullName}, Runs => {Runs}");
+            
         }
 
-        public void Run()
+        public void Run(Program.Options options)
         {
+            _runCount = options.RunCount ?? 3;
+
+            Console.WriteLine($"Latency Test to run => {_perfTestType.FullName}, Runs => {_runCount}");
+
             _test = (ILatencyTest)Activator.CreateInstance(_perfTestType);
             CheckProcessorsRequirements(_test);
 
-            Console.WriteLine("Starting latency tests");
+            Console.WriteLine("Starting");
             var stopwatch = new Stopwatch();
             var histogram = new LongHistogram(10000000000L, 4);
-            for (var i = 0; i < Runs; i++)
+            for (var i = 0; i < _runCount; i++)
             {
                 stopwatch.Reset();
                 histogram.Reset();
@@ -70,6 +73,27 @@ namespace Disruptor.PerfTests
             }
         }
 
+        public void Report(Program.Options options)
+        {
+            var computerSpecifications = new ComputerSpecifications();
+
+            if (options.ShouldPrintComputerSpecifications)
+                Console.WriteLine(computerSpecifications.ToString());
+
+            if (!options.ShouldGenerateReport)
+                return;
+
+            var path = Path.Combine(Environment.CurrentDirectory, _perfTestType.Name + "-" + DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
+
+            File.WriteAllText(path, BuildReport(computerSpecifications));
+
+            var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
+            File.AppendAllText(totalsPath, $"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{_results.Max(x => x.Histogram.GetValueAtPercentile(99))}\n");
+
+            if (options.ShouldOpenReport)
+                Process.Start(path);
+        }
+
         private void CheckProcessorsRequirements(ILatencyTest test)
         {
             var availableProcessors = Environment.ProcessorCount;
@@ -80,7 +104,7 @@ namespace Disruptor.PerfTests
             Console.WriteLine($"Processors required = {test.RequiredProcessorCount}, available = {availableProcessors}");
         }
 
-        public string BuildReport(ComputerSpecifications computerSpecifications)
+        private string BuildReport(ComputerSpecifications computerSpecifications)
         {
             var sb = new StringBuilder();
             sb.AppendLine("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">")
@@ -110,7 +134,7 @@ namespace Disruptor.PerfTests
 
             sb.AppendLine("        <h2>Test configuration</h2>")
               .AppendLine("        Test: " + _perfTestType.FullName + "<br>")
-              .AppendLine("        Runs: " + Runs + "<br>");
+              .AppendLine("        Runs: " + _runCount + "<br>");
             if (_test.RequiredProcessorCount > Environment.ProcessorCount)
                 sb.AppendLine("        Warning ! Test requires: " + _test.RequiredProcessorCount + " processors but there is only " + Environment.ProcessorCount + " here <br>");
 
@@ -132,22 +156,6 @@ namespace Disruptor.PerfTests
             sb.AppendLine("        </table>");
 
             return sb.ToString();
-        }
-
-        public void GenerateAndOpenReport(bool shouldOpen)
-        {
-            var path = Path.Combine(Environment.CurrentDirectory, _perfTestType.Name + "-" + DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
-
-            var computerSpecifications = new ComputerSpecifications();
-            Console.WriteLine(computerSpecifications.ToString());
-
-            File.WriteAllText(path, BuildReport(computerSpecifications));
-
-            var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
-            File.AppendAllText(totalsPath, $"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{_results.Max(x => x.Histogram.GetValueAtPercentile(99))}\n");
-
-            if (shouldOpen)
-                Process.Start(path);
         }
 
         public static long ConvertStopwatchTicksToNano(double durationInTicks)

@@ -56,7 +56,7 @@ namespace Disruptor.PerfTests
             }
         }
 
-        public override string ToString() => _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2}";
+        public override string ToString() => _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2} - Mean: {Histogram.GetValueAtPercentile(50)}";
 
     }
 }
