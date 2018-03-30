@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Disruptor
+namespace Disruptor.Benchmarks
 {
     /// <summary>
     /// <para>Coordinator for claiming sequences for access to a data structure while tracking dependent <see cref="Sequence"/>s.
@@ -12,7 +13,7 @@ namespace Disruptor
     /// to <see cref="Sequencer.Next()"/>, to determine the highest available sequence that can be read, then
     /// <see cref="GetHighestPublishedSequence"/> should be used. 
     /// </summary>
-    public class MultiProducerSequencer : ISequencer
+    public unsafe class MultiProducerSequencerPointer : ISequencer
     {
         private readonly int _bufferSize;
         private readonly IWaitStrategy _waitStrategy;
@@ -26,11 +27,11 @@ namespace Disruptor
 
         // availableBuffer tracks the state of each ringbuffer slot
         // see below for more details on the approach
-        private readonly int[] _availableBuffer;
+        private readonly int* _availableBuffer;
         private readonly int _indexMask;
         private readonly int _indexShift;
 
-        public MultiProducerSequencer(int bufferSize, IWaitStrategy waitStrategy)
+        public MultiProducerSequencerPointer(int bufferSize, IWaitStrategy waitStrategy)
         {
             if (bufferSize < 1)
             {
@@ -44,7 +45,7 @@ namespace Disruptor
             _bufferSize = bufferSize;
             _waitStrategy = waitStrategy;
             _isBlockingWaitStrategy = !(waitStrategy is INonBlockingWaitStrategy);
-            _availableBuffer = new int[bufferSize];
+            _availableBuffer = (int*)Marshal.AllocHGlobal(bufferSize * sizeof(int));
             _indexMask = bufferSize - 1;
             _indexShift = Util.Log2(bufferSize);
 
@@ -309,7 +310,7 @@ namespace Disruptor
 
         private void InitialiseAvailableBuffer()
         {
-            for (int i = _availableBuffer.Length - 1; i != 0; i--)
+            for (int i = _bufferSize - 1; i != 0; i--)
             {
                 SetAvailableBufferValue(i, -1);
             }
@@ -324,7 +325,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Publish(long sequence)
         {
-            SetAvailableBufferValue(CalculateIndex(sequence), CalculateAvailabilityFlag(sequence));
+            SetAvailable(sequence);
 
             if (_isBlockingWaitStrategy)
             {
@@ -339,7 +340,7 @@ namespace Disruptor
         {
             for (long l = lo; l <= hi; l++)
             {
-                SetAvailableBufferValue(CalculateIndex(l), CalculateAvailabilityFlag(l));
+                SetAvailable(l);
             }
 
             if (_isBlockingWaitStrategy)
@@ -348,7 +349,11 @@ namespace Disruptor
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void SetAvailable(long sequence)
+        {
+            SetAvailableBufferValue(CalculateIndex(sequence), CalculateAvailabilityFlag(sequence));
+        }
+
         private void SetAvailableBufferValue(int index, int flag)
         {
             _availableBuffer[index] = flag;
@@ -359,7 +364,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">sequence of the buffer to check</param>
         /// <returns>true if the sequence is available for use, false if not</returns>
-        public bool IsAvailable(long sequence)
+        public unsafe bool IsAvailable(long sequence)
         {
             int index = CalculateIndex(sequence);
             int flag = CalculateAvailabilityFlag(sequence);

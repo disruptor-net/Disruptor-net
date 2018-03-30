@@ -2,26 +2,27 @@
 
   <PropertyGroup>
     <AssemblyName>Disruptor.Benchmarks</AssemblyName>
-	<RootNamespace>Disruptor.Benchmarks</RootNamespace>
-	<Title>Disruptor.Benchmarks</Title>
+    <RootNamespace>Disruptor.Benchmarks</RootNamespace>
+    <Title>Disruptor.Benchmarks</Title>
     <TargetFramework>net47</TargetFramework>
-	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-	<OutputType>exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputType>exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="BenchmarkDotNet.Artifacts\**" />
     <None Remove="Disruptor.Benchmarks.v3.ncrunchproject" />
   </ItemGroup>
-  
+
   <ItemGroup>
-	<PackageReference Include="BenchmarkDotNet" Version="0.10.10" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.10.10" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <Reference Include="ObjectLayoutInspector">
       <HintPath>..\..\tools\ObjectLayoutInspector\ObjectLayoutInspector.dll</HintPath>

@@ -18,4 +18,5 @@ using System.Runtime.InteropServices;
 [assembly: Guid("d80ab069-2ad5-46b5-8a6f-60d2e6b3e30d")]
 [assembly: InternalsVisibleTo("Disruptor.Tests")]
 [assembly: InternalsVisibleTo("Disruptor.PerfTests")]
+[assembly: InternalsVisibleTo("Disruptor.Benchmarks")]
 
