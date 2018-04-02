@@ -325,7 +325,7 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Publish(long sequence)
         {
-            SetAvailable(sequence);
+            SetAvailableBufferValue(CalculateIndex(sequence), CalculateAvailabilityFlag(sequence));
 
             if (_isBlockingWaitStrategy)
             {
@@ -340,7 +340,7 @@ namespace Disruptor.Benchmarks
         {
             for (long l = lo; l <= hi; l++)
             {
-                SetAvailable(l);
+                SetAvailableBufferValue(CalculateIndex(l), CalculateAvailabilityFlag(l));
             }
 
             if (_isBlockingWaitStrategy)
@@ -349,11 +349,7 @@ namespace Disruptor.Benchmarks
             }
         }
 
-        private void SetAvailable(long sequence)
-        {
-            SetAvailableBufferValue(CalculateIndex(sequence), CalculateAvailabilityFlag(sequence));
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetAvailableBufferValue(int index, int flag)
         {
             _availableBuffer[index] = flag;
@@ -364,6 +360,7 @@ namespace Disruptor.Benchmarks
         /// </summary>
         /// <param name="sequence">sequence of the buffer to check</param>
         /// <returns>true if the sequence is available for use, false if not</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe bool IsAvailable(long sequence)
         {
             int index = CalculateIndex(sequence);

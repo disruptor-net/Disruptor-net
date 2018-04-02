@@ -14,10 +14,30 @@ namespace Disruptor.Benchmarks
             //TypeLayout.PrintLayout<RingBuffer<object>>();
             //TypeLayout.PrintLayout<SingleProducerSequencer>();
 
+            //RunMultiProducerSequencerBenchmarks();
             //RunInt32ArrayBenchmarks();
             //RunObjectArrayBenchmarks();
 
             Console.ReadLine();
+        }
+
+        private static void RunMultiProducerSequencerBenchmarks()
+        {
+            var bench = new MultiProducerSequencerBenchmarks();
+
+            bench.IsAvailable();
+            bench.IsAvailablePointer();
+            bench.Publish();
+            bench.PublishPointer();
+
+            Console.WriteLine("YYY");
+            Console.ReadLine();
+            Console.WriteLine("ZZZ");
+
+            bench.IsAvailable();
+            bench.IsAvailablePointer();
+            bench.Publish();
+            bench.PublishPointer();
         }
 
         private static void RunInt32ArrayBenchmarks()

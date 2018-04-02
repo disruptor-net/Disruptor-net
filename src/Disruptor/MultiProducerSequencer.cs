@@ -359,6 +359,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">sequence of the buffer to check</param>
         /// <returns>true if the sequence is available for use, false if not</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAvailable(long sequence)
         {
             int index = CalculateIndex(sequence);

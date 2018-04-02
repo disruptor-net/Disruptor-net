@@ -25,24 +25,28 @@ namespace Disruptor.Benchmarks
         }
 
         [Benchmark]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public void Publish()
         {
             _sequencer.Publish(_sequence);
         }
 
         [Benchmark]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public bool IsAvailable()
         {
             return _sequencer.IsAvailable(_sequence);
         }
 
         [Benchmark]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public void PublishPointer()
         {
             _sequencerPointer.Publish(_sequence);
         }
 
         [Benchmark]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public bool IsAvailablePointer()
         {
             return _sequencerPointer.IsAvailable(_sequence);
