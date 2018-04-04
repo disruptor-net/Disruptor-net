@@ -21,7 +21,7 @@
   
   <ItemGroup>
     <PackageReference Include="System.Reflection.Emit" Version="4.0.1" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0" />
+    <PackageReference Include="InlineIL.Fody" Version="0.2.0" />
   </ItemGroup>
 
 </Project>

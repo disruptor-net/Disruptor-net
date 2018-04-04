@@ -11,17 +11,12 @@ namespace Disruptor.Benchmarks
             _ringBuffer = new RingBuffer<TestEvent>(() => new TestEvent(), 4096);
         }
 
-        [Benchmark(OperationsPerInvoke = 4096, Baseline = true)]
-        public long Indexer()
+        public int Index = 371;
+
+        [Benchmark(Baseline = true)]
+        public TestEvent Indexer()
         {
-            var sum = 0L;
-
-            for (var i = 0; i < 4096; i++)
-            {
-                sum += _ringBuffer[i].Data;
-            }
-
-            return sum;
+            return _ringBuffer[Index];
         }
 
         public class TestEvent

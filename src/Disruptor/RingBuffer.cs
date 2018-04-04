@@ -155,8 +155,7 @@ namespace Disruptor
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                ref var firstItem = ref Unsafe.As<object, T>(ref _fields.Entries[0]);
-                return Unsafe.Add(ref firstItem, RingBufferFields.BufferPad + (int)(sequence & _fields.IndexMask));
+                return Util.Read<T>(_fields.Entries, RingBufferFields.BufferPad + (int)(sequence & _fields.IndexMask));
             }
         }
 

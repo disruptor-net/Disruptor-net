@@ -7,8 +7,10 @@ namespace Disruptor.Benchmarks
     {
         public static void Main()
         {
-            //BenchmarkRunner.Run<RingBufferBenchmarks>();
-            BenchmarkRunner.Run<MultiProducerSequencerBenchmarks>();
+            BenchmarkRunner.Run<RingBufferBenchmarks>();
+            //BenchmarkRunner.Run<MultiProducerSequencerBenchmarks>();
+            //BenchmarkRunner.Run<ObjectArrayBenchmarks>();
+            //BenchmarkRunner.Run<Int32ArrayBenchmarks>();
 
             //TypeLayout.PrintLayout<Sequence>();
             //TypeLayout.PrintLayout<RingBuffer<object>>();
@@ -17,6 +19,21 @@ namespace Disruptor.Benchmarks
             //RunMultiProducerSequencerBenchmarks();
             //RunInt32ArrayBenchmarks();
             //RunObjectArrayBenchmarks();
+
+            //Console.WriteLine(ObjectArrayBenchmarks.OffsetToArrayData);
+            //Console.WriteLine(Int32ArrayBenchmarks.OffsetToArrayData);
+
+            //var bench = new ObjectArrayBenchmarks();
+
+            //for (var i = 0; i < 100; i++)
+            //{
+            //    Console.WriteLine(bench.ReadILImpl<ObjectArrayBenchmarks.Event>(i).Value);
+            //}
+
+            //var bench = new Int32ArrayBenchmarks();
+            //bench.Write();
+
+            //Console.WriteLine(bench.ReadOneIL());
 
             Console.ReadLine();
         }
@@ -63,15 +80,15 @@ namespace Disruptor.Benchmarks
         {
             var bench = new ObjectArrayBenchmarks();
 
-            bench.ReadOne();
-            bench.ReadOneUnsafe();
+            bench.ReadImplPublic(371);
+            bench.ReadUnsafeImplPublic(371);
 
             Console.WriteLine("YYY");
             Console.ReadLine();
             Console.WriteLine("ZZZ");
 
-            bench.ReadOne();
-            bench.ReadOneUnsafe();
+            bench.ReadImplPublic(371);
+            bench.ReadUnsafeImplPublic(371);
         }
     }
 }

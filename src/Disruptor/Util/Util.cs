@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
+using InlineIL;
 
 namespace Disruptor
 {
@@ -7,6 +10,8 @@ namespace Disruptor
     /// </summary>
     internal static class Util
     {
+        private static readonly int _offsetToArrayData = ElemOffset(new object[1]);
+
         /// <summary>
         /// Calculate the next power of 2, greater than or equal to x.
         /// </summary>
@@ -80,6 +85,39 @@ namespace Disruptor
             }
 
             return sequences;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T Read<T>(object array, int index)
+        {
+            IL.DeclareLocals(false, new LocalVar(typeof(byte).MakeByRefType()));
+            IL.Emit(OpCodes.Ldarg_0);
+            IL.Emit(OpCodes.Stloc_0);
+            IL.Emit(OpCodes.Ldloc_0);
+
+            IL.Emit(OpCodes.Ldarg_1);
+            IL.Emit(OpCodes.Sizeof, typeof(object));
+            IL.Emit(OpCodes.Mul);
+
+            IL.Emit(OpCodes.Ldsfld, new FieldRef(typeof(Util), nameof(_offsetToArrayData)));
+            IL.Emit(OpCodes.Add);
+
+            IL.Emit(OpCodes.Add);
+
+            IL.Emit(OpCodes.Ldobj, typeof(T));
+
+            return IL.Return<T>();
+        }
+
+        private static int ElemOffset(object[] arr)
+        {
+            IL.Emit(OpCodes.Ldarg_0);
+            IL.Emit(OpCodes.Ldc_I4_0);
+            IL.Emit(OpCodes.Ldelema, typeof(object));
+            IL.Emit(OpCodes.Ldarg_0);
+            IL.Emit(OpCodes.Sub);
+
+            return IL.Return<int>();
         }
     }
 }
