@@ -91,20 +91,20 @@ namespace Disruptor
         public static T Read<T>(object array, int index)
         {
             IL.DeclareLocals(false, new LocalVar(typeof(byte).MakeByRefType()));
-            IL.Emit(OpCodes.Ldarg_0);
-            IL.Emit(OpCodes.Stloc_0);
-            IL.Emit(OpCodes.Ldloc_0);
+            IL.Emit(OpCodes.Ldarg_0); // load the object
+            IL.Emit(OpCodes.Stloc_0); // convert the object pointer to a byref
+            IL.Emit(OpCodes.Ldloc_0); // load the object pointer as a byref
 
-            IL.Emit(OpCodes.Ldarg_1);
-            IL.Emit(OpCodes.Sizeof, typeof(object));
-            IL.Emit(OpCodes.Mul);
+            IL.Emit(OpCodes.Ldarg_1); // load the index
+            IL.Emit(OpCodes.Sizeof, typeof(object)); // get the size of the object pointer
+            IL.Emit(OpCodes.Mul); // multiply the index by the offset size of the object pointer
 
-            IL.Emit(OpCodes.Ldsfld, new FieldRef(typeof(Util), nameof(_offsetToArrayData)));
-            IL.Emit(OpCodes.Add);
+            IL.Emit(OpCodes.Ldsfld, new FieldRef(typeof(Util), nameof(_offsetToArrayData))); // get the offset to the start of the array
+            IL.Emit(OpCodes.Add); // add the start offset to the element offset
 
-            IL.Emit(OpCodes.Add);
+            IL.Emit(OpCodes.Add); // add the start + offset to the byref object pointer
 
-            IL.Emit(OpCodes.Ldobj, typeof(T));
+            IL.Emit(OpCodes.Ldobj, typeof(T)); // load a T value from the computed address
 
             return IL.Return<T>();
         }
