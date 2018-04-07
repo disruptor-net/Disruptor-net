@@ -1,11 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Disruptor.Benchmarks
 {
@@ -21,7 +15,7 @@ namespace Disruptor.Benchmarks
             _sequencer = new MultiProducerSequencer(1024, new BusySpinWaitStrategy());
             _sequencerPointer = new MultiProducerSequencerPointer(1024, new BusySpinWaitStrategy());
             _sequence = _sequencer.Next();
-            _sequencePointer = _sequencerPointer.Next();
+            _sequencerPointer.Next();
         }
 
         [Benchmark]

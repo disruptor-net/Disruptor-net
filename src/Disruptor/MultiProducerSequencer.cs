@@ -365,7 +365,7 @@ namespace Disruptor
             int index = CalculateIndex(sequence);
             int flag = CalculateAvailabilityFlag(sequence);
 
-            return _availableBuffer[index] == flag;
+            return Volatile.Read(ref _availableBuffer[index]) == flag;
         }
 
         /// <summary>

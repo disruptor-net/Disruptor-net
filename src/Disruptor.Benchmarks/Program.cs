@@ -7,8 +7,8 @@ namespace Disruptor.Benchmarks
     {
         public static void Main()
         {
-            BenchmarkRunner.Run<RingBufferBenchmarks>();
-            //BenchmarkRunner.Run<MultiProducerSequencerBenchmarks>();
+            //BenchmarkRunner.Run<RingBufferBenchmarks>();
+            BenchmarkRunner.Run<MultiProducerSequencerBenchmarks>();
             //BenchmarkRunner.Run<ObjectArrayBenchmarks>();
             //BenchmarkRunner.Run<Int32ArrayBenchmarks>();
 
