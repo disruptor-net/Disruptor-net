@@ -3,7 +3,7 @@ using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Support
 {
-    public class LongArrayEventHandler : IEventHandler<long[]>
+    public class LongArrayEventHandler : IEventHandler<long[]>, IBatchStartAware
     {
         private PaddedLong _value;
 
@@ -28,14 +28,16 @@ namespace Disruptor.PerfTests.Support
             {
                 _value.Value = _value.Value + value[i];
             }
-
-            if (endOfBatch)
-                BatchesProcessedCount.Value = BatchesProcessedCount.Value + 1;
-            
+          
             if (--Count == 0)
             {
                 Signal?.Set();
             }
+        }
+
+        public void OnBatchStart(long batchSize)
+        {
+            BatchesProcessedCount.Value = BatchesProcessedCount.Value + 1;
         }
     }
 }
