@@ -8,7 +8,7 @@ namespace Disruptor.Benchmarks
         public static void Main()
         {
             //BenchmarkRunner.Run<RingBufferBenchmarks>();
-            BenchmarkRunner.Run<MultiProducerSequencerBenchmarks>();
+            //BenchmarkRunner.Run<MultiProducerSequencerBenchmarks>();
             //BenchmarkRunner.Run<ObjectArrayBenchmarks>();
             //BenchmarkRunner.Run<Int32ArrayBenchmarks>();
 
@@ -17,25 +17,34 @@ namespace Disruptor.Benchmarks
             //TypeLayout.PrintLayout<SingleProducerSequencer>();
 
             //RunMultiProducerSequencerBenchmarks();
-            //RunInt32ArrayBenchmarks();
+            RunInt32ArrayBenchmarks();
             //RunObjectArrayBenchmarks();
+            //RunRingBufferBenchmarks();
 
             //Console.WriteLine(ObjectArrayBenchmarks.OffsetToArrayData);
             //Console.WriteLine(Int32ArrayBenchmarks.OffsetToArrayData);
 
-            //var bench = new ObjectArrayBenchmarks();
-
-            //for (var i = 0; i < 100; i++)
-            //{
-            //    Console.WriteLine(bench.ReadILImpl<ObjectArrayBenchmarks.Event>(i).Value);
-            //}
-
-            //var bench = new Int32ArrayBenchmarks();
-            //bench.Write();
-
-            //Console.WriteLine(bench.ReadOneIL());
-
             Console.ReadLine();
+        }
+
+        private static void RunRingBufferBenchmarks()
+        {
+            var bench = new RingBufferBenchmarks();
+
+            //bench.Indexer();
+            //bench.IndexerArray();
+            //bench.IndexerUnsafe();
+            bench.IndexerUnsafeSum();
+            bench.IndexerUnsafeSumForLoop();
+
+            Console.WriteLine("X");
+            Console.ReadLine();
+
+            //bench.Indexer();
+            //bench.IndexerArray();
+            //bench.IndexerUnsafe();
+            bench.IndexerUnsafeSum();
+            bench.IndexerUnsafeSumForLoop();
         }
 
         private static void RunMultiProducerSequencerBenchmarks()
@@ -61,19 +70,22 @@ namespace Disruptor.Benchmarks
         {
             var bench = new Int32ArrayBenchmarks();
 
-            bench.Write();
-            bench.WriteFixed();
-            bench.WritePointer();
-            bench.WriteUnsafe();
+            //bench.Write();
+            //bench.WriteFixed();
+            //bench.WritePointer();
+            //bench.WriteUnsafe();
+            bench.Read();
+            bench.ReadFixed();
 
             Console.WriteLine("YYY");
             Console.ReadLine();
-            Console.WriteLine("ZZZ");
 
-            bench.Write();
-            bench.WriteFixed();
-            bench.WritePointer();
-            bench.WriteUnsafe();
+            //bench.Write();
+            //bench.WriteFixed();
+            //bench.WritePointer();
+            //bench.WriteUnsafe();
+            bench.Read();
+            bench.ReadFixed();
         }
 
         private static void RunObjectArrayBenchmarks()

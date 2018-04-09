@@ -14,7 +14,7 @@ namespace Disruptor.Benchmarks
         {
             _array = new int[1024];
             _gcHandle = GCHandle.Alloc(new int[1024], GCHandleType.Pinned);
-            _fixedArrayPointer = (int*)_gcHandle.AddrOfPinnedObject();
+            _fixedArrayPointer = (int*)_gcHandle.AddrOfPinnedObject().ToPointer();
         }
 
         public int Index = 371;
@@ -48,6 +48,30 @@ namespace Disruptor.Benchmarks
         public void WriteUnsafe()
         {
             Unsafe.Add(ref _array[0], Index) = 999;
+        }
+
+        [Benchmark]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public int Read()
+        {
+            return _array[Index];
+        }
+
+        [Benchmark]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public int ReadFixed()
+        {
+            fixed (int* pointer = _array)
+            {
+                return pointer[Index];
+            }
+        }
+
+        [Benchmark]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public int ReadPointer()
+        {
+            return _fixedArrayPointer[Index];
         }
     }
 }
