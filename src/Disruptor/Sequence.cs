@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -39,7 +40,11 @@ namespace Disruptor
         /// <summary>
         /// Current sequence number
         /// </summary>
-        public long Value => Volatile.Read(ref _value);
+        public long Value
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Volatile.Read(ref _value);
+        }
 
         /// <summary>
         /// Perform an ordered write of this sequence.  The intent is
@@ -47,6 +52,7 @@ namespace Disruptor
         /// store.
         /// </summary>
         /// <param name="value">The new value for the sequence.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetValue(long value)
         {
             // no synchronization required, the CLR memory model prevents Store/Store re-ordering
@@ -58,6 +64,7 @@ namespace Disruptor
         /// write and a Store/Load barrier between this write and any subsequent volatile read. 
         /// </summary>
         /// <param name="value"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetValueVolatile(long value)
         {
             Volatile.Write(ref _value, value);
@@ -69,6 +76,7 @@ namespace Disruptor
         /// <param name="expectedSequence">the expected value for the sequence</param>
         /// <param name="nextSequence">the new value for the sequence</param>
         /// <returns>true if successful. False return indicates that the actual value was not equal to the expected value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool CompareAndSet(long expectedSequence, long nextSequence)
         {
             return Interlocked.CompareExchange(ref _value, nextSequence, expectedSequence) == expectedSequence;
@@ -87,6 +95,7 @@ namespace Disruptor
         /// Increments the sequence and stores the result, as an atomic operation.
         ///</summary>
         ///<returns>incremented sequence</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long IncrementAndGet()
         {
             return Interlocked.Increment(ref _value);
@@ -96,6 +105,7 @@ namespace Disruptor
         /// Increments the sequence and stores the result, as an atomic operation.
         ///</summary>
         ///<returns>incremented sequence</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long AddAndGet(long value)
         {
             return Interlocked.Add(ref _value, value);
