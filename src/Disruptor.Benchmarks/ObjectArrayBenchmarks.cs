@@ -1,6 +1,7 @@
-﻿using System.Reflection.Emit;
-using BenchmarkDotNet.Attributes;
+﻿using System;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using BenchmarkDotNet.Attributes;
 using InlineIL;
 
 namespace Disruptor.Benchmarks
@@ -8,7 +9,7 @@ namespace Disruptor.Benchmarks
     public class ObjectArrayBenchmarks
     {
         private static readonly int _offsetToArrayData = ElemOffset(new object[1]);
-        private object[] _array;
+        private readonly object[] _array;
 
         public ObjectArrayBenchmarks()
         {
@@ -17,11 +18,19 @@ namespace Disruptor.Benchmarks
             {
                 _array[i] = new Event { Value = i };
             }
+
+            var item = _array[42];
+
+            if (!ReferenceEquals(ReadILImpl<Event>(42), item))
+                throw new InvalidOperationException();
+
+            if (!ReferenceEquals(ReadILImpl2<Event>(42), item))
+                throw new InvalidOperationException();
         }
 
         public int Index = 371;
 
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         [MethodImpl(MethodImplOptions.NoInlining)]
         public int ReadOne()
         {
@@ -93,10 +102,18 @@ namespace Disruptor.Benchmarks
             return ReadILImpl<Event>(Index).Value;
         }
 
+        [Benchmark]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public int ReadOneIL2()
+        {
+            return ReadILImpl2<Event>(Index).Value;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T ReadILImpl<T>(int index)
         {
             IL.DeclareLocals(false, new LocalVar(typeof(byte).MakeByRefType()));
+
             IL.Emit(OpCodes.Ldarg_0);
             IL.Emit(OpCodes.Ldfld, new FieldRef(typeof(ObjectArrayBenchmarks), nameof(_array)));
             IL.Emit(OpCodes.Stloc_0);
@@ -112,6 +129,20 @@ namespace Disruptor.Benchmarks
             IL.Emit(OpCodes.Add);
 
             IL.Emit(OpCodes.Ldobj, typeof(T));
+
+            return IL.Return<T>();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T ReadILImpl2<T>(int index)
+        {
+            IL.Emit(OpCodes.Ldarg_0);
+            IL.Emit(OpCodes.Ldfld, new FieldRef(typeof(ObjectArrayBenchmarks), nameof(_array)));
+
+            IL.Emit(OpCodes.Ldarg_1);
+            IL.Emit(OpCodes.Readonly); // Trigger this codepath in the JIT: https://github.com/dotnet/coreclr/blob/bc28740cd5f0533655f347fc315f6a28836a7efe/src/jit/importer.cpp#L11141-L11147
+            IL.Emit(OpCodes.Ldelema, typeof(T));
+            IL.Emit(OpCodes.Ldind_Ref);
 
             return IL.Return<T>();
         }
