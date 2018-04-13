@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Disruptor
 {
@@ -17,6 +18,15 @@ namespace Disruptor
         /// </summary>
         private AlertException()
         {
+        }
+
+        /// <summary>
+        /// Non-inlinable method helper to throw the exception.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Throw()
+        {
+            throw Instance;
         }
     }
 }

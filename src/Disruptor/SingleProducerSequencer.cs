@@ -138,13 +138,13 @@ namespace Disruptor
         {
             if (n < 1)
             {
-                throw new ArgumentException("n must be > 0");
+                ThrowHelper.ThrowArgMustBeGreaterThanZero();
             }
 
             return NextInternal(n);
         }
 
-        public long NextInternal(int n)
+        internal long NextInternal(int n)
         {
             long nextValue = _nextValue;
 
@@ -202,7 +202,7 @@ namespace Disruptor
         {
             if (n < 1)
             {
-                throw new ArgumentException("n must be > 0");
+                ThrowHelper.ThrowArgMustBeGreaterThanZero();
             }
 
             return TryNextInternal(n);
@@ -252,7 +252,7 @@ namespace Disruptor
         {
             if (n < 1)
             {
-                throw new ArgumentException("n must be > 0");
+                ThrowHelper.ThrowArgMustBeGreaterThanZero();
             }
 
             return TryNextInternal(n, out sequence);

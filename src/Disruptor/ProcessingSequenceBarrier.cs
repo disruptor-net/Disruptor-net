@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Disruptor
 {
     /// <summary>
@@ -50,16 +52,18 @@ namespace Disruptor
             _waitStrategy.SignalAllWhenBlocking();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ClearAlert()
         {
             _alerted = false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CheckAlert()
         {
             if(_alerted)
             {
-                throw AlertException.Instance;
+                AlertException.Throw();
             }
         }
     }

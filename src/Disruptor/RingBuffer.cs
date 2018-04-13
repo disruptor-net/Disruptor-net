@@ -219,7 +219,7 @@ namespace Disruptor
         {
             if (n < 1)
             {
-                throw new ArgumentException("n must be > 0");
+                ThrowHelper.ThrowArgMustBeGreaterThanZero();
             }
 
             switch (_fields.SequencerType)
@@ -279,7 +279,7 @@ namespace Disruptor
         {
             if (n < 1)
             {
-                throw new ArgumentException("n must be > 0");
+                ThrowHelper.ThrowArgMustBeGreaterThanZero();
             }
 
             switch (_fields.SequencerType)
@@ -810,9 +810,21 @@ namespace Disruptor
         /// message as being available to be read.
         /// </summary>
         /// <param name="sequence">the sequence to publish.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Publish(long sequence)
         {
-            _fields.Sequencer.Publish(sequence);
+            switch (_fields.SequencerType)
+            {
+                case RingBufferFields.RingBufferSequencerType.SingleProducer:
+                    _fields.SingleProducerSequencer.Publish(sequence);
+                    break;
+                case RingBufferFields.RingBufferSequencerType.MultiProducer:
+                    _fields.MultiProducerSequencer.Publish(sequence);
+                    break;
+                default:
+                    _fields.Sequencer.Publish(sequence);
+                    break;
+            }
         }
 
         /// <summary>
@@ -821,9 +833,21 @@ namespace Disruptor
         /// </summary>
         /// <param name="lo">the lowest sequence number to be published</param>
         /// <param name="hi">the highest sequence number to be published</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Publish(long lo, long hi)
         {
-            _fields.Sequencer.Publish(lo, hi);
+            switch (_fields.SequencerType)
+            {
+                case RingBufferFields.RingBufferSequencerType.SingleProducer:
+                    _fields.SingleProducerSequencer.Publish(hi);
+                    break;
+                case RingBufferFields.RingBufferSequencerType.MultiProducer:
+                    _fields.MultiProducerSequencer.Publish(lo, hi);
+                    break;
+                default:
+                    _fields.Sequencer.Publish(lo, hi);
+                    break;
+            }
         }
 
         /// <summary>

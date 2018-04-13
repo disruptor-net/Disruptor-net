@@ -141,7 +141,7 @@ namespace Disruptor
         {
             if (n < 1)
             {
-                throw new ArgumentException("n must be > 0");
+                ThrowHelper.ThrowArgMustBeGreaterThanZero();
             }
 
             return NextInternal(n);
@@ -213,7 +213,7 @@ namespace Disruptor
         {
             if (n < 1)
             {
-                throw new ArgumentException("n must be > 0");
+                ThrowHelper.ThrowArgMustBeGreaterThanZero();
             }
 
             return TryNextInternal(n);
@@ -269,7 +269,7 @@ namespace Disruptor
         {
             if (n < 1)
             {
-                throw new ArgumentException("n must be > 0");
+                ThrowHelper.ThrowArgMustBeGreaterThanZero();
             }
 
             return TryNextInternal(n, out sequence);
