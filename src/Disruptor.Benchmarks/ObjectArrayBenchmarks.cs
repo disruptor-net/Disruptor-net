@@ -3,6 +3,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using InlineIL;
+using static InlineIL.IL.Emit;
 
 namespace Disruptor.Benchmarks
 {
@@ -112,23 +113,26 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T ReadILImpl<T>(int index)
         {
-            IL.DeclareLocals(false, new LocalVar(typeof(byte).MakeByRefType()));
+            IL.DeclareLocals(
+                false,
+                typeof(byte).MakeByRefType()
+            );
 
-            IL.Emit(OpCodes.Ldarg_0);
-            IL.Emit(OpCodes.Ldfld, new FieldRef(typeof(ObjectArrayBenchmarks), nameof(_array)));
-            IL.Emit(OpCodes.Stloc_0);
-            IL.Emit(OpCodes.Ldloc_0);
+            Ldarg_0();
+            Ldfld(new FieldRef(typeof(ObjectArrayBenchmarks), nameof(_array)));
+            Stloc_0();
+            Ldloc_0();
 
-            IL.Emit(OpCodes.Ldarg_1);
-            IL.Emit(OpCodes.Sizeof, typeof(object));
-            IL.Emit(OpCodes.Mul);
+            Ldarg(nameof(index));
+            Sizeof(typeof(object));
+            Mul();
 
-            IL.Emit(OpCodes.Ldsfld, new FieldRef(typeof(ObjectArrayBenchmarks), nameof(_offsetToArrayData)));
-            IL.Emit(OpCodes.Add);
+            Ldsfld(new FieldRef(typeof(ObjectArrayBenchmarks), nameof(_offsetToArrayData)));
+            Add();
 
-            IL.Emit(OpCodes.Add);
+            Add();
 
-            IL.Emit(OpCodes.Ldobj, typeof(T));
+            Ldobj(typeof(T));
 
             return IL.Return<T>();
         }
@@ -136,24 +140,24 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T ReadILImpl2<T>(int index)
         {
-            IL.Emit(OpCodes.Ldarg_0);
-            IL.Emit(OpCodes.Ldfld, new FieldRef(typeof(ObjectArrayBenchmarks), nameof(_array)));
+            Ldarg_0();
+            Ldfld(new FieldRef(typeof(ObjectArrayBenchmarks), nameof(_array)));
 
-            IL.Emit(OpCodes.Ldarg_1);
-            IL.Emit(OpCodes.Readonly); // Trigger this codepath in the JIT: https://github.com/dotnet/coreclr/blob/bc28740cd5f0533655f347fc315f6a28836a7efe/src/jit/importer.cpp#L11141-L11147
-            IL.Emit(OpCodes.Ldelema, typeof(T));
-            IL.Emit(OpCodes.Ldind_Ref);
+            Ldarg(nameof(index));
+            Readonly(); // Trigger this codepath in the JIT: https://github.com/dotnet/coreclr/blob/bc28740cd5f0533655f347fc315f6a28836a7efe/src/jit/importer.cpp#L11141-L11147
+            Ldelema(typeof(T));
+            Ldind_Ref();
 
             return IL.Return<T>();
         }
 
         private static int ElemOffset<T>(T[] arr)
         {
-            IL.Emit(OpCodes.Ldarg_0);
-            IL.Emit(OpCodes.Ldc_I4_0);
-            IL.Emit(OpCodes.Ldelema, typeof(T));
-            IL.Emit(OpCodes.Ldarg_0);
-            IL.Emit(OpCodes.Sub);
+            Ldarg(nameof(arr));
+            Ldc_I4_0();
+            Ldelema(typeof(T));
+            Ldarg(nameof(arr));
+            Sub();
 
             return IL.Return<int>();
         }

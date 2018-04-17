@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using InlineIL;
+using static InlineIL.IL.Emit;
 
 namespace Disruptor
 {
@@ -90,32 +90,36 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Read<T>(object array, int index)
         {
-            IL.DeclareLocals(false, new LocalVar(typeof(byte).MakeByRefType()));
-            IL.Emit(OpCodes.Ldarg_0); // load the object
-            IL.Emit(OpCodes.Stloc_0); // convert the object pointer to a byref
-            IL.Emit(OpCodes.Ldloc_0); // load the object pointer as a byref
+            IL.DeclareLocals(
+                false,
+                typeof(byte).MakeByRefType()
+            );
 
-            IL.Emit(OpCodes.Ldarg_1); // load the index
-            IL.Emit(OpCodes.Sizeof, typeof(object)); // get the size of the object pointer
-            IL.Emit(OpCodes.Mul); // multiply the index by the offset size of the object pointer
+            Ldarg(nameof(array)); // load the object
+            Stloc_0(); // convert the object pointer to a byref
+            Ldloc_0(); // load the object pointer as a byref
 
-            IL.Emit(OpCodes.Ldsfld, new FieldRef(typeof(Util), nameof(_offsetToArrayData))); // get the offset to the start of the array
-            IL.Emit(OpCodes.Add); // add the start offset to the element offset
+            Ldarg(nameof(index)); // load the index
+            Sizeof(typeof(object)); // get the size of the object pointer
+            Mul(); // multiply the index by the offset size of the object pointer
 
-            IL.Emit(OpCodes.Add); // add the start + offset to the byref object pointer
+            Ldsfld(new FieldRef(typeof(Util), nameof(_offsetToArrayData))); // get the offset to the start of the array
+            Add(); // add the start offset to the element offset
 
-            IL.Emit(OpCodes.Ldobj, typeof(T)); // load a T value from the computed address
+            Add(); // add the start + offset to the byref object pointer
+
+            Ldobj(typeof(T)); // load a T value from the computed address
 
             return IL.Return<T>();
         }
 
         private static int ElemOffset(object[] arr)
         {
-            IL.Emit(OpCodes.Ldarg_0);
-            IL.Emit(OpCodes.Ldc_I4_0);
-            IL.Emit(OpCodes.Ldelema, typeof(object));
-            IL.Emit(OpCodes.Ldarg_0);
-            IL.Emit(OpCodes.Sub);
+            Ldarg(nameof(arr));
+            Ldc_I4_0();
+            Ldelema(typeof(object));
+            Ldarg(nameof(arr));
+            Sub();
 
             return IL.Return<int>();
         }
