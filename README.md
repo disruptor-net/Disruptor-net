@@ -2,11 +2,27 @@
 
 This project aims to provide the full functionality of the Disruptor to CLR projects.
 
+## Documentation
+
+There is no specific documentation for this project, but most of the information from the Java version is applicable to the .NET version, especially the [core concepts](https://github.com/LMAX-Exchange/disruptor/wiki/Introduction).
+
 ## Roadmap
 
-* Include latest changes made to the future java versions
+* Include latest changes made to the future Java versions
+* Remove exception-based APIs
+* Improve documentation
 
 ## What's new?
+
+28/04/2018 (v3.4.0-alpha):
+
+* Remove Histogram and MutableLong
+* Remove base type from SingleProducerSequencer and MultiProducerSequencer
+* Fix race between run() and halt() on BatchEventProcessor
+* Make obsolete exception-based TryNext methods
+* (Perf) Use generated struct types to improve BatchEventProcessor and ProcessingSequenceBarrier performance
+* (Perf) Remove unneeded unsafe code from MultiProducerSequencer
+* (Perf) Use custom IL to improve RingBuffer indexer performance
 
 05/02/2018 (v3.3.8):
 
