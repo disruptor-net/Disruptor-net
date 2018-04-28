@@ -38,16 +38,13 @@ namespace Disruptor
         /// capacity.</returns>
         public bool TryPublishEvent(Func<T, long, T> translator, int capacity)
         {
-            try
+            if (_ringBuffer.TryNext(capacity, out var sequence))
             {
-                long sequence = _ringBuffer.TryNext(capacity);
                 TranslateAndPublish(translator, sequence);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         private void TranslateAndPublish(Func<T, long, T> translator, long sequence)

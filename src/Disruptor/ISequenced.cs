@@ -1,4 +1,6 @@
-﻿namespace Disruptor
+﻿using System;
+
+namespace Disruptor
 {
     public interface ISequenced
     {
@@ -51,6 +53,7 @@
         /// </summary>
         /// <returns>the claimed sequence value</returns>
         /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
+        [Obsolete("Use TryNext(out long) instead.")]
         long TryNext();
 
         /// <summary>
@@ -64,6 +67,7 @@
         /// <param name="n">the number of sequences to claim</param>
         /// <returns>the claimed sequence value</returns>
         /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
+        [Obsolete("Use TryNext(int, out long) instead.")]
         long TryNext(int n);
 
         /// <summary>

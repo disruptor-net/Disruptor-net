@@ -254,6 +254,7 @@ namespace Disruptor
         /// <returns>The next sequence to publish to.</returns>
         /// <exception cref="InsufficientCapacityException">if the necessary space in the ring buffer is not available</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("Use TryNext(out long) instead.")]
         public long TryNext()
         {
             switch (_fields.SequencerType)
@@ -275,6 +276,7 @@ namespace Disruptor
         /// <returns>sequence number of the highest slot claimed</returns>
         /// <exception cref="InsufficientCapacityException">if the necessary space in the ring buffer is not available</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("Use TryNext(int, out long) instead.")]
         public long TryNext(int n)
         {
             if (n < 1)
@@ -386,7 +388,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">The sequence to identify the entry.</param>
         /// <returns><c>true</c> if the value can be read, <c>false</c> otherwise.</returns>
-        [Obsolete("Please don't use this method.  It probably won't do what you think that it does.")]
+        [Obsolete("Please don't use this method. It probably won't do what you think that it does.")]
         public bool IsPublished(long sequence)
         {
             return _fields.Sequencer.IsAvailable(sequence);
@@ -464,16 +466,13 @@ namespace Disruptor
         /// </summary>
         public bool TryPublishEvent(IEventTranslator<T> translator)
         {
-            try
+            if (_fields.Sequencer.TryNext(out var sequence))
             {
-                long sequence = _fields.Sequencer.TryNext();
                 TranslateAndPublish(translator, sequence);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -490,16 +489,13 @@ namespace Disruptor
         /// </summary>
         public bool TryPublishEvent<A>(IEventTranslatorOneArg<T, A> translator, A arg0)
         {
-            try
+            if (_fields.Sequencer.TryNext(out var sequence))
             {
-                long sequence = _fields.Sequencer.TryNext();
                 TranslateAndPublish(translator, sequence, arg0);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -516,16 +512,13 @@ namespace Disruptor
         /// </summary>
         public bool TryPublishEvent<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A arg0, B arg1)
         {
-            try
+            if (_fields.Sequencer.TryNext(out var sequence))
             {
-                long sequence = _fields.Sequencer.TryNext();
                 TranslateAndPublish(translator, sequence, arg0, arg1);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -542,16 +535,13 @@ namespace Disruptor
         /// </summary>
         public bool TryPublishEvent<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A arg0, B arg1, C arg2)
         {
-            try
+            if (_fields.Sequencer.TryNext(out var sequence))
             {
-                long sequence = _fields.Sequencer.TryNext();
                 TranslateAndPublish(translator, sequence, arg0, arg1, arg2);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -568,16 +558,13 @@ namespace Disruptor
         /// </summary>
         public bool TryPublishEvent(IEventTranslatorVararg<T> translator, params object[] args)
         {
-            try
+            if (_fields.Sequencer.TryNext(out var sequence))
             {
-                long sequence = _fields.Sequencer.TryNext();
                 TranslateAndPublish(translator, sequence, args);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -612,16 +599,14 @@ namespace Disruptor
         public bool TryPublishEvents(IEventTranslator<T>[] translators, int batchStartsAt, int batchSize)
         {
             CheckBounds(translators, batchStartsAt, batchSize);
-            try
+
+            if (_fields.Sequencer.TryNext(batchSize, out var finalSequence))
             {
-                long finalSequence = _fields.Sequencer.TryNext(batchSize);
                 TranslateAndPublishBatch(translators, batchStartsAt, batchSize, finalSequence);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -656,16 +641,14 @@ namespace Disruptor
         public bool TryPublishEvents<A>(IEventTranslatorOneArg<T, A> translator, int batchStartsAt, int batchSize, A[] arg0)
         {
             CheckBounds(arg0, batchStartsAt, batchSize);
-            try
+
+            if (_fields.Sequencer.TryNext(batchSize, out var finalSequence))
             {
-                long finalSequence = _fields.Sequencer.TryNext(batchSize);
                 TranslateAndPublishBatch(translator, arg0, batchStartsAt, batchSize, finalSequence);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -700,16 +683,14 @@ namespace Disruptor
         public bool TryPublishEvents<A, B>(IEventTranslatorTwoArg<T, A, B> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1)
         {
             CheckBounds(arg0, arg1, batchStartsAt, batchSize);
-            try
+
+            if (_fields.Sequencer.TryNext(batchSize, out var finalSequence))
             {
-                long finalSequence = _fields.Sequencer.TryNext(batchSize);
                 TranslateAndPublishBatch(translator, arg0, arg1, batchStartsAt, batchSize, finalSequence);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -744,16 +725,14 @@ namespace Disruptor
         public bool TryPublishEvents<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1, C[] arg2)
         {
             CheckBounds(arg0, arg1, arg2, batchStartsAt, batchSize);
-            try
+
+            if (_fields.Sequencer.TryNext(batchSize, out var finalSequence))
             {
-                long finalSequence = _fields.Sequencer.TryNext(batchSize);
                 TranslateAndPublishBatch(translator, arg0, arg1, arg2, batchStartsAt, batchSize, finalSequence);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -793,16 +772,14 @@ namespace Disruptor
         public bool TryPublishEvents(IEventTranslatorVararg<T> translator, int batchStartsAt, int batchSize, params object[][] args)
         {
             CheckBounds(args, batchStartsAt, batchSize);
-            try
+
+            if (_fields.Sequencer.TryNext(batchSize, out var finalSequence))
             {
-                long finalSequence = _fields.Sequencer.TryNext(batchSize);
                 TranslateAndPublishBatch(translator, batchStartsAt, batchSize, finalSequence, args);
                 return true;
             }
-            catch (InsufficientCapacityException)
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>

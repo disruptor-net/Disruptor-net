@@ -99,6 +99,7 @@ namespace Disruptor
         /// </summary>
         /// <returns>the claimed sequence value</returns>
         /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
+        [Obsolete("Use TryNext(out long) instead.")]
         public abstract long TryNext();
 
         /// <summary>
@@ -112,6 +113,7 @@ namespace Disruptor
         /// <param name="n">the number of sequences to claim</param>
         /// <returns>the claimed sequence value</returns>
         /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
+        [Obsolete("Use TryNext(int, out long) instead.")]
         public abstract long TryNext(int n);
 
         /// <summary>

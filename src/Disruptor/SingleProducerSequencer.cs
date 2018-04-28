@@ -181,6 +181,7 @@ namespace Disruptor
         /// <returns>the claimed sequence value</returns>
         /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("Use TryNext(out long) instead.")]
         public long TryNext()
         {
             return TryNextInternal(1);
@@ -198,6 +199,7 @@ namespace Disruptor
         /// <returns>the claimed sequence value</returns>
         /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("Use TryNext(int, out long) instead.")]
         public long TryNext(int n)
         {
             if (n < 1)
