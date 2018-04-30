@@ -20,7 +20,21 @@ namespace Disruptor.Tests.Dsl.Stubs
 
             if (!Volatile.Read(ref _ignoreExecutions))
             {
-                var t = new Thread(() => command());
+                var t = new Thread(() =>
+                {
+                    try
+                    {
+                        command();
+                    }
+                    catch (ThreadInterruptedException e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                });
                 _threads.Enqueue(t);
                 t.Start();
             }
@@ -30,23 +44,13 @@ namespace Disruptor.Tests.Dsl.Stubs
 
         public void JoinAllThreads()
         {
-            Thread thread;
-            while (_threads.TryDequeue(out thread))
+            while (_threads.TryDequeue(out var thread))
             {
-                if (thread.IsAlive)
+                if (!thread.Join(5000))
                 {
-                    try
-                    {
-                        thread.Interrupt();
-                        thread.Join(5000);
-                    }
-                    catch (ThreadInterruptedException e)
-                    {
-                        Console.WriteLine(e);
-                    }
+                    thread.Interrupt();
+                    Assert.IsTrue(thread.Join(5000), "Failed to stop thread: " + thread);
                 }
-
-                Assert.IsFalse(thread.IsAlive, "Failed to stop thread: " + thread);
             }
         }
 

@@ -6,14 +6,22 @@
 	<Title>Disruptor.Tests</Title>
     <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
 	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <StartupObject>Disruptor.Tests.Example.DynamiclyAddHandler</StartupObject>
+    <OutputType>exe</OutputType>
   </PropertyGroup>
+  
+  <ItemGroup>  
+    <Reference Include="netstandard" />
+  </ItemGroup>
   
   <ItemGroup>
     <None Remove="Disruptor.Tests.v3.ncrunchproject" />
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="NUnit" Version="3.8.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.6.1" />
+    <PackageReference Include="NUnit" Version="3.10.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.10.0" />
   </ItemGroup>
   
   <ItemGroup>

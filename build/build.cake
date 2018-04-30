@@ -16,6 +16,8 @@ var paths = new
 
 var nugetVersion = XmlPeek(paths.AssemblyProject, "//InformationalVersion/text()");
 var targetFrameworks = XmlPeek(paths.AssemblyProject, "//TargetFrameworks/text()").Split(';');
+var testsFrameworks = XmlPeek(paths.TestsProject, "//TargetFrameworks/text()").Split(';');
+
 
 Task("Restore-NuGet-Packages")
     .Does(() => 
@@ -35,13 +37,37 @@ Task("Build-Tests")
     .IsDependentOn("Restore-NuGet-Packages")
     .Does(() =>
     {
-        var settings = new DotNetCoreBuildSettings { Configuration = configuration, OutputDirectory = paths.TestsOutput.FullPath };
-        DotNetCoreBuild(paths.TestsProject.FullPath, settings);
+        foreach (var framwork in testsFrameworks.Where(x => !x.Contains("core")))
+        {
+            Information("Building tests for  {0}", framwork);
+            
+            var outputPath = paths.TestsOutput.FullPath + "/" + framwork;
+            var settings = new DotNetCoreBuildSettings { Configuration = configuration, OutputDirectory = outputPath, Framework = framwork };
+            DotNetCoreBuild(paths.TestsProject.FullPath, settings);
+        }
     });
 
 Task("Run-Tests")
     .IsDependentOn("Build-Tests")
-    .Does(() => NUnit(paths.TestsOutput.FullPath + "/*.Tests.dll", new NUnitSettings { NoResults = true, ToolPath = paths.NUnit }));
+    .Does(() =>
+    {
+        foreach (var framwork in testsFrameworks.Where(x => !x.Contains("core")))
+        {
+            Information("Running tests for {0}", framwork);
+            
+            var outputPath = paths.TestsOutput.FullPath + "/" + framwork;
+            NUnit(outputPath + "/*.Tests.exe", new NUnitSettings { NoResults = true, ToolPath = paths.NUnit });
+        }
+        
+        foreach (var framwork in testsFrameworks.Where(x => x.Contains("core")))
+        {
+            Information("Running tests for {0}", framwork);
+            
+            var outputPath = paths.TestsOutput.FullPath + "/" + framwork;
+            var settings = new DotNetCoreTestSettings { Configuration = configuration, OutputDirectory = outputPath, Framework = framwork };
+            DotNetCoreTest(paths.TestsProject.FullPath, settings);
+        }
+    });
 
 Task("Clean-Perf")
     .Does(() => CleanDirectory(paths.PerfOutput));
@@ -80,7 +106,7 @@ Task("Pack")
     .IsDependentOn("Build-Assembly")
     .Does(() => 
     {
-		CreateDirectory(paths.NugetOutput);
+        CreateDirectory(paths.NugetOutput);
         Information("Packing {0}", nugetVersion);
         NuGetPack(paths.Nuspec, new NuGetPackSettings
         {

@@ -15,7 +15,6 @@
   
   <ItemGroup>
 	<PackageReference Include="HdrHistogram" Version="1.7.0" />
-    <PackageReference Include="NUnit" Version="3.8.1" />
   </ItemGroup>
   
   <ItemGroup>
