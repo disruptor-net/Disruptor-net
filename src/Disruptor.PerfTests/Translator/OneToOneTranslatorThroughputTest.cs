@@ -34,13 +34,13 @@ namespace Disruptor.PerfTests.Translator
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 100L;
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
-        private readonly ValueAdditionEventHandler _handler = new ValueAdditionEventHandler();
-        private readonly RingBuffer<ValueEvent> _ringBuffer;
+        private readonly AdditionEventHandler _handler = new AdditionEventHandler();
+        private readonly RingBuffer<PerfEvent> _ringBuffer;
         private readonly MutableLong _value = new MutableLong();
 
         public OneToOneTranslatorThroughputTest()
         {
-            var disruptor = new Disruptor<ValueEvent>(ValueEvent.EventFactory,
+            var disruptor = new Disruptor<PerfEvent>(PerfEvent.EventFactory,
                                                       _bufferSize, 
                                                       TaskScheduler.Default,
                                                       ProducerType.Single,
@@ -88,11 +88,11 @@ namespace Disruptor.PerfTests.Translator
             }
         }
 
-        private class Translator : IEventTranslatorOneArg<ValueEvent, MutableLong>
+        private class Translator : IEventTranslatorOneArg<PerfEvent, MutableLong>
         {
             public static readonly Translator Instance = new Translator();
 
-            public void TranslateTo(ValueEvent @event, long sequence, MutableLong arg0)
+            public void TranslateTo(PerfEvent @event, long sequence, MutableLong arg0)
             {
                 @event.Value = arg0.Value;
             }

@@ -3,13 +3,13 @@ using System.Threading;
 
 namespace Disruptor.PerfTests.Support
 {
-    public class ValueQueueProducer
+    public class PerfQueueProducer
     {
         private readonly Barrier _barrier;
         private readonly ConcurrentQueue<long> _blockingQueue;
         private readonly long _iterations;
 
-        public ValueQueueProducer(Barrier barrier, ConcurrentQueue<long> blockingQueue, long iterations)
+        public PerfQueueProducer(Barrier barrier, ConcurrentQueue<long> blockingQueue, long iterations)
         {
             _barrier = barrier;
             _blockingQueue = blockingQueue;

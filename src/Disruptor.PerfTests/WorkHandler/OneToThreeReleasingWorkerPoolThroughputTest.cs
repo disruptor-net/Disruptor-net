@@ -14,10 +14,10 @@ namespace Disruptor.PerfTests.WorkHandler
         private static readonly long _iterations = 1000L * 1000 * 10L;
         private readonly PaddedLong[] _counters = new PaddedLong[_numWorkers];
         private readonly EventCountingAndReleasingWorkHandler[] _handlers = new EventCountingAndReleasingWorkHandler[_numWorkers];
-        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory,
+        private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory,
                                                                                                          _bufferSize,
                                                                                                          new YieldingWaitStrategy());
-        private readonly WorkerPool<ValueEvent> _workerPool;
+        private readonly WorkerPool<PerfEvent> _workerPool;
 
         public OneToThreeReleasingWorkerPoolThroughputTest()
         {
@@ -30,7 +30,7 @@ namespace Disruptor.PerfTests.WorkHandler
                 _handlers[i] = new EventCountingAndReleasingWorkHandler(_counters, i);
             }
 
-            _workerPool = new WorkerPool<ValueEvent>(_ringBuffer,
+            _workerPool = new WorkerPool<PerfEvent>(_ringBuffer,
                                                     _ringBuffer.NewBarrier(),
                                                     new FatalExceptionHandler(),
                                                     _handlers);
@@ -83,7 +83,7 @@ namespace Disruptor.PerfTests.WorkHandler
             return sumJobs;
         }
 
-        private class EventCountingAndReleasingWorkHandler : IWorkHandler<ValueEvent>, IEventReleaseAware
+        private class EventCountingAndReleasingWorkHandler : IWorkHandler<PerfEvent>, IEventReleaseAware
         {
             private readonly PaddedLong[] _counters;
             private readonly int _index;
@@ -95,7 +95,7 @@ namespace Disruptor.PerfTests.WorkHandler
                 _index = index;
             }
 
-            public void OnEvent(ValueEvent evt)
+            public void OnEvent(PerfEvent evt)
             {
                 _eventReleaser.Release();
                 _counters[_index].Value = _counters[_index].Value + 1L;

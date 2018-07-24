@@ -20,11 +20,11 @@ namespace Disruptor.PerfTests.WorkHandler
         private readonly EventCountingQueueProcessor[] _queueWorkers = new EventCountingQueueProcessor[_numWorkers];
         private readonly EventCountingWorkHandler[] _handlers = new EventCountingWorkHandler[_numWorkers];
 
-        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory,
+        private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory,
                                                                                                           _bufferSize,
                                                                                                           new YieldingWaitStrategy());
 
-        private readonly WorkerPool<ValueEvent> _workerPool;
+        private readonly WorkerPool<PerfEvent> _workerPool;
 
         public OneToThreeWorkerPoolThroughputTest()
         {
@@ -42,7 +42,7 @@ namespace Disruptor.PerfTests.WorkHandler
                 _handlers[i] = new EventCountingWorkHandler(_counters, i);
             }
 
-            _workerPool = new WorkerPool<ValueEvent>(_ringBuffer,
+            _workerPool = new WorkerPool<PerfEvent>(_ringBuffer,
                                                      _ringBuffer.NewBarrier(),
                                                      new FatalExceptionHandler(),
                                                      _handlers);
@@ -55,7 +55,7 @@ namespace Disruptor.PerfTests.WorkHandler
         public long Run(ThroughputSessionContext sessionContext)
         {
             ResetCounters();
-            RingBuffer<ValueEvent> ringBuffer = _workerPool.Start(new BasicExecutor(TaskScheduler.Default));
+            RingBuffer<PerfEvent> ringBuffer = _workerPool.Start(new BasicExecutor(TaskScheduler.Default));
             sessionContext.Start();
 
             for (long i = 0; i < _iterations; i++)

@@ -11,10 +11,10 @@ namespace Disruptor.Dsl
     public class EventHandlerGroup<T> where T : class
     {
         private readonly Disruptor<T> _disruptor;
-        private readonly ConsumerRepository<T> _consumerRepository;
+        private readonly ConsumerRepository _consumerRepository;
         private readonly ISequence[] _sequences;
 
-        internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository<T> consumerRepository, IEnumerable<ISequence> sequences)
+        internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository consumerRepository, IEnumerable<ISequence> sequences)
         {
             _disruptor = disruptor;
             _consumerRepository = consumerRepository;

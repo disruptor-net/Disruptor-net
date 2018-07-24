@@ -9,7 +9,7 @@ namespace Disruptor.Tests.Dsl
     [TestFixture]
     public class ConsumerRepositoryTests
     {
-        private ConsumerRepository<TestEvent> _consumerRepository;
+        private ConsumerRepository _consumerRepository;
         private IEventProcessor _eventProcessor1;
         private IEventProcessor _eventProcessor2;
         private SleepingEventHandler _handler1;
@@ -20,7 +20,7 @@ namespace Disruptor.Tests.Dsl
         [SetUp]
         public void SetUp()
         {
-            _consumerRepository = new ConsumerRepository<TestEvent>();
+            _consumerRepository = new ConsumerRepository();
             _eventProcessor1 = new DummyEventProcessor();
             _eventProcessor2 = new DummyEventProcessor();
 
@@ -81,7 +81,7 @@ namespace Disruptor.Tests.Dsl
             var seen2 = false;
             foreach (var testEntryEventProcessorInfo in _consumerRepository)
             {
-                var eventProcessorInfo = (EventProcessorInfo<TestEvent>)testEntryEventProcessorInfo;
+                var eventProcessorInfo = (EventProcessorInfo)testEntryEventProcessorInfo;
                 if (!seen1 && eventProcessorInfo.EventProcessor == _eventProcessor1 && eventProcessorInfo.Handler == _handler1)
                 {
                     seen1 = true;

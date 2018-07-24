@@ -3,7 +3,7 @@ using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Support
 {
-    public class ValueMutationEventHandler : IEventHandler<ValueEvent>, IBatchStartAware
+    public class PerfMutationEventHandler : IEventHandler<PerfEvent>, IBatchStartAware
     {
         private readonly Operation _operation;
         private PaddedLong _value;
@@ -11,7 +11,7 @@ namespace Disruptor.PerfTests.Support
         private Barrier _latch;
         public PaddedLong BatchesProcessedCount;
 
-        public ValueMutationEventHandler(Operation operation)
+        public PerfMutationEventHandler(Operation operation)
         {
             _operation = operation;
         }
@@ -26,7 +26,7 @@ namespace Disruptor.PerfTests.Support
             BatchesProcessedCount.Value = 0;
         }
 
-        public void OnEvent(ValueEvent data, long sequence, bool endOfBatch)
+        public void OnEvent(PerfEvent data, long sequence, bool endOfBatch)
         {
             _value.Value = _operation.Op(_value.Value, data.Value);
 

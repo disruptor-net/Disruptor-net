@@ -6,24 +6,24 @@ namespace Disruptor.Dsl
     /// <code>disruptorWizard.HandleExceptionsIn(eventHandler).With(exceptionHandler);</code>
     /// </summary>
     /// <typeparam name="T">the type of event being handled.</typeparam>
-    public class ExceptionHandlerSetting<T> where T : class 
+    public class ValueExceptionHandlerSetting<T> where T : struct
     {
-        private readonly IEventHandler<T> _eventHandler;
+        private readonly IValueEventHandler<T> _eventHandler;
         private readonly ConsumerRepository _consumerRepository;
 
-        internal ExceptionHandlerSetting(IEventHandler<T> eventHandler, ConsumerRepository consumerRepository)
+        internal ValueExceptionHandlerSetting(IValueEventHandler<T> eventHandler, ConsumerRepository consumerRepository)
         {
             _eventHandler = eventHandler;
             _consumerRepository = consumerRepository;
         }
-        
+
         /// <summary>
-        /// Specify the <see cref="IExceptionHandler{T}"/> to use with the event handler.
+        /// Specify the <see cref="IValueExceptionHandler{T}"/> to use with the event handler.
         /// </summary>
         /// <param name="exceptionHandler">exceptionHandler the exception handler to use.</param>
-        public void With(IExceptionHandler<T> exceptionHandler)
+        public void With(IValueExceptionHandler<T> exceptionHandler)
         {
-            ((IBatchEventProcessor<T>)_consumerRepository.GetEventProcessorFor(_eventHandler)).SetExceptionHandler(exceptionHandler);
+            ((IValueBatchEventProcessor<T>)_consumerRepository.GetEventProcessorFor(_eventHandler)).SetExceptionHandler(exceptionHandler);
             _consumerRepository.GetBarrierFor(_eventHandler).Alert();
         }
     }

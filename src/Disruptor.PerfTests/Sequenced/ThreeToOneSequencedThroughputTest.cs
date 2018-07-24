@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
 using Disruptor.Scheduler;
-using ValuePublisher = System.Action<System.Threading.CountdownEvent, Disruptor.RingBuffer<Disruptor.PerfTests.Support.ValueEvent>, long>;
+using ValuePublisher = System.Action<System.Threading.CountdownEvent, Disruptor.RingBuffer<Disruptor.PerfTests.Support.PerfEvent>, long>;
 
 namespace Disruptor.PerfTests.Sequenced
 {
@@ -52,11 +52,11 @@ namespace Disruptor.PerfTests.Sequenced
         private const long _iterations = 1000L * 1000L * 20L;
 
         private readonly CountdownEvent _cyclicBarrier = new CountdownEvent(_numPublishers + 1);
-        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateMultiProducer(ValueEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
+        private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
         private readonly TaskScheduler _scheduler = new RoundRobinThreadAffinedTaskScheduler(5);
         private readonly ISequenceBarrier _sequenceBarrier;
-        private readonly ValueAdditionEventHandler _handler = new ValueAdditionEventHandler();
-        private readonly IBatchEventProcessor<ValueEvent> _batchEventProcessor;
+        private readonly AdditionEventHandler _handler = new AdditionEventHandler();
+        private readonly IBatchEventProcessor<PerfEvent> _batchEventProcessor;
         private readonly ValuePublisher[] _valuePublishers = new ValuePublisher[_numPublishers];
 
         public ThreeToOneSequencedThroughputTest()
@@ -107,7 +107,7 @@ namespace Disruptor.PerfTests.Sequenced
             return _iterations;
         }
 
-        private static void ValuePublisher(CountdownEvent countdownEvent, RingBuffer<ValueEvent> ringBuffer, long iterations)
+        private static void ValuePublisher(CountdownEvent countdownEvent, RingBuffer<PerfEvent> ringBuffer, long iterations)
         {
             countdownEvent.Signal();
             countdownEvent.Wait();

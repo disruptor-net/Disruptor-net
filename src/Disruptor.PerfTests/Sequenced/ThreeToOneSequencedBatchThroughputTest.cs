@@ -50,9 +50,9 @@ namespace Disruptor.PerfTests.Sequenced
         private const long _iterations = 1000L * 1000L * 100L;
         private readonly CountdownEvent _cyclicBarrier = new CountdownEvent(_numPublishers + 1);
 
-        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateMultiProducer(ValueEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
-        private readonly ValueAdditionEventHandler _handler = new ValueAdditionEventHandler();
-        private readonly IBatchEventProcessor<ValueEvent> _batchEventProcessor;
+        private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
+        private readonly AdditionEventHandler _handler = new AdditionEventHandler();
+        private readonly IBatchEventProcessor<PerfEvent> _batchEventProcessor;
         private readonly ValueBatchPublisher[] _valuePublishers = new ValueBatchPublisher[_numPublishers];
 
         public ThreeToOneSequencedBatchThroughputTest()
@@ -108,11 +108,11 @@ namespace Disruptor.PerfTests.Sequenced
         private class ValueBatchPublisher
         {
             private readonly CountdownEvent _cyclicBarrier;
-            private readonly RingBuffer<ValueEvent> _ringBuffer;
+            private readonly RingBuffer<PerfEvent> _ringBuffer;
             private readonly long _iterations;
             private readonly int _batchSize;
 
-            public ValueBatchPublisher(CountdownEvent cyclicBarrier, RingBuffer<ValueEvent> ringBuffer, long iterations, int batchSize)
+            public ValueBatchPublisher(CountdownEvent cyclicBarrier, RingBuffer<PerfEvent> ringBuffer, long iterations, int batchSize)
             {
                 _cyclicBarrier = cyclicBarrier;
                 _ringBuffer = ringBuffer;

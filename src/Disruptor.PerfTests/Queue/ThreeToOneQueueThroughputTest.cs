@@ -15,15 +15,15 @@ namespace Disruptor.PerfTests.Queue
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
         private readonly Barrier _signal = new Barrier(_publisherCount + 1);
         private readonly ConcurrentQueue<long> _blockingQueue = new ConcurrentQueue<long>();
-        private readonly ValueAdditionQueueEventProcessor _queueProcessor;
-        private readonly ValueQueueProducer[] _valueQueueProducers = new ValueQueueProducer[_publisherCount];
+        private readonly PerfAdditionQueueEventProcessor _queueProcessor;
+        private readonly PerfQueueProducer[] _perfQueueProducers = new PerfQueueProducer[_publisherCount];
 
         public ThreeToOneQueueThroughputTest()
         {
-            _queueProcessor = new ValueAdditionQueueEventProcessor(_blockingQueue, ((_iterations / _publisherCount) * _publisherCount) - 1L);
+            _queueProcessor = new PerfAdditionQueueEventProcessor(_blockingQueue, ((_iterations / _publisherCount) * _publisherCount) - 1L);
             for (var i = 0; i < _publisherCount; i++)
             {
-                _valueQueueProducers[i] = new ValueQueueProducer(_signal, _blockingQueue, _iterations / _publisherCount);
+                _perfQueueProducers[i] = new PerfQueueProducer(_signal, _blockingQueue, _iterations / _publisherCount);
             }
         }
 
@@ -37,7 +37,7 @@ namespace Disruptor.PerfTests.Queue
             var tasks = new Task[_publisherCount];
             for (var i = 0; i < _publisherCount; i++)
             {
-                tasks[i] = _executor.Execute(_valueQueueProducers[i].Run);
+                tasks[i] = _executor.Execute(_perfQueueProducers[i].Run);
             }
             var processorTask = _executor.Execute(_queueProcessor.Run);
 

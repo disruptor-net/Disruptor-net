@@ -89,6 +89,7 @@ namespace Disruptor
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Read<T>(object array, int index)
+            where T : class
         {
             IL.DeclareLocals(
                 false,
@@ -111,6 +112,35 @@ namespace Disruptor
             Ldobj(typeof(T)); // load a T value from the computed address
 
             return IL.Return<T>();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T ReadValue<T>(object array, int index)
+            where T : struct
+        {
+            IL.DeclareLocals(
+                false,
+                typeof(byte).MakeByRefType()
+            );
+
+            Ldarg(nameof(array)); // load the object
+            Stloc_0(); // convert the object pointer to a byref
+            Ldloc_0(); // load the object pointer as a byref
+
+            Ldarg(nameof(index)); // load the index
+            Sizeof(typeof(T)); // get the size of the object pointer
+            Mul(); // multiply the index by the offset size of the object pointer
+
+            Ldsfld(new FieldRef(typeof(Util), nameof(_offsetToArrayData))); // get the offset to the start of the array
+            Add(); // add the start offset to the element offset
+
+            Add(); // add the start + offset to the byref object pointer
+
+            //Ldobj(typeof(T).MakeByRefType()); // load a T value from the computed address
+
+            Ret();
+
+            throw IL.Unreachable();
         }
 
         private static int ElemOffset(object[] arr)
