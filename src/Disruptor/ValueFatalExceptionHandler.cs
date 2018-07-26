@@ -25,6 +25,20 @@ namespace Disruptor
         }
 
         /// <summary>
+        /// Callback to notify of an exception during <see cref="ITimeoutHandler.OnTimeout"/>
+        /// </summary>
+        /// <param name="ex">ex throw during the starting process.</param>
+        /// <param name="sequence">sequence of the event which cause the exception.</param>
+        public void HandleOnTimeoutException(Exception ex, long sequence)
+        {
+            var message = $"Exception during OnTimeout(): {ex}";
+
+            Console.WriteLine(message);
+
+            throw new ApplicationException(message, ex);
+        }
+
+        /// <summary>
         /// Callback to notify of an exception during <see cref="ILifecycleAware.OnStart"/>
         /// </summary>
         /// <param name="ex">ex throw during the starting process.</param>

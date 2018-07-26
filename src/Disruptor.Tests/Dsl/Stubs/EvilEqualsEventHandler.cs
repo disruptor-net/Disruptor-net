@@ -2,9 +2,13 @@
 
 namespace Disruptor.Tests.Dsl.Stubs
 {
-    public class EvilEqualsEventHandler : IEventHandler<TestEvent>
+    public class EvilEqualsEventHandler : IEventHandler<TestEvent>, IValueEventHandler<TestValueEvent>
     {
         public void OnEvent(TestEvent data, long sequence, bool endOfBatch)
+        {
+        }
+
+        public void OnEvent(ref TestValueEvent data, long sequence, bool endOfBatch)
         {
         }
 

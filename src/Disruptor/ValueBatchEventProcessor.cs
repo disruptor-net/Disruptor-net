@@ -4,10 +4,10 @@ using System.Threading;
 namespace Disruptor
 {
     /// <summary>
-    /// Convenience class for handling the batching semantics of consuming events from a <see cref="RingBuffer{T}"/>
-    /// and delegating the available events to an <see cref="IEventHandler{T}"/>.
+    /// Convenience class for handling the batching semantics of consuming events from a <see cref="ValueRingBuffer{T}"/>
+    /// and delegating the available events to an <see cref="IValueEventHandler{T}"/>.
     /// 
-    /// If the <see cref="IEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
+    /// If the <see cref="IValueEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
     /// is started and just before the thread is shutdown.
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
@@ -45,9 +45,9 @@ namespace Disruptor
 
         /// <summary>
         /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
-        /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
+        /// the <see cref="IValueEventHandler{T}.OnEvent"/> method returns.
         /// 
-        /// Consider using <see cref="BatchEventProcessorFactory.Create{T}"/> to create your <see cref="IEventProcessor"/>.
+        /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
         /// </summary>
         /// <param name="dataProvider">dataProvider to which events are published</param>
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
@@ -87,7 +87,7 @@ namespace Disruptor
         public bool IsRunning => _running != RunningStates.Idle;
 
         /// <summary>
-        /// Set a new <see cref="IExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IEventHandler{T}"/>
+        /// Set a new <see cref="IValueExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IValueEventHandler{T}"/>
         /// </summary>
         /// <param name="exceptionHandler">exceptionHandler to replace the existing exceptionHandler.</param>
         public void SetExceptionHandler(IValueExceptionHandler<T> exceptionHandler)
@@ -200,9 +200,7 @@ namespace Disruptor
             }
             catch (Exception ex)
             {
-                ref T evt = ref _dataProvider[availableSequence];
-
-                _exceptionHandler.HandleEventException(ex, availableSequence, ref evt);
+                _exceptionHandler.HandleOnTimeoutException(ex, availableSequence);
             }
         }
 

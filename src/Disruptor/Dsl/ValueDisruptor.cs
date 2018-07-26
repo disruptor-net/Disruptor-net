@@ -131,7 +131,7 @@ namespace Disruptor.Dsl
         /// <code>disruptorWizard.HandleExceptionsIn(eventHandler).With(exceptionHandler);</code>
         /// </summary>
         /// <param name="eventHandler">eventHandler the event handler to set a different exception handler for</param>
-        /// <returns>an <see cref="ExceptionHandlerSetting{T}"/> dsl object - intended to be used by chaining the with method call</returns>
+        /// <returns>an <see cref="ValueExceptionHandlerSetting{T}"/> dsl object - intended to be used by chaining the with method call</returns>
         public ValueExceptionHandlerSetting<T> HandleExceptionsFor(IValueEventHandler<T> eventHandler)
         {
             return new ValueExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
@@ -142,7 +142,7 @@ namespace Disruptor.Dsl
         /// For example if the handler <code>A</code> must process events before handler <code>B</code>:
         /// <code>dw.After(A).HandleEventsWith(B);</code>
         /// </summary>
-        /// <param name="handlers">handlers the event handlers, previously set up with <see cref="HandleEventsWith(Disruptor.IValueEventHandler{T}[])"/>,
+        /// <param name="handlers">handlers the event handlers, previously set up with <see cref="HandleEventsWith(IValueEventHandler{T}[])"/>,
         /// that will form the barrier for subsequent handlers or processors.</param>
         /// <returns>an <see cref="ValueEventHandlerGroup{T}"/> that can be used to setup a dependency barrier over the specified event handlers.</returns>
         public ValueEventHandlerGroup<T> After(params IValueEventHandler<T>[] handlers)
@@ -151,10 +151,32 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
+        /// Set up custom event processors to handle events from the ring buffer. The disruptor will
+        /// automatically start these processors when <see cref="Start"/> is called.
+        /// 
+        /// This method can be used as the start of a chain. For example if the handler <code>A</code> must
+        /// process events before handler<code>B</code>:
+        /// <code>dw.HandleEventsWith(A).Then(B);</code>
+        /// 
+        /// Since this is the start of the chain, the processor factories will always be passed an empty <code>Sequence</code>
+        /// array, so the factory isn't necessary in this case. This method is provided for consistency with
+        /// <see cref="ValueEventHandlerGroup{T}.HandleEventsWith(IValueEventProcessorFactory{T}[])"/> and <see cref="ValueEventHandlerGroup{T}.Then(IValueEventProcessorFactory{T}[])"/>
+        /// which do have barrier sequences to provide.
+        /// 
+        /// This call is additive, but generally should only be called once when setting up the disruptor instance.
+        /// </summary>
+        /// <param name="eventProcessorFactories">eventProcessorFactories the event processor factories to use to create the event processors that will process events.</param>
+        /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
+        public ValueEventHandlerGroup<T> HandleEventsWith(params IValueEventProcessorFactory<T>[] eventProcessorFactories)
+        {
+            return CreateEventProcessors(new ISequence[0], eventProcessorFactories);
+        }
+
+        /// <summary>
         /// Create a group of event processors to be used as a dependency.
         /// </summary>
-        /// <see cref="After(Disruptor.IValueEventHandler{T}[])"/>
-        /// <param name="processors">processors the event processors, previously set up with <see cref="HandleEventsWith(Disruptor.IValueEventHandler{T}[])"/>,
+        /// <see cref="After(IValueEventHandler{T}[])"/>
+        /// <param name="processors">processors the event processors, previously set up with <see cref="HandleEventsWith(IValueEventHandler{T}[])"/>,
         /// that will form the barrier for subsequent handlers or processors.</param>
         /// <returns>an <see cref="ValueEventHandlerGroup{T}"/> that can be used to setup a <see cref="ISequenceBarrier"/> over the specified event processors.</returns>
         public ValueEventHandlerGroup<T> After(params IEventProcessor[] processors)
@@ -166,7 +188,13 @@ namespace Disruptor.Dsl
 
             return new ValueEventHandlerGroup<T>(this, _consumerRepository, Util.GetSequencesFor(processors));
         }
-        
+
+        /// <summary>
+        /// Publish an event to the ring buffer.
+        /// </summary>
+        /// <param name="eventTranslator">the translator that will load data into the event</param>
+        public void PublishEvent(IValueEventTranslator<T> eventTranslator) => _ringBuffer.PublishEvent(eventTranslator);
+
         /// <summary>
         /// Starts the event processors and returns the fully configured ring buffer.
         /// 
@@ -242,8 +270,8 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
-        /// The <see cref="RingBuffer{T}"/> used by this disruptor. This is useful for creating custom
-        /// event processors if the behaviour of <see cref="BatchEventProcessor{T}"/> is not suitable.
+        /// The <see cref="ValueRingBuffer{T}"/> used by this disruptor. This is useful for creating custom
+        /// event processors if the behaviour of <see cref="IValueBatchEventProcessor{T}"/> is not suitable.
         /// </summary>
         public ValueRingBuffer<T> RingBuffer => _ringBuffer;
 
@@ -259,7 +287,6 @@ namespace Disruptor.Dsl
 
         /// <summary>
         /// Get the event for a given sequence in the RingBuffer.
-        /// <see cref="RingBuffer{T}.this"/>
         /// </summary>
         /// <param name="sequence">sequence for the event</param>
         /// <returns>event for the sequence</returns>
@@ -332,6 +359,13 @@ namespace Disruptor.Dsl
 
                 _consumerRepository.UnMarkEventProcessorsAsEndOfChain(barrierSequences);
             }
+        }
+
+        internal ValueEventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
+        {
+            var eventProcessors = processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, barrierSequences)).ToArray();
+
+            return HandleEventsWith(eventProcessors);
         }
 
         private void CheckNotStarted()

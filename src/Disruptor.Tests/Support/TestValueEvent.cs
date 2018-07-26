@@ -1,6 +1,6 @@
 ﻿namespace Disruptor.Tests.Support
 {
-    public class TestEvent
+    public struct TestValueEvent
     {
         public override string ToString() => "Test Event";
     }

@@ -160,10 +160,132 @@ namespace Disruptor
         /// <param name="sequence">the sequence to claim.</param>
         /// <returns>the preallocated event.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T ClaimAndGetPreallocated(long sequence)
+        public ref T ClaimAndGetPreallocated(long sequence)
         {
             _sequencer.Claim(sequence);
-            return this[sequence];
+            return ref this[sequence];
+        }
+
+        /// <summary>
+        /// Publishes an event to the ring buffer.  It handles claiming the next sequence, getting the current(uninitialised)
+        /// event from the ring buffer and publishing the claimed sequence after translation.
+        /// </summary>
+        /// <param name="translator">The user specified translation for the event</param>
+        public void PublishEvent<TTranslator>(TTranslator translator) where TTranslator : IValueEventTranslator<T>
+        {
+            long sequence = _sequencer.Next();
+            TranslateAndPublish(translator, sequence);
+        }
+
+        /// <summary>
+        /// Attempts to publish an event to the ring buffer.  It handles claiming the next sequence, getting the current(uninitialised)
+        /// event from the ring buffer and publishing the claimed sequence after translation.Will return false if specified capacity
+        /// was not available.
+        /// </summary>
+        /// <param name="translator">The user specified translation for the event</param>
+        /// <returns>true if the value was published, false if there was insufficient capacity</returns>
+        public bool TryPublishEvent<TTranslator>(TTranslator translator) where TTranslator : IValueEventTranslator<T>
+        {
+            if (_sequencer.TryNext(out var sequence))
+            {
+                TranslateAndPublish(translator, sequence);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Publishes multiple events to the ring buffer.  It handles claiming the next sequence, getting the current(uninitialised)
+        /// event from the ring buffer and publishing the claimed sequence after translation.
+        /// <para/>
+        /// With this call the data that is to be inserted into the ring buffer will be a field (either explicitly or captured anonymously),
+        /// therefore this call will require an instance of the translator for each value that is to be inserted into the ring buffer.
+        /// </summary>
+        /// <param name="translators">The user specified translation for each event</param>
+        public void PublishEvents(IValueEventTranslator<T>[] translators)
+        {
+            PublishEvents(translators, 0, translators.Length);
+        }
+
+        /// <summary>
+        /// Publishes multiple events to the ring buffer.  It handles claiming the next sequence, getting the current(uninitialised)
+        /// event from the ring buffer and publishing the claimed sequence after translation.
+        /// <para/>
+        /// With this call the data that is to be inserted into the ring buffer will be a field (either explicitly or captured anonymously),
+        /// therefore this call will require an instance of the translator for each value that is to be inserted into the ring buffer.
+        /// </summary>
+        /// <param name="translators">The user specified translation for each event</param>
+        /// <param name="batchStartsAt">The first element of the array which is within the batch.</param>
+        /// <param name="batchSize">The actual size of the batch.</param>
+        public void PublishEvents(IValueEventTranslator<T>[] translators, int batchStartsAt, int batchSize)
+        {
+            CheckBounds(translators, batchStartsAt, batchSize);
+            long finalSequence = _sequencer.Next(batchSize);
+            TranslateAndPublishBatch(translators, batchStartsAt, batchSize, finalSequence);
+        }
+
+        /// <summary>
+        /// Attempts to publish multiple events to the ring buffer.  It handles claiming the next sequence, getting the current(uninitialised)
+        /// event from the ring buffer and publishing the claimed sequence after translation.Will return false if specified capacity was not available.
+        /// </summary>
+        /// <param name="translators">The user specified translation for each event</param>
+        /// <returns>true if the value was published, false if there was insufficient capacity</returns>
+        public bool TryPublishEvents(IValueEventTranslator<T>[] translators)
+        {
+            return TryPublishEvents(translators, 0, translators.Length);
+        }
+
+        /// <summary>
+        /// Attempts to publish multiple events to the ring buffer.  It handles claiming the next sequence, getting the current(uninitialised)
+        /// event from the ring buffer and publishing the claimed sequence after translation.Will return false if specified capacity was not available.
+        /// </summary>
+        /// <param name="translators">The user specified translation for each event</param>
+        /// <param name="batchStartsAt">The first element of the array which is within the batch.</param>
+        /// <param name="batchSize">The actual size of the batch.</param>
+        /// <returns>true if the value was published, false if there was insufficient capacity</returns>
+        public bool TryPublishEvents(IValueEventTranslator<T>[] translators, int batchStartsAt, int batchSize)
+        {
+            CheckBounds(translators, batchStartsAt, batchSize);
+
+            if (_sequencer.TryNext(batchSize, out var finalSequence))
+            {
+                TranslateAndPublishBatch(translators, batchStartsAt, batchSize, finalSequence);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void TranslateAndPublish<TTranslator>(TTranslator translator, long sequence) where TTranslator : IValueEventTranslator<T>
+        {
+            try
+            {
+                translator.TranslateTo(ref this[sequence], sequence);
+            }
+            finally
+            {
+                _sequencer.Publish(sequence);
+            }
+        }
+
+        private void TranslateAndPublishBatch(IValueEventTranslator<T>[] translators, int batchStartsAt, int batchSize, long finalSequence)
+        {
+            long initialSequence = finalSequence - (batchSize - 1);
+            try
+            {
+                long sequence = initialSequence;
+                int batchEndsAt = batchStartsAt + batchSize;
+                for (int i = batchStartsAt; i < batchEndsAt; i++)
+                {
+                    IValueEventTranslator<T> translator = translators[i];
+                    translator.TranslateTo(ref this[sequence], sequence++);
+                }
+            }
+            finally
+            {
+                _sequencer.Publish(initialSequence, finalSequence);
+            }
         }
     }
 }

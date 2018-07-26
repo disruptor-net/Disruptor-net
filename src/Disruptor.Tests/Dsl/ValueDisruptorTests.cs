@@ -9,15 +9,14 @@ using NUnit.Framework;
 namespace Disruptor.Tests.Dsl
 {
     [TestFixture]
-    public class DisruptorTests
+    public class ValueDisruptorTests
     {
         private const int _timeoutInSeconds = 2;
-        private Disruptor<TestEvent> _disruptor;
+        private ValueDisruptor<TestValueEvent> _disruptor;
         private StubExecutor _executor;
         private List<DelayedEventHandler> _delayedEventHandlers;
-        private List<TestWorkHandler> _testWorkHandlers;
-        private RingBuffer<TestEvent> _ringBuffer;
-        private TestEvent _lastPublishedEvent;
+        private ValueRingBuffer<TestValueEvent> _ringBuffer;
+        private TestValueEvent? _lastPublishedEvent;
 
         [SetUp]
         public void SetUp()
@@ -25,9 +24,8 @@ namespace Disruptor.Tests.Dsl
             _lastPublishedEvent = null;
             _ringBuffer = null;
             _delayedEventHandlers = new List<DelayedEventHandler>();
-            _testWorkHandlers = new List<TestWorkHandler>();
             _executor = new StubExecutor();
-            _disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 4, _executor);
+            _disruptor = new ValueDisruptor<TestValueEvent>(() => new TestValueEvent(), 4, _executor);
         }
 
         [TearDown]
@@ -36,10 +34,6 @@ namespace Disruptor.Tests.Dsl
             foreach (var delayedEventHandler in _delayedEventHandlers)
             {
                 delayedEventHandler.StopWaiting();
-            }
-            foreach (var testWorkHandler in _testWorkHandlers)
-            {
-                testWorkHandler.StopWaiting();
             }
 
             _disruptor.Halt();
@@ -50,13 +44,13 @@ namespace Disruptor.Tests.Dsl
         public void ShouldProcessMessagesPublishedBeforeStartIsCalled()
         {
             var eventCounter = new CountdownEvent(2);
-            _disruptor.HandleEventsWith(new ActionEventHandler<TestEvent>(e => eventCounter.Signal()));
+            _disruptor.HandleEventsWith(new ActionEventHandler<TestValueEvent>(e => eventCounter.Signal()));
 
-            _disruptor.PublishEvent(new ActionEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
+            _disruptor.PublishEvent(new ActionEventTranslator<TestValueEvent>(e => _lastPublishedEvent = e));
 
             _disruptor.Start();
 
-            _disruptor.PublishEvent(new ActionEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
+            _disruptor.PublishEvent(new ActionEventTranslator<TestValueEvent>(e => _lastPublishedEvent = e));
 
             if (!eventCounter.Wait(TimeSpan.FromSeconds(5)))
                 Assert.Fail("Did not process event published before start was called. Missed events: " + eventCounter.CurrentCount);
@@ -111,26 +105,6 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
-        public void ShouldSetSequenceForWorkProcessorIfAddedAfterPublish()
-        {
-            var rb = _disruptor.RingBuffer;
-            var wh1 = CreateTestWorkHandler();
-            var wh2 = CreateTestWorkHandler();
-            var wh3 = CreateTestWorkHandler();
-
-            rb.Publish(rb.Next());
-            rb.Publish(rb.Next());
-            rb.Publish(rb.Next());
-            rb.Publish(rb.Next());
-            rb.Publish(rb.Next());
-            rb.Publish(rb.Next());
-
-            _disruptor.HandleEventsWithWorkerPool(wh1, wh2, wh3);
-
-            Assert.That(_disruptor.RingBuffer.GetMinimumGatingSequence(), Is.EqualTo(5L));
-        }
-
-        [Test]
         public void ShouldCreateEventProcessorGroupForFirstEventProcessors()
         {
             _executor.IgnoreExecutions();
@@ -149,7 +123,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldMakeEntriesAvailableToFirstHandlersImmediately()
         {
             var countDownLatch = new CountdownEvent(2);
-            var eventHandler = new EventHandlerStub<TestEvent>(countDownLatch);
+            var eventHandler = new EventHandlerStub<TestValueEvent>(countDownLatch);
 
             _disruptor.HandleEventsWith(CreateDelayedEventHandler(), eventHandler);
 
@@ -162,7 +136,7 @@ namespace Disruptor.Tests.Dsl
             var eventHandler1 = CreateDelayedEventHandler();
 
             var countDownLatch = new CountdownEvent(2);
-            var eventHandler2 = new EventHandlerStub<TestEvent>(countDownLatch);
+            var eventHandler2 = new EventHandlerStub<TestValueEvent>(countDownLatch);
 
             _disruptor.HandleEventsWith(eventHandler1).Then(eventHandler2);
 
@@ -176,7 +150,7 @@ namespace Disruptor.Tests.Dsl
             var handler2 = CreateDelayedEventHandler();
 
             var countDownLatch = new CountdownEvent(2);
-            var handlerWithBarrier = new EventHandlerStub<TestEvent>(countDownLatch);
+            var handlerWithBarrier = new EventHandlerStub<TestValueEvent>(countDownLatch);
 
             _disruptor.HandleEventsWith(handler1, handler2);
             _disruptor.After(handler1, handler2).HandleEventsWith(handlerWithBarrier);
@@ -192,7 +166,7 @@ namespace Disruptor.Tests.Dsl
             var handler2 = CreateDelayedEventHandler();
 
             var countDownLatch = new CountdownEvent(2);
-            var handlerWithBarrier = new EventHandlerStub<TestEvent>(countDownLatch);
+            var handlerWithBarrier = new EventHandlerStub<TestValueEvent>(countDownLatch);
 
             _disruptor.HandleEventsWith(handler1);
             var handler2Group = _disruptor.HandleEventsWith(handler2);
@@ -217,41 +191,6 @@ namespace Disruptor.Tests.Dsl
 
             // handler2.equals(handler1) but it hasn't yet been registered so should throw exception.
             Assert.Throws<ArgumentException>(() => _disruptor.After(handler2));
-        }
-
-        [Test]
-        public void ShouldSupportSpecifyingAExceptionHandlerForEventProcessors()
-        {
-            var eventHandled = new AtomicReference<Exception>();
-            var exceptionHandler = new StubExceptionHandler(eventHandled);
-            var testException = new Exception();
-            var handler = new ExceptionThrowingEventHandler(testException);
-
-            _disruptor.HandleExceptionsWith(exceptionHandler);
-            _disruptor.HandleEventsWith(handler);
-
-            PublishEvent();
-
-            var actualException = WaitFor(eventHandled);
-            Assert.AreSame(testException, actualException);
-        }
-
-        [Test]
-        public void ShouldOnlyApplyExceptionsHandlersSpecifiedViaHandleExceptionsWithOnNewEventProcessors()
-        {
-            var eventHandled = new AtomicReference<Exception>();
-            var exceptionHandler = new StubExceptionHandler(eventHandled);
-            var testException = new Exception();
-            var handler = new ExceptionThrowingEventHandler(testException);
-
-            _disruptor.HandleExceptionsWith(exceptionHandler);
-            _disruptor.HandleEventsWith(handler);
-            _disruptor.HandleExceptionsWith(new FatalExceptionHandler());
-
-            PublishEvent();
-
-            var actualException = WaitFor(eventHandled);
-            Assert.AreSame(testException, actualException);
         }
 
         [Test]
@@ -362,7 +301,7 @@ namespace Disruptor.Tests.Dsl
             var delayedEventHandler = CreateDelayedEventHandler();
 
             var countDownLatch = new CountdownEvent(2);
-            var handlerWithBarrier = new EventHandlerStub<TestEvent>(countDownLatch);
+            var handlerWithBarrier = new EventHandlerStub<TestValueEvent>(countDownLatch);
 
             var processor = BatchEventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), delayedEventHandler);
             _disruptor.HandleEventsWith(processor).Then(handlerWithBarrier);
@@ -378,7 +317,7 @@ namespace Disruptor.Tests.Dsl
 
             var ringBuffer = _disruptor.RingBuffer;
             var countDownLatch = new CountdownEvent(2);
-            var handlerWithBarrier = new EventHandlerStub<TestEvent>(countDownLatch);
+            var handlerWithBarrier = new EventHandlerStub<TestValueEvent>(countDownLatch);
 
             var sequenceBarrier = _disruptor.After(delayedEventHandler).AsSequenceBarrier();
             var processor = BatchEventProcessorFactory.Create(ringBuffer, sequenceBarrier, handlerWithBarrier);
@@ -396,7 +335,7 @@ namespace Disruptor.Tests.Dsl
 
             var ringBuffer = _disruptor.RingBuffer;
             var countDownLatch = new CountdownEvent(2);
-            var handlerWithBarrier = new EventHandlerStub<TestEvent>(countDownLatch);
+            var handlerWithBarrier = new EventHandlerStub<TestValueEvent>(countDownLatch);
 
             var sequenceBarrier = _disruptor.After(delayedEventHandler1).AsSequenceBarrier();
             var processor = BatchEventProcessorFactory.Create(ringBuffer, sequenceBarrier, delayedEventHandler2);
@@ -404,118 +343,6 @@ namespace Disruptor.Tests.Dsl
             _disruptor.After(delayedEventHandler1).And(processor).HandleEventsWith(handlerWithBarrier);
 
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler1, delayedEventHandler2);
-        }
-
-        [Test]
-        public void ShouldProvideEventsToWorkHandlers()
-        {
-            var workHandler1 = CreateTestWorkHandler();
-            var workHandler2 = CreateTestWorkHandler();
-            _disruptor.HandleEventsWithWorkerPool(workHandler1, workHandler2);
-
-            PublishEvent();
-            PublishEvent();
-
-            workHandler1.ProcessEvent();
-            workHandler2.ProcessEvent();
-        }
-
-        [Test]
-        public void ShouldProvideEventsMultipleWorkHandlers()
-        {
-            var workHandler1 = CreateTestWorkHandler();
-            var workHandler2 = CreateTestWorkHandler();
-            var workHandler3 = CreateTestWorkHandler();
-            var workHandler4 = CreateTestWorkHandler();
-            var workHandler5 = CreateTestWorkHandler();
-            var workHandler6 = CreateTestWorkHandler();
-            var workHandler7 = CreateTestWorkHandler();
-            var workHandler8 = CreateTestWorkHandler();
-
-            _disruptor
-                .HandleEventsWithWorkerPool(workHandler1, workHandler2)
-                .ThenHandleEventsWithWorkerPool(workHandler3, workHandler4);
-            _disruptor
-                .HandleEventsWithWorkerPool(workHandler5, workHandler6)
-                .ThenHandleEventsWithWorkerPool(workHandler7, workHandler8);
-        }
-
-        [Test]
-        public void ShouldSupportUsingWorkerPoolAsDependency()
-        {
-            var workHandler1 = CreateTestWorkHandler();
-            var workHandler2 = CreateTestWorkHandler();
-            var delayedEventHandler = CreateDelayedEventHandler();
-            _disruptor.HandleEventsWithWorkerPool(workHandler1, workHandler2).Then(delayedEventHandler);
-
-            PublishEvent();
-            PublishEvent();
-
-            Assert.That(_disruptor.GetBarrierFor(delayedEventHandler).Cursor, Is.EqualTo(-1L));
-
-            workHandler2.ProcessEvent();
-            workHandler1.ProcessEvent();
-
-            delayedEventHandler.ProcessEvent();
-        }
-
-        [Test]
-        public void ShouldSupportUsingWorkerPoolAsDependencyAndProcessFirstEventAsSoonAsItIsAvailable()
-        {
-            var workHandler1 = CreateTestWorkHandler();
-            var workHandler2 = CreateTestWorkHandler();
-            var delayedEventHandler = CreateDelayedEventHandler();
-            _disruptor.HandleEventsWithWorkerPool(workHandler1, workHandler2).Then(delayedEventHandler);
-
-            PublishEvent();
-            PublishEvent();
-
-            workHandler1.ProcessEvent();
-            delayedEventHandler.ProcessEvent();
-
-            workHandler2.ProcessEvent();
-            delayedEventHandler.ProcessEvent();
-        }
-
-        [Test]
-        public void ShouldSupportUsingWorkerPoolWithADependency()
-        {
-            var workHandler1 = CreateTestWorkHandler();
-            var workHandler2 = CreateTestWorkHandler();
-            var delayedEventHandler = CreateDelayedEventHandler();
-            _disruptor.HandleEventsWith(delayedEventHandler).ThenHandleEventsWithWorkerPool(workHandler1, workHandler2);
-
-            PublishEvent();
-            PublishEvent();
-
-            delayedEventHandler.ProcessEvent();
-            delayedEventHandler.ProcessEvent();
-
-            workHandler1.ProcessEvent();
-            workHandler2.ProcessEvent();
-        }
-
-        [Test]
-        public void ShouldSupportCombiningWorkerPoolWithEventHandlerAsDependencyWhenNotPreviouslyRegistered()
-
-        {
-            var workHandler1 = CreateTestWorkHandler();
-            var delayedEventHandler1 = CreateDelayedEventHandler();
-            var delayedEventHandler2 = CreateDelayedEventHandler();
-            _disruptor.HandleEventsWith(delayedEventHandler1).And(_disruptor.HandleEventsWithWorkerPool(workHandler1)).Then(
-                delayedEventHandler2);
-
-            PublishEvent();
-            PublishEvent();
-
-            delayedEventHandler1.ProcessEvent();
-            delayedEventHandler1.ProcessEvent();
-
-            workHandler1.ProcessEvent();
-            delayedEventHandler2.ProcessEvent();
-
-            workHandler1.ProcessEvent();
-            delayedEventHandler2.ProcessEvent();
         }
 
         [Test]
@@ -551,18 +378,18 @@ namespace Disruptor.Tests.Dsl
             Assert.That(_disruptor.RingBuffer.GetRemainingCapacity(), Is.EqualTo(_ringBuffer.BufferSize - 0L));
         }
 
-        private class TempEventHandler : IEventHandler<TestEvent>
+        private class TempEventHandler : IValueEventHandler<TestValueEvent>
         {
-            private readonly Disruptor<TestEvent> _disruptor;
+            private readonly ValueDisruptor<TestValueEvent> _disruptor;
             private readonly long[] _remainingCapacity;
 
-            public TempEventHandler(Disruptor<TestEvent> disruptor, long[] remainingCapacity)
+            public TempEventHandler(ValueDisruptor<TestValueEvent> disruptor, long[] remainingCapacity)
             {
                 _disruptor = disruptor;
                 _remainingCapacity = remainingCapacity;
             }
 
-            public void OnEvent(TestEvent data, long sequence, bool endOfBatch)
+            public void OnEvent(ref TestValueEvent data, long sequence, bool endOfBatch)
             {
                 _remainingCapacity[0] = _disruptor.RingBuffer.GetRemainingCapacity();
             }
@@ -572,7 +399,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldAllowEventHandlerWithSuperType()
         {
             var latch = new CountdownEvent(2);
-            var objectHandler = new EventHandlerStub<object>(latch);
+            var objectHandler = new EventHandlerStub<TestValueEvent>(latch);
 
             _disruptor.HandleEventsWith(objectHandler);
 
@@ -584,7 +411,7 @@ namespace Disruptor.Tests.Dsl
         {
             var latch = new CountdownEvent(2);
             var delayedEventHandler = CreateDelayedEventHandler();
-            var objectHandler = new EventHandlerStub<object>(latch);
+            var objectHandler = new EventHandlerStub<TestValueEvent>(latch);
 
             _disruptor.HandleEventsWith(delayedEventHandler).Then(objectHandler);
 
@@ -595,27 +422,27 @@ namespace Disruptor.Tests.Dsl
         public void ShouldMakeEntriesAvailableToFirstCustomProcessorsImmediately()
         {
             var countDownLatch = new CountdownEvent(2);
-            var eventHandler = new EventHandlerStub<TestEvent>(countDownLatch);
+            var eventHandler = new EventHandlerStub<TestValueEvent>(countDownLatch);
 
             _disruptor.HandleEventsWith(new EventProcessorFactory(_disruptor, eventHandler, 0));
 
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch);
         }
 
-        private class EventProcessorFactory : IEventProcessorFactory<TestEvent>
+        private class EventProcessorFactory : IValueEventProcessorFactory<TestValueEvent>
         {
-            private readonly Disruptor<TestEvent> _disruptor;
-            private readonly IEventHandler<TestEvent> _eventHandler;
+            private readonly ValueDisruptor<TestValueEvent> _disruptor;
+            private readonly IValueEventHandler<TestValueEvent> _eventHandler;
             private readonly int _sequenceLength;
 
-            public EventProcessorFactory(Disruptor<TestEvent> disruptor, IEventHandler<TestEvent> eventHandler, int sequenceLength)
+            public EventProcessorFactory(ValueDisruptor<TestValueEvent> disruptor, IValueEventHandler<TestValueEvent> eventHandler, int sequenceLength)
             {
                 _disruptor = disruptor;
                 _eventHandler = eventHandler;
                 _sequenceLength = sequenceLength;
             }
 
-            public IEventProcessor CreateEventProcessor(RingBuffer<TestEvent> ringBuffer, ISequence[] barrierSequences)
+            public IEventProcessor CreateEventProcessor(ValueRingBuffer<TestValueEvent> ringBuffer, ISequence[] barrierSequences)
             {
                 Assert.AreEqual(_sequenceLength, barrierSequences.Length, "Should not have had any barrier sequences");
                 return BatchEventProcessorFactory.Create(_disruptor.RingBuffer, ringBuffer.NewBarrier(barrierSequences), _eventHandler);
@@ -626,19 +453,12 @@ namespace Disruptor.Tests.Dsl
         public void ShouldHonourDependenciesForCustomProcessors()
         {
             var countDownLatch = new CountdownEvent(2);
-            var eventHandler = new EventHandlerStub<TestEvent>(countDownLatch);
+            var eventHandler = new EventHandlerStub<TestValueEvent>(countDownLatch);
             var delayedEventHandler = CreateDelayedEventHandler();
 
             _disruptor.HandleEventsWith(delayedEventHandler).Then(new EventProcessorFactory(_disruptor, eventHandler, 1));
 
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
-        }
-
-        private TestWorkHandler CreateTestWorkHandler()
-        {
-            var testWorkHandler = new TestWorkHandler();
-            _testWorkHandlers.Add(testWorkHandler);
-            return testWorkHandler;
         }
 
         private void EnsureTwoEventsProcessedAccordingToDependencies(CountdownEvent countDownLatch, params DelayedEventHandler[] dependencies)
@@ -675,7 +495,7 @@ namespace Disruptor.Tests.Dsl
             }
         }
 
-        private TestEvent PublishEvent()
+        private TestValueEvent PublishEvent()
         {
             if (_ringBuffer == null)
             {
@@ -689,19 +509,19 @@ namespace Disruptor.Tests.Dsl
 
             _disruptor.PublishEvent(new EventTranslator(this));
 
-            return _lastPublishedEvent;
+            return _lastPublishedEvent.GetValueOrDefault();
         }
 
-        private class EventTranslator : IEventTranslator<TestEvent>
+        private class EventTranslator : IValueEventTranslator<TestValueEvent>
         {
-            private readonly DisruptorTests _disruptorTests;
+            private readonly ValueDisruptorTests _disruptorTests;
 
-            public EventTranslator(DisruptorTests disruptorTests)
+            public EventTranslator(ValueDisruptorTests disruptorTests)
             {
                 _disruptorTests = disruptorTests;
             }
 
-            public void TranslateTo(TestEvent eventData, long sequence)
+            public void TranslateTo(ref TestValueEvent eventData, long sequence)
             {
                 _disruptorTests._lastPublishedEvent = eventData;
             }

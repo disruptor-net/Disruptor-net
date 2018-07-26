@@ -10,6 +10,8 @@ namespace Disruptor.Dsl
 
         public void HandleEventException(Exception ex, long sequence, ref T evt) => _handler.HandleEventException(ex, sequence, ref evt);
 
+        public void HandleOnTimeoutException(Exception ex, long sequence) => _handler.HandleOnTimeoutException(ex, sequence);
+
         public void HandleOnStartException(Exception ex) => _handler.HandleOnStartException(ex);
 
         public void HandleOnShutdownException(Exception ex) => _handler.HandleOnShutdownException(ex);

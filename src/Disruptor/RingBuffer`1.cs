@@ -510,30 +510,6 @@ namespace Disruptor
             return false;
         }
 
-        private void CheckBounds(IEventTranslator<T>[] translators, int batchStartsAt, int batchSize)
-        {
-            CheckBatchSizing(batchStartsAt, batchSize);
-            BatchOverRuns(translators, batchStartsAt, batchSize);
-        }
-
-        private void CheckBatchSizing(int batchStartsAt, int batchSize)
-        {
-            if (batchStartsAt < 0 || batchSize < 0)
-            {
-                throw new ArgumentException("Both batchStartsAt and batchSize must be positive but got: batchStartsAt " + batchStartsAt + " and batchSize " + batchSize);
-            }
-            else if (batchSize > BufferSize)
-            {
-                throw new ArgumentException("The ring buffer cannot accommodate " + batchSize + " it only has space for " + BufferSize + " entities.");
-            }
-        }
-
-        private void CheckBounds<A>(A[] arg0, int batchStartsAt, int batchSize)
-        {
-            CheckBatchSizing(batchStartsAt, batchSize);
-            BatchOverRuns(arg0, batchStartsAt, batchSize);
-        }
-
         private void CheckBounds<A, B>(A[] arg0, B[] arg1, int batchStartsAt, int batchSize)
         {
             CheckBatchSizing(batchStartsAt, batchSize);
@@ -554,17 +530,6 @@ namespace Disruptor
         {
             CheckBatchSizing(batchStartsAt, batchSize);
             BatchOverRuns(args, batchStartsAt, batchSize);
-        }
-
-        private static void BatchOverRuns<A>(A[] arg0, int batchStartsAt, int batchSize)
-        {
-            if (batchStartsAt + batchSize > arg0.Length)
-            {
-                throw new ArgumentException(
-                    "A batchSize of: " + batchSize +
-                    " with batchStatsAt of: " + batchStartsAt +
-                    " will overrun the available number of arguments: " + (arg0.Length - batchStartsAt));
-            }
         }
 
         private void TranslateAndPublish(IEventTranslator<T> translator, long sequence)
@@ -628,8 +593,7 @@ namespace Disruptor
             }
         }
 
-        private void TranslateAndPublishBatch(IEventTranslator<T>[] translators, int batchStartsAt,
-                                              int batchSize, long finalSequence)
+        private void TranslateAndPublishBatch(IEventTranslator<T>[] translators, int batchStartsAt, int batchSize, long finalSequence)
         {
             long initialSequence = finalSequence - (batchSize - 1);
             try

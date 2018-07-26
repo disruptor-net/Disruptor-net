@@ -31,17 +31,12 @@ namespace Disruptor.Tests.Support
 
         public bool Equals(StubEvent other)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return other.Value == Value;
+            return other != null && other.Value == Value;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != typeof(StubEvent)) return false;
-            return Equals((StubEvent)obj);
+            return Equals(obj as StubEvent);
         }
 
         public override string ToString()

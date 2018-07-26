@@ -3,7 +3,7 @@ using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Support
 {
-    public class AdditionEventHandler : IEventHandler<PerfEvent>, IValueEventHandler<ValueEvent>, IBatchStartAware
+    public class AdditionEventHandler : IEventHandler<PerfEvent>, IValueEventHandler<PerfValueEvent>, IBatchStartAware
     {
         private PaddedLong _value;
         public long Count { get; private set; }
@@ -30,7 +30,7 @@ namespace Disruptor.PerfTests.Support
             }
         }
 
-        public void OnEvent(ref ValueEvent data, long sequence, bool endOfBatch)
+        public void OnEvent(ref PerfValueEvent data, long sequence, bool endOfBatch)
         {
             _value.Value = _value.Value + data.Value;
 

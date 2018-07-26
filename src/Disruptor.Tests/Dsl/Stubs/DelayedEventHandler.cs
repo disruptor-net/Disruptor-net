@@ -4,7 +4,7 @@ using Disruptor.Tests.Support;
 
 namespace Disruptor.Tests.Dsl.Stubs
 {
-    public class DelayedEventHandler : IEventHandler<TestEvent>, ILifecycleAware
+    public class DelayedEventHandler : IEventHandler<TestEvent>, IValueEventHandler<TestValueEvent>, ILifecycleAware
     {
         private int _readyToProcessEvent;
         private volatile bool _stopped;
@@ -20,6 +20,11 @@ namespace Disruptor.Tests.Dsl.Stubs
         }
 
         public void OnEvent(TestEvent entry, long sequence, bool endOfBatch)
+        {
+            WaitForAndSetFlag(0);
+        }
+
+        public void OnEvent(ref TestValueEvent data, long sequence, bool endOfBatch)
         {
             WaitForAndSetFlag(0);
         }

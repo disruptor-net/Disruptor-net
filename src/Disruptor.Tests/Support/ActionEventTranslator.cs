@@ -2,7 +2,7 @@
 
 namespace Disruptor.Tests.Support
 {
-    public class ActionEventTranslator<T> : IEventTranslator<T>
+    public class ActionEventTranslator<T> : IEventTranslator<T>, IValueEventTranslator<T>
     {
         private readonly Action<T> _translateToAction;
 
@@ -12,6 +12,11 @@ namespace Disruptor.Tests.Support
         }
 
         public void TranslateTo(T eventData, long sequence)
+        {
+            _translateToAction.Invoke(eventData);
+        }
+
+        public void TranslateTo(ref T eventData, long sequence)
         {
             _translateToAction.Invoke(eventData);
         }

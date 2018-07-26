@@ -12,8 +12,8 @@ namespace Disruptor.Tests.Dsl
         private ConsumerRepository _consumerRepository;
         private IEventProcessor _eventProcessor1;
         private IEventProcessor _eventProcessor2;
-        private SleepingEventHandler _handler1;
-        private SleepingEventHandler _handler2;
+        private DummyEventHandler<TestEvent> _handler1;
+        private DummyEventHandler<TestEvent> _handler2;
         private ISequenceBarrier _barrier1;
         private ISequenceBarrier _barrier2;
 
@@ -24,8 +24,8 @@ namespace Disruptor.Tests.Dsl
             _eventProcessor1 = new DummyEventProcessor();
             _eventProcessor2 = new DummyEventProcessor();
 
-            _handler1 = new SleepingEventHandler();
-            _handler2 = new SleepingEventHandler();
+            _handler1 = new DummyEventHandler<TestEvent>();
+            _handler2 = new DummyEventHandler<TestEvent>();
 
             _barrier1 = new DummySequenceBarrier();
             _barrier2 = new DummySequenceBarrier();

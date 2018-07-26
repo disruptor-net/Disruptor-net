@@ -24,7 +24,7 @@ namespace Disruptor.Tests
             return new ConstraintResult(this, actual, valid);
         }
 
-        public static RingBufferEqualsConstraint RingBufferWithEvents(params object[] values)
+        public static RingBufferEqualsConstraint IsRingBufferWithEvents(params object[] values)
         {
             return new RingBufferEqualsConstraint(values);
         }

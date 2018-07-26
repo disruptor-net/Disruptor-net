@@ -403,5 +403,34 @@ namespace Disruptor
                    "sequencer=" + _sequencer +
                    "}";
         }
+
+        internal void CheckBounds<TArray>(TArray[] translators, int batchStartsAt, int batchSize)
+        {
+            CheckBatchSizing(batchStartsAt, batchSize);
+            BatchOverRuns(translators, batchStartsAt, batchSize);
+        }
+
+        internal void CheckBatchSizing(int batchStartsAt, int batchSize)
+        {
+            if (batchStartsAt < 0 || batchSize < 0)
+            {
+                throw new ArgumentException("Both batchStartsAt and batchSize must be positive but got: batchStartsAt " + batchStartsAt + " and batchSize " + batchSize);
+            }
+            if (batchSize > BufferSize)
+            {
+                throw new ArgumentException("The ring buffer cannot accommodate " + batchSize + " it only has space for " + BufferSize + " entities.");
+            }
+        }
+
+        internal static void BatchOverRuns<TArray>(TArray[] arg0, int batchStartsAt, int batchSize)
+        {
+            if (batchStartsAt + batchSize > arg0.Length)
+            {
+                throw new ArgumentException(
+                    "A batchSize of: " + batchSize +
+                    " with batchStatsAt of: " + batchStartsAt +
+                    " will overrun the available number of arguments: " + (arg0.Length - batchStartsAt));
+            }
+        }
     }
 }
