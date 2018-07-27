@@ -136,8 +136,6 @@ namespace Disruptor
 
             Add(); // add the start + offset to the byref object pointer
 
-            //Ldobj(typeof(T).MakeByRefType()); // load a T value from the computed address
-
             Ret();
 
             throw IL.Unreachable();

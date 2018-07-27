@@ -7,46 +7,29 @@ using NUnit.Framework;
 
 namespace Disruptor.Tests
 {
-    [TestFixture(BatchEventProcessorType.Legacy)]
-    [TestFixture(BatchEventProcessorType.Optimized)]
-    public class BatchEventProcessorTests
+    [TestFixture]
+    public class ValueBatchEventProcessorTests
     {
-        private readonly BatchEventProcessorType _targetType;
-        private RingBuffer<StubEvent> _ringBuffer;
+        private ValueRingBuffer<StubValueEvent> _ringBuffer;
         private ISequenceBarrier _sequenceBarrier;
-
-        public BatchEventProcessorTests(BatchEventProcessorType targetType)
-        {
-            _targetType = targetType;
-        }
 
         [SetUp]
         public void Setup()
         {
-            _ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), 16);
+            _ringBuffer = new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), 16);
             _sequenceBarrier = _ringBuffer.NewBarrier();
         }
 
-        private IBatchEventProcessor<T> CreateBatchEventProcessor<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
-            where T : class
+        private IValueBatchEventProcessor<T> CreateBatchEventProcessor<T>(IValueDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
+            where T : struct
         {
-            switch (_targetType)
-            {
-                case BatchEventProcessorType.Legacy:
-                    return new BatchEventProcessor<T>(dataProvider, sequenceBarrier, eventHandler);
-
-                case BatchEventProcessorType.Optimized:
-                    return BatchEventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
-
-                default:
-                    throw new NotSupportedException();
-            }
+            return BatchEventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
         }
 
         [Test]
         public void ShouldThrowExceptionOnSettingNullExceptionHandler()
         {
-            var eventHandler = new TestEventHandler<StubEvent>(x => throw new NullReferenceException());
+            var eventHandler = new TestValueEventHandler<StubValueEvent>(x => throw new NullReferenceException());
             var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
             Assert.Throws<ArgumentNullException>(() => batchEventProcessor.SetExceptionHandler(null));
@@ -56,7 +39,7 @@ namespace Disruptor.Tests
         public void ShouldCallMethodsInLifecycleOrderForBatch()
         {
             var eventSignal = new CountdownEvent(3);
-            var eventHandler = new TestEventHandler<StubEvent>(x => eventSignal.Signal());
+            var eventHandler = new TestValueEventHandler<StubValueEvent>(x => eventSignal.Signal());
             var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
             _ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
@@ -78,8 +61,8 @@ namespace Disruptor.Tests
         public void ShouldCallExceptionHandlerOnUncaughtException()
         {
             var exceptionSignal = new CountdownEvent(1);
-            var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
-            var eventHandler = new TestEventHandler<StubEvent>(x => throw new NullReferenceException());
+            var exceptionHandler = new TestValueExceptionHandler<StubValueEvent>(x => exceptionSignal.Signal());
+            var eventHandler = new TestValueEventHandler<StubValueEvent>(x => throw new NullReferenceException());
             var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
             _ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
 
@@ -117,13 +100,13 @@ namespace Disruptor.Tests
             Assert.That(batchSizes, Is.EqualTo(new List<long> { 3, 2, 1 }));
         }
 
-        private class LoopbackEventHandler : IEventHandler<StubEvent>, IBatchStartAware
+        private class LoopbackEventHandler : IValueEventHandler<StubValueEvent>, IBatchStartAware
         {
             private readonly List<long> _batchSizes;
-            private readonly RingBuffer<StubEvent> _ringBuffer;
+            private readonly ValueRingBuffer<StubValueEvent> _ringBuffer;
             private readonly CountdownEvent _signal;
 
-            public LoopbackEventHandler(RingBuffer<StubEvent> ringBuffer, List<long> batchSizes, CountdownEvent signal)
+            public LoopbackEventHandler(ValueRingBuffer<StubValueEvent> ringBuffer, List<long> batchSizes, CountdownEvent signal)
             {
                 _batchSizes = batchSizes;
                 _ringBuffer = ringBuffer;
@@ -132,7 +115,7 @@ namespace Disruptor.Tests
 
             public void OnBatchStart(long batchSize) => _batchSizes.Add(batchSize);
 
-            public void OnEvent(StubEvent data, long sequence, bool endOfBatch)
+            public void OnEvent(ref StubValueEvent data, long sequence, bool endOfBatch)
             {
                 if (!endOfBatch)
                 {
@@ -149,7 +132,7 @@ namespace Disruptor.Tests
             var waitStrategy = new BusySpinWaitStrategy();
             var sequencer = new SingleProducerSequencer(8, waitStrategy);
             var barrier = ProcessingSequenceBarrierFactory.Create(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
-            var dp = new DummyDataProvider<object>();
+            var dp = new DummyDataProvider<long>();
 
             var h1 = new LifeCycleHandler();
             var p1 = CreateBatchEventProcessor(dp, barrier, h1);
@@ -189,12 +172,12 @@ namespace Disruptor.Tests
             }
         }
 
-        private class LifeCycleHandler : IEventHandler<object>, ILifecycleAware
+        private class LifeCycleHandler : IValueEventHandler<long>, ILifecycleAware
         {
             private readonly ManualResetEvent _startedSignal = new ManualResetEvent(false);
             private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
 
-            public void OnEvent(object data, long sequence, bool endOfBatch)
+            public void OnEvent(ref long data, long sequence, bool endOfBatch)
             {
             }
 

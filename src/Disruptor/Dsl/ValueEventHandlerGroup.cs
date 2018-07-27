@@ -8,7 +8,8 @@ namespace Disruptor.Dsl
     /// A group of <see cref="IEventProcessor"/>s used as part of the <see cref="ValueDisruptor{T}"/>
     ///</summary>
     ///<typeparam name="T">the type of event used by <see cref="IEventProcessor"/>s.</typeparam>
-    public class ValueEventHandlerGroup<T> where T : struct
+    public class ValueEventHandlerGroup<T>
+        where T : struct
     {
         private readonly ValueDisruptor<T> _disruptor;
         private readonly ConsumerRepository _consumerRepository;

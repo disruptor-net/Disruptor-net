@@ -2,7 +2,7 @@ using System;
 
 namespace Disruptor.Tests.Support
 {
-    public class StubEvent
+    public class StubEvent : IEquatable<StubEvent>
     {
         public StubEvent(int i)
         {

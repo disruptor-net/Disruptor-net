@@ -5,19 +5,19 @@ using NUnit.Framework;
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class FatalExceptionHandlerTests
+    public class ValueFatalExceptionHandlerTests
     {
         [Test]
         public void ShouldHandleFatalException()
         {
             var causeException = new Exception();
-            var evt = new StubEvent(0);
+            var evt = new StubValueEvent(0);
 
-            var exceptionHandler = new FatalExceptionHandler();
+            var exceptionHandler = new ValueFatalExceptionHandler<StubValueEvent>();
 
             try
             {
-                exceptionHandler.HandleEventException(causeException, 0L, evt);
+                exceptionHandler.HandleEventException(causeException, 0L, ref evt);
             }
             catch (Exception ex)
             {

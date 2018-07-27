@@ -19,7 +19,8 @@ namespace Disruptor.Dsl
     /// var ringBuffer = disruptor.Start();</code>
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
-    public class Disruptor<T> where T : class
+    public class Disruptor<T>
+        where T : class
     {
         private readonly RingBuffer<T> _ringBuffer;
         private readonly IExecutor _executor;

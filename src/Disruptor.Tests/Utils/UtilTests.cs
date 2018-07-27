@@ -1,3 +1,5 @@
+using System.Linq;
+using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests.Utils
@@ -35,6 +37,51 @@ namespace Disruptor.Tests.Utils
             var sequences = new Sequence[0];
 
             Assert.AreEqual(long.MaxValue, Util.GetMinimumSequence(sequences));
+        }
+
+        [Test]
+        public void ShouldReadObjectAtIndex()
+        {
+            var array = Enumerable.Range(0, 2000).Select(x => new StubEvent(x)).ToArray();
+
+            for (var i = 0; i < array.Length; i++)
+            {
+                var evt = Util.Read<StubEvent>(array, i);
+
+                Assert.AreEqual(new StubEvent(i), evt);
+            }
+        }
+
+        [Test]
+        public void ShouldReadValueAtIndex()
+        {
+            var array = Enumerable.Range(0, 2000).Select(x => new StubValueEvent(x)).ToArray();
+
+            for (var i = 0; i < array.Length; i++)
+            {
+                var evt = Util.ReadValue<StubValueEvent>(array, i);
+
+                Assert.AreEqual(new StubValueEvent(i), evt);
+            }
+        }
+
+        [Test]
+        public void ShouldMutateValueAtIndex()
+        {
+            var array = Enumerable.Range(0, 2000).Select(x => new StubValueEvent(x)).ToArray();
+
+            for (var i = 0; i < array.Length; i++)
+            {
+                ref var evt = ref Util.ReadValue<StubValueEvent>(array, i);
+                evt.TestString = evt.Value.ToString();
+            }
+
+            for (var i = 0; i < array.Length; i++)
+            {
+                var evt = Util.ReadValue<StubValueEvent>(array, i);
+
+                Assert.AreEqual(evt.Value.ToString(), evt.TestString);
+            }
         }
     }
 }

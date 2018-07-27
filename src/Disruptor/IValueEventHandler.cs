@@ -6,6 +6,7 @@
     /// <typeparam name="T">Type of events for sharing during exchange or parallel coordination of an event.</typeparam>
     /// <remarks>See <see cref="IValueBatchEventProcessor{T}.SetExceptionHandler"/> if you want to handle exceptions propagated out of the handler.</remarks>
     public interface IValueEventHandler<T>
+        where T : struct
     {
         /// <summary>
         /// Called when a publisher has committed an event to the <see cref="ValueRingBuffer{T}"/>. The <see cref="IValueBatchEventProcessor{T}"/> will
