@@ -19,7 +19,6 @@
   
   <ItemGroup>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
-	<ProjectReference Include="..\Disruptor.Scheduler\Disruptor.Scheduler.csproj" />
 	<ProjectReference Include="..\Disruptor.Tests\Disruptor.Tests.csproj" />
   </ItemGroup>
   

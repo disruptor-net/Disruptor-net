@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
-using Disruptor.Scheduler;
 using ValuePublisher = System.Action<System.Threading.CountdownEvent, Disruptor.RingBuffer<Disruptor.PerfTests.Support.PerfEvent>, long>;
 
 namespace Disruptor.PerfTests.Sequenced
