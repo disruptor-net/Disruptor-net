@@ -128,8 +128,8 @@ namespace Disruptor.PerfTests
                 Console.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} target [--report=false] [--openreport=false] [--printspec=false] [--runs=count]");
                 Console.WriteLine();
                 Console.WriteLine("Options:");
-                Console.WriteLine("     target           Test type full name or \"all\" for all tests");
-                Console.WriteLine("     --runs count     Number of runs");
+                Console.WriteLine("     target         Test type full name or \"all\" for all tests");
+                Console.WriteLine("   --runs count     Number of runs");
                 Console.WriteLine();
             }
         }
