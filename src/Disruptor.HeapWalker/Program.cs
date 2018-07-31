@@ -18,9 +18,9 @@ namespace Disruptor.HeapWalker
                 return;
             }
 
-            Console.WriteLine($"PID: {options.PID}");
+            Console.WriteLine($"PID: {options.ProcessId}");
 
-            using (var dataTarget = DataTarget.AttachToProcess(options.PID, 5000, AttachFlag.NonInvasive))
+            using (var dataTarget = DataTarget.AttachToProcess(options.ProcessId, 5000, AttachFlag.NonInvasive))
             {
                 foreach (var runtimeInfo in dataTarget.ClrVersions)
                 {
@@ -34,7 +34,7 @@ namespace Disruptor.HeapWalker
                     }
 
                     if (options.ScanEvents)
-                        ScanEvents();
+                        ScanEvents(runtime);
                     else
                         ScanTypes(runtime, options.ScanTypeName);
 
@@ -46,9 +46,59 @@ namespace Disruptor.HeapWalker
             Console.ReadLine();
         }
 
-        private static void ScanEvents()
+        private static void ScanEvents(ClrRuntime runtime)
         {
-            Console.WriteLine("Not supported");
+            Console.WriteLine($"Scanning for ring buffers");
+
+            var ringBufferPadding = 2 * 128 / IntPtr.Size;
+
+            for (var segmentIndex = 0; segmentIndex < runtime.Heap.Segments.Count; segmentIndex++)
+            {
+                Console.WriteLine($"Walking the heap... ({segmentIndex} / {runtime.Heap.Segments.Count})");
+
+                var foundForSegment = false;
+                var segment = runtime.Heap.Segments[segmentIndex];
+                for (var address = segment.FirstObject; address != 0; address = segment.NextObject(address))
+                {
+                    var type = runtime.Heap.GetObjectType(address);
+                    if (type == null)
+                        continue;
+
+                    if (!type.Name.StartsWith("Disruptor.RingBuffer<") || !type.Name.EndsWith(">"))
+                        continue;
+
+                    if (!foundForSegment)
+                    {
+                        Console.WriteLine();
+                        foundForSegment = true;
+                    }
+                    Console.WriteLine($"Found instance of {type.Name}");
+
+                    var fieldsField = type.GetFieldByName("_fields");
+                    var fieldsAddress = fieldsField.GetAddress(address);
+
+                    var entriesField = fieldsField.Type.GetFieldByName("Entries");
+                    var entriesAddress = (ulong)entriesField.GetValue(fieldsAddress, true);
+                    var entriesLength = entriesField.Type.GetArrayLength(entriesAddress);
+
+                    Console.WriteLine($"Ring buffer size: {entriesLength} ({entriesLength - ringBufferPadding} events + {ringBufferPadding} padding)");
+
+                    var entriesAddresses = new List<ulong>();
+
+                    for (var index = 0; index < entriesLength; index++)
+                    {
+                        var arrayElementValue = (ulong)entriesField.Type.GetArrayElementValue(entriesAddress, index);
+                        if (arrayElementValue != 0)
+                            entriesAddresses.Add(arrayElementValue);
+                    }
+
+                    PrintOffsets(runtime.Heap, entriesAddresses);
+
+                    Console.WriteLine();
+                }
+            }
+
+            Console.WriteLine($"Walking the heap... ({runtime.Heap.Segments.Count} / {runtime.Heap.Segments.Count})");
         }
 
         private static void ScanTypes(ClrRuntime runtime, string scanTypeName)
@@ -64,15 +114,10 @@ namespace Disruptor.HeapWalker
             }
 
             Console.WriteLine($"Found types: {string.Join(", ", typeInfos.Keys.Select(x => x.Name))}");
-            Console.WriteLine();
 
-            for (var segmentIndex = 0; ; segmentIndex++)
+            for (var segmentIndex = 0; segmentIndex < runtime.Heap.Segments.Count; segmentIndex++)
             {
-                Console.SetCursorPosition(0, Console.CursorTop - 1);
                 Console.WriteLine($"Walking the heap... ({segmentIndex} / {runtime.Heap.Segments.Count})");
-
-                if (segmentIndex >= runtime.Heap.Segments.Count)
-                    break;
 
                 var segment = runtime.Heap.Segments[segmentIndex];
                 for (var address = segment.FirstObject; address != 0; address = segment.NextObject(address))
@@ -85,59 +130,85 @@ namespace Disruptor.HeapWalker
                         continue;
 
                     typeInfo.Addresses.Add(address);
-                    typeInfo.Segments.Add(segment.Start);
                     typeInfo.Generations.Add(segment.GetGeneration(address));
                 }
             }
+
+            Console.WriteLine($"Walking the heap... ({runtime.Heap.Segments.Count} / {runtime.Heap.Segments.Count})");
 
             foreach (var typeInfo in typeInfos)
             {
                 Console.WriteLine();
                 Console.WriteLine($"[{typeInfo.Key}]");
 
-                typeInfo.Value.PrintStats();
+                typeInfo.Value.PrintStats(runtime.Heap);
+            }
+        }
+
+        private static void PrintOffsets(ClrHeap heap, List<ulong> addresses)
+        {
+            if (addresses.Count == 0)
+                return;
+
+            var segments = new HashSet<ulong>();
+            var offsetCounts = new Dictionary<long, int>();
+            var previous = addresses[0];
+
+            segments.Add(heap.GetSegmentByAddress(previous).Start);
+
+            foreach (var address in addresses.Skip(1))
+            {
+                var offset = address > previous ? (long)(address - previous) : -(long)(previous - address);
+                segments.Add(heap.GetSegmentByAddress(address).Start);
+
+                offsetCounts[offset] = offsetCounts.TryGetValue(offset, out var count) ? count + 1 : 1;
+                previous = address;
+            }
+
+            Console.WriteLine($"Segments count: {segments.Count}");
+
+            var sortedOffsetCounts = offsetCounts.Select(x => (offset: x.Key, count: x.Value, absOffset: Math.Abs(x.Key))).OrderBy(x => x.absOffset).ToList();
+
+            foreach (var offsetCount in sortedOffsetCounts.Take(5))
+            {
+                Console.WriteLine($"Offset: {offsetCount.offset} Count: {offsetCount.count}");
+            }
+
+            var remainingOffsets = sortedOffsetCounts.Skip(5).ToList();
+            if (remainingOffsets.Count != 0)
+            {
+                var eventsCount = remainingOffsets.Sum(x => x.count);
+                var maxOffset = remainingOffsets.Max(x => x.absOffset);
+                var averageOffset = (long)remainingOffsets.Average(x => x.absOffset);
+
+                Console.WriteLine($"{remainingOffsets.Count} remaining offsets for {eventsCount} events, max: {maxOffset}, avg: {averageOffset}");
             }
         }
 
         private class TypeInfo
         {
             public List<ulong> Addresses { get; } = new List<ulong>();
-            public HashSet<ulong> Segments { get; } = new HashSet<ulong>();
             public HashSet<int> Generations { get; } = new HashSet<int>();
 
-            public void PrintStats()
+            public void PrintStats(ClrHeap heap)
             {
                 if (!Addresses.Any())
                 {
                     Console.WriteLine("No object found");
                     return;
                 }
-
-                Console.WriteLine($"SegmentCount: {Segments.Count}");
+                
                 Console.WriteLine($"Generations: {string.Join(", ", Generations.OrderBy(_ => _))}");
 
                 Addresses.Sort();
 
-                var offsetCounts = new Dictionary<ulong, int>(); 
-                var previous = Addresses[0];
-                foreach (var address in Addresses.Skip(1))
-                {
-                    var offset = address - previous;
-                    previous = address;
-
-                    offsetCounts[offset] = offsetCounts.TryGetValue(offset, out var count) ? count + 1 : 1;
-                }
-
-                foreach (var offsetCount in offsetCounts.OrderBy(x => x.Key))
-                {
-                    Console.WriteLine($"Offset: {offsetCount.Key} Count: {offsetCount.Value}");
-                }
+                PrintOffsets(heap, Addresses);
             }
         }
       
         public class Options
         {
-            public int PID { get; set; }
+            public int ProcessId { get; set; }
             public string ScanTypeName { get; set; }
             public bool ScanEvents { get; set; }
 
@@ -148,7 +219,7 @@ namespace Disruptor.HeapWalker
                 if (args.Length == 0 || !int.TryParse(args[0], NumberStyles.None, CultureInfo.InvariantCulture, out var pid))
                     return false;
 
-                options.PID = pid;
+                options.ProcessId = pid;
 
                 foreach (var arg in args.Skip(1))
                 {
