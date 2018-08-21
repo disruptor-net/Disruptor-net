@@ -99,16 +99,16 @@ namespace Disruptor.PerfTests
                 {
                     switch (arg.ToLowerInvariant())
                     {
-                        case "--report=false":
-                            options.ShouldGenerateReport = false;
+                        case string s when Regex.Match(s, "--report=(false|true)") is var m && m.Success:
+                            options.ShouldGenerateReport = bool.Parse(m.Groups[1].Value);
                             break;
 
-                        case "--openreport=true":
-                            options.ShouldOpenReport = true;
+                        case string s when Regex.Match(s, "--openreport=(false|true)") is var m && m.Success:
+                            options.ShouldOpenReport = bool.Parse(m.Groups[1].Value);
                             break;
 
-                        case "--printspec=false":
-                            options.ShouldPrintComputerSpecifications = false;
+                        case string s when Regex.Match(s, "--printspec=(false|true)") is var m && m.Success:
+                            options.ShouldPrintComputerSpecifications = bool.Parse(m.Groups[1].Value);
                             break;
 
                         case string s when Regex.Match(s, "--runs=(\\d+)") is var m && m.Success:
