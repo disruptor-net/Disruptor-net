@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using HdrHistogram;
 
@@ -10,6 +11,8 @@ namespace Disruptor.PerfTests
 {
     public class LatencyTestSession
     {
+        private static readonly double _stopwatchTickNanoSecondsFrequency = 1000000000.0 / Stopwatch.Frequency;
+
         private readonly List<LatencyTestSessionResult> _results = new List<LatencyTestSessionResult>(10);
         private readonly Type _perfTestType;
         private ILatencyTest _test;
@@ -18,7 +21,6 @@ namespace Disruptor.PerfTests
         public LatencyTestSession(Type perfTestType)
         {
             _perfTestType = perfTestType;
-            
         }
 
         public void Run(Program.Options options)
@@ -31,12 +33,12 @@ namespace Disruptor.PerfTests
             CheckProcessorsRequirements(_test);
 
             Console.WriteLine("Starting");
-            var stopwatch = new Stopwatch();
-            var histogram = new LongHistogram(10000000000L, 4);
+            
             for (var i = 0; i < _runCount; i++)
             {
-                stopwatch.Reset();
-                histogram.Reset();
+                var histogram = new LongHistogram(10000000000L, 4);
+                var stopwatch = new Stopwatch();
+
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
 
@@ -158,15 +160,16 @@ namespace Disruptor.PerfTests
             return sb.ToString();
         }
 
-        public static long ConvertStopwatchTicksToNano(double durationInTicks)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long ConvertStopwatchTicksToNano(long durationInTicks)
         {
-            var durationInNano = (durationInTicks / Stopwatch.Frequency) * Math.Pow(10, 9);
-            return (long)durationInNano;
+            return (long)(durationInTicks * _stopwatchTickNanoSecondsFrequency);
         }
 
-        public static double ConvertNanoToStopwatchTicks(long pauseDurationInNanos)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long ConvertNanoToStopwatchTicks(long pauseDurationInNanos)
         {
-            return pauseDurationInNanos * Math.Pow(10, -9) * Stopwatch.Frequency;
+            return (long)(pauseDurationInNanos / _stopwatchTickNanoSecondsFrequency);
         }
     }
 }
