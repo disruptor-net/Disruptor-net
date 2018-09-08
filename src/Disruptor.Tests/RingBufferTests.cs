@@ -126,30 +126,19 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldThrowExceptionIfBufferIsFull()
+        public void ShouldReturnFalseIfBufferIsFull()
         {
             _ringBuffer.AddGatingSequences(new Sequence(_ringBuffer.BufferSize));
 
-            try
+            for (var i = 0; i < _ringBuffer.BufferSize; i++)
             {
-                for (var i = 0; i < _ringBuffer.BufferSize; i++)
-                {
-                    _ringBuffer.Publish(_ringBuffer.TryNext());
-                }
-            }
-            catch (Exception)
-            {
-                throw new ApplicationException("Should not of thrown exception");
+                var succeeded = _ringBuffer.TryNext(out var n);
+                Assert.IsTrue(succeeded);
+
+                _ringBuffer.Publish(n);
             }
 
-            try
-            {
-                _ringBuffer.TryNext();
-                throw new ApplicationException("Exception should have been thrown");
-            }
-            catch (InsufficientCapacityException)
-            {
-            }
+            Assert.IsFalse(_ringBuffer.TryNext(out _));
         }
 
         [Test]

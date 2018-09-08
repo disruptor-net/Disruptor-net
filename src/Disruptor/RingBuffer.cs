@@ -237,68 +237,6 @@ namespace Disruptor
         /// Increment and return the next sequence for the ring buffer.  Calls of this
         /// method should ensure that they always publish the sequence afterward. E.g.
         /// <code>
-        /// long sequence = ringBuffer.TryNext();
-        /// try
-        /// {
-        ///     Event e = ringBuffer[sequence];
-        ///     // Do some work with the event.
-        /// }
-        /// finally
-        /// {
-        ///     ringBuffer.Publish(sequence);
-        /// }
-        /// </code>
-        /// This method will not block if there is not space available in the ring
-        /// buffer, instead it will throw an <see cref="InsufficientCapacityException"/>.
-        /// </summary>
-        /// <returns>The next sequence to publish to.</returns>
-        /// <exception cref="InsufficientCapacityException">if the necessary space in the ring buffer is not available</exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [Obsolete("Use TryNext(out long) instead.")]
-        public long TryNext()
-        {
-            switch (_fields.SequencerType)
-            {
-                case RingBufferFields.RingBufferSequencerType.SingleProducer:
-                    return _fields.SingleProducerSequencer.TryNextInternal(1);
-                case RingBufferFields.RingBufferSequencerType.MultiProducer:
-                    return _fields.MultiProducerSequencer.TryNextInternal(1);
-                default:
-                    return _fields.Sequencer.TryNext();
-            }
-        }
-
-        /// <summary>
-        /// The same functionality as <see cref="TryNext(int)"/>, but allows the caller to attempt
-        /// to claim the next n sequences.
-        /// </summary>
-        /// <param name="n">number of slots to claim</param>
-        /// <returns>sequence number of the highest slot claimed</returns>
-        /// <exception cref="InsufficientCapacityException">if the necessary space in the ring buffer is not available</exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [Obsolete("Use TryNext(int, out long) instead.")]
-        public long TryNext(int n)
-        {
-            if (n < 1)
-            {
-                ThrowHelper.ThrowArgMustBeGreaterThanZero();
-            }
-
-            switch (_fields.SequencerType)
-            {
-                case RingBufferFields.RingBufferSequencerType.SingleProducer:
-                    return _fields.SingleProducerSequencer.TryNextInternal(n);
-                case RingBufferFields.RingBufferSequencerType.MultiProducer:
-                    return _fields.MultiProducerSequencer.TryNextInternal(n);
-                default:
-                    return _fields.Sequencer.TryNext(n);
-            }
-        }
-
-        /// <summary>
-        /// Increment and return the next sequence for the ring buffer.  Calls of this
-        /// method should ensure that they always publish the sequence afterward. E.g.
-        /// <code>
         /// if (!ringBuffer.TryNext(out var sequence))
         /// {
         ///     // Handle full ring buffer

@@ -97,32 +97,6 @@ namespace Disruptor
         /// Have a look at <see cref="Next()"/> for a description on how to
         /// use this method.
         /// </summary>
-        /// <returns>the claimed sequence value</returns>
-        /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
-        [Obsolete("Use TryNext(out long) instead.")]
-        public abstract long TryNext();
-
-        /// <summary>
-        /// Attempt to claim the next <code>n</code> events in sequence for publishing.
-        /// Will return the highest numbered slot if there is at least <code>n</code> slots
-        /// available.
-        /// 
-        /// Have a look at <see cref="Next(int)"/> for a description on how to
-        /// use this method.
-        /// </summary>
-        /// <param name="n">the number of sequences to claim</param>
-        /// <returns>the claimed sequence value</returns>
-        /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
-        [Obsolete("Use TryNext(int, out long) instead.")]
-        public abstract long TryNext(int n);
-
-        /// <summary>
-        /// Attempt to claim the next event for publishing.  Will return the
-        /// number of the slot if there is at least one slot available.
-        /// 
-        /// Have a look at <see cref="Next()"/> for a description on how to
-        /// use this method.
-        /// </summary>
         /// <param name="sequence">the claimed sequence value</param>
         /// <returns>true of there is space available in the ring buffer, otherwise false.</returns>
         public abstract bool TryNext(out long sequence);

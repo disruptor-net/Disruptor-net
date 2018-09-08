@@ -112,7 +112,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldThrowInsufficientCapacityExceptionWhenSequencerIsFull()
+        public void ShouldReturnFalseWhenSequencerIsFull()
         {
             _sequencer.AddGatingSequences(_gatingSequence);
 
@@ -121,7 +121,7 @@ namespace Disruptor.Tests
                 _sequencer.Next();
             }
 
-            Assert.Throws<InsufficientCapacityException>(() => _sequencer.TryNext());
+            Assert.IsFalse(_sequencer.TryNext(out _));
         }
 
         [Test]
@@ -228,39 +228,6 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldTryNext()
-        {
-            _sequencer.AddGatingSequences(_gatingSequence);
-
-            for (int i = 0; i < _bufferSize; i++)
-            {
-                var sequence = _sequencer.TryNext();
-                Assert.That(sequence, Is.EqualTo(i));
-
-                _sequencer.Publish(i);
-            }
-
-            Assert.Throws<InsufficientCapacityException>(() => _sequencer.TryNext());
-        }
-
-        [Test]
-        public void ShouldTryNextN()
-        {
-            _sequencer.AddGatingSequences(_gatingSequence);
-
-            for (int i = 0; i < _bufferSize; i+=2)
-            {
-                var sequence = _sequencer.TryNext(2);
-                Assert.That(sequence, Is.EqualTo(i + 1));
-
-                _sequencer.Publish(i);
-                _sequencer.Publish(i + 1);
-            }
-
-            Assert.Throws<InsufficientCapacityException>(() => _sequencer.TryNext(1));
-        }
-
-        [Test]
         public void ShouldTryNextOut()
         {
             _sequencer.AddGatingSequences(_gatingSequence);
@@ -318,15 +285,15 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldNotAllowBulkTryNextLessThanZero()
+        public void ShouldNotAllowBulkTryNextOutLessThanZero()
         {
-            Assert.Throws<ArgumentException>(() => _sequencer.TryNext(-1));
+            Assert.Throws<ArgumentException>(() => _sequencer.TryNext(-1, out _));
         }
 
         [Test]
-        public void ShouldNotAllowBulkTryNextOfZero()
+        public void ShouldNotAllowBulkTryNextOutOfZero()
         {
-            Assert.Throws<ArgumentException>(() => _sequencer.TryNext(0));
+            Assert.Throws<ArgumentException>(() => _sequencer.TryNext(0, out _));
         }
     }
 }

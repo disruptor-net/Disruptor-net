@@ -178,58 +178,6 @@ namespace Disruptor
         /// Have a look at <see cref="Next()"/> for a description on how to
         /// use this method.
         /// </summary>
-        /// <returns>the claimed sequence value</returns>
-        /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [Obsolete("Use TryNext(out long) instead.")]
-        public long TryNext()
-        {
-            return TryNextInternal(1);
-        }
-
-        /// <summary>
-        /// Attempt to claim the next <code>n</code> events in sequence for publishing.
-        /// Will return the highest numbered slot if there is at least <code>n</code> slots
-        /// available.
-        /// 
-        /// Have a look at <see cref="Next(int)"/> for a description on how to
-        /// use this method.
-        /// </summary>
-        /// <param name="n">the number of sequences to claim</param>
-        /// <returns>the claimed sequence value</returns>
-        /// <exception cref="InsufficientCapacityException">there is no space available in the ring buffer.</exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [Obsolete("Use TryNext(int, out long) instead.")]
-        public long TryNext(int n)
-        {
-            if (n < 1)
-            {
-                ThrowHelper.ThrowArgMustBeGreaterThanZero();
-            }
-
-            return TryNextInternal(n);
-        }
-
-        internal long TryNextInternal(int n)
-        {
-            if (!HasAvailableCapacity(n, true))
-            {
-                throw InsufficientCapacityException.Instance;
-            }
-
-            var nextSequence = _nextValue + n;
-            _nextValue = nextSequence;
-
-            return nextSequence;
-        }
-
-        /// <summary>
-        /// Attempt to claim the next event for publishing.  Will return the
-        /// number of the slot if there is at least one slot available.
-        /// 
-        /// Have a look at <see cref="Next()"/> for a description on how to
-        /// use this method.
-        /// </summary>
         /// <param name="sequence">the claimed sequence value</param>
         /// <returns>true of there is space available in the ring buffer, otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

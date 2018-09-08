@@ -27,26 +27,6 @@ namespace Disruptor.Benchmarks
             Console.ReadLine();
         }
 
-        private static void RunRingBufferBenchmarks()
-        {
-            var bench = new RingBufferBenchmarks();
-
-            //bench.Indexer();
-            //bench.IndexerArray();
-            //bench.IndexerUnsafe();
-            bench.IndexerUnsafeSum();
-            bench.IndexerUnsafeSumForLoop();
-
-            Console.WriteLine("X");
-            Console.ReadLine();
-
-            //bench.Indexer();
-            //bench.IndexerArray();
-            //bench.IndexerUnsafe();
-            bench.IndexerUnsafeSum();
-            bench.IndexerUnsafeSumForLoop();
-        }
-
         private static void RunMultiProducerSequencerBenchmarks()
         {
             var bench = new MultiProducerSequencerBenchmarks();

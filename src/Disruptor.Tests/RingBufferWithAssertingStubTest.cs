@@ -24,12 +24,6 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldDelegateTryNextAndPublish()
-        {
-            _ringBuffer.Publish(_ringBuffer.TryNext());
-        }
-
-        [Test]
         public void ShouldDelegateTryNextOutAndPublish()
         {
             Assert.That(_ringBuffer.TryNext(out var sequence), Is.True);
@@ -46,7 +40,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldDelegateTryNextNAndPublish()
         {
-            long hi = _ringBuffer.TryNext(10);
+            _ringBuffer.TryNext(10, out var hi);
             _ringBuffer.Publish(hi - 9, hi);
         }
 
@@ -87,10 +81,6 @@ namespace Disruptor.Tests
                 _lastBatchSize = n;
                 return _lastValue;
             }
-
-            public long TryNext() => Next();
-
-            public long TryNext(int n) => Next(n);
 
             public bool TryNext(out long sequence)
             {
