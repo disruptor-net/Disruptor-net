@@ -133,7 +133,7 @@ namespace Disruptor.Tests
                         _ringBuffer.Publish(next);
                     }
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     Failed = true;
                 }

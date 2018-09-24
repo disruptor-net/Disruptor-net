@@ -119,11 +119,11 @@ namespace Disruptor.Tests
                         testEvent.Sequence = next;
                         testEvent.A = next + 13;
                         testEvent.B = next - 7;
-                        //testEvent.S = "wibble-" + next;
+                        testEvent.S = "wibble-";
                         _ringBuffer.Publish(next);
                     }
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     Failed = true;
                 }

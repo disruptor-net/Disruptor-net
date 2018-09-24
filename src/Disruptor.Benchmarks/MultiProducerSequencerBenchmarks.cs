@@ -8,7 +8,6 @@ namespace Disruptor.Benchmarks
         private MultiProducerSequencer _sequencer;
         private MultiProducerSequencerPointer _sequencerPointer;
         private long _sequence;
-        private long _sequencePointer;
 
         public MultiProducerSequencerBenchmarks()
         {

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DefaultItemExcludes>$(DefaultItemExcludes);*.DotSettings;*.ncrunchproject</DefaultItemExcludes>
+    <DebugType>embedded</DebugType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Version>3.4.0</Version>
+    <LastPortedJavaRevision>a18f8198ab94590f0a5ec7c3378ba87f997ea670</LastPortedJavaRevision>
+    <Product>Disruptor</Product>
+    <Description>A High Performance Inter-Thread Messaging Library</Description>
+    <Authors>Olivier Deheurles, Mendel Monteiro Beckerman, Antoine Blanchet, Olivier Coanet</Authors>
+    <PackageProjectUrl>https://github.com/disruptor-net/Disruptor-net</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/disruptor-net/Disruptor-net/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageTags>Concurrency;Disruptor;Latency;Throughput;Queue</PackageTags>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(APPVEYOR)' == 'True'">
+    <Deterministic>true</Deterministic>
+    <DeterministicSourcePaths>true</DeterministicSourcePaths>
+    <PackageVersion Condition="'$(PackageVersion)' == ''">$(Version)</PackageVersion>
+    <PackageVersion Condition="'$(APPVEYOR_REPO_TAG)' == 'false' and '$(APPVEYOR_BUILD_NUMBER)' != ''">$(PackageVersion)-pre$(APPVEYOR_BUILD_NUMBER)</PackageVersion>
+    <PackageVersion Condition="'$(APPVEYOR_REPO_TAG)' == 'true' and '$(APPVEYOR_REPO_TAG_NAME)' != ''">$(APPVEYOR_REPO_TAG_NAME)</PackageVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(NCrunch)' == '1'">
+    <EnableSourceLink>false</EnableSourceLink>
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2018.2.1" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>

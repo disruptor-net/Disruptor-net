@@ -4,11 +4,11 @@ namespace Disruptor.Tests.Example.PullWithBatchedPoller
 {
     public class BatchedPoller<T> where T : class 
     {
-        private readonly EventPoller<DataEvent<T>> _poller;
+        private readonly EventPoller<DataEvent> _poller;
         private readonly int _maxBatchSize;
-        private readonly BatchedData<T> _polledData;
+        private readonly BatchedData _polledData;
 
-        public BatchedPoller(RingBuffer<DataEvent<T>> ringBuffer, int batchSize)
+        public BatchedPoller(RingBuffer<DataEvent> ringBuffer, int batchSize)
         {
             _poller = ringBuffer.NewPoller();
             ringBuffer.AddGatingSequences(_poller.Sequence);
@@ -18,7 +18,7 @@ namespace Disruptor.Tests.Example.PullWithBatchedPoller
                 batchSize = 20;
             }
             _maxBatchSize = batchSize;
-            _polledData = new BatchedData<T>(_maxBatchSize);
+            _polledData = new BatchedData(_maxBatchSize);
         }
 
         public T Poll()
@@ -32,7 +32,7 @@ namespace Disruptor.Tests.Example.PullWithBatchedPoller
             return _polledData.GetMsgCount() > 0 ? _polledData.PollMessage() : null;
         }
 
-        private PollState LoadNextValues(EventPoller<DataEvent<T>> poller, BatchedData<T> batch)
+        private PollState LoadNextValues(EventPoller<DataEvent> poller, BatchedData batch)
         {
             return poller.Poll((ev, sequence, endOfBatch) =>
                                {
@@ -41,7 +41,7 @@ namespace Disruptor.Tests.Example.PullWithBatchedPoller
                                });
         }
 
-        public class DataEvent<T>
+        public class DataEvent
         {
             public T Data { get; set; }
 
@@ -62,7 +62,7 @@ namespace Disruptor.Tests.Example.PullWithBatchedPoller
             }
         }
 
-        public class BatchedData<T>
+        public class BatchedData
         {
 
             private int _msgHighBound;

@@ -7,7 +7,7 @@ namespace Disruptor.Tests.Example.PullWithBatchedPoller
         public static void Main(string[] args)
         {
             var batchSize = 40;
-            var ringBuffer = RingBuffer<BatchedPoller<object>.DataEvent<object>>.CreateMultiProducer(() => new BatchedPoller<object>.DataEvent<object>(), 1024);
+            var ringBuffer = RingBuffer<BatchedPoller<object>.DataEvent>.CreateMultiProducer(() => new BatchedPoller<object>.DataEvent(), 1024);
 
             var poller = new BatchedPoller<object>(ringBuffer, batchSize);
 

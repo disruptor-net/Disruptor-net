@@ -9,15 +9,12 @@ var paths = new
     AssemblyProject = MakeAbsolute(File("../src/Disruptor/Disruptor.csproj")),
     TestsProject = MakeAbsolute(File("../src/Disruptor.Tests/Disruptor.Tests.csproj")),
     PerfProject = MakeAbsolute(File("../src/Disruptor.PerfTests/Disruptor.PerfTests.csproj")),
-    Nuspec = MakeAbsolute(File("Disruptor-net.nuspec")),
     NUnit = MakeAbsolute(File("../tools/NUnit/nunit3-console.exe")),
     Projects = GetFiles("../src/**/*.csproj").Select(MakeAbsolute),
 };
 
-var nugetVersion = XmlPeek(paths.AssemblyProject, "//InformationalVersion/text()");
 var targetFrameworks = XmlPeek(paths.AssemblyProject, "//TargetFrameworks/text()").Split(';');
 var testsFrameworks = XmlPeek(paths.TestsProject, "//TargetFrameworks/text()").Split(';');
-
 
 Task("Restore-NuGet-Packages")
     .Does(() => 
@@ -107,13 +104,17 @@ Task("Pack")
     .Does(() => 
     {
         CreateDirectory(paths.NugetOutput);
-        Information("Packing {0}", nugetVersion);
-        NuGetPack(paths.Nuspec, new NuGetPackSettings
-        {
-            Version = nugetVersion,
-            BasePath = paths.AssemblyOutput.FullPath,
-            OutputDirectory = paths.NugetOutput
-        });
+        MSBuild(paths.AssemblyProject, settings => settings
+            .WithTarget("Pack")
+            .SetConfiguration("Release")
+            .SetPlatformTarget(PlatformTarget.MSIL)
+            .SetVerbosity(Verbosity.Minimal)
+            .WithProperty("PackageOutputPath", paths.NugetOutput.FullPath)
+        );
     });
+
+Task("AppVeyor")
+    .IsDependentOn("Run-Tests")
+    .IsDependentOn("Pack");
 
 RunTarget(target);

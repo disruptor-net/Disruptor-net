@@ -24,7 +24,7 @@ namespace Disruptor.Tests
                 waitStrategy.WaitFor(6, cursor, dependent, sequenceBarrier);
                 throw new ApplicationException("TimeoutException should have been thrown");
             }
-            catch (TimeoutException e)
+            catch (TimeoutException)
             {
             }
 

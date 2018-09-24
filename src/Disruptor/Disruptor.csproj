@@ -1,31 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Disruptor</AssemblyName>
-    <RootNamespace>Disruptor</RootNamespace>
-    <Title>Disruptor</Title>
-    <Product>Disruptor</Product>
-    <Description>A High Performance Inter-Thread Messaging Library</Description>
-    <Version>3.4.0</Version>
-    <InformationalVersion>3.4.0-alpha</InformationalVersion>
-    <FileVersion>3.4.0.0</FileVersion>
-    <LastPortedJavaRevision>a18f8198ab94590f0a5ec7c3378ba87f997ea670</LastPortedJavaRevision>
-    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Disruptor.xml</DocumentationFile>
+    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>    
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsPackable>true</IsPackable>
+    <PackageId>Disruptor</PackageId>
+    <NoWarn>1701;1702;1591</NoWarn>
   </PropertyGroup>
-
-  <ItemGroup>  
-    <Reference Include="netstandard" />
-  </ItemGroup>
   
   <ItemGroup>
-    <None Remove="Disruptor.v3.ncrunchproject" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <PackageReference Include="System.Reflection.Emit" Version="4.0.1" />
-    <PackageReference Include="InlineIL.Fody" Version="0.5.0" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.0.1" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
+    <PackageReference Include="Fody" Version="3.2.4" PrivateAssets="all" />
+    <PackageReference Include="InlineIL.Fody" Version="0.7.0" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

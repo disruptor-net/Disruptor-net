@@ -6,6 +6,8 @@ using Disruptor.Tests.Dsl.Stubs;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
+#pragma warning disable 618
+
 namespace Disruptor.Tests.Dsl
 {
     [TestFixture]

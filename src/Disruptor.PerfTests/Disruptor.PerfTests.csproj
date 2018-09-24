@@ -1,26 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Disruptor.PerfTests</AssemblyName>
-	<RootNamespace>Disruptor.PerfTests</RootNamespace>
-	<Title>Disruptor.PerfTests</Title>
     <TargetFramework>net47</TargetFramework>
-	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-	<OutputType>exe</OutputType>
+	  <OutputType>exe</OutputType>
   </PropertyGroup>
     
   <ItemGroup>
-    <None Remove="Disruptor.PerfTests.v3.ncrunchproject" />
-  </ItemGroup>
-  
-  <ItemGroup>
-	<PackageReference Include="HdrHistogram" Version="1.7.0" />
+	  <PackageReference Include="HdrHistogram" Version="1.7.0" />
   </ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
-	<ProjectReference Include="..\Disruptor.Scheduler\Disruptor.Scheduler.csproj" />
-	<ProjectReference Include="..\Disruptor.Tests\Disruptor.Tests.csproj" />
+	  <ProjectReference Include="..\Disruptor.Scheduler\Disruptor.Scheduler.csproj" />
+	  <ProjectReference Include="..\Disruptor.Tests\Disruptor.Tests.csproj" />
   </ItemGroup>
   
   <ItemGroup>

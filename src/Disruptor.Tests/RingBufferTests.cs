@@ -6,6 +6,8 @@ using NUnit.Framework;
 using Gen = System.Collections.Generic;
 using static Disruptor.Tests.RingBufferEqualsConstraint;
 
+#pragma warning disable 618,612
+
 namespace Disruptor.Tests
 {
     [TestFixture]

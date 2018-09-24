@@ -1,6 +1,6 @@
-version: 3.4.0.{build}
 image: Visual Studio 2017
 build_script:
-- ps: build\build.ps1 -Script build\build.cake -Target Build-Assembly
-test_script:
-- ps: build\build.ps1 -Script build\build.cake -Target Run-Tests
+- ps: build\build.ps1 -Script build\build.cake -Target AppVeyor
+test: off
+artifacts:
+- path: output\nuget\*.nupkg

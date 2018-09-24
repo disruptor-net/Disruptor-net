@@ -59,7 +59,6 @@ namespace Disruptor.PerfTests.Queue
             private HistogramBase _histogram;
             private ManualResetEvent _signal;
             private CountdownEvent _globalSignal;
-            private long _counter;
 
             public QueuePinger(ArrayConcurrentQueue<long> pingQueue, ArrayConcurrentQueue<long> pongQueue, long maxEvents, long pauseTimeInNano)
             {
@@ -101,7 +100,6 @@ namespace Disruptor.PerfTests.Queue
                 _globalSignal = globalSignal;
                 _signal = signal;
                 _histogram = histogram;
-                _counter = 0;
             }
         }
 
