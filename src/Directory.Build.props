@@ -18,7 +18,7 @@
     <Description>A High Performance Inter-Thread Messaging Library</Description>
     <Authors>Olivier Deheurles, Mendel Monteiro Beckerman, Antoine Blanchet, Olivier Coanet</Authors>
     <PackageProjectUrl>https://github.com/disruptor-net/Disruptor-net</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/disruptor-net/Disruptor-net/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>Concurrency;Disruptor;Latency;Throughput;Queue</PackageTags>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
