@@ -10,7 +10,7 @@ namespace Disruptor
     /// </summary>
     internal static class Util
     {
-        private static readonly int _offsetToArrayData = ElemOffset(new object[1]);
+        private static readonly int _offsetToArrayData = OffsetToArrayData();
 
         /// <summary>
         /// Calculate the next power of 2, greater than or equal to x.
@@ -42,6 +42,7 @@ namespace Disruptor
             {
                 ++r;
             }
+
             return r;
         }
 
@@ -68,6 +69,7 @@ namespace Disruptor
                 var sequence = sequences[i].Value;
                 minimum = Math.Min(minimum, sequence);
             }
+
             return minimum;
         }
 
@@ -113,15 +115,29 @@ namespace Disruptor
             return IL.Return<T>();
         }
 
-        private static int ElemOffset(object[] arr)
+        private static int OffsetToArrayData()
         {
-            Ldarg(nameof(arr));
-            Ldc_I4_0();
-            Ldelema(typeof(object));
-            Ldarg(nameof(arr));
+            var array = new object[1];
+
+            return (int)ElemOffset(array, ref array[0]);
+        }
+
+        private static IntPtr ElemOffset(object origin, ref object target)
+        {
+            IL.DeclareLocals(
+                false,
+                typeof(byte).MakeByRefType()
+            );
+
+            Ldarg(nameof(target));
+
+            Ldarg(nameof(origin)); // load the object
+            Stloc_0(); // convert the object pointer to a byref
+            Ldloc_0(); // load the object pointer as a byref
+
             Sub();
 
-            return IL.Return<int>();
+            return IL.Return<IntPtr>();
         }
     }
 }

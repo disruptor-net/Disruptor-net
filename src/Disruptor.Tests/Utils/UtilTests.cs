@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests.Utils
@@ -35,6 +38,19 @@ namespace Disruptor.Tests.Utils
             var sequences = new Sequence[0];
 
             Assert.AreEqual(long.MaxValue, Util.GetMinimumSequence(sequences));
+        }
+
+        [Test]
+        public void ShouldReadArrayElement()
+        {
+            var array = Enumerable.Range(0, 100)
+                                  .Select(x => new LongEvent())
+                                  .ToArray();
+
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], Util.Read<LongEvent>(array, index));
+            }
         }
     }
 }
