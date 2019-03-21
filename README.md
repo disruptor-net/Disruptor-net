@@ -14,6 +14,10 @@ There is no specific documentation for this project, but most of the information
 
 ## What's new?
 
+28/04/2018 (v3.4.1):
+
+* Fix invalid IL code that caused an exception on Mono
+
 28/04/2018 (v3.4.0-alpha):
 
 * Remove Histogram and MutableLong
