@@ -16,12 +16,10 @@ namespace Disruptor.Tests.Dsl
         private StubExecutor _executor;
         private List<DelayedEventHandler> _delayedEventHandlers;
         private ValueRingBuffer<TestValueEvent> _ringBuffer;
-        private TestValueEvent? _lastPublishedEvent;
 
         [SetUp]
         public void SetUp()
         {
-            _lastPublishedEvent = null;
             _ringBuffer = null;
             _delayedEventHandlers = new List<DelayedEventHandler>();
             _executor = new StubExecutor();
@@ -46,11 +44,11 @@ namespace Disruptor.Tests.Dsl
             var eventCounter = new CountdownEvent(2);
             _disruptor.HandleEventsWith(new TestValueEventHandler<TestValueEvent>(e => eventCounter.Signal()));
 
-            _disruptor.PublishEvent(new ActionEventTranslator<TestValueEvent>(e => _lastPublishedEvent = e));
+            _disruptor.PublishEvent().Dispose();
 
             _disruptor.Start();
 
-            _disruptor.PublishEvent(new ActionEventTranslator<TestValueEvent>(e => _lastPublishedEvent = e));
+            _disruptor.PublishEvent().Dispose();
 
             if (!eventCounter.Wait(TimeSpan.FromSeconds(5)))
                 Assert.Fail("Did not process event published before start was called. Missed events: " + eventCounter.CurrentCount);
@@ -450,7 +448,7 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
-        public void ShouldHonourDependenciesForCustomProcessors()
+        public void ShouldxHonourDependenciesForCustomProcessors()
         {
             var countDownLatch = new CountdownEvent(2);
             var eventHandler = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
@@ -495,7 +493,7 @@ namespace Disruptor.Tests.Dsl
             }
         }
 
-        private TestValueEvent PublishEvent()
+        private void PublishEvent()
         {
             if (_ringBuffer == null)
             {
@@ -507,24 +505,7 @@ namespace Disruptor.Tests.Dsl
                 }
             }
 
-            _disruptor.PublishEvent(new EventTranslator(this));
-
-            return _lastPublishedEvent.GetValueOrDefault();
-        }
-
-        private class EventTranslator : IValueEventTranslator<TestValueEvent>
-        {
-            private readonly ValueDisruptorTests _disruptorTests;
-
-            public EventTranslator(ValueDisruptorTests disruptorTests)
-            {
-                _disruptorTests = disruptorTests;
-            }
-
-            public void TranslateTo(ref TestValueEvent eventData, long sequence)
-            {
-                _disruptorTests._lastPublishedEvent = eventData;
-            }
+            _disruptor.PublishEvent().Dispose();
         }
 
         private static Exception WaitFor(AtomicReference<Exception> reference)

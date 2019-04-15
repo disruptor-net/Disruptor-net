@@ -40,7 +40,7 @@ namespace Disruptor.Tests.Support
             Value = evt.Value;
         }
 
-        public struct Translator : IValueEventTranslator<StubValueEvent>
+        public struct Translator
         {
             private readonly int _value;
             private readonly string _testString;

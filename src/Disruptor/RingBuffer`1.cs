@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Disruptor.Dsl;
 
 namespace Disruptor
@@ -510,26 +509,54 @@ namespace Disruptor
             return false;
         }
 
-        private void CheckBounds<A, B>(A[] arg0, B[] arg1, int batchStartsAt, int batchSize)
+        private void CheckBounds<TArray>(TArray[] translators, int batchStartsAt, int batchSize)
         {
             CheckBatchSizing(batchStartsAt, batchSize);
-            BatchOverRuns(arg0, batchStartsAt, batchSize);
-            BatchOverRuns(arg1, batchStartsAt, batchSize);
+            BatchOverRuns(translators, batchStartsAt, batchSize);
         }
 
-        private void CheckBounds<A, B, C>(
-            A[] arg0, B[] arg1, C[] arg2, int batchStartsAt, int batchSize)
+        private void CheckBounds<T1, T2>(T1[] arg1, T2[] arg2, int batchStartsAt, int batchSize)
         {
             CheckBatchSizing(batchStartsAt, batchSize);
-            BatchOverRuns(arg0, batchStartsAt, batchSize);
             BatchOverRuns(arg1, batchStartsAt, batchSize);
             BatchOverRuns(arg2, batchStartsAt, batchSize);
+        }
+
+        private void CheckBounds<T1, T2, T3>(T1[] arg1, T2[] arg2, T3[] arg3, int batchStartsAt, int batchSize)
+        {
+            CheckBatchSizing(batchStartsAt, batchSize);
+            BatchOverRuns(arg1, batchStartsAt, batchSize);
+            BatchOverRuns(arg2, batchStartsAt, batchSize);
+            BatchOverRuns(arg3, batchStartsAt, batchSize);
         }
 
         private void CheckBounds(int batchStartsAt, int batchSize, object[][] args)
         {
             CheckBatchSizing(batchStartsAt, batchSize);
             BatchOverRuns(args, batchStartsAt, batchSize);
+        }
+
+        private void CheckBatchSizing(int batchStartsAt, int batchSize)
+        {
+            if (batchStartsAt < 0 || batchSize < 0)
+            {
+                throw new ArgumentException("Both batchStartsAt and batchSize must be positive but got: batchStartsAt " + batchStartsAt + " and batchSize " + batchSize);
+            }
+            if (batchSize > BufferSize)
+            {
+                throw new ArgumentException("The ring buffer cannot accommodate " + batchSize + " it only has space for " + BufferSize + " entities.");
+            }
+        }
+
+        private static void BatchOverRuns<TArray>(TArray[] arg0, int batchStartsAt, int batchSize)
+        {
+            if (batchStartsAt + batchSize > arg0.Length)
+            {
+                throw new ArgumentException(
+                    "A batchSize of: " + batchSize +
+                    " with batchStatsAt of: " + batchStartsAt +
+                    " will overrun the available number of arguments: " + (arg0.Length - batchStartsAt));
+            }
         }
 
         private void TranslateAndPublish(IEventTranslator<T> translator, long sequence)

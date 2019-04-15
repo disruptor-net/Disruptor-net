@@ -193,8 +193,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Publish an event to the ring buffer.
         /// </summary>
-        /// <param name="eventTranslator">the translator that will load data into the event</param>
-        public void PublishEvent(IValueEventTranslator<T> eventTranslator) => _ringBuffer.PublishEvent(eventTranslator);
+        public ValueRingBuffer<T>.PublishEventScope PublishEvent() => _ringBuffer.PublishEvent();
 
         /// <summary>
         /// Starts the event processors and returns the fully configured ring buffer.
