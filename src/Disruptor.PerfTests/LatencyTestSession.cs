@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using HdrHistogram;
 
@@ -78,7 +79,10 @@ namespace Disruptor.PerfTests
             var computerSpecifications = new ComputerSpecifications();
 
             if (options.ShouldPrintComputerSpecifications)
-                Console.WriteLine(computerSpecifications.ToString());
+            {
+                Console.WriteLine();
+                Console.Write(computerSpecifications.ToString());
+            }
 
             if (!options.ShouldGenerateReport)
                 return;
@@ -94,7 +98,7 @@ namespace Disruptor.PerfTests
                 Process.Start(path);
         }
 
-        private void CheckProcessorsRequirements(ILatencyTest test)
+        private static void CheckProcessorsRequirements(ILatencyTest test)
         {
             var availableProcessors = Environment.ProcessorCount;
             if (test.RequiredProcessorCount <= availableProcessors)
@@ -119,13 +123,13 @@ namespace Disruptor.PerfTests
             sb.AppendLine("        <h2>Host configuration</h2>");
             computerSpecifications.AppendHtml(sb);
 
-            if (computerSpecifications.NumberOfCores < 4)
+            if (computerSpecifications.PhysicalCoreCount < 4)
             {
-                sb.AppendFormat("        <b><font color='red'>Your computer has {0} physical core(s) but most of the tests require at least 4 cores</font></b><br>", computerSpecifications.NumberOfCores);
+                sb.AppendFormat("        <b><font color='red'>Your computer has {0} physical core(s) but most of the tests require at least 4 cores</font></b><br>", computerSpecifications.PhysicalCoreCount);
             }
             if (!Stopwatch.IsHighResolution)
             {
-                sb.AppendFormat("        <b><font color='red'>Your computer does not support synchronized TSC, measured latencies might be wrong on multicore CPU architectures.</font></b><br>", computerSpecifications.NumberOfCores);
+                sb.AppendFormat("        <b><font color='red'>Your computer does not support synchronized TSC, measured latencies might be wrong on multicore CPU architectures.</font></b><br>", computerSpecifications.PhysicalCoreCount);
             }
             if (computerSpecifications.IsHyperThreaded)
             {

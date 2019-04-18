@@ -13,14 +13,12 @@ namespace Disruptor.PerfTests
             if (!Options.TryParse(args, out var options))
             {
                 Options.PrintUsage();
-                Console.ReadKey();
                 return;
             }
 
             if (!TryLoadPerfTestTypes(options.Target, out var perfTestTypes))
             {
                 Console.WriteLine($"Invalid target: [{options.Target}]");
-                Console.ReadKey();
                 return;
             }
 
@@ -38,7 +36,7 @@ namespace Disruptor.PerfTests
                 return true;
             }
 
-            var type = Type.GetType(target);
+            var type = Resolve(target);
             if (type != null && IsValidTestType(type))
             {
                 perfTestTypes = new[] { type };
@@ -48,7 +46,8 @@ namespace Disruptor.PerfTests
             perfTestTypes = null;
             return false;
 
-            bool IsValidTestType(Type x) => !x.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(x) || typeof(ILatencyTest).IsAssignableFrom(x));
+            bool IsValidTestType(Type t) => !t.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(t) || typeof(ILatencyTest).IsAssignableFrom(t));
+            Type Resolve(string typeName) => Type.GetType(typeName) ?? typeof(Program).Assembly.ExportedTypes.FirstOrDefault(x => x.Name == typeName);
         }
 
         private static void RunTestForType(Type perfTestType, Options options)
@@ -99,16 +98,16 @@ namespace Disruptor.PerfTests
                 {
                     switch (arg.ToLowerInvariant())
                     {
-                        case "--report=false":
-                            options.ShouldGenerateReport = false;
+                        case string s when Regex.Match(s, "--report=(true|false)") is var m && m.Success:
+                            options.ShouldGenerateReport = bool.Parse(m.Groups[1].Value);
                             break;
 
-                        case "--openreport=true":
-                            options.ShouldOpenReport = true;
+                        case string s when Regex.Match(s, "--openreport=(true|false)") is var m && m.Success:
+                            options.ShouldOpenReport = bool.Parse(m.Groups[1].Value);
                             break;
 
-                        case "--printspec=false":
-                            options.ShouldPrintComputerSpecifications = false;
+                        case string s when Regex.Match(s, "--printspec=(true|false)") is var m && m.Success:
+                            options.ShouldPrintComputerSpecifications = bool.Parse(m.Groups[1].Value);
                             break;
 
                         case string s when Regex.Match(s, "--runs=(\\d+)") is var m && m.Success:
@@ -129,7 +128,7 @@ namespace Disruptor.PerfTests
                 Console.WriteLine();
                 Console.WriteLine("Options:");
                 Console.WriteLine("     target           Test type full name or \"all\" for all tests");
-                Console.WriteLine("     --runs count     Number of runs");
+                Console.WriteLine("     --runs=count     Number of runs");
                 Console.WriteLine();
             }
         }

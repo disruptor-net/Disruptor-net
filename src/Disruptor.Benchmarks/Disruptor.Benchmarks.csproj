@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net47</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <OutputType>exe</OutputType>
   </PropertyGroup>
 
@@ -10,8 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.10.10" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.11.5" />
     <PackageReference Include="Fody" Version="3.2.4" PrivateAssets="all" />
     <PackageReference Include="InlineIL.Fody" Version="0.7.0" PrivateAssets="all" />
   </ItemGroup>

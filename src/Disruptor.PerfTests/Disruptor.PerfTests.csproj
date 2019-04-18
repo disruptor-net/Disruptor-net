@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net47</TargetFramework>
-	  <OutputType>exe</OutputType>
+    <TargetFrameworks>net472;netcoreapp2.1</TargetFrameworks>
+    <OutputType>exe</OutputType>
   </PropertyGroup>
     
   <ItemGroup>
-	  <PackageReference Include="HdrHistogram" Version="1.7.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.11.5" />
+    <PackageReference Include="HdrHistogram" Version="2.5.0" />
   </ItemGroup>
   
   <ItemGroup>

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using BenchmarkDotNet.Environments;
 
 namespace Disruptor.PerfTests
 {
@@ -77,7 +78,10 @@ namespace Disruptor.PerfTests
             var computerSpecifications = new ComputerSpecifications();
 
             if (options.ShouldPrintComputerSpecifications)
-                Console.WriteLine(computerSpecifications.ToString());
+            {
+                Console.WriteLine();
+                Console.Write(computerSpecifications.ToString());
+            }
 
             if (!options.ShouldGenerateReport)
                 return;
@@ -117,9 +121,9 @@ namespace Disruptor.PerfTests
             sb.AppendLine("        <h2>Host configuration</h2>");
 
             computerSpecifications.AppendHtml(sb);
-            if (computerSpecifications.NumberOfCores < 4)
+            if (computerSpecifications.PhysicalCoreCount < 4)
             {
-                sb.AppendFormat("        <b><font color='red'>Your computer has {0} physical core(s) but most of the tests require at least 4 cores</font></b><br>", computerSpecifications.NumberOfCores);
+                sb.AppendFormat("        <b><font color='red'>Your computer has {0} physical core(s) but most of the tests require at least 4 cores</font></b><br>", computerSpecifications.PhysicalCoreCount);
             }
             if (computerSpecifications.IsHyperThreaded)
             {

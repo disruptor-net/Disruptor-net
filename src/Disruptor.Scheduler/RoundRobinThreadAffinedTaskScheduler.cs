@@ -32,6 +32,8 @@ namespace Disruptor.Scheduler
             CreateThreads(numberOfThreads, processorIndexes);
         }
 
+        public static bool IsSupported { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
         /// <summary>
         /// Create a new <see cref="RoundRobinThreadAffinedTaskScheduler"/> with a provided number of background threads. 
         /// Threads are pined to a logical core using a round roubin algorithm choosen between provided processor indexes
@@ -123,10 +125,7 @@ namespace Disruptor.Scheduler
         /// <returns>
         /// Returns an integer that represents the maximum concurrency level.
         /// </returns>
-        public override int MaximumConcurrencyLevel
-        {
-            get { return _threads.Count; }
-        }
+        public override int MaximumConcurrencyLevel => _threads.Count;
 
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
@@ -145,9 +144,8 @@ namespace Disruptor.Scheduler
             }
         }
 
-
         [DllImport("kernel32.dll")]
-        static extern uint GetCurrentThreadId();
+        private static extern uint GetCurrentThreadId();
 
         private static void SetThreadAffinity(int processorIndex)
         {
@@ -187,9 +185,7 @@ namespace Disruptor.Scheduler
                     }
                 }
 
-                throw new InvalidOperationException(
-                    string.Format("Could not retrieve native thread with ID: {0}, current managed thread ID was {1}",
-                                  threadId, Thread.CurrentThread.ManagedThreadId));
+                throw new InvalidOperationException($"Could not retrieve native thread with ID: {threadId}, current managed thread ID was {threadId}");
             }
         }
     }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
@@ -53,7 +52,7 @@ namespace Disruptor.PerfTests.Sequenced
 
         private readonly CountdownEvent _cyclicBarrier = new CountdownEvent(_numPublishers + 1);
         private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateMultiProducer(ValueEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
-        private readonly TaskScheduler _scheduler = new RoundRobinThreadAffinedTaskScheduler(5);
+        private readonly TaskScheduler _scheduler = RoundRobinThreadAffinedTaskScheduler.IsSupported ? new RoundRobinThreadAffinedTaskScheduler(5) : TaskScheduler.Default;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly ValueAdditionEventHandler _handler = new ValueAdditionEventHandler();
         private readonly IBatchEventProcessor<ValueEvent> _batchEventProcessor;

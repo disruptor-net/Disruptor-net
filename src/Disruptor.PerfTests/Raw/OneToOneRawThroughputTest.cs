@@ -50,11 +50,11 @@ namespace Disruptor.PerfTests.Raw
 
         private readonly SingleProducerSequencer _sequencer = new SingleProducerSequencer(_bufferSize, new YieldingWaitStrategy());
         private readonly MyRunnable _myRunnable;
-        private readonly RoundRobinThreadAffinedTaskScheduler _taskScheduler;
+        private readonly TaskScheduler _taskScheduler;
 
         public OneToOneRawThroughputTest()
         {
-            _taskScheduler = new RoundRobinThreadAffinedTaskScheduler(2);
+            _taskScheduler = RoundRobinThreadAffinedTaskScheduler.IsSupported ? new RoundRobinThreadAffinedTaskScheduler(2) : TaskScheduler.Default;
             _myRunnable = new MyRunnable(_sequencer);
             _sequencer.AddGatingSequences(_myRunnable.Sequence);
         }
