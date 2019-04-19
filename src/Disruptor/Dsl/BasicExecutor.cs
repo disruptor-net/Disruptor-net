@@ -25,7 +25,7 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
-        /// Start a new task executiong the given command in the current taskscheduler
+        /// Start a new task executing the given command in the current TaskScheduler.
         /// </summary>
         /// <param name="command"></param>
         public Task Execute(Action command)

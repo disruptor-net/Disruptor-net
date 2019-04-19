@@ -143,9 +143,9 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next(int n)
         {
-            if (n < 1)
+            if (n < 1 || n > _bufferSize)
             {
-                ThrowHelper.ThrowArgMustBeGreaterThanZero();
+                ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
             }
 
             switch (_sequencerType)
@@ -207,12 +207,17 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryNext(int n, out long sequence)
         {
+            if (n < 1 || n > _bufferSize)
+            {
+                ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
+            }
+
             switch (_sequencerType)
             {
                 case RingBufferSequencerType.SingleProducer:
-                    return _singleProducerSequencer.TryNext(n, out sequence);
+                    return _singleProducerSequencer.TryNextInternal(n, out sequence);
                 case RingBufferSequencerType.MultiProducer:
-                    return _multiProducerSequencer.TryNext(n, out sequence);
+                    return _multiProducerSequencer.TryNextInternal(n, out sequence);
                 default:
                     return _sequencer.TryNext(n, out sequence);
             }

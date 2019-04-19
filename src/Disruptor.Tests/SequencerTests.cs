@@ -228,7 +228,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldTryNextOut()
+        public void ShouldTryNext()
         {
             _sequencer.AddGatingSequences(_gatingSequence);
 
@@ -245,7 +245,7 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldTryNextNOut()
+        public void ShouldTryNextN()
         {
             _sequencer.AddGatingSequences(_gatingSequence);
 
@@ -285,15 +285,39 @@ namespace Disruptor.Tests
         }
 
         [Test]
-        public void ShouldNotAllowBulkTryNextOutLessThanZero()
+        public void ShouldAllowBulkNextEqualToBufferSize()
+        {
+            Assert.DoesNotThrow(() => _sequencer.Next(_bufferSize));
+        }
+
+        [Test]
+        public void ShouldNotAllowBulkNextGreaterThanRingBufferSize()
+        {
+            Assert.Throws<ArgumentException>(() => _sequencer.Next(_bufferSize + 1));
+        }
+
+        [Test]
+        public void ShouldNotAllowBulkTryNextLessThanZero()
         {
             Assert.Throws<ArgumentException>(() => _sequencer.TryNext(-1, out _));
         }
 
         [Test]
-        public void ShouldNotAllowBulkTryNextOutOfZero()
+        public void ShouldNotAllowBulkTryNextOfZero()
         {
             Assert.Throws<ArgumentException>(() => _sequencer.TryNext(0, out _));
+        }
+
+        [Test]
+        public void ShouldAllowBulkTryNextEqualToBufferSize()
+        {
+            Assert.DoesNotThrow(() => _sequencer.TryNext(_bufferSize, out _));
+        }
+
+        [Test]
+        public void ShouldNotAllowBulkTryNextGreaterThanRingBufferSize()
+        {
+            Assert.Throws<ArgumentException>(() => _sequencer.TryNext(_bufferSize + 1, out _));
         }
     }
 }

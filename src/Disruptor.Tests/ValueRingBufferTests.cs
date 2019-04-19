@@ -46,6 +46,13 @@ namespace Disruptor.Tests
         }
 
         [Test]
+        public void ShouldNotClaimMoreThanCapacity()
+        {
+            Assert.Throws<ArgumentException>(() => _ringBuffer.Next(_ringBuffer.BufferSize + 1));
+            Assert.Throws<ArgumentException>(() => _ringBuffer.TryNext(_ringBuffer.BufferSize + 1, out _));
+        }
+
+        [Test]
         public void ShouldClaimAndGetInSeparateThread()
         {
             var events = GetEvents(0, 0);

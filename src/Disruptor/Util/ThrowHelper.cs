@@ -9,9 +9,9 @@ namespace Disruptor
     internal static class ThrowHelper
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void ThrowArgMustBeGreaterThanZero()
+        public static void ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize()
         {
-            throw new ArgumentException("n must be > 0");
+            throw new ArgumentException("n must be > 0 and <= bufferSize");
         }
     }
 }

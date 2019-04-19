@@ -126,12 +126,12 @@ namespace Disruptor
         /// Claim the next n events in sequence for publishing.  This is for batch event producing.  Using batch producing requires a little care and some math.
         /// <code>
         ///     int n = 10;
-        ///     long hi = sequencer.next(n);
+        ///     long hi = sequencer.Next(n);
         ///     long lo = hi - (n - 1);
         ///     for (long sequence = lo; sequence &lt;= hi; sequence++) {
         ///        // Do work.
         ///     }
-        ///     sequencer.publish(lo, hi);
+        ///     sequencer.Publish(lo, hi);
         /// </code>
         /// </summary>
         /// <param name="n">the number of sequences to claim</param>
@@ -139,9 +139,9 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next(int n)
         {
-            if (n < 1)
+            if (n < 1 || n > _bufferSize)
             {
-                ThrowHelper.ThrowArgMustBeGreaterThanZero();
+                ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
             }
 
             return NextInternal(n);
@@ -211,9 +211,9 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryNext(int n, out long sequence)
         {
-            if (n < 1)
+            if (n < 1 || n > _bufferSize)
             {
-                ThrowHelper.ThrowArgMustBeGreaterThanZero();
+                ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
             }
 
             return TryNextInternal(n, out sequence);
