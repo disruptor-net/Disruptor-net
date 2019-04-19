@@ -48,10 +48,10 @@ namespace Disruptor.PerfTests.Sequenced
         private const int _bufferSize = 1024 * 8;
         private const long _iterations = 1000L * 1000L * 100L;
 
-        private readonly RingBuffer<ValueEvent> _ringBuffer;
-        private readonly IBatchEventProcessor<ValueEvent>[] _batchEventProcessors = new IBatchEventProcessor<ValueEvent>[_numEventProcessors];
+        private readonly RingBuffer<PerfEvent> _ringBuffer;
+        private readonly IBatchEventProcessor<PerfEvent>[] _batchEventProcessors = new IBatchEventProcessor<PerfEvent>[_numEventProcessors];
         private readonly long[] _results = new long[_numEventProcessors];
-        private readonly ValueMutationEventHandler[] _handlers = new ValueMutationEventHandler[_numEventProcessors];
+        private readonly PerfMutationEventHandler[] _handlers = new PerfMutationEventHandler[_numEventProcessors];
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
         
         public OneToThreeSequencedThroughputTest()
@@ -63,12 +63,12 @@ namespace Disruptor.PerfTests.Sequenced
                 _results[2] = Operation.And.Op(_results[2], i);
             }
 
-            _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+            _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
 
-            _handlers[0] = new ValueMutationEventHandler(Operation.Addition);
-            _handlers[1] = new ValueMutationEventHandler(Operation.Subtraction);
-            _handlers[2] = new ValueMutationEventHandler(Operation.And);
+            _handlers[0] = new PerfMutationEventHandler(Operation.Addition);
+            _handlers[1] = new PerfMutationEventHandler(Operation.Subtraction);
+            _handlers[2] = new PerfMutationEventHandler(Operation.And);
 
 
             for (var i = 0; i < _numEventProcessors; i++)

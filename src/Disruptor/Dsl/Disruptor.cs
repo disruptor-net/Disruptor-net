@@ -11,20 +11,20 @@ namespace Disruptor.Dsl
     /// 
     /// A simple example of setting up the disruptor with two event handlers that
     /// must process events in order:
-    /// <code>Disruptor{MyEvent} disruptor = new Disruptor{MyEvent}(MyEvent.FACTORY, 32, Executors.NewCachedThreadPool());
-    /// EventHandler{MyEvent} handler1 = new EventHandler{MyEvent}() { ... };
-    /// EventHandler{MyEvent} handler2 = new EventHandler{MyEvent}() { ... };
-    /// disruptor.HandleEventsWith(handler1);
-    /// disruptor.After(handler1).HandleEventsWith(handler2);
+    /// <code>var disruptor = new Disruptor{MyEvent}(() => new MyEvent(), 32, TaskScheduler.Default);
+    /// var handler1 = new EventHandler1() { ... };
+    /// var handler2 = new EventHandler2() { ... };
+    /// disruptor.HandleEventsWith(handler1).Then(handler2);
     /// 
-    /// RingBuffer ringBuffer = disruptor.Start();</code>
+    /// var ringBuffer = disruptor.Start();</code>
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
-    public class Disruptor<T> where T : class
+    public class Disruptor<T>
+        where T : class
     {
         private readonly RingBuffer<T> _ringBuffer;
         private readonly IExecutor _executor;
-        private readonly ConsumerRepository<T> _consumerRepository = new ConsumerRepository<T>();
+        private readonly ConsumerRepository _consumerRepository = new ConsumerRepository();
         private IExceptionHandler<T> _exceptionHandler = new ExceptionHandlerWrapper<T>();
         private int _started;
 
@@ -79,7 +79,7 @@ namespace Disruptor.Dsl
         /// 
         /// <code>dw.HandleEventsWith(A).Then(B);</code>
         /// 
-        /// This call is additive, but generally should only be called once when setting up the Disruptor instance.
+        /// This call is additive, but generally should only be called once when setting up the disruptor instance.
         /// </summary>
         /// <param name="handlers">the event handlers that will process events</param>
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
@@ -89,7 +89,7 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
-        /// Set up custom event processors to handle events from the ring buffer. The Disruptor will
+        /// Set up custom event processors to handle events from the ring buffer. The disruptor will
         /// automatically start these processors when <see cref="Start"/> is called.
         /// 
         /// This method can be used as the start of a chain. For example if the handler <code>A</code> must
@@ -101,7 +101,7 @@ namespace Disruptor.Dsl
         /// <see cref="EventHandlerGroup{T}.HandleEventsWith(IEventProcessorFactory{T}[])"/> and <see cref="EventHandlerGroup{T}.Then(IEventProcessorFactory{T}[])"/>
         /// which do have barrier sequences to provide.
         /// 
-        /// This call is additive, but generally should only be called once when setting up the Disruptor instance.
+        /// This call is additive, but generally should only be called once when setting up the disruptor instance.
         /// </summary>
         /// <param name="eventProcessorFactories">eventProcessorFactories the event processor factories to use to create the event processors that will process events.</param>
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
@@ -111,7 +111,7 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
-        /// Set up custom event processors to handle events from the ring buffer. The Disruptor will
+        /// Set up custom event processors to handle events from the ring buffer. The disruptor will
         /// automatically start this processors when <see cref="Start"/> is called.
         /// 
         /// This method can be used as the start of a chain. For example if the processor <code>A</code> must
@@ -141,7 +141,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Set up a <see cref="WorkerPool{T}"/> to distribute an event to one of a pool of work handler threads.
         /// Each event will only be processed by one of the work handlers.
-        /// The Disruptor will automatically start this processors when <see cref="Start"/> is called.
+        /// The disruptor will automatically start this processors when <see cref="Start"/> is called.
         /// </summary>
         /// <param name="workHandlers">the work handlers that will process events.</param>
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
@@ -162,8 +162,8 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
-        /// Specify an exception handler to be used for event handlers and worker pools created by this Disruptor.
-        /// The exception handler will be used by existing and future event handlers and worker pools created by this Disruptor instance.
+        /// Specify an exception handler to be used for event handlers and worker pools created by this disruptor.
+        /// The exception handler will be used by existing and future event handlers and worker pools created by this disruptor instance.
         /// </summary>
         /// <param name="exceptionHandler">the exception handler to use</param>
         public void SetDefaultExceptionHandler(IExceptionHandler<T> exceptionHandler)
@@ -341,7 +341,7 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
-        /// The <see cref="RingBuffer{T}"/> used by this Disruptor. This is useful for creating custom
+        /// The <see cref="RingBuffer{T}"/> used by this disruptor. This is useful for creating custom
         /// event processors if the behaviour of <see cref="BatchEventProcessor{T}"/> is not suitable.
         /// </summary>
         public RingBuffer<T> RingBuffer => _ringBuffer;

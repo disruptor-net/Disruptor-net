@@ -12,7 +12,7 @@ namespace Disruptor
     /// 
     /// This class is kept mainly for compatibility reasons.
     /// 
-    /// Consider using <see cref="BatchEventProcessorFactory.Create{T}"/> to create your <see cref="IEventProcessor"/>.
+    /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
     public class BatchEventProcessor<T> : BatchEventProcessor<T, IDataProvider<T>, ISequenceBarrier, IEventHandler<T>, BatchEventProcessor<T>.BatchStartAware>
@@ -22,7 +22,7 @@ namespace Disruptor
         /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
         /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
         /// 
-        /// Consider using <see cref="BatchEventProcessorFactory.Create{T}"/> to create your <see cref="IEventProcessor"/>.
+        /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
         /// </summary>
         /// <param name="dataProvider">dataProvider to which events are published</param>
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
@@ -92,7 +92,7 @@ namespace Disruptor
         /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
         /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
         /// 
-        /// Consider using <see cref="BatchEventProcessorFactory.Create{T}"/> to create your <see cref="IEventProcessor"/>.
+        /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
         /// </summary>
         /// <param name="dataProvider">dataProvider to which events are published</param>
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>

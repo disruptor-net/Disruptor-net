@@ -51,7 +51,7 @@ namespace Disruptor.Tests
             _ringBuffer.Publish(hi - 9, hi);
         }
 
-        private class AssertingSequencer : ISequencer
+        public class AssertingSequencer : ISequencer
         {
             private readonly int _size;
             private long _lastBatchSize = -1;

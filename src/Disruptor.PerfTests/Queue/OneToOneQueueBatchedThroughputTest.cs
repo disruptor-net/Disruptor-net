@@ -12,11 +12,11 @@ namespace Disruptor.PerfTests.Queue
         private const long _expectedResult = _iterations * 3L;
 
         private readonly ArrayConcurrentQueue<long> _blockingQueue = new ArrayConcurrentQueue<long>(_bufferSize);
-        private readonly ValueAdditionBatchQueueProcessor _queueProcessor;
+        private readonly PerfAdditionBatchQueueProcessor _queueProcessor;
         
         public OneToOneQueueBatchedThroughputTest()
         {
-            _queueProcessor = new ValueAdditionBatchQueueProcessor(_blockingQueue, _iterations);
+            _queueProcessor = new PerfAdditionBatchQueueProcessor(_blockingQueue, _iterations);
         }
 
         public int RequiredProcessorCount => 2;

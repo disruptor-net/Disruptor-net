@@ -2,11 +2,11 @@
 
 namespace Disruptor.Tests.Support
 {
-    public class ActionEventHandler<T> : IEventHandler<T>
+    public class TestEventHandler<T> : IEventHandler<T>
     {
         private readonly Action<T> _onEventAction;
 
-        public ActionEventHandler(Action<T> onEventAction)
+        public TestEventHandler(Action<T> onEventAction)
         {
             _onEventAction = onEventAction;
         }

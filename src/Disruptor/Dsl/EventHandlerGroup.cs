@@ -5,16 +5,16 @@ using System.Linq;
 namespace Disruptor.Dsl
 {
     ///<summary>
-    /// A group of <see cref="IEventProcessor"/>s used as part of the <see cref="Disruptor"/>
+    /// A group of <see cref="IEventProcessor"/>s used as part of the <see cref="Disruptor{T}"/>
     ///</summary>
     ///<typeparam name="T">the type of event used by <see cref="IEventProcessor"/>s.</typeparam>
     public class EventHandlerGroup<T> where T : class
     {
         private readonly Disruptor<T> _disruptor;
-        private readonly ConsumerRepository<T> _consumerRepository;
+        private readonly ConsumerRepository _consumerRepository;
         private readonly ISequence[] _sequences;
 
-        internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository<T> consumerRepository, IEnumerable<ISequence> sequences)
+        internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository consumerRepository, IEnumerable<ISequence> sequences)
         {
             _disruptor = disruptor;
             _consumerRepository = consumerRepository;
@@ -121,7 +121,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Create a dependency barrier for the processors in this group.
         /// This allows custom event processors to have dependencies on
-        /// <see cref="BatchEventProcessor{T}"/>s created by the disruptor.
+        /// <see cref="IBatchEventProcessor{T}"/>s created by the disruptor.
         /// </summary>
         /// <returns>a <see cref="ISequenceBarrier"/> including all the processors in this group.</returns>
         public ISequenceBarrier AsSequenceBarrier()

@@ -128,7 +128,7 @@ namespace Disruptor.PerfTests
                 Console.WriteLine();
                 Console.WriteLine("Options:");
                 Console.WriteLine("     target           Test type full name or \"all\" for all tests");
-                Console.WriteLine("     --runs=count     Number of runs");
+                Console.WriteLine("   --runs=count     Number of runs");
                 Console.WriteLine();
             }
         }

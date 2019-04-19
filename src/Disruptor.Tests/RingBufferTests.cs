@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
-using Gen = System.Collections.Generic;
 using static Disruptor.Tests.RingBufferEqualsConstraint;
 
 #pragma warning disable 618,612
@@ -99,7 +99,7 @@ namespace Disruptor.Tests
             }
         }
 
-        private Task<Gen.List<StubEvent>> GetEvents(long initial, long toWaitFor)
+        private Task<List<StubEvent>> GetEvents(long initial, long toWaitFor)
         {
             var barrier = new Barrier(2);
             var dependencyBarrier = _ringBuffer.NewBarrier();
@@ -193,7 +193,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvent(translator);
             ringBuffer.TryPublishEvent(translator);
 
-            Assert.That(ringBuffer, RingBufferWithEvents(0L, 1L));
+            Assert.That(ringBuffer, IsRingBufferWithEvents(0L, 1L));
         }
 
         [Test]
@@ -205,7 +205,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvent(translator, "Foo");
             ringBuffer.TryPublishEvent(translator, "Foo");
 
-            Assert.That(ringBuffer, RingBufferWithEvents("Foo-0", "Foo-1"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("Foo-0", "Foo-1"));
         }
 
         [Test]
@@ -217,7 +217,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvent(translator, "Foo", "Bar");
             ringBuffer.TryPublishEvent(translator, "Foo", "Bar");
 
-            Assert.That(ringBuffer, RingBufferWithEvents("FooBar-0", "FooBar-1"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("FooBar-0", "FooBar-1"));
         }
 
         [Test]
@@ -229,7 +229,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvent(translator, "Foo", "Bar", "Baz");
             ringBuffer.TryPublishEvent(translator, "Foo", "Bar", "Baz");
 
-            Assert.That(ringBuffer, RingBufferWithEvents("FooBarBaz-0", "FooBarBaz-1"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("FooBarBaz-0", "FooBarBaz-1"));
         }
 
         [Test]
@@ -241,7 +241,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvent(translator, "Foo", "Bar", "Baz", "Bam");
             ringBuffer.TryPublishEvent(translator, "Foo", "Bar", "Baz", "Bam");
 
-            Assert.That(ringBuffer, RingBufferWithEvents("FooBarBazBam-0", "FooBarBazBam-1"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("FooBarBazBam-0", "FooBarBazBam-1"));
         }
 
         [Test]
@@ -254,7 +254,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translators);
             Assert.IsTrue(ringBuffer.TryPublishEvents(translators));
 
-            Assert.That(ringBuffer, RingBufferWithEvents(0L, 1L, 2L, 3L));
+            Assert.That(ringBuffer, IsRingBufferWithEvents(0L, 1L, 2L, 3L));
         }
 
         [Test]
@@ -286,7 +286,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translators, 0, 1);
             Assert.IsTrue(ringBuffer.TryPublishEvents(translators, 0, 1));
 
-            Assert.That(ringBuffer, RingBufferWithEvents(0L, 1L, null, null));
+            Assert.That(ringBuffer, IsRingBufferWithEvents(0L, 1L, null, null));
         }
 
         [Test]
@@ -300,7 +300,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translators, 1, 2);
             Assert.IsTrue(ringBuffer.TryPublishEvents(translators, 1, 2));
 
-            Assert.That(ringBuffer, RingBufferWithEvents(0L, 1L, 2L, 3L));
+            Assert.That(ringBuffer, IsRingBufferWithEvents(0L, 1L, 2L, 3L));
         }
 
         [Test]
@@ -312,7 +312,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, new[] { "Foo", "Foo" });
             Assert.IsTrue(ringBuffer.TryPublishEvents(translator, new[] { "Foo", "Foo" }));
 
-            Assert.That(ringBuffer, RingBufferWithEvents("Foo-0", "Foo-1", "Foo-2", "Foo-3"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("Foo-0", "Foo-1", "Foo-2", "Foo-3"));
         }
 
         [Test]
@@ -340,7 +340,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, 0, 1, new[] { "Foo", "Foo" });
             Assert.IsTrue(ringBuffer.TryPublishEvents(translator, 0, 1, new[] { "Foo", "Foo" }));
 
-            Assert.That(ringBuffer, RingBufferWithEvents("Foo-0", "Foo-1", null, null));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("Foo-0", "Foo-1", null, null));
         }
 
         [Test]
@@ -352,7 +352,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, 1, 2, new[] { "Foo", "Foo", "Foo" });
             Assert.IsTrue(ringBuffer.TryPublishEvents(translator, 1, 2, new[] { "Foo", "Foo", "Foo" }));
 
-            Assert.That(ringBuffer, RingBufferWithEvents("Foo-0", "Foo-1", "Foo-2", "Foo-3"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("Foo-0", "Foo-1", "Foo-2", "Foo-3"));
         }
 
         [Test]
@@ -364,7 +364,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
             ringBuffer.TryPublishEvents(translator, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" });
 
-            Assert.That(ringBuffer, RingBufferWithEvents("FooBar-0", "FooBar-1", "FooBar-2", "FooBar-3"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("FooBar-0", "FooBar-1", "FooBar-2", "FooBar-3"));
         }
 
         [Test]
@@ -396,7 +396,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, 0, 1, new[] { "Foo0", "Foo1" }, new[] { "Bar0", "Bar1" });
             ringBuffer.TryPublishEvents(translator, 0, 1, new[] { "Foo2", "Foo3" }, new[] { "Bar2", "Bar3" });
 
-            Assert.That(ringBuffer, RingBufferWithEvents("Foo0Bar0-0", "Foo2Bar2-1", null, null));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("Foo0Bar0-0", "Foo2Bar2-1", null, null));
         }
 
         [Test]
@@ -410,7 +410,7 @@ namespace Disruptor.Tests
             ringBuffer.TryPublishEvents(
                 translator, 1, 2, new[] { "Foo3", "Foo4", "Foo5" }, new[] { "Bar3", "Bar4", "Bar5" });
 
-            Assert.That(ringBuffer, RingBufferWithEvents("Foo1Bar1-0", "Foo2Bar2-1", "Foo4Bar4-2", "Foo5Bar5-3"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("Foo1Bar1-0", "Foo2Bar2-1", "Foo4Bar4-2", "Foo5Bar5-3"));
         }
 
         [Test]
@@ -424,7 +424,7 @@ namespace Disruptor.Tests
             ringBuffer.TryPublishEvents(
                 translator, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" });
 
-            Assert.That(ringBuffer, RingBufferWithEvents("FooBarBaz-0", "FooBarBaz-1", "FooBarBaz-2", "FooBarBaz-3"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("FooBarBaz-0", "FooBarBaz-1", "FooBarBaz-2", "FooBarBaz-3"));
         }
 
         [Test]
@@ -458,7 +458,7 @@ namespace Disruptor.Tests
             ringBuffer.TryPublishEvents(
                 translator, 0, 1, new[] { "Foo", "Foo" }, new[] { "Bar", "Bar" }, new[] { "Baz", "Baz" });
 
-            Assert.That(ringBuffer, RingBufferWithEvents("FooBarBaz-0", "FooBarBaz-1", null, null));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("FooBarBaz-0", "FooBarBaz-1", null, null));
         }
 
         [Test]
@@ -476,7 +476,7 @@ namespace Disruptor.Tests
                     translator, 1, 2, new[] { "Foo3", "Foo4", "Foo5" }, new[] { "Bar3", "Bar4", "Bar5" },
                     new[] { "Baz3", "Baz4", "Baz5" }));
 
-            Assert.That(ringBuffer, RingBufferWithEvents("Foo1Bar1Baz1-0", "Foo2Bar2Baz2-1", "Foo4Bar4Baz4-2", "Foo5Bar5Baz5-3"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("Foo1Bar1Baz1-0", "Foo2Bar2Baz2-1", "Foo4Bar4Baz4-2", "Foo5Bar5Baz5-3"));
         }
 
         [Test]
@@ -488,7 +488,7 @@ namespace Disruptor.Tests
             ringBuffer.PublishEvents(translator, new[] { "Foo", "Bar", "Baz", "Bam" }, new[] { "Foo", "Bar", "Baz", "Bam" });
             Assert.IsTrue(ringBuffer.TryPublishEvents(translator, new[] { "Foo", "Bar", "Baz", "Bam" }, new[] { "Foo", "Bar", "Baz", "Bam" }));
 
-            Assert.That(ringBuffer, RingBufferWithEvents("FooBarBazBam-0", "FooBarBazBam-1", "FooBarBazBam-2", "FooBarBazBam-3"));
+            Assert.That(ringBuffer, IsRingBufferWithEvents("FooBarBazBam-0", "FooBarBazBam-1", "FooBarBazBam-2", "FooBarBazBam-3"));
         }
 
         [Test]
@@ -526,7 +526,7 @@ namespace Disruptor.Tests
                     translator, 0, 1, new object[] { "Foo", "Bar", "Baz", "Bam" }, new object[] { "Foo", "Bar", "Baz", "Bam" }));
 
             Assert.That(
-                ringBuffer, RingBufferWithEvents(
+                ringBuffer, IsRingBufferWithEvents(
                     "FooBarBazBam-0", "FooBarBazBam-1", null, null));
         }
 
@@ -547,7 +547,7 @@ namespace Disruptor.Tests
                     new object[] { "Foo5", "Bar5", "Baz5", "Bam5" }));
 
             Assert.That(
-                ringBuffer, RingBufferWithEvents(
+                ringBuffer, IsRingBufferWithEvents(
                     "Foo1Bar1Baz1Bam1-0", "Foo2Bar2Baz2Bam2-1", "Foo4Bar4Baz4Bam4-2", "Foo5Bar5Baz5Bam5-3"));
         }
 
@@ -1308,18 +1308,6 @@ namespace Disruptor.Tests
             Assert.That(rb.HasAvailableCapacity(1), Is.EqualTo(false));
         }
 
-        private Task<Gen.List<StubEvent>> GetMessages(long initial, long toWaitFor)
-        {
-            var cyclicBarrier = new Barrier(2);
-            var sequenceBarrier = _ringBuffer.NewBarrier();
-
-            var f = Task.Factory.StartNew(() => new TestWaiter(cyclicBarrier, sequenceBarrier, _ringBuffer, initial, toWaitFor).Call());
-
-            cyclicBarrier.SignalAndWait();
-
-            return f;
-        }
-
         private static void AssertEmptyRingBuffer(RingBuffer<object[]> ringBuffer)
         {
             Assert.That(ringBuffer[0][0], Is.EqualTo(null));
@@ -1392,6 +1380,38 @@ namespace Disruptor.Tests
             }
 
             public bool IsRunning { get; private set; }
+        }
+
+        private class TestWaiter
+        {
+            private readonly Barrier _barrier;
+            private readonly ISequenceBarrier _sequenceBarrier;
+            private readonly long _initialSequence;
+            private readonly long _toWaitForSequence;
+            private readonly RingBuffer<StubEvent> _ringBuffer;
+
+            public TestWaiter(Barrier barrier, ISequenceBarrier sequenceBarrier, RingBuffer<StubEvent> ringBuffer, long initialSequence, long toWaitForSequence)
+            {
+                _barrier = barrier;
+                _sequenceBarrier = sequenceBarrier;
+                _ringBuffer = ringBuffer;
+                _initialSequence = initialSequence;
+                _toWaitForSequence = toWaitForSequence;
+            }
+
+            public List<StubEvent> Call()
+            {
+                _barrier.SignalAndWait();
+                _sequenceBarrier.WaitFor(_toWaitForSequence);
+
+                var events = new List<StubEvent>();
+                for (var l = _initialSequence; l <= _toWaitForSequence; l++)
+                {
+                    events.Add(_ringBuffer[l]);
+                }
+
+                return events;
+            }
         }
     }
 }

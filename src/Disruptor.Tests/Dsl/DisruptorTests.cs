@@ -52,7 +52,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldProcessMessagesPublishedBeforeStartIsCalled()
         {
             var eventCounter = new CountdownEvent(2);
-            _disruptor.HandleEventsWith(new ActionEventHandler<TestEvent>(e => eventCounter.Signal()));
+            _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>(e => eventCounter.Signal()));
 
             _disruptor.PublishEvent(new ActionEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
 
@@ -136,8 +136,8 @@ namespace Disruptor.Tests.Dsl
         public void ShouldCreateEventProcessorGroupForFirstEventProcessors()
         {
             _executor.IgnoreExecutions();
-            IEventHandler<TestEvent> eventHandler1 = new SleepingEventHandler();
-            IEventHandler<TestEvent> eventHandler2 = new SleepingEventHandler();
+            var eventHandler1 = new SleepingEventHandler();
+            var eventHandler2 = new SleepingEventHandler();
 
             var eventHandlerGroup =
                 _disruptor.HandleEventsWith(eventHandler1, eventHandler2);
@@ -151,7 +151,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldMakeEntriesAvailableToFirstHandlersImmediately()
         {
             var countDownLatch = new CountdownEvent(2);
-            IEventHandler<TestEvent> eventHandler = new EventHandlerStub<TestEvent>(countDownLatch);
+            var eventHandler = new CountDownEventHandler<TestEvent>(countDownLatch);
 
             _disruptor.HandleEventsWith(CreateDelayedEventHandler(), eventHandler);
 
@@ -164,7 +164,7 @@ namespace Disruptor.Tests.Dsl
             var eventHandler1 = CreateDelayedEventHandler();
 
             var countDownLatch = new CountdownEvent(2);
-            IEventHandler<TestEvent> eventHandler2 = new EventHandlerStub<TestEvent>(countDownLatch);
+            var eventHandler2 = new CountDownEventHandler<TestEvent>(countDownLatch);
 
             _disruptor.HandleEventsWith(eventHandler1).Then(eventHandler2);
 
@@ -178,7 +178,7 @@ namespace Disruptor.Tests.Dsl
             var handler2 = CreateDelayedEventHandler();
 
             var countDownLatch = new CountdownEvent(2);
-            IEventHandler<TestEvent> handlerWithBarrier = new EventHandlerStub<TestEvent>(countDownLatch);
+            var handlerWithBarrier = new CountDownEventHandler<TestEvent>(countDownLatch);
 
             _disruptor.HandleEventsWith(handler1, handler2);
             _disruptor.After(handler1, handler2).HandleEventsWith(handlerWithBarrier);
@@ -194,7 +194,7 @@ namespace Disruptor.Tests.Dsl
             var handler2 = CreateDelayedEventHandler();
 
             var countDownLatch = new CountdownEvent(2);
-            IEventHandler<TestEvent> handlerWithBarrier = new EventHandlerStub<TestEvent>(countDownLatch);
+            var handlerWithBarrier = new CountDownEventHandler<TestEvent>(countDownLatch);
 
             _disruptor.HandleEventsWith(handler1);
             var handler2Group = _disruptor.HandleEventsWith(handler2);
@@ -225,7 +225,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldSupportSpecifyingAExceptionHandlerForEventProcessors()
         {
             var eventHandled = new AtomicReference<Exception>();
-            IExceptionHandler<object> exceptionHandler = new StubExceptionHandler(eventHandled);
+            var exceptionHandler = new StubExceptionHandler(eventHandled);
             var testException = new Exception();
             var handler = new ExceptionThrowingEventHandler(testException);
 
@@ -242,7 +242,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldOnlyApplyExceptionsHandlersSpecifiedViaHandleExceptionsWithOnNewEventProcessors()
         {
             var eventHandled = new AtomicReference<Exception>();
-            IExceptionHandler<object> exceptionHandler = new StubExceptionHandler(eventHandled);
+            var exceptionHandler = new StubExceptionHandler(eventHandled);
             var testException = new Exception();
             var handler = new ExceptionThrowingEventHandler(testException);
 
@@ -260,7 +260,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldSupportSpecifyingADefaultExceptionHandlerForEventProcessors()
         {
             var eventHandled = new AtomicReference<Exception>();
-            IExceptionHandler<object> exceptionHandler = new StubExceptionHandler(eventHandled);
+            var exceptionHandler = new StubExceptionHandler(eventHandled);
             var testException = new Exception();
             var handler = new ExceptionThrowingEventHandler(testException);
 
@@ -277,7 +277,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldApplyDefaultExceptionHandlerToExistingEventProcessors()
         {
             var eventHandled = new AtomicReference<Exception>();
-            IExceptionHandler<object> exceptionHandler = new StubExceptionHandler(eventHandled);
+            var exceptionHandler = new StubExceptionHandler(eventHandled);
             var testException = new Exception();
             var handler = new ExceptionThrowingEventHandler(testException);
 
@@ -364,7 +364,7 @@ namespace Disruptor.Tests.Dsl
             var delayedEventHandler = CreateDelayedEventHandler();
 
             var countDownLatch = new CountdownEvent(2);
-            IEventHandler<TestEvent> handlerWithBarrier = new EventHandlerStub<TestEvent>(countDownLatch);
+            var handlerWithBarrier = new CountDownEventHandler<TestEvent>(countDownLatch);
 
             var processor = BatchEventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), delayedEventHandler);
             _disruptor.HandleEventsWith(processor).Then(handlerWithBarrier);
@@ -380,7 +380,7 @@ namespace Disruptor.Tests.Dsl
 
             var ringBuffer = _disruptor.RingBuffer;
             var countDownLatch = new CountdownEvent(2);
-            IEventHandler<TestEvent> handlerWithBarrier = new EventHandlerStub<TestEvent>(countDownLatch);
+            var handlerWithBarrier = new CountDownEventHandler<TestEvent>(countDownLatch);
 
             var sequenceBarrier = _disruptor.After(delayedEventHandler).AsSequenceBarrier();
             var processor = BatchEventProcessorFactory.Create(ringBuffer, sequenceBarrier, handlerWithBarrier);
@@ -398,7 +398,7 @@ namespace Disruptor.Tests.Dsl
 
             var ringBuffer = _disruptor.RingBuffer;
             var countDownLatch = new CountdownEvent(2);
-            IEventHandler<TestEvent> handlerWithBarrier = new EventHandlerStub<TestEvent>(countDownLatch);
+            var handlerWithBarrier = new CountDownEventHandler<TestEvent>(countDownLatch);
 
             var sequenceBarrier = _disruptor.After(delayedEventHandler1).AsSequenceBarrier();
             var processor = BatchEventProcessorFactory.Create(ringBuffer, sequenceBarrier, delayedEventHandler2);
@@ -537,7 +537,7 @@ namespace Disruptor.Tests.Dsl
         {
             long[] remainingCapacity = { -1 };
             //Given
-            IEventHandler<TestEvent> eventHandler = new TempEventHandler(_disruptor, remainingCapacity);
+            var eventHandler = new TempEventHandler(_disruptor, remainingCapacity);
 
             _disruptor.HandleEventsWith(eventHandler);
 
@@ -574,7 +574,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldAllowEventHandlerWithSuperType()
         {
             var latch = new CountdownEvent(2);
-            IEventHandler<object> objectHandler = new EventHandlerStub<object>(latch);
+            var objectHandler = new CountDownEventHandler<object>(latch);
 
             _disruptor.HandleEventsWith(objectHandler);
 
@@ -586,7 +586,7 @@ namespace Disruptor.Tests.Dsl
         {
             var latch = new CountdownEvent(2);
             var delayedEventHandler = CreateDelayedEventHandler();
-            IEventHandler<object> objectHandler = new EventHandlerStub<object>(latch);
+            var objectHandler = new CountDownEventHandler<object>(latch);
 
             _disruptor.HandleEventsWith(delayedEventHandler).Then(objectHandler);
 
@@ -597,7 +597,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldMakeEntriesAvailableToFirstCustomProcessorsImmediately()
         {
             var countDownLatch = new CountdownEvent(2);
-            IEventHandler<TestEvent> eventHandler = new EventHandlerStub<TestEvent>(countDownLatch);
+            var eventHandler = new CountDownEventHandler<TestEvent>(countDownLatch);
 
             _disruptor.HandleEventsWith(new EventProcessorFactory(_disruptor, eventHandler, 0));
 
@@ -628,7 +628,7 @@ namespace Disruptor.Tests.Dsl
         public void ShouldHonourDependenciesForCustomProcessors()
         {
             var countDownLatch = new CountdownEvent(2);
-            IEventHandler<TestEvent> eventHandler = new EventHandlerStub<TestEvent>(countDownLatch);
+            var eventHandler = new CountDownEventHandler<TestEvent>(countDownLatch);
             var delayedEventHandler = CreateDelayedEventHandler();
 
             _disruptor.HandleEventsWith(delayedEventHandler).Then(new EventProcessorFactory(_disruptor, eventHandler, 1));

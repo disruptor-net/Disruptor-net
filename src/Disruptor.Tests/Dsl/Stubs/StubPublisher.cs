@@ -1,15 +1,13 @@
-﻿using Disruptor.Tests.Support;
-
-namespace Disruptor.Tests.Dsl.Stubs
+﻿namespace Disruptor.Tests.Dsl.Stubs
 {
     public class StubPublisher
     {
         private volatile bool _running = true;
         private volatile int _publicationCount;
 
-        private readonly RingBuffer<TestEvent> _ringBuffer;
+        private readonly ISequenced _ringBuffer;
 
-        public StubPublisher(RingBuffer<TestEvent> ringBuffer)
+        public StubPublisher(ISequenced ringBuffer)
         {
             _ringBuffer = ringBuffer;
         }
@@ -19,7 +17,6 @@ namespace Disruptor.Tests.Dsl.Stubs
             while (_running)
             {
                 var sequence = _ringBuffer.Next();
-                //TestEvent entry = ringBuffer.get(sequence);
                 _ringBuffer.Publish(sequence);
                 _publicationCount++;
             }

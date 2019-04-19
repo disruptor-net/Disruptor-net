@@ -1,5 +1,6 @@
 ﻿using System;
 using BenchmarkDotNet.Running;
+using ObjectLayoutInspector;
 
 namespace Disruptor.Benchmarks
 {
@@ -11,20 +12,24 @@ namespace Disruptor.Benchmarks
             //BenchmarkRunner.Run<MultiProducerSequencerBenchmarks>();
             //BenchmarkRunner.Run<ObjectArrayBenchmarks>();
             //BenchmarkRunner.Run<Int32ArrayBenchmarks>();
+            //BenchmarkRunner.Run<ValueArrayBenchmarks>();
 
             //TypeLayout.PrintLayout<Sequence>();
             //TypeLayout.PrintLayout<RingBuffer<object>>();
-            //TypeLayout.PrintLayout<SingleProducerSequencer>();
+            //TypeLayout.PrintLayout<ValueRingBuffer<ValueRingBufferBenchmarks.Event>.PublishScope>();
+            //TypeLayout.PrintLayout<ValueRingBuffer<ValueRingBufferBenchmarks.Event>.PublishScopeRange>();
 
             //RunMultiProducerSequencerBenchmarks();
-            RunInt32ArrayBenchmarks();
+            //RunInt32ArrayBenchmarks();
             //RunObjectArrayBenchmarks();
             //RunRingBufferBenchmarks();
 
             //Console.WriteLine(ObjectArrayBenchmarks.OffsetToArrayData);
             //Console.WriteLine(Int32ArrayBenchmarks.OffsetToArrayData);
 
-            Console.ReadLine();
+            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run();
+
+            //Console.ReadLine();
         }
 
         private static void RunMultiProducerSequencerBenchmarks()

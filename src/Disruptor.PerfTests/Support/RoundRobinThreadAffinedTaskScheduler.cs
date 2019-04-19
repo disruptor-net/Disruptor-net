@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Disruptor.Scheduler
+namespace Disruptor.PerfTests.Support
 {
     /// <summary>
     /// An implementation of <see cref="TaskScheduler"/> which creates an underlying thread pool and set processor affinity to each thread.

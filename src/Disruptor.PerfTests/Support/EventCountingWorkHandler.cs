@@ -2,7 +2,7 @@
 
 namespace Disruptor.PerfTests.Support
 {
-    public class EventCountingWorkHandler : IWorkHandler<ValueEvent>
+    public class EventCountingWorkHandler : IWorkHandler<PerfEvent>
     {
         private readonly PaddedLong[] _counters;
         private readonly int _index;
@@ -13,7 +13,7 @@ namespace Disruptor.PerfTests.Support
             _index = index;
         }
 
-        public void OnEvent(ValueEvent evt)
+        public void OnEvent(PerfEvent evt)
         {
             _counters[_index].Value = _counters[_index].Value + 1L;
         }

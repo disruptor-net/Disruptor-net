@@ -46,7 +46,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldThrowExceptionOnSettingNullExceptionHandler()
         {
-            var eventHandler = new ActionEventHandler<StubEvent>(x => throw new NullReferenceException());
+            var eventHandler = new TestEventHandler<StubEvent>(x => throw new NullReferenceException());
             var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
             Assert.Throws<ArgumentNullException>(() => batchEventProcessor.SetExceptionHandler(null));
@@ -56,7 +56,7 @@ namespace Disruptor.Tests
         public void ShouldCallMethodsInLifecycleOrderForBatch()
         {
             var eventSignal = new CountdownEvent(3);
-            var eventHandler = new ActionEventHandler<StubEvent>(x => eventSignal.Signal());
+            var eventHandler = new TestEventHandler<StubEvent>(x => eventSignal.Signal());
             var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
             _ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
@@ -78,8 +78,8 @@ namespace Disruptor.Tests
         public void ShouldCallExceptionHandlerOnUncaughtException()
         {
             var exceptionSignal = new CountdownEvent(1);
-            var exceptionHandler = new ActionExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
-            var eventHandler = new ActionEventHandler<StubEvent>(x => throw new NullReferenceException());
+            var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
+            var eventHandler = new TestEventHandler<StubEvent>(x => throw new NullReferenceException());
             var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
             _ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
 

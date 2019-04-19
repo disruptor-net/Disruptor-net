@@ -45,15 +45,15 @@ namespace Disruptor.PerfTests.Sequenced
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-        private readonly RingBuffer<ValueEvent> _ringBuffer;
-        private readonly ValueAdditionEventHandler _handler;
-        private readonly IBatchEventProcessor<ValueEvent> _batchEventProcessor;
+        private readonly RingBuffer<PerfEvent> _ringBuffer;
+        private readonly AdditionEventHandler _handler;
+        private readonly IBatchEventProcessor<PerfEvent> _batchEventProcessor;
 
         public OneToOneSequencedBatchThroughputTest()
         {
-            _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+            _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
-            _handler = new ValueAdditionEventHandler();
+            _handler = new AdditionEventHandler();
             _batchEventProcessor = BatchEventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);
             _ringBuffer.AddGatingSequences(_batchEventProcessor.Sequence);
         }

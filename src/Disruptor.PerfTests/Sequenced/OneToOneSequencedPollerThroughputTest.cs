@@ -16,14 +16,14 @@ namespace Disruptor.PerfTests.Sequenced
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-        private readonly RingBuffer<ValueEvent> _ringBuffer;
-        private readonly EventPoller<ValueEvent> _poller;
+        private readonly RingBuffer<PerfEvent> _ringBuffer;
+        private readonly EventPoller<PerfEvent> _poller;
         private readonly PollRunnable _pollRunnable;
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
 
         public OneToOneSequencedPollerThroughputTest()
         {
-            _ringBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+            _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
             _poller = _ringBuffer.NewPoller();
             _ringBuffer.AddGatingSequences(_poller.Sequence);
             _pollRunnable = new PollRunnable(_poller);
@@ -35,8 +35,8 @@ namespace Disruptor.PerfTests.Sequenced
 
         public class PollRunnable
         {
-            private readonly EventPoller<ValueEvent> _poller;
-            private readonly Func<ValueEvent, long, bool, bool> _eventHandler;
+            private readonly EventPoller<PerfEvent> _poller;
+            private readonly Func<PerfEvent, long, bool, bool> _eventHandler;
             private readonly AutoResetEvent _started = new AutoResetEvent(false);
             private volatile int _running = 1;
             private PaddedLong _value;
@@ -44,7 +44,7 @@ namespace Disruptor.PerfTests.Sequenced
             private long _count;
             public PaddedLong BatchesProcessedCount;
 
-            public PollRunnable(EventPoller<ValueEvent> poller)
+            public PollRunnable(EventPoller<PerfEvent> poller)
             {
                 _poller = poller;
                 _eventHandler = OnEvent;
@@ -71,7 +71,7 @@ namespace Disruptor.PerfTests.Sequenced
                 }
             }
 
-            private bool OnEvent(ValueEvent @event, long sequence, bool endOfBatch)
+            private bool OnEvent(PerfEvent @event, long sequence, bool endOfBatch)
             {
                 _value.Value = _value.Value + @event.Value;
 

@@ -13,30 +13,30 @@ namespace Disruptor.PerfTests.Sequenced
         private static readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
         private const int _bufferSize = 1024;
         private const long _iterations = 100 * 1000 * 30;
-        private const int _pauseDurationInNanos = 1000;
+        private const long _pauseNanos = 1000;
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-        private readonly RingBuffer<ValueEvent> _pingBuffer;
-        private readonly RingBuffer<ValueEvent> _pongBuffer;
+        private readonly RingBuffer<PerfEvent> _pingBuffer;
+        private readonly RingBuffer<PerfEvent> _pongBuffer;
 
         private readonly ISequenceBarrier _pongBarrier;
         private readonly Pinger _pinger;
-        private readonly IBatchEventProcessor<ValueEvent> _pingProcessor;
+        private readonly IBatchEventProcessor<PerfEvent> _pingProcessor;
 
         private readonly ISequenceBarrier _pingBarrier;
         private readonly Ponger _ponger;
-        private readonly IBatchEventProcessor<ValueEvent> _pongProcessor;
+        private readonly IBatchEventProcessor<PerfEvent> _pongProcessor;
 
         public PingPongSequencedLatencyTest()
         {
-            _pingBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
-            _pongBuffer = RingBuffer<ValueEvent>.CreateSingleProducer(ValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+            _pingBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+            _pongBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
 
             _pingBarrier = _pingBuffer.NewBarrier();
             _pongBarrier = _pongBuffer.NewBarrier();
 
-            _pinger = new Pinger(_pingBuffer, _iterations, _pauseDurationInNanos);
+            _pinger = new Pinger(_pingBuffer, _iterations, _pauseNanos);
             _ponger = new Ponger(_pongBuffer);
 
             _pingProcessor = BatchEventProcessorFactory.Create(_pongBuffer,_pongBarrier, _pinger);
@@ -74,38 +74,37 @@ namespace Disruptor.PerfTests.Sequenced
             Task.WaitAll(processorTask1, processorTask2);
         }
 
-        private class Pinger : IEventHandler<ValueEvent>, ILifecycleAware
+        private class Pinger : IEventHandler<PerfEvent>, ILifecycleAware
         {
-            private readonly RingBuffer<ValueEvent> _buffer;
+            private readonly RingBuffer<PerfEvent> _buffer;
             private readonly long _maxEvents;
-            private readonly int _pauseDurationInNanos;
-            private double _pauseDurationInStopwatchTicks;
+            private readonly long _pauseTimeNs;
+            private readonly long _pauseTimeTicks;
             private HistogramBase _histogram;
             private long _t0;
             private long _counter;
             private CountdownEvent _globalSignal;
             private ManualResetEvent _signal;
 
-            public Pinger(RingBuffer<ValueEvent> buffer, long maxEvents, int pauseDurationInNanos)
+            public Pinger(RingBuffer<PerfEvent> buffer, long maxEvents, long pauseTimeNs)
             {
                 _buffer = buffer;
                 _maxEvents = maxEvents;
-
-                _pauseDurationInNanos = pauseDurationInNanos;
-                _pauseDurationInStopwatchTicks = LatencyTestSession.ConvertNanoToStopwatchTicks(pauseDurationInNanos);
+                _pauseTimeNs = pauseTimeNs;
+                _pauseTimeTicks = LatencyTestSession.ConvertNanoToStopwatchTicks(pauseTimeNs);
             }
 
-            public void OnEvent(ValueEvent data, long sequence, bool endOfBatch)
+            public void OnEvent(PerfEvent data, long sequence, bool endOfBatch)
             {
                 var t1 = Stopwatch.GetTimestamp();
 
-                _histogram.RecordValueWithExpectedInterval(LatencyTestSession.ConvertStopwatchTicksToNano(t1 - _t0), _pauseDurationInNanos);
+                _histogram.RecordValueWithExpectedInterval(LatencyTestSession.ConvertStopwatchTicksToNano(t1 - _t0), _pauseTimeNs);
 
                 if (data.Value < _maxEvents)
                 {
-                    while (_pauseDurationInStopwatchTicks > (Stopwatch.GetTimestamp() - t1))
+                    while (_pauseTimeTicks > (Stopwatch.GetTimestamp() - t1))
                     {
-                        Thread.Sleep(0);
+                        Thread.Yield();
                     }
 
                     Send();
@@ -131,6 +130,8 @@ namespace Disruptor.PerfTests.Sequenced
                 _globalSignal.Signal();
                 _globalSignal.Wait();
 
+                Thread.Sleep(1000);
+
                 Send();
             }
 
@@ -148,17 +149,17 @@ namespace Disruptor.PerfTests.Sequenced
             }
         }
 
-        private class Ponger : IEventHandler<ValueEvent>, ILifecycleAware
+        private class Ponger : IEventHandler<PerfEvent>, ILifecycleAware
         {
-            private readonly RingBuffer<ValueEvent> _buffer;
+            private readonly RingBuffer<PerfEvent> _buffer;
             private CountdownEvent _globalSignal;
 
-            public Ponger(RingBuffer<ValueEvent> buffer)
+            public Ponger(RingBuffer<PerfEvent> buffer)
             {
                 _buffer = buffer;
             }
 
-            public void OnEvent(ValueEvent data, long sequence, bool endOfBatch)
+            public void OnEvent(PerfEvent data, long sequence, bool endOfBatch)
             {
                 var next = _buffer.Next();
                 _buffer[next].Value = data.Value;

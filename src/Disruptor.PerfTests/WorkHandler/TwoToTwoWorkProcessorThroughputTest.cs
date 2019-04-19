@@ -29,10 +29,10 @@ namespace Disruptor.PerfTests.WorkHandler
         private const long _iterations = 1000L * 1000L * 1L;
         private readonly CountdownEvent _cyclicBarrier = new CountdownEvent(_numPublishers + 1);
 
-        private readonly RingBuffer<ValueEvent> _ringBuffer = RingBuffer<ValueEvent>.CreateMultiProducer(ValueEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
+        private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
         private readonly Sequence _workSequence = new Sequence();
         private readonly ValueAdditionWorkHandler[] _handlers = new ValueAdditionWorkHandler[2];
-        private readonly WorkProcessor<ValueEvent>[] _workProcessors = new WorkProcessor<ValueEvent>[2];
+        private readonly WorkProcessor<PerfEvent>[] _workProcessors = new WorkProcessor<PerfEvent>[2];
         private readonly ValuePublisher[] _valuePublishers = new ValuePublisher[_numPublishers];
 
         public TwoToTwoWorkProcessorThroughputTest()
@@ -41,8 +41,8 @@ namespace Disruptor.PerfTests.WorkHandler
             _handlers[0] = new ValueAdditionWorkHandler();
             _handlers[1] = new ValueAdditionWorkHandler();
 
-            _workProcessors[0] = new WorkProcessor<ValueEvent>(_ringBuffer, sequenceBarrier, _handlers[0], new IgnoreExceptionHandler(), _workSequence);
-            _workProcessors[1] = new WorkProcessor<ValueEvent>(_ringBuffer, sequenceBarrier, _handlers[1], new IgnoreExceptionHandler(), _workSequence);
+            _workProcessors[0] = new WorkProcessor<PerfEvent>(_ringBuffer, sequenceBarrier, _handlers[0], new IgnoreExceptionHandler(), _workSequence);
+            _workProcessors[1] = new WorkProcessor<PerfEvent>(_ringBuffer, sequenceBarrier, _handlers[1], new IgnoreExceptionHandler(), _workSequence);
 
             for (var i = 0; i < _numPublishers; i++)
             {
@@ -100,10 +100,10 @@ namespace Disruptor.PerfTests.WorkHandler
         private class ValuePublisher
         {
             private readonly CountdownEvent _cyclicBarrier;
-            private readonly RingBuffer<ValueEvent> _ringBuffer;
+            private readonly RingBuffer<PerfEvent> _ringBuffer;
             private readonly long _iterations;
 
-            public ValuePublisher(CountdownEvent cyclicBarrier, RingBuffer<ValueEvent> ringBuffer, long iterations)
+            public ValuePublisher(CountdownEvent cyclicBarrier, RingBuffer<PerfEvent> ringBuffer, long iterations)
             {
                 _cyclicBarrier = cyclicBarrier;
                 _ringBuffer = ringBuffer;
@@ -125,11 +125,11 @@ namespace Disruptor.PerfTests.WorkHandler
             }
         }
 
-        private class ValueAdditionWorkHandler : IWorkHandler<ValueEvent>
+        private class ValueAdditionWorkHandler : IWorkHandler<PerfEvent>
         {
             public long Total { get; private set; }
 
-            public void OnEvent(ValueEvent evt)
+            public void OnEvent(PerfEvent evt)
             {
                 var value = evt.Value;
                 Total += value;

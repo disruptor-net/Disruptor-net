@@ -9,9 +9,9 @@ namespace Disruptor.Dsl
     public class ExceptionHandlerSetting<T> where T : class 
     {
         private readonly IEventHandler<T> _eventHandler;
-        private readonly ConsumerRepository<T> _consumerRepository;
+        private readonly ConsumerRepository _consumerRepository;
 
-        internal ExceptionHandlerSetting(IEventHandler<T> eventHandler, ConsumerRepository<T> consumerRepository)
+        internal ExceptionHandlerSetting(IEventHandler<T> eventHandler, ConsumerRepository consumerRepository)
         {
             _eventHandler = eventHandler;
             _consumerRepository = consumerRepository;

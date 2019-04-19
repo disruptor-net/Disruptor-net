@@ -5,21 +5,21 @@ using System.Runtime.CompilerServices;
 
 namespace Disruptor.Dsl
 {
-    internal class ConsumerRepository<T> : IEnumerable<IConsumerInfo> where T : class
+    internal class ConsumerRepository : IEnumerable<IConsumerInfo>
     {
-        private readonly Dictionary<IEventHandler<T>, EventProcessorInfo<T>> _eventProcessorInfoByEventHandler;
+        private readonly Dictionary<object, EventProcessorInfo> _eventProcessorInfoByEventHandler;
         private readonly Dictionary<ISequence, IConsumerInfo> _eventProcessorInfoBySequence;
         private readonly List<IConsumerInfo> _consumerInfos = new List<IConsumerInfo>();
 
         public ConsumerRepository()
         {
-            _eventProcessorInfoByEventHandler = new Dictionary<IEventHandler<T>, EventProcessorInfo<T>>(new IdentityComparer<IEventHandler<T>>());
+            _eventProcessorInfoByEventHandler = new Dictionary<object, EventProcessorInfo>(new IdentityComparer<object>());
             _eventProcessorInfoBySequence = new Dictionary<ISequence, IConsumerInfo>(new IdentityComparer<ISequence>());
         }
 
-        public void Add(IEventProcessor eventProcessor, IEventHandler<T> eventHandler, ISequenceBarrier sequenceBarrier)
+        public void Add(IEventProcessor eventProcessor, object eventHandler, ISequenceBarrier sequenceBarrier)
         {
-            var consumerInfo = new EventProcessorInfo<T>(eventProcessor, eventHandler, sequenceBarrier);
+            var consumerInfo = new EventProcessorInfo(eventProcessor, eventHandler, sequenceBarrier);
             _eventProcessorInfoByEventHandler[eventHandler] = consumerInfo;
             _eventProcessorInfoBySequence[eventProcessor.Sequence] = consumerInfo;
             _consumerInfos.Add(consumerInfo);
@@ -27,12 +27,13 @@ namespace Disruptor.Dsl
 
         public void Add(IEventProcessor processor)
         {
-            var consumerInfo = new EventProcessorInfo<T>(processor, null, null);
+            var consumerInfo = new EventProcessorInfo(processor, null, null);
             _eventProcessorInfoBySequence [processor.Sequence] = consumerInfo;
             _consumerInfos.Add(consumerInfo);
         }
-        
-        public void Add(WorkerPool<T> workerPool, ISequenceBarrier sequenceBarrier)
+
+        public void Add<T>(WorkerPool<T> workerPool, ISequenceBarrier sequenceBarrier)
+            where T : class
         {
             var workerPoolInfo = new WorkerPoolInfo<T>(workerPool, sequenceBarrier);
             _consumerInfos.Add(workerPoolInfo);
@@ -57,9 +58,9 @@ namespace Disruptor.Dsl
             return lastSequence.ToArray();
         }
 
-        public IEventProcessor GetEventProcessorFor(IEventHandler<T> eventHandler)
+        public IEventProcessor GetEventProcessorFor(object eventHandler)
         {
-            EventProcessorInfo<T> eventprocessorInfo;
+            EventProcessorInfo eventprocessorInfo;
             var found = _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventprocessorInfo);
             if(!found || eventprocessorInfo == null)
             {
@@ -69,7 +70,13 @@ namespace Disruptor.Dsl
             return eventprocessorInfo.EventProcessor;
         }
 
-        public ISequence GetSequenceFor(IEventHandler<T> eventHandler)
+        public ISequence GetSequenceFor<T>(IEventHandler<T> eventHandler)
+        {
+            return GetEventProcessorFor(eventHandler).Sequence;
+        }
+
+        public ISequence GetSequenceFor<T>(IValueEventHandler<T> eventHandler)
+            where T : struct
         {
             return GetEventProcessorFor(eventHandler).Sequence;
         }
@@ -86,9 +93,16 @@ namespace Disruptor.Dsl
             }
         }
 
-        public ISequenceBarrier GetBarrierFor(IEventHandler<T> eventHandler)
+        public ISequenceBarrier GetBarrierFor<T>(IEventHandler<T> eventHandler)
         {
-            EventProcessorInfo<T> eventProcessorInfo;
+            EventProcessorInfo eventProcessorInfo;
+            return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventProcessorInfo) ? eventProcessorInfo.Barrier : null;
+        }
+
+        public ISequenceBarrier GetBarrierFor<T>(IValueEventHandler<T> eventHandler)
+            where T : struct
+        {
+            EventProcessorInfo eventProcessorInfo;
             return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventProcessorInfo) ? eventProcessorInfo.Barrier : null;
         }
 

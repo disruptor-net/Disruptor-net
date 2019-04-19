@@ -2,11 +2,11 @@
 
 namespace Disruptor.Tests.Dsl.Stubs
 {
-    public class EventHandlerStub<T> : IEventHandler<T>
+    public class CountDownEventHandler<T> : IEventHandler<T>
     {
         private readonly CountdownEvent _countDownLatch;
 
-        public EventHandlerStub(CountdownEvent countDownLatch)
+        public CountDownEventHandler(CountdownEvent countDownLatch)
         {
             _countDownLatch = countDownLatch;
         }

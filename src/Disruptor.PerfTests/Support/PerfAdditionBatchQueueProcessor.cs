@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace Disruptor.PerfTests.Support
 {
-    public class ValueAdditionBatchQueueProcessor
+    public class PerfAdditionBatchQueueProcessor
     {
         private volatile bool _running;
         private long _value;
@@ -14,7 +14,7 @@ namespace Disruptor.PerfTests.Support
         private readonly List<long> _batch = new List<long>(100);
         private readonly long _count;
 
-        public ValueAdditionBatchQueueProcessor(ArrayConcurrentQueue<long> blockingQueue, long count)
+        public PerfAdditionBatchQueueProcessor(ArrayConcurrentQueue<long> blockingQueue, long count)
         {
             _blockingQueue = blockingQueue;
             _count = count;
@@ -75,7 +75,7 @@ namespace Disruptor.PerfTests.Support
 
         public override string ToString()
         {
-            return "ValueAdditionBatchQueueProcessor{" +
+            return "PerfAdditionBatchQueueProcessor{" +
                 "value=" + _value +
                 ", sequence=" + _sequence +
                 ", count=" + _count +

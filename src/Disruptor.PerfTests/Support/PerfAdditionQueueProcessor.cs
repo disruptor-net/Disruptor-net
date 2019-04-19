@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace Disruptor.PerfTests.Support
 {
-    public class ValueAdditionQueueProcessor
+    public class PerfAdditionQueueProcessor
     {
         private volatile bool _running;
         private long _value;
@@ -14,8 +14,8 @@ namespace Disruptor.PerfTests.Support
         private readonly ArrayConcurrentQueue<long> _blockingQueue;
         private readonly long _count;
 
-        //public ValueAdditionQueueProcessor(ConcurrentQueue<long> blockingQueue, long count)
-        public ValueAdditionQueueProcessor(ArrayConcurrentQueue<long> blockingQueue, long count)
+        //public PerfAdditionQueueProcessor(ConcurrentQueue<long> blockingQueue, long count)
+        public PerfAdditionQueueProcessor(ArrayConcurrentQueue<long> blockingQueue, long count)
         {
             _blockingQueue = blockingQueue;
             _count = count;
