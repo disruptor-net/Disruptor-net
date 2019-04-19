@@ -13,7 +13,7 @@
         /// processed without having to wait for any new event to arrive.  This can be useful for event handlers that need
         /// to do slower operations like I/O as they can group together the data from multiple events into a single
         /// operation.  Implementations should ensure that the operation is always performed when endOfBatch is true as
-        /// the time between that message an the next one is inderminate.
+        /// the time between that message an the next one is indeterminate.
         /// </summary>
         /// <param name="data">Data committed to the <see cref="RingBuffer{T}"/></param>
         /// <param name="sequence">Sequence number committed to the <see cref="RingBuffer{T}"/></param>
