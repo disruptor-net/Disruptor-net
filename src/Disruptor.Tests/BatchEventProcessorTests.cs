@@ -218,5 +218,84 @@ namespace Disruptor.Tests
                 return _shutdownSignal.WaitOne(timeSpan);
             }
         }
+
+        [Test]
+        public void ShouldNotPassZeroSizeToBatchStartAware()
+        {
+            var latch = new CountdownEvent(3);
+
+            var eventHandler = new BatchAwareEventHandler(x => latch.Signal());
+
+            var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, new DelegatingSequenceBarrier(_sequenceBarrier), eventHandler);
+
+            _ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
+
+            var task = Task.Run(() => batchEventProcessor.Run());
+            latch.Wait(TimeSpan.FromSeconds(2));
+
+            _ringBuffer.Publish(_ringBuffer.Next());
+            _ringBuffer.Publish(_ringBuffer.Next());
+            _ringBuffer.Publish(_ringBuffer.Next());
+
+            batchEventProcessor.Halt();
+            task.Wait();
+
+            Assert.That(eventHandler.BatchSizeToCount.Count, Is.Not.EqualTo(0));
+            Assert.That(eventHandler.BatchSizeToCount.Keys, Has.No.Member(0));
+        }
+
+        private class DelegatingSequenceBarrier : ISequenceBarrier
+        {
+            private readonly ISequenceBarrier _target;
+            private bool _suppress = true;
+
+            public DelegatingSequenceBarrier(ISequenceBarrier target)
+            {
+                _target = target;
+            }
+
+            public long WaitFor(long sequence)
+            {
+                var result = _suppress ? sequence - 1 : _target.WaitFor(sequence);
+                _suppress = !_suppress;
+                return result;
+            }
+
+            public long Cursor => _target.Cursor;
+
+            public bool IsAlerted => _target.IsAlerted;
+
+            public void Alert()
+            {
+                _target.Alert();
+            }
+
+            public void ClearAlert()
+            {
+                _target.ClearAlert();
+            }
+
+            public void CheckAlert()
+            {
+                _target.CheckAlert();
+            }
+        }
+
+        // ReSharper disable once MemberCanBePrivate.Global
+        // Public to enable dynamic code generation
+        public class BatchAwareEventHandler : TestEventHandler<StubEvent>, IBatchStartAware
+        {
+            public Dictionary<long, int> BatchSizeToCount { get; } = new Dictionary<long, int>();
+
+            public BatchAwareEventHandler(Action<StubEvent> onEventAction)
+                : base(onEventAction)
+            {
+            }
+
+            public void OnBatchStart(long batchSize)
+            {
+                BatchSizeToCount[batchSize] = BatchSizeToCount.TryGetValue(batchSize, out var count) ? count + 1 : 1;
+            }
+        }
     }
 }
