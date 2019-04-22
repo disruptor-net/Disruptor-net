@@ -34,16 +34,17 @@ namespace Disruptor
 
         public struct BatchStartAware : IBatchStartAware
         {
-            private readonly IBatchStartAware _eventHandler;
+            private readonly IBatchStartAware _batchStartAware;
 
             public BatchStartAware(object eventHandler)
             {
-                _eventHandler = eventHandler as IBatchStartAware;
+                _batchStartAware = eventHandler as IBatchStartAware;
             }
 
             public void OnBatchStart(long batchSize)
             {
-                _eventHandler?.OnBatchStart(batchSize);
+                if (_batchStartAware != null && batchSize != 0)
+                    _batchStartAware.OnBatchStart(batchSize);
             }
         }
     }
@@ -198,6 +199,13 @@ namespace Disruptor
                 try
                 {
                     var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
+
+                    // WaitFor can return a value lower than nextSequence, for example when using a MultiProducerSequencer.
+                    // The Java version includes the test "if (availableSequence >= nextSequence)" to avoid invoking OnBatchStart on empty batches.
+                    // However, this test has a negative impact on performance even for event handlers that are not IBatchStartAware.
+                    // This is unfortunate because this test should be removed by the JIT when OnBatchStart is a noop.
+                    // => The test is currently implemented on struct proxies. See BatchEventProcessor<T>.BatchStartAware and StructProxy.
+                    // For some reason this also improves BatchEventProcessor performance for IBatchStartAware event handlers.
 
                     _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
 

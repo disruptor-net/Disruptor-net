@@ -76,32 +76,63 @@ namespace Disruptor.Internal
 
             for (var index = 0; index < interfaceMap.InterfaceMethods.Length; index++)
             {
-                var interfaceMethodInfo = interfaceMap.InterfaceMethods[index];
-                var targetMethodInfo = interfaceMap.TargetMethods[index];
-                var parameters = interfaceMethodInfo.GetParameters();
+                var interfaceMethod = interfaceMap.InterfaceMethods[index];
+                var parameters = interfaceMethod.GetParameters();
+                var targetMethod = interfaceMap.TargetMethods[index];
 
-                var method = typeBuilder.DefineMethod(interfaceMethodInfo.Name, MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final, interfaceMethodInfo.ReturnType, parameters.Select(x => x.ParameterType).ToArray());
+                var method = typeBuilder.DefineMethod(interfaceMethod.Name, MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final, interfaceMethod.ReturnType, parameters.Select(x => x.ParameterType).ToArray());
 
-                if (targetMethodInfo.IsGenericMethod)
+                if (targetMethod.IsGenericMethod)
                 {
-                    var genericArguments = targetMethodInfo.GetGenericArguments();
+                    var genericArguments = targetMethod.GetGenericArguments();
                     method.DefineGenericParameters(genericArguments.Select((x, i) => $"T{i}").ToArray());
                 }
 
                 method.SetImplementationFlags(method.GetMethodImplementationFlags() | MethodImplAttributes.AggressiveInlining);
 
                 var methodGenerator = method.GetILGenerator();
-                methodGenerator.Emit(OpCodes.Ldarg_0);
-                methodGenerator.Emit(OpCodes.Ldfld, field);
 
-                for (var parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
+                if (interfaceType == typeof(IBatchStartAware) && targetMethod.Name == nameof(IBatchStartAware.OnBatchStart))
                 {
-                    methodGenerator.Emit(OpCodes.Ldarg_S, (byte)parameterIndex + 1);
+                    GenerateOnBatchStart(methodGenerator, targetMethod, field);
                 }
-
-                methodGenerator.Emit(OpCodes.Call, targetMethodInfo);
-                methodGenerator.Emit(OpCodes.Ret);
+                else
+                {
+                    GenerateDefaultMethod(methodGenerator, targetMethod, field, parameters);
+                }
             }
+        }
+
+        private static void GenerateOnBatchStart(ILGenerator methodGenerator, MethodInfo targetMethod, FieldBuilder field)
+        {
+            var returnLabel = methodGenerator.DefineLabel();
+
+            // if (batchSize == 0) return
+            methodGenerator.Emit(OpCodes.Ldarg_1);
+            methodGenerator.Emit(OpCodes.Brfalse_S, returnLabel);
+
+            // _target.OnBatchStart(batchSize)
+            methodGenerator.Emit(OpCodes.Ldarg_0);
+            methodGenerator.Emit(OpCodes.Ldfld, field);
+            methodGenerator.Emit(OpCodes.Ldarg_1);
+            methodGenerator.Emit(OpCodes.Call, targetMethod);
+
+            methodGenerator.MarkLabel(returnLabel);
+            methodGenerator.Emit(OpCodes.Ret);
+        }
+
+        private static void GenerateDefaultMethod(ILGenerator methodGenerator, MethodInfo targetMethod, FieldBuilder field, ParameterInfo[] parameters)
+        {
+            methodGenerator.Emit(OpCodes.Ldarg_0);
+            methodGenerator.Emit(OpCodes.Ldfld, field);
+
+            for (var parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
+            {
+                methodGenerator.Emit(OpCodes.Ldarg_S, (byte)parameterIndex + 1);
+            }
+
+            methodGenerator.Emit(OpCodes.Call, targetMethod);
+            methodGenerator.Emit(OpCodes.Ret);
         }
     }
 }
