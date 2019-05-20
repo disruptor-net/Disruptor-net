@@ -24,7 +24,10 @@ namespace Disruptor.Tests
 
             stopwatch.Stop();
 
-            Assert.That(stopwatch.Elapsed, Is.GreaterThanOrEqualTo(theTimeout - TimeSpan.FromMilliseconds(5)));
+            // Required to make the test pass on azure pipelines.
+            var tolerance = TimeSpan.FromMilliseconds(25);
+
+            Assert.That(stopwatch.Elapsed, Is.GreaterThanOrEqualTo(theTimeout - tolerance));
         }
     }
 }
