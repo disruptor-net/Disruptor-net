@@ -1,6 +1,0 @@
-image: Visual Studio 2017
-build_script:
-- ps: build\build.ps1 -Script build\build.cake -Target AppVeyor
-test: off
-artifacts:
-- path: output\nuget\*.nupkg
