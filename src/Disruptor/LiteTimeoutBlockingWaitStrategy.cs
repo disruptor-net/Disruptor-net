@@ -38,8 +38,8 @@ namespace Disruptor
                         Interlocked.Exchange(ref _signalNeeded, 1);
 
                         barrier.CheckAlert();
-                        
-                         if (!Monitor.Wait(_lock, milliseconds))
+
+                        if (!Monitor.Wait(_lock, milliseconds))
                         {
                             throw TimeoutException.Instance;
                         }

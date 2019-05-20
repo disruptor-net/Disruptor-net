@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class LiteTimeoutBlockingWaitStrategyTests
+    public class TimeoutBlockingWaitStrategyTests
     {
         [Test]
         public void ShouldTimeoutWaitFor()
@@ -14,7 +14,7 @@ namespace Disruptor.Tests
             var sequenceBarrier = new DummySequenceBarrier();
 
             var theTimeout = TimeSpan.FromMilliseconds(500);
-            var waitStrategy = new LiteTimeoutBlockingWaitStrategy(theTimeout);
+            var waitStrategy = new TimeoutBlockingWaitStrategy(theTimeout);
             var cursor = new Sequence(5);
             var dependent = cursor;
 
