@@ -12,8 +12,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>3.4.1</Version>
-    <LastPortedJavaRevision>a18f8198ab94590f0a5ec7c3378ba87f997ea670</LastPortedJavaRevision>
+    <Version>3.4.2</Version>
+    <LastPortedJavaRevision>f32a6f6780d0adc9cbeb4c91c5494e7ab7325a5a</LastPortedJavaRevision>
     <Product>Disruptor</Product>
     <Description>A High Performance Inter-Thread Messaging Library</Description>
     <Authors>Olivier Deheurles, Mendel Monteiro Beckerman, Antoine Blanchet, Olivier Coanet</Authors>

@@ -14,6 +14,11 @@ There is no specific documentation for this project, but most of the information
 
 ## What's new?
 
+11/06/2019 (v3.4.2):
+
+* Stop invoking IBatchStartAware.OnBatchStart for empty batches
+* Support event handlers with explicit interface implementations
+
 28/04/2018 (v3.4.1):
 
 * Fix invalid IL code that caused an exception on Mono
