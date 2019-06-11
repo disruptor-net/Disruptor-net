@@ -219,12 +219,13 @@ namespace Disruptor.Tests
             }
         }
 
-        [Test]
-        public void ShouldNotPassZeroSizeToBatchStartAware()
+        [TestCase(typeof(BatchAwareEventHandler))]
+        [TestCase(typeof(BatchAwareEventHandlerInternal))]
+        public void ShouldNotPassZeroSizeToBatchStartAware(Type eventHandlerType)
         {
             var latch = new CountdownEvent(3);
 
-            var eventHandler = new BatchAwareEventHandler(x => latch.Signal());
+            var eventHandler = (BatchAwareEventHandler)Activator.CreateInstance(eventHandlerType, (Action<StubEvent>)(x => latch.Signal()));
 
             var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, new DelegatingSequenceBarrier(_sequenceBarrier), eventHandler);
 
@@ -295,6 +296,14 @@ namespace Disruptor.Tests
             public void OnBatchStart(long batchSize)
             {
                 BatchSizeToCount[batchSize] = BatchSizeToCount.TryGetValue(batchSize, out var count) ? count + 1 : 1;
+            }
+        }
+
+        internal class BatchAwareEventHandlerInternal : BatchAwareEventHandler
+        {
+            public BatchAwareEventHandlerInternal(Action<StubEvent> onEventAction)
+                : base(onEventAction)
+            {
             }
         }
     }

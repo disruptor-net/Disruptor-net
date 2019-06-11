@@ -38,7 +38,9 @@ namespace Disruptor.Internal
 
         private static Type GenerateStructProxyType(Type targetType)
         {
-            if (!targetType.IsVisible)
+            var interfaceTypes = targetType.GetInterfaces().Where(x => x.IsVisible).ToList();
+
+            if (!CanGenerateStructProxy(targetType, interfaceTypes))
                 return null;
 
             var typeBuilder = _moduleBuilder.DefineType($"StructProxy_{targetType.Name}_{Guid.NewGuid():N}", TypeAttributes.Public, typeof(ValueType));
@@ -46,8 +48,7 @@ namespace Disruptor.Internal
             var field = typeBuilder.DefineField("_target", targetType, FieldAttributes.Private);
 
             GenerateConstructor(targetType, typeBuilder, field);
-
-            var interfaceTypes = targetType.GetInterfaces().Where(x => x.IsVisible);
+            
             foreach (var interfaceType in interfaceTypes)
             {
                 GenerateInterfaceImplementation(interfaceType, targetType, typeBuilder, field);
@@ -56,6 +57,13 @@ namespace Disruptor.Internal
             return typeBuilder.CreateTypeInfo();
         }
 
+        private static bool CanGenerateStructProxy(Type targetType, List<Type> interfaceTypes)
+        {
+            if (!targetType.IsVisible)
+                return false;
+
+            return interfaceTypes.SelectMany(x => targetType.GetInterfaceMap(x).TargetMethods).All(x => x.IsPublic);
+        }
 
         private static void GenerateConstructor(Type targetType, TypeBuilder typeBuilder, FieldBuilder field)
         {

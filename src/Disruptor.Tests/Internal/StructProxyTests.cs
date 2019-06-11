@@ -35,9 +35,25 @@ namespace Disruptor.Tests.Internal
             IFoo fooProxy = null;
 
             Assert.DoesNotThrow(() => fooProxy = StructProxy.CreateProxyInstance<IFoo>(foo));
+            Assert.DoesNotThrow(() => fooProxy.Value = 1);
+            Assert.DoesNotThrow(() => fooProxy.Compute(1, 2));
 
             Assert.IsNotNull(fooProxy);
-            Assert.AreEqual(fooProxy, foo);
+            Assert.AreSame(fooProxy, foo);
+        }
+
+        [Test]
+        public void ShouldNotFailForExplicitImplementation()
+        {
+            var foo = new ExplicitImplementation();
+            IFoo fooProxy = null;
+
+            Assert.DoesNotThrow(() => fooProxy = StructProxy.CreateProxyInstance<IFoo>(foo));
+            Assert.DoesNotThrow(() => fooProxy.Value = 1);
+            Assert.DoesNotThrow(() => fooProxy.Compute(1, 2));
+
+            Assert.IsNotNull(fooProxy);
+            Assert.AreSame(fooProxy, foo);
         }
 
         [Test]
@@ -78,6 +94,15 @@ namespace Disruptor.Tests.Internal
             public int Value { get; set; }
 
             public void Compute(int a, long b)
+            {
+            }
+        }
+
+        public class ExplicitImplementation : IFoo
+        {
+            int IFoo.Value { get; set; }
+
+            void IFoo.Compute(int a, long b)
             {
             }
         }
