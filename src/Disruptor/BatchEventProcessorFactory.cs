@@ -22,16 +22,43 @@ namespace Disruptor
             var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
             var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrier);
             var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
-            var batchStartAwareProxy = eventHandler is IBatchStartAware batchStartAware ?  StructProxy.CreateProxyInstance(batchStartAware) : new NoopBatchStartAware();
+            var batchStartAwareProxy = CreateBatchStartAwareProxy(eventHandler);
 
             var batchEventProcessorType = typeof(BatchEventProcessor<,,,,>).MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), batchStartAwareProxy.GetType());
             return (IBatchEventProcessor<T>)Activator.CreateInstance(batchEventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy);
+        }
+
+        private static IBatchStartAware CreateBatchStartAwareProxy(object eventHandler)
+        {
+            if (!(eventHandler is IBatchStartAware batchStartAware))
+                return new NoopBatchStartAware();
+
+            var proxy = StructProxy.CreateProxyInstance(batchStartAware);
+            var proxyGenerationFailed = ReferenceEquals(proxy, batchStartAware);
+
+            return proxyGenerationFailed ? new DefaultBatchStartAware(batchStartAware) : proxy;
         }
 
         private struct NoopBatchStartAware : IBatchStartAware
         {
             public void OnBatchStart(long batchSize)
             {
+            }
+        }
+
+        private struct DefaultBatchStartAware : IBatchStartAware
+        {
+            private readonly IBatchStartAware _target;
+
+            public DefaultBatchStartAware(IBatchStartAware target)
+            {
+                _target = target;
+            }
+
+            public void OnBatchStart(long batchSize)
+            {
+                if (batchSize != 0)
+                    _target.OnBatchStart(batchSize);
             }
         }
     }
