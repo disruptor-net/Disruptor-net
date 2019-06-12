@@ -142,6 +142,23 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
+        public void ShouldSupportAddingCustomEventProcessorWithFactory()
+        {
+            var rb = _disruptor.RingBuffer;
+            var b1 = BatchEventProcessorFactory.Create(rb, rb.NewBarrier(), new SleepingEventHandler());
+            var b2 = new TestValueEventProcessorFactory<TestValueEvent>((ringBuffer, barrierSequences) =>
+            {
+                return BatchEventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(barrierSequences), new SleepingEventHandler());
+            });
+
+            _disruptor.HandleEventsWith(b1).Then(b2);
+
+            _disruptor.Start();
+
+            Assert.That(_executor.GetExecutionCount(), Is.EqualTo(2));
+        }
+
+        [Test]
         public void ShouldAllowSpecifyingSpecificEventProcessorsToWaitFor()
         {
             var handler1 = CreateDelayedEventHandler();
@@ -154,6 +171,8 @@ namespace Disruptor.Tests.Dsl
             _disruptor.After(handler1, handler2).HandleEventsWith(handlerWithBarrier);
 
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, handler1, handler2);
+
+            Assert.That(_executor.GetExecutionCount(), Is.EqualTo(3));
         }
 
         [Test]
@@ -171,6 +190,8 @@ namespace Disruptor.Tests.Dsl
             _disruptor.After(handler1).And(handler2Group).HandleEventsWith(handlerWithBarrier);
 
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, handler1, handler2);
+
+            Assert.That(_executor.GetExecutionCount(), Is.EqualTo(3));
         }
 
         [Test]
@@ -305,6 +326,8 @@ namespace Disruptor.Tests.Dsl
             _disruptor.HandleEventsWith(processor).Then(handlerWithBarrier);
 
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
+
+            Assert.That(_executor.GetExecutionCount(), Is.EqualTo(2));
         }
 
         [Test]
@@ -322,6 +345,8 @@ namespace Disruptor.Tests.Dsl
             _disruptor.HandleEventsWith(processor);
 
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
+
+            Assert.That(_executor.GetExecutionCount(), Is.EqualTo(2));
         }
 
         [Test]
@@ -344,6 +369,27 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
+        public void ShouldSupportMultipleCustomProcessorsAndHandlersAsDependencies()
+        {
+            var ringBuffer = _disruptor.RingBuffer;
+            var countDownLatch = new CountdownEvent(2);
+            var handlerWithBarrier = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
+
+            var delayedEventHandler1 = CreateDelayedEventHandler();
+            var processor1 = BatchEventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), delayedEventHandler1);
+
+            var delayedEventHandler2 = CreateDelayedEventHandler();
+            var processor2 = BatchEventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), delayedEventHandler2);
+
+            _disruptor.HandleEventsWith(processor1, processor2);
+            _disruptor.After(processor1, processor2).HandleEventsWith(handlerWithBarrier);
+
+            EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler1, delayedEventHandler2);
+
+            Assert.That(_executor.GetExecutionCount(), Is.EqualTo(3));
+        }
+
+        [Test]
         public void ShouldThrowTimeoutExceptionIfShutdownDoesNotCompleteNormally()
         {
             //Given
@@ -360,7 +406,7 @@ namespace Disruptor.Tests.Dsl
         {
             long[] remainingCapacity = { -1 };
             //Given
-            var eventHandler = new TempEventHandler(_disruptor, remainingCapacity);
+            var eventHandler = new TestValueEventHandler<TestValueEvent>(e => remainingCapacity[0] = _disruptor.RingBuffer.GetRemainingCapacity());
 
             _disruptor.HandleEventsWith(eventHandler);
 
@@ -374,23 +420,6 @@ namespace Disruptor.Tests.Dsl
             }
             Assert.That(remainingCapacity[0], Is.EqualTo(_ringBuffer.BufferSize - 1L));
             Assert.That(_disruptor.RingBuffer.GetRemainingCapacity(), Is.EqualTo(_ringBuffer.BufferSize - 0L));
-        }
-
-        private class TempEventHandler : IValueEventHandler<TestValueEvent>
-        {
-            private readonly ValueDisruptor<TestValueEvent> _disruptor;
-            private readonly long[] _remainingCapacity;
-
-            public TempEventHandler(ValueDisruptor<TestValueEvent> disruptor, long[] remainingCapacity)
-            {
-                _disruptor = disruptor;
-                _remainingCapacity = remainingCapacity;
-            }
-
-            public void OnEvent(ref TestValueEvent data, long sequence, bool endOfBatch)
-            {
-                _remainingCapacity[0] = _disruptor.RingBuffer.GetRemainingCapacity();
-            }
         }
 
         [Test]
@@ -422,39 +451,27 @@ namespace Disruptor.Tests.Dsl
             var countDownLatch = new CountdownEvent(2);
             var eventHandler = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
 
-            _disruptor.HandleEventsWith(new EventProcessorFactory(_disruptor, eventHandler, 0));
+            _disruptor.HandleEventsWith(new TestValueEventProcessorFactory<TestValueEvent>((ringBuffer, barrierSequences) =>
+            {
+                Assert.AreEqual(0, barrierSequences.Length, "Should not have had any barrier sequences");
+                return BatchEventProcessorFactory.Create(_disruptor.RingBuffer, ringBuffer.NewBarrier(barrierSequences), eventHandler);
+            }));
 
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch);
         }
 
-        private class EventProcessorFactory : IValueEventProcessorFactory<TestValueEvent>
-        {
-            private readonly ValueDisruptor<TestValueEvent> _disruptor;
-            private readonly IValueEventHandler<TestValueEvent> _eventHandler;
-            private readonly int _sequenceLength;
-
-            public EventProcessorFactory(ValueDisruptor<TestValueEvent> disruptor, IValueEventHandler<TestValueEvent> eventHandler, int sequenceLength)
-            {
-                _disruptor = disruptor;
-                _eventHandler = eventHandler;
-                _sequenceLength = sequenceLength;
-            }
-
-            public IEventProcessor CreateEventProcessor(ValueRingBuffer<TestValueEvent> ringBuffer, ISequence[] barrierSequences)
-            {
-                Assert.AreEqual(_sequenceLength, barrierSequences.Length, "Should not have had any barrier sequences");
-                return BatchEventProcessorFactory.Create(_disruptor.RingBuffer, ringBuffer.NewBarrier(barrierSequences), _eventHandler);
-            }
-        }
-
         [Test]
-        public void ShouldxHonourDependenciesForCustomProcessors()
+        public void ShouldHonourDependenciesForCustomProcessors()
         {
             var countDownLatch = new CountdownEvent(2);
             var eventHandler = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
             var delayedEventHandler = CreateDelayedEventHandler();
 
-            _disruptor.HandleEventsWith(delayedEventHandler).Then(new EventProcessorFactory(_disruptor, eventHandler, 1));
+            _disruptor.HandleEventsWith(delayedEventHandler).Then(new TestValueEventProcessorFactory<TestValueEvent>((ringBuffer, barrierSequences) =>
+            {
+                Assert.AreEqual(1, barrierSequences.Length, "Should have had a barrier sequence");
+                return BatchEventProcessorFactory.Create(_disruptor.RingBuffer, ringBuffer.NewBarrier(barrierSequences), eventHandler);
+            }));
 
             EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
         }

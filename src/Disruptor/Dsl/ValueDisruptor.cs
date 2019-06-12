@@ -182,11 +182,6 @@ namespace Disruptor.Dsl
         /// <returns>an <see cref="ValueEventHandlerGroup{T}"/> that can be used to setup a <see cref="ISequenceBarrier"/> over the specified event processors.</returns>
         public ValueEventHandlerGroup<T> After(params IEventProcessor[] processors)
         {
-            foreach (var processor in processors)
-            {
-                _consumerRepository.Add(processor);
-            }
-
             return new ValueEventHandlerGroup<T>(this, _consumerRepository, Util.GetSequencesFor(processors));
         }
 
