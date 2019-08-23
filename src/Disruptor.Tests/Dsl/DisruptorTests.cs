@@ -640,7 +640,7 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
-        public void ShouldHonourDependenciesForCustomProcessors()
+        public void ShouldHonorDependenciesForCustomProcessors()
         {
             var countDownLatch = new CountdownEvent(2);
             var eventHandler = new CountDownEventHandler<TestEvent>(countDownLatch);

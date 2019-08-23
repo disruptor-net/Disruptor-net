@@ -166,72 +166,91 @@ namespace Disruptor
             return ref this[sequence];
         }
 
+        /// <summary>
+        /// Increment the ring buffer sequence and return a scope that will publish the sequence on disposing.
+        /// This method will block until there is space available in the ring buffer.
+        /// buffer
+        /// <code>
+        /// using (var scope = _ringBuffer.PublishEvent())
+        /// {
+        ///     ref var e = ref scope.Event();
+        ///     // Do some work with the event.
+        /// }
+        /// </code>
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public PublishEventScope PublishEvent()
+        public UnpublishedEventScope PublishEvent()
         {
             var sequence = Next();
-            return new PublishEventScope(this, sequence);
+            return new UnpublishedEventScope(this, sequence);
         }
 
         /// <summary>
-        /// Publishes an event to the ring buffer.  It handles claiming the next sequence, getting the current(uninitialised)
-        /// event from the ring buffer and publishing the claimed sequence after translation.
+        /// Try to increment the ring buffer sequence and return a scope that will publish the sequence on disposing.
+        /// This method will not block if there is not space available in the ring buffer.
+        /// <code>
+        /// using (var scope = _ringBuffer.TryPublishEvent())
+        /// {
+        ///     if (!scope.TryGetEvent(out var eventRef))
+        ///         return;
+        /// 
+        ///     ref var e = ref eventRef.Event();
+        ///     // Do some work with the event.
+        /// }
+        /// </code>
         /// </summary>
-        public readonly struct PublishEventScope : IDisposable
-        {
-            private readonly ValueRingBuffer<T> _ringBuffer;
-            private readonly long _sequence;
-
-            public PublishEventScope(ValueRingBuffer<T> ringBuffer, long sequence)
-            {
-                _ringBuffer = ringBuffer;
-                _sequence = sequence;
-            }
-
-            public long Sequence => _sequence;
-
-            public ref T Data
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => ref _ringBuffer[_sequence];
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose()
-            {
-                _ringBuffer.Publish(_sequence);
-            }
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryPublishEvent(out PublishEventScope scope)
+        public NullableUnpublishedEventScope TryPublishEvent()
         {
             var success = TryNext(out var sequence);
-            scope = new PublishEventScope(this, sequence);
-
-            return success;
+            return new NullableUnpublishedEventScope(success ? this : null, sequence);
         }
 
+        /// <summary>
+        /// Increment the ring buffer sequence by <paramref name="count"/> and return a scope that will publish the sequences on disposing.
+        /// This method will block until there is space available in the ring buffer.
+        /// <code>
+        /// using (var scope = _ringBuffer.PublishEvents(2))
+        /// {
+        ///     ref var e1 = ref scope.Event(0);
+        ///     ref var e2 = ref scope.Event(1);
+        ///     // Do some work with the events.
+        /// }
+        /// </code>
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public PublishEventsScope PublishEvents(int count)
+        public UnpublishedEventBatchScope PublishEvents(int count)
         {
             if ((uint)count > _bufferSize)
                 ThrowInvalidPublishCountException();
 
             var endSequence = Next(count);
-            return new PublishEventsScope(this, endSequence + 1 - count, endSequence);
+            return new UnpublishedEventBatchScope(this, endSequence + 1 - count, endSequence);
         }
 
+        /// <summary>
+        /// Try to increment the ring buffer sequence by <paramref name="count"/> and return a scope that will publish the sequences on disposing.
+        /// This method will not block if there is not space available in the ring buffer.
+        /// <code>
+        /// using (var scope = _ringBuffer.TryPublishEvent(2))
+        /// {
+        ///     if (!scope.TryGetEvents(out var eventsRef))
+        ///         return;
+        /// 
+        ///     ref var e1 = ref eventRefs.Event(0);
+        ///     ref var e2 = ref eventRefs.Event(1);
+        ///     // Do some work with the events.
+        /// }
+        /// </code>
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryPublishEvents(int count, out PublishEventsScope scope)
+        public NullableUnpublishedEventBatchScope TryPublishEvents(int count)
         {
             if ((uint)count > _bufferSize)
                 ThrowInvalidPublishCountException();
 
             var success = TryNext(count, out var endSequence);
-            scope = new PublishEventsScope(this, endSequence + 1 - count, endSequence);
-
-            return success;
+            return new NullableUnpublishedEventBatchScope(success ? this : null, endSequence + 1 - count, endSequence);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -241,16 +260,46 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Publishes an event to the ring buffer.  It handles claiming the next sequence, getting the current(uninitialised)
-        /// event from the ring buffer and publishing the claimed sequence after translation.
+        /// Holds an unpublished sequence number.
+        /// Publishes the sequence number on disposing.
         /// </summary>
-        public readonly struct PublishEventsScope : IDisposable
+        public readonly struct UnpublishedEventScope : IDisposable
+        {
+            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly long _sequence;
+
+            public UnpublishedEventScope(ValueRingBuffer<T> ringBuffer, long sequence)
+            {
+                _ringBuffer = ringBuffer;
+                _sequence = sequence;
+            }
+
+            public long Sequence => _sequence;
+
+            /// <summary>
+            /// Gets the event for the associated sequence number.
+            /// </summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ref T Event() => ref _ringBuffer[_sequence];
+
+            /// <summary>
+            /// Publishes the sequence number.
+            /// </summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Dispose() => _ringBuffer.Publish(_sequence);
+        }
+
+        /// <summary>
+        /// Holds an unpublished sequence number batch.
+        /// Publishes the sequence numbers on disposing.
+        /// </summary>
+        public readonly struct UnpublishedEventBatchScope : IDisposable
         {
             private readonly ValueRingBuffer<T> _ringBuffer;
             private readonly long _startSequence;
             private readonly long _endSequence;
 
-            public PublishEventsScope(ValueRingBuffer<T> ringBuffer, long startSequence, long endSequence)
+            public UnpublishedEventBatchScope(ValueRingBuffer<T> ringBuffer, long startSequence, long endSequence)
             {
                 _ringBuffer = ringBuffer;
                 _startSequence = startSequence;
@@ -260,14 +309,156 @@ namespace Disruptor
             public long StartSequence => _startSequence;
             public long EndSequence => _endSequence;
 
+            /// <summary>
+            /// Gets the event for the associated sequence number.
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref T Data(int index) => ref _ringBuffer[_startSequence + index];
+            public ref T Event(int index) => ref _ringBuffer[_startSequence + index];
 
+            /// <summary>
+            /// Publishes the sequence number batch.
+            /// </summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Dispose() => _ringBuffer.Publish(_startSequence, _endSequence);
+        }
+
+        /// <summary>
+        /// Holds an unpublished sequence number.
+        /// Publishes the sequence number on disposing.
+        /// </summary>
+        public readonly struct NullableUnpublishedEventScope : IDisposable
+        {
+            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly long _sequence;
+
+            public NullableUnpublishedEventScope(ValueRingBuffer<T> ringBuffer, long sequence)
+            {
+                _ringBuffer = ringBuffer;
+                _sequence = sequence;
+            }
+
+            /// <summary>
+            /// Returns a value indicating whether the sequence was successfully claimed.
+            /// </summary>
+            public bool HasEvent => _ringBuffer != null;
+
+            /// <summary>
+            /// Gets the event for the associated sequence number.
+            /// </summary>
+            /// <returns>
+            /// true if the sequence number was successfully claimed, false otherwise.
+            /// </returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool TryGetEvent(out EventRef eventRef)
+            {
+                eventRef = new EventRef(_ringBuffer, _sequence);
+                return _ringBuffer != null;
+            }
+
+            /// <summary>
+            /// Publishes the sequence number if it was successfully claimed.
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
             {
-                _ringBuffer.Publish(_startSequence, _endSequence);
+                if (_ringBuffer != null)
+                    _ringBuffer.Publish(_sequence);
             }
+        }
+
+        /// <summary>
+        /// Holds an unpublished sequence number.
+        /// </summary>
+        public readonly struct EventRef
+        {
+            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly long _sequence;
+
+            public EventRef(ValueRingBuffer<T> ringBuffer, long sequence)
+            {
+                _ringBuffer = ringBuffer;
+                _sequence = sequence;
+            }
+
+            public long Sequence => _sequence;
+
+            /// <summary>
+            /// Gets the event for the associated sequence number.
+            /// </summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ref T Event() => ref _ringBuffer[_sequence];
+        }
+
+        /// <summary>
+        /// Holds an unpublished sequence number batch.
+        /// Publishes the sequence numbers on disposing.
+        /// </summary>
+        public readonly struct NullableUnpublishedEventBatchScope : IDisposable
+        {
+            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly long _startSequence;
+            private readonly long _endSequence;
+
+            public NullableUnpublishedEventBatchScope(ValueRingBuffer<T> ringBuffer, long startSequence, long endSequence)
+            {
+                _ringBuffer = ringBuffer;
+                _startSequence = startSequence;
+                _endSequence = endSequence;
+            }
+
+            /// <summary>
+            /// Returns a value indicating whether the sequence batch was successfully claimed.
+            /// </summary>
+            public bool HasEvents => _ringBuffer != null;
+
+            /// <summary>
+            /// Gets the events for the associated sequence number batch.
+            /// </summary>
+            /// <returns>
+            /// true if the sequence batch was successfully claimed, false otherwise.
+            /// </returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool TryGetEvents(out EventBatchRef eventRef)
+            {
+                eventRef = new EventBatchRef(_ringBuffer, _startSequence, _endSequence);
+                return _ringBuffer != null;
+            }
+
+            /// <summary>
+            /// Publishes the sequence batch if it was successfully claimed.
+            /// </summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Dispose()
+            {
+                if (_ringBuffer != null)
+                    _ringBuffer.Publish(_startSequence, _endSequence);
+            }
+        }
+
+        /// <summary>
+        /// Holds an unpublished sequence number batch.
+        /// </summary>
+        public readonly struct EventBatchRef
+        {
+            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly long _startSequence;
+            private readonly long _endSequence;
+
+            public EventBatchRef(ValueRingBuffer<T> ringBuffer, long startSequence, long endSequence)
+            {
+                _ringBuffer = ringBuffer;
+                _startSequence = startSequence;
+                _endSequence = endSequence;
+            }
+
+            public long StartSequence => _startSequence;
+            public long EndSequence => _endSequence;
+
+            /// <summary>
+            /// Gets the event for the associated sequence number and the specified index.
+            /// </summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ref T Event(int index) => ref _ringBuffer[_startSequence + index];
         }
     }
 }

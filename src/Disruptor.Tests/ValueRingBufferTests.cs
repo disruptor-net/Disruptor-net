@@ -65,7 +65,7 @@ namespace Disruptor.Tests
 
             using (var scope = _ringBuffer.PublishEvent())
             {
-                scope.Data = expectedEvent;
+                scope.Event() = expectedEvent;
             }
 
             Assert.AreEqual(expectedEvent, events.Result[0]);
@@ -79,7 +79,7 @@ namespace Disruptor.Tests
             {
                 using (var scope = _ringBuffer.PublishEvent())
                 {
-                    scope.Data.Value = i;
+                    scope.Event().Value = i;
                 }
             }
 
@@ -102,7 +102,7 @@ namespace Disruptor.Tests
             {
                 using (var scope = _ringBuffer.PublishEvent())
                 {
-                    scope.Data.Value = i;
+                    scope.Event().Value = i;
                 }
             }
 
@@ -140,8 +140,8 @@ namespace Disruptor.Tests
             {
                 using (var scope = ringBuffer.PublishEvent())
                 {
-                    scope.Data.Value = i;
-                    scope.Data.TestString = i.ToString();
+                    scope.Event().Value = i;
+                    scope.Event().TestString = i.ToString();
                 }
             }
 
@@ -212,13 +212,14 @@ namespace Disruptor.Tests
 
             using (var scope = ringBuffer.PublishEvent())
             {
-                scope.Data = scope.Sequence;
+                scope.Event() = scope.Sequence;
             }
 
-            Assert.IsTrue(ringBuffer.TryPublishEvent(out var s));
-            using (s)
+            using (var scope = ringBuffer.TryPublishEvent())
             {
-                s.Data = s.Sequence;
+                Assert.IsTrue(scope.HasEvent);
+                Assert.IsTrue(scope.TryGetEvent(out var e));
+                e.Event() = e.Sequence;
             }
 
             Assert.That(ringBuffer, IsValueRingBufferWithEvents(0L, 1L));
@@ -231,16 +232,17 @@ namespace Disruptor.Tests
 
             using (var scope = ringBuffer.PublishEvents(2))
             {
-                scope.Data(0) = scope.StartSequence;
-                scope.Data(1) = scope.StartSequence + 1;
+                scope.Event(0) = scope.StartSequence;
+                scope.Event(1) = scope.StartSequence + 1;
             }
             Assert.That(ringBuffer, IsValueRingBufferWithEvents(0L, 1L, -1, -1));
 
-            Assert.IsTrue(ringBuffer.TryPublishEvents(2, out var s));
-            using (s)
+            using (var scope = ringBuffer.TryPublishEvents(2))
             {
-                s.Data(0) = s.StartSequence;
-                s.Data(1) = s.StartSequence + 1;
+                Assert.IsTrue(scope.HasEvents);
+                Assert.IsTrue(scope.TryGetEvents(out var e));
+                e.Event(0) = e.StartSequence;
+                e.Event(1) = e.StartSequence + 1;
             }
 
             Assert.That(ringBuffer, IsValueRingBufferWithEvents(0L, 1L, 2L, 3L));
@@ -253,7 +255,7 @@ namespace Disruptor.Tests
 
             try
             {
-                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(5, out _));
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(5));
             }
             finally
             {
@@ -283,7 +285,7 @@ namespace Disruptor.Tests
 
             try
             {
-                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(0, out _));
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(0));
             }
             finally
             {
@@ -313,7 +315,7 @@ namespace Disruptor.Tests
 
             try
             {
-                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(-1, out _));
+                Assert.Throws<ArgumentException>(() => ringBuffer.TryPublishEvents(-1));
             }
             finally
             {
@@ -377,18 +379,6 @@ namespace Disruptor.Tests
             }
 
             Assert.That(rb.HasAvailableCapacity(1), Is.EqualTo(false));
-        }
-
-        private Task<List<StubValueEvent>> GetMessages(long initial, long toWaitFor)
-        {
-            var cyclicBarrier = new Barrier(2);
-            var sequenceBarrier = _ringBuffer.NewBarrier();
-
-            var f = Task.Factory.StartNew(() => new TestWaiter(cyclicBarrier, sequenceBarrier, _ringBuffer, initial, toWaitFor).Call());
-
-            cyclicBarrier.SignalAndWait();
-
-            return f;
         }
 
         private static void AssertEmptyRingBuffer(ValueRingBuffer<long> ringBuffer)

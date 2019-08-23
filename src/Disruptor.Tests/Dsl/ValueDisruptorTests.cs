@@ -39,6 +39,34 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
+        public void ShouldPublishAndHandleEvent()
+        {
+            var eventCounter = new CountdownEvent(2);
+            _disruptor.HandleEventsWith(new TestValueEventHandler<TestValueEvent>(e => eventCounter.Signal()));
+
+            _disruptor.Start();
+
+            _disruptor.PublishEvent().Dispose();
+            _disruptor.PublishEvent().Dispose();
+
+            Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        }
+
+        [Test]
+        public void ShouldPublishAndHandleEvents()
+        {
+            var eventCounter = new CountdownEvent(4);
+            _disruptor.HandleEventsWith(new TestValueEventHandler<TestValueEvent>(e => eventCounter.Signal()));
+
+            _disruptor.Start();
+
+            _disruptor.PublishEvents(2).Dispose();
+            _disruptor.PublishEvents(2).Dispose();
+
+            Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        }
+
+        [Test]
         public void ShouldProcessMessagesPublishedBeforeStartIsCalled()
         {
             var eventCounter = new CountdownEvent(2);
@@ -177,7 +205,6 @@ namespace Disruptor.Tests.Dsl
 
         [Test]
         public void ShouldWaitOnAllProducersJoinedByAnd()
-
         {
             var handler1 = CreateDelayedEventHandler();
             var handler2 = CreateDelayedEventHandler();
@@ -461,7 +488,7 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
-        public void ShouldHonourDependenciesForCustomProcessors()
+        public void ShouldHonorDependenciesForCustomProcessors()
         {
             var countDownLatch = new CountdownEvent(2);
             var eventHandler = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);

@@ -37,7 +37,7 @@ namespace Disruptor.Benchmarks
         {
             using (var scope = _ringBuffer.PublishEvent())
             {
-                ref var data = ref scope.Data;
+                ref var data = ref scope.Event();
                 data.L1 = 1;
                 data.L2 = 2;
                 data.L3 = 3;
@@ -72,12 +72,12 @@ namespace Disruptor.Benchmarks
         [Benchmark]
         public void TryPublishScope()
         {
-            if (!_ringBuffer.TryPublishEvent(out var scope))
-                return;
-
-            using (scope)
+            using (var scope = _ringBuffer.TryPublishEvent())
             {
-                ref var data = ref scope.Data;
+                if (!scope.TryGetEvent(out var eventRef))
+                    return;
+
+                ref var data = ref eventRef.Event();
                 data.L1 = 1;
                 data.L2 = 2;
                 data.L3 = 3;
@@ -112,7 +112,7 @@ namespace Disruptor.Benchmarks
         {
             using (var scope = _ringBuffer.PublishEvents(2))
             {
-                ref var data = ref scope.Data(0);
+                ref var data = ref scope.Event(0);
                 data.L1 = 1;
                 data.L2 = 2;
                 data.L3 = 3;
@@ -147,12 +147,12 @@ namespace Disruptor.Benchmarks
         [Benchmark]
         public void TryPublishManyScope()
         {
-            if (!_ringBuffer.TryPublishEvents(2, out var scope))
-                return;
-
-            using (scope)
+            using (var scope = _ringBuffer.TryPublishEvents(2))
             {
-                ref var data = ref scope.Data(0);
+                if (!scope.TryGetEvents(out var eventsRef))
+                    return;
+
+                ref var data = ref eventsRef.Event(0);
                 data.L1 = 1;
                 data.L2 = 2;
                 data.L3 = 3;

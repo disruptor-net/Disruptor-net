@@ -186,9 +186,14 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
-        /// Publish an event to the ring buffer.
+        /// <see cref="ValueRingBuffer{T}.PublishEvent"/>
         /// </summary>
-        public ValueRingBuffer<T>.PublishEventScope PublishEvent() => _ringBuffer.PublishEvent();
+        public ValueRingBuffer<T>.UnpublishedEventScope PublishEvent() => _ringBuffer.PublishEvent();
+
+        /// <summary>
+        /// <see cref="ValueRingBuffer{T}.PublishEvents"/>
+        /// </summary>
+        public ValueRingBuffer<T>.UnpublishedEventBatchScope PublishEvents(int count) => _ringBuffer.PublishEvents(count);
 
         /// <summary>
         /// Starts the event processors and returns the fully configured ring buffer.
