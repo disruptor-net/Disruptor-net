@@ -1,9 +1,12 @@
+using System;
+
 namespace Disruptor
 {
     /// <summary>
     /// Implementations translate another data representations into events claimed from the <see cref="RingBuffer{T}"/>
     /// </summary>
     /// <typeparam name="T">event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
+    [Obsolete(Constants.ObsoletePublicationApiMessage)]
     public interface IEventTranslatorVararg<T>
     {
         /// <summary>

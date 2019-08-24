@@ -32,26 +32,14 @@ namespace Disruptor.Tests
                 {
                     var bytes = new byte[32];
                     _random.NextBytes(bytes);
-                    _disruptor.PublishEvent(new ByteArrayTranslator(bytes));
+                    using (var scope = _disruptor.PublishEvent())
+                    {
+                        bytes.CopyTo(scope.Event(), 0);
+                    }
                 }
             });
 
             Assert.IsTrue(task.Wait(1000));
-        }
-
-        public class ByteArrayTranslator : IEventTranslator<byte[]>
-        {
-            private readonly byte[] _bytes;
-
-            public ByteArrayTranslator(byte[] bytes)
-            {
-                _bytes = bytes;
-            }
-
-            public void TranslateTo(byte[] eventData, long sequence)
-            {
-                _bytes.CopyTo(eventData, 0);
-            }
         }
 
         [TearDown]

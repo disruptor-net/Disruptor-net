@@ -1,9 +1,12 @@
+using System;
+
 namespace Disruptor
 {
     /// <summary>
     ///     An entity into which events can be published
     /// </summary>
     /// <typeparam name="T"></typeparam>
+    [Obsolete(Constants.ObsoletePublicationApiMessage)]
     public interface IEventSink<T> where T : class
     {
         /// <summary>

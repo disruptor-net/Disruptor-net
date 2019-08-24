@@ -222,6 +222,7 @@ namespace Disruptor.Dsl
         /// Publish an event to the ring buffer.
         /// </summary>
         /// <param name="eventTranslator">the translator that will load data into the event</param>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent(IEventTranslator<T> eventTranslator) => _ringBuffer.PublishEvent(eventTranslator);
 
         /// <summary>
@@ -230,6 +231,7 @@ namespace Disruptor.Dsl
         /// <typeparam name="A">Class of the user supplied argument.</typeparam>
         /// <param name="eventTranslator">the translator that will load data into the event</param>
         /// <param name="arg">A single argument to load into the event</param>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent<A>(IEventTranslatorOneArg<T, A> eventTranslator, A arg) => _ringBuffer.PublishEvent(eventTranslator, arg);
 
         /// <summary>
@@ -238,7 +240,7 @@ namespace Disruptor.Dsl
         /// <typeparam name="A">Class of the user supplied argument.</typeparam>
         /// <param name="eventTranslator">the translator that will load data into the event</param>
         /// <param name="arg">An array single arguments to load into the events. One Per event.</param>
-        [Obsolete("Use PublishEvents instead")]
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent<A>(IEventTranslatorOneArg<T, A> eventTranslator, A[] arg) => _ringBuffer.PublishEvents(eventTranslator, arg);
 
         /// <summary>
@@ -247,6 +249,7 @@ namespace Disruptor.Dsl
         /// <typeparam name="A">Class of the user supplied argument.</typeparam>
         /// <param name="eventTranslator">the translator that will load data into the event.</param>
         /// <param name="arg">An array single arguments to load into the events. One Per event.</param>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents<A>(IEventTranslatorOneArg<T, A> eventTranslator, A[] arg) => _ringBuffer.PublishEvents(eventTranslator, arg);
 
         /// <summary>
@@ -257,6 +260,7 @@ namespace Disruptor.Dsl
         /// <param name="eventTranslator">the translator that will load data into the event.</param>
         /// <param name="arg0">The first argument to load into the event</param>
         /// <param name="arg1">The second argument to load into the event</param>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent<A, B>(IEventTranslatorTwoArg<T, A, B> eventTranslator, A arg0, B arg1) => _ringBuffer.PublishEvent(eventTranslator, arg0, arg1);
 
         /// <summary>
@@ -269,6 +273,7 @@ namespace Disruptor.Dsl
         /// <param name="arg0">The first argument to load into the event</param>
         /// <param name="arg1">The second argument to load into the event</param>
         /// <param name="arg2">The third argument to load into the event</param>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> eventTranslator, A arg0, B arg1, C arg2) => _ringBuffer.PublishEvent(eventTranslator, arg0, arg1, arg2);
 
         /// <summary>

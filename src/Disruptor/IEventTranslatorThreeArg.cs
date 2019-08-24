@@ -1,4 +1,6 @@
-﻿namespace Disruptor
+﻿using System;
+
+namespace Disruptor
 {
     /// <summary>
     /// Implementations translate another data representations into events claimed from the <see cref="RingBuffer{T}"/>
@@ -7,6 +9,7 @@
     /// <typeparam name="A"></typeparam>
     /// <typeparam name="B"></typeparam>
     /// <typeparam name="C"></typeparam>
+    [Obsolete(Constants.ObsoletePublicationApiMessage)]
     public interface IEventTranslatorThreeArg<T, A, B, C>
     {
         /// <summary>

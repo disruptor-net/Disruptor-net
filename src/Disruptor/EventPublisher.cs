@@ -5,6 +5,7 @@ namespace Disruptor
     /// <summary>
     /// Utility class for simplifying publication to the ring buffer.
     /// </summary>
+    [Obsolete(Constants.ObsoletePublicationApiMessage)]
     public sealed class EventPublisher<T> where T : class
     {
         private readonly RingBuffer<T> _ringBuffer;

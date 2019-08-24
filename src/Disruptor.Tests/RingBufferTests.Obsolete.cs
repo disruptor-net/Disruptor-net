@@ -2,6 +2,8 @@
 using NUnit.Framework;
 using static Disruptor.Tests.RingBufferEqualsConstraint;
 
+#pragma warning disable 618
+
 namespace Disruptor.Tests
 {
     partial class RingBufferTests

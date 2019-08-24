@@ -1,4 +1,6 @@
-﻿namespace Disruptor
+﻿using System;
+
+namespace Disruptor
 {
     /// <summary>
     /// Implementations translate (write) data representations into events claimed from the <see cref="RingBuffer{T}"/>.
@@ -7,6 +9,7 @@
     /// the sequence update.
     /// </summary>
     /// <typeparam name="T">event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
+    [Obsolete(Constants.ObsoletePublicationApiMessage)]
     public interface IEventTranslator<in T>
     {
         /// <summary>

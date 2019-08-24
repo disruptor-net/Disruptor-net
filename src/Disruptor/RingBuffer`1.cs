@@ -2,6 +2,8 @@
 using System.Runtime.CompilerServices;
 using Disruptor.Dsl;
 
+#pragma warning disable 618
+
 namespace Disruptor
 {
     /// <summary>
@@ -178,10 +180,11 @@ namespace Disruptor
         {
             return _sequencer.NewPoller(this, gatingSequences);
         }
-        
+
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvent(Disruptor.IEventTranslator{T})"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent(IEventTranslator<T> translator)
         {
             long sequence = _sequencer.Next();
@@ -191,6 +194,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvent(Disruptor.IEventTranslator{T})"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvent(IEventTranslator<T> translator)
         {
             if (_sequencer.TryNext(out var sequence))
@@ -205,6 +209,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvent{A}(IEventTranslatorOneArg{T,A},A)"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent<A>(IEventTranslatorOneArg<T, A> translator, A arg0)
         {
             long sequence = _sequencer.Next();
@@ -214,6 +219,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvent{A}(IEventTranslatorOneArg{T,A},A)"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvent<A>(IEventTranslatorOneArg<T, A> translator, A arg0)
         {
             if (_sequencer.TryNext(out var sequence))
@@ -228,6 +234,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvent{A,B}(IEventTranslatorTwoArg{T,A,B},A,B)"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A arg0, B arg1)
         {
             long sequence = _sequencer.Next();
@@ -237,6 +244,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvent{A,B}(IEventTranslatorTwoArg{T,A,B},A,B)"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvent<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A arg0, B arg1)
         {
             if (_sequencer.TryNext(out var sequence))
@@ -251,6 +259,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvent{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},A,B,C)"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A arg0, B arg1, C arg2)
         {
             long sequence = _sequencer.Next();
@@ -260,6 +269,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvent{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},A,B,C)"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvent<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A arg0, B arg1, C arg2)
         {
             if (_sequencer.TryNext(out var sequence))
@@ -274,6 +284,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvent(IEventTranslatorVararg{T},object[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent(IEventTranslatorVararg<T> translator, params object[] args)
         {
             long sequence = _sequencer.Next();
@@ -283,6 +294,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvent(IEventTranslatorVararg{T},object[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvent(IEventTranslatorVararg<T> translator, params object[] args)
         {
             if (_sequencer.TryNext(out var sequence))
@@ -297,6 +309,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvents(IEventTranslator{T}[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents(IEventTranslator<T>[] translators)
         {
             PublishEvents(translators, 0, translators.Length);
@@ -305,6 +318,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvents(IEventTranslator{T}[],int,int)"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents(IEventTranslator<T>[] translators, int batchStartsAt, int batchSize)
         {
             CheckBounds(translators, batchStartsAt, batchSize);
@@ -315,6 +329,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvents(IEventTranslator{T}[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvents(IEventTranslator<T>[] translators)
         {
             return TryPublishEvents(translators, 0, translators.Length);
@@ -323,6 +338,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvents(IEventTranslator{T}[],int,int)"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvents(IEventTranslator<T>[] translators, int batchStartsAt, int batchSize)
         {
             CheckBounds(translators, batchStartsAt, batchSize);
@@ -339,6 +355,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvents{A}(IEventTranslatorOneArg{T,A},A[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents<A>(IEventTranslatorOneArg<T, A> translator, A[] arg0)
         {
             PublishEvents(translator, 0, arg0.Length, arg0);
@@ -347,6 +364,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvents{A}(IEventTranslatorOneArg{T,A},int,int,A[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents<A>(IEventTranslatorOneArg<T, A> translator, int batchStartsAt, int batchSize, A[] arg0)
         {
             CheckBounds(arg0, batchStartsAt, batchSize);
@@ -357,6 +375,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvents{A}(IEventTranslatorOneArg{T,A},A[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvents<A>(IEventTranslatorOneArg<T, A> translator, A[] arg0)
         {
             return TryPublishEvents(translator, 0, arg0.Length, arg0);
@@ -365,6 +384,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvents{A}(IEventTranslatorOneArg{T,A},int,int,A[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvents<A>(IEventTranslatorOneArg<T, A> translator, int batchStartsAt, int batchSize, A[] arg0)
         {
             CheckBounds(arg0, batchStartsAt, batchSize);
@@ -381,6 +401,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvents{A,B}(IEventTranslatorTwoArg{T,A,B},A[],B[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A[] arg0, B[] arg1)
         {
             PublishEvents(translator, 0, arg0.Length, arg0, arg1);
@@ -389,6 +410,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvents{A,B}(IEventTranslatorTwoArg{T,A,B},int,int,A[],B[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents<A, B>(IEventTranslatorTwoArg<T, A, B> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1)
         {
             CheckBounds(arg0, arg1, batchStartsAt, batchSize);
@@ -399,6 +421,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvents{A,B}(IEventTranslatorTwoArg{T,A,B},A[],B[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvents<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A[] arg0, B[] arg1)
         {
             return TryPublishEvents(translator, 0, arg0.Length, arg0, arg1);
@@ -407,6 +430,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvents{A,B}(IEventTranslatorTwoArg{T,A,B},int,int,A[],B[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvents<A, B>(IEventTranslatorTwoArg<T, A, B> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1)
         {
             CheckBounds(arg0, arg1, batchStartsAt, batchSize);
@@ -423,6 +447,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvents{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},A[],B[],C[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A[] arg0, B[] arg1, C[] arg2)
         {
             PublishEvents(translator, 0, arg0.Length, arg0, arg1, arg2);
@@ -431,6 +456,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvents{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},int,int,A[],B[],C[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1, C[] arg2)
         {
             CheckBounds(arg0, arg1, arg2, batchStartsAt, batchSize);
@@ -441,6 +467,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvents{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},A[],B[],C[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvents<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A[] arg0, B[] arg1, C[] arg2)
         {
             return TryPublishEvents(translator, 0, arg0.Length, arg0, arg1, arg2);
@@ -449,6 +476,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvents{A,B,C}(IEventTranslatorThreeArg{T,A,B,C},int,int,A[],B[],C[])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvents<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1, C[] arg2)
         {
             CheckBounds(arg0, arg1, arg2, batchStartsAt, batchSize);
@@ -465,6 +493,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvents(IEventTranslatorVararg{T},object[][])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents(IEventTranslatorVararg<T> translator, params object[][] args)
         {
             PublishEventsInternal(translator, 0, args.Length, args);
@@ -473,6 +502,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.PublishEvents(IEventTranslatorVararg{T},int,int,object[][])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvents(IEventTranslatorVararg<T> translator, int batchStartsAt, int batchSize, params object[][] args)
         {
             PublishEventsInternal(translator, batchStartsAt, batchSize, args);
@@ -488,6 +518,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvents(IEventTranslatorVararg{T},object[][])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvents(IEventTranslatorVararg<T> translator, params object[][] args)
         {
             return TryPublishEvents(translator, 0, args.Length, args);
@@ -496,6 +527,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IEventSink{T}.TryPublishEvents(IEventTranslatorVararg{T},int,int,object[][])"/>
         /// </summary>
+        [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvents(IEventTranslatorVararg<T> translator, int batchStartsAt, int batchSize, params object[][] args)
         {
             CheckBounds(args, batchStartsAt, batchSize);

@@ -1,3 +1,5 @@
+using System;
+
 namespace Disruptor
 {
     /// <summary>
@@ -5,6 +7,7 @@ namespace Disruptor
     /// </summary>
     /// <typeparam name="T">event implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
     /// <typeparam name="A"></typeparam>
+    [Obsolete(Constants.ObsoletePublicationApiMessage)]
     public interface IEventTranslatorOneArg<T, A>
     {
         /// <summary>

@@ -69,12 +69,13 @@ namespace Disruptor.Tests
 
             var buffer = d.Start();
 
-            IEventTranslator<LongEvent> translator = new EventTranslator<LongEvent>();
-
             const int eventCount = 10000;
             for (var i = 0; i < eventCount; i++)
             {
-                buffer.PublishEvent(translator);
+                using (var scope = buffer.PublishEvent())
+                {
+                    scope.Event().Value = scope.Sequence;
+                }
             }
 
             while (Volatile.Read(ref handler1.Processed) != eventCount - 1 ||
@@ -87,14 +88,6 @@ namespace Disruptor.Tests
             Assert.That(handler1.EventCount, Is.EqualTo((long)eventCount / 2));
             Assert.That(handler2.PublishedValue, Is.EqualTo((long)eventCount - 1));
             Assert.That(handler2.EventCount, Is.EqualTo((long)eventCount / 2));
-        }
-
-        private class EventTranslator<T> : IEventTranslator<LongEvent>
-        {
-            public void TranslateTo(LongEvent eventData, long sequence)
-            {
-                eventData.Value = sequence;
-            }
         }
     }
 }
