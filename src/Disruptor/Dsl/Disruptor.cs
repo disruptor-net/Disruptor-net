@@ -209,6 +209,16 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
+        /// <see cref="RingBuffer{T}.PublishEvent()"/>
+        /// </summary>
+        public RingBuffer<T>.UnpublishedEventScope PublishEvent() => _ringBuffer.PublishEvent();
+
+        /// <summary>
+        /// <see cref="RingBuffer{T}.PublishEvents(int)"/>
+        /// </summary>
+        public RingBuffer<T>.UnpublishedEventBatchScope PublishEvents(int count) => _ringBuffer.PublishEvents(count);
+
+        /// <summary>
         /// Publish an event to the ring buffer.
         /// </summary>
         /// <param name="eventTranslator">the translator that will load data into the event</param>

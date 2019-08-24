@@ -19,12 +19,10 @@ namespace Disruptor.Tests.Dsl
         private List<DelayedEventHandler> _delayedEventHandlers;
         private List<TestWorkHandler> _testWorkHandlers;
         private RingBuffer<TestEvent> _ringBuffer;
-        private TestEvent _lastPublishedEvent;
 
         [SetUp]
         public void SetUp()
         {
-            _lastPublishedEvent = null;
             _ringBuffer = null;
             _delayedEventHandlers = new List<DelayedEventHandler>();
             _testWorkHandlers = new List<TestWorkHandler>();
@@ -49,16 +47,44 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
+        public void ShouldPublishAndHandleEvent()
+        {
+            var eventCounter = new CountdownEvent(2);
+            _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>(e => eventCounter.Signal()));
+
+            _disruptor.Start();
+
+            _disruptor.PublishEvent().Dispose();
+            _disruptor.PublishEvent().Dispose();
+
+            Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        }
+
+        [Test]
+        public void ShouldPublishAndHandleEvents()
+        {
+            var eventCounter = new CountdownEvent(4);
+            _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>(e => eventCounter.Signal()));
+
+            _disruptor.Start();
+
+            _disruptor.PublishEvents(2).Dispose();
+            _disruptor.PublishEvents(2).Dispose();
+
+            Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        }
+
+        [Test]
         public void ShouldProcessMessagesPublishedBeforeStartIsCalled()
         {
             var eventCounter = new CountdownEvent(2);
             _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>(e => eventCounter.Signal()));
 
-            _disruptor.PublishEvent(new ActionEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
+            _disruptor.PublishEvent().Dispose();
 
             _disruptor.Start();
 
-            _disruptor.PublishEvent(new ActionEventTranslator<TestEvent>(e => _lastPublishedEvent = e));
+            _disruptor.PublishEvent().Dispose();
 
             if (!eventCounter.Wait(TimeSpan.FromSeconds(5)))
                 Assert.Fail("Did not process event published before start was called. Missed events: " + eventCounter.CurrentCount);
@@ -708,22 +734,7 @@ namespace Disruptor.Tests.Dsl
                 }
             }
 
-            _disruptor.PublishEvent(new EventTranslator(this));
-        }
-
-        private class EventTranslator : IEventTranslator<TestEvent>
-        {
-            private readonly DisruptorTests _disruptorTests;
-
-            public EventTranslator(DisruptorTests disruptorTests)
-            {
-                _disruptorTests = disruptorTests;
-            }
-
-            public void TranslateTo(TestEvent eventData, long sequence)
-            {
-                _disruptorTests._lastPublishedEvent = eventData;
-            }
+            _disruptor.PublishEvent().Dispose();
         }
 
         private static Exception WaitFor(AtomicReference<Exception> reference)

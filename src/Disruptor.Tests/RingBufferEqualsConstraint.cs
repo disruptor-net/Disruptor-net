@@ -18,7 +18,7 @@ namespace Disruptor.Tests
             for (var i = 0; i < _values.Length; i++)
             {
                 var value = _values[i];
-                valid &= value == null || ringBuffer[i][0].Equals(value);
+                valid &= value == null || value.Equals(ringBuffer[i][0]);
             }
 
             return new ConstraintResult(this, actual, valid);

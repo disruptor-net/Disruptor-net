@@ -253,12 +253,6 @@ namespace Disruptor
             return new NullableUnpublishedEventBatchScope(success ? this : null, endSequence + 1 - count, endSequence);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void ThrowInvalidPublishCountException()
-        {
-            throw new ArgumentException($"Invalid publish count: It should be >= 0 and <= {_bufferSize}");
-        }
-
         /// <summary>
         /// Holds an unpublished sequence number.
         /// Publishes the sequence number on disposing.

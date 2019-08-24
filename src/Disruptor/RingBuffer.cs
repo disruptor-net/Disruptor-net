@@ -346,5 +346,11 @@ namespace Disruptor
                    "sequencer=" + _sequencer +
                    "}";
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        protected void ThrowInvalidPublishCountException()
+        {
+            throw new ArgumentException($"Invalid publish count: It should be >= 0 and <= {_bufferSize}");
+        }
     }
 }
