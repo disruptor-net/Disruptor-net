@@ -314,12 +314,7 @@ namespace Disruptor.Dsl
         private bool HasBacklog()
         {
             var cursor = _ringBuffer.Cursor;
-            foreach (var sequence in _consumerRepository.GetLastSequenceInChain(false))
-            {
-                if (cursor > sequence.Value)
-                    return true;
-            }
-            return false;
+            return _consumerRepository.HasBacklog(cursor, false);
         }
 
         internal ValueEventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)

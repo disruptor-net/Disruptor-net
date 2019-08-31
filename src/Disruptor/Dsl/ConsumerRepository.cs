@@ -43,6 +43,25 @@ namespace Disruptor.Dsl
             }
         }
 
+        public bool HasBacklog(long cursor, bool includeStopped)
+        {
+            foreach (var consumerInfo in _consumerInfos)
+            {
+                if ((includeStopped || consumerInfo.IsRunning) && consumerInfo.IsEndOfChain)
+                {
+                    foreach (var sequence in consumerInfo.Sequences)
+                    {
+                        if (cursor > sequence.Value)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public ISequence[] GetLastSequenceInChain(bool includeStopped)
         {
             var lastSequence = new List<ISequence>();
