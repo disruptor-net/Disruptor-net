@@ -29,12 +29,21 @@ namespace Disruptor.Dsl
         private int _started;
 
         /// <summary>
-        /// Create a new ValueDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and
-        /// <see cref="ProducerType.Multi"/>
+        /// Create a new ValueDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
         /// </summary>
         /// <param name="eventFactory">the factory to create events in the ring buffer</param>
-        /// <param name="ringBufferSize">the size of the ring buffer</param>
-        /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads to for processors</param>
+        /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
+        public ValueDisruptor(Func<T> eventFactory, int ringBufferSize)
+            : this(eventFactory, ringBufferSize, TaskScheduler.Default)
+        {
+        }
+
+        /// <summary>
+        /// Create a new ValueDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
+        /// </summary>
+        /// <param name="eventFactory">the factory to create events in the ring buffer</param>
+        /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
+        /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
         public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler)
             : this(ValueRingBuffer<T>.CreateMultiProducer(eventFactory, ringBufferSize), new BasicExecutor(taskScheduler))
         {
@@ -45,7 +54,7 @@ namespace Disruptor.Dsl
         /// </summary>
         /// <param name="eventFactory">the factory to create events in the ring buffer</param>
         /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
-        /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads to for processors</param>
+        /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
         /// <param name="producerType">the claim strategy to use for the ring buffer</param>
         /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
         public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
@@ -54,19 +63,16 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
-        /// Allows the executor to be specified
+        /// Create a new ValueDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
         /// </summary>
-        /// <param name="eventFactory"></param>
-        /// <param name="ringBufferSize"></param>
-        /// <param name="executor"></param>
+        /// <param name="eventFactory">the factory to create events in the ring buffer</param>
+        /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
+        /// <param name="executor">an <see cref="IExecutor"/> to create threads for processors</param>
         public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, IExecutor executor)
             : this(ValueRingBuffer<T>.CreateMultiProducer(eventFactory, ringBufferSize), executor)
         {
         }
 
-        /// <summary>
-        /// Private constructor helper
-        /// </summary>
         private ValueDisruptor(ValueRingBuffer<T> ringBuffer, IExecutor executor)
         {
             _ringBuffer = ringBuffer;
