@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
-    <StartupObject>Disruptor.Tests.Example.DynamiclyAddHandler</StartupObject>
-    <OutputType>exe</OutputType>
   </PropertyGroup>
   
   <ItemGroup>

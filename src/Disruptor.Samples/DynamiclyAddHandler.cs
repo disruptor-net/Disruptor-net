@@ -1,6 +1,5 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Disruptor.Tests.Support;
 using Disruptor.Dsl;
 
 namespace Disruptor.Tests.Example
@@ -10,7 +9,7 @@ namespace Disruptor.Tests.Example
         public static void Main(string[] args)
         {
             var executor = new BasicExecutor(TaskScheduler.Current);
-            var disruptor = new Disruptor<StubEvent>(() => new StubEvent(-1), 1024, TaskScheduler.Current);
+            var disruptor = new Disruptor<DynamicEvent>(() => new DynamicEvent(), 1024, TaskScheduler.Current);
             var ringBuffer = disruptor.Start();
 
             // Construct 2 batch event processors.
@@ -37,11 +36,15 @@ namespace Disruptor.Tests.Example
             ringBuffer.RemoveGatingSequence(processor2.Sequence);
         }
 
-        private class DynamicHandler : IEventHandler<StubEvent>, ILifecycleAware
+        public class DynamicEvent
+        {
+        }
+
+        public class DynamicHandler : IEventHandler<DynamicEvent>, ILifecycleAware
         {
             private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
 
-            public void OnEvent(StubEvent data, long sequence, bool endOfBatch)
+            public void OnEvent(DynamicEvent data, long sequence, bool endOfBatch)
             {
             }
 
