@@ -7,128 +7,36 @@ namespace Disruptor
     /// <summary>
     /// Ring based store of reusable entries containing the data representing
     /// an event being exchanged between event producer and <see cref="IEventProcessor"/>s.
+    ///
+    /// The underlying storage is an unmanaged buffer. The buffer must be preallocated.
     /// </summary>
     /// <typeparam name="T">implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
-    public sealed class ValueRingBuffer<T> : ArrayRingBuffer, IValueRingBuffer<T>
-        where T : struct
+    public sealed class UnsafeRingBuffer<T> : UnsafeRingBuffer, IValueRingBuffer<T>
+        where T : unmanaged
     {
-        private static readonly int _bufferPad = Util.GetRingBufferPaddingEventCount(Util.SizeOf<T>());
-
         /// <summary>
-        /// Construct a ValueRingBuffer with the full option set.
+        /// Construct an UnsafeRingBuffer with the full option set.
         /// </summary>
+        /// <param name="pointer">pointer to the first element of the buffer</param>
+        /// <param name="eventSize">size of each event</param>
         /// <param name="sequencer">sequencer to handle the ordering of events moving through the ring buffer.</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        public ValueRingBuffer(ISequencer sequencer)
-            : this(() => default(T), sequencer)
+        public UnsafeRingBuffer(IntPtr pointer, int eventSize, ISequencer sequencer)
+            : base(pointer, eventSize, sequencer)
         {
         }
 
         /// <summary>
-        /// Construct a ValueRingBuffer with the full option set.
+        /// Construct an UnsafeRingBuffer with the full option set.
+        /// The <see cref="UnsafeRingBufferMemory"/> is not owned by the ring buffer and should be disposed after shutdown.
         /// </summary>
-        /// <param name="eventFactory">eventFactory to create entries for filling the ring buffer</param>
-        /// <param name="sequencer">sequencer to handle the ordering of events moving through the ring buffer.</param>
-        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        public ValueRingBuffer(Func<T> eventFactory, ISequencer sequencer)
-        : base(sequencer, typeof(T), _bufferPad)
-        {
-            Fill(eventFactory);
-        }
-
-        private void Fill(Func<T> eventFactory)
-        {
-            for (var index = 0; index < _bufferSize; index++)
-            {
-                this[index] = eventFactory.Invoke();
-            }
-        }
-
-        /// <summary>
-        /// Construct a ValueRingBuffer with a <see cref="MultiProducerSequencer"/> sequencer.
-        /// </summary>
-        /// <param name="eventFactory"> eventFactory to create entries for filling the ring buffer</param>
-        /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
-        public ValueRingBuffer(Func<T> eventFactory, int bufferSize)
-            : this(eventFactory, new MultiProducerSequencer(bufferSize, new BlockingWaitStrategy()))
-        {
-        }
-
-        /// <summary>
-        /// Create a new multiple producer ValueRingBuffer with the specified wait strategy.
-        /// </summary>
-        /// <param name="factory">used to create the events within the ring buffer.</param>
-        /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
-        /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
-        /// <returns>a constructed ring buffer.</returns>
-        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        public static ValueRingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
-        {
-            MultiProducerSequencer sequencer = new MultiProducerSequencer(bufferSize, waitStrategy);
-
-            return new ValueRingBuffer<T>(factory, sequencer);
-        }
-
-        /// <summary>
-        /// Create a new multiple producer ValueRingBuffer using the default wait strategy <see cref="BlockingWaitStrategy"/>.
-        /// </summary>
-        /// <param name="factory">used to create the events within the ring buffer.</param>
-        /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
-        /// <returns>a constructed ring buffer.</returns>
-        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        public static ValueRingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize)
-        {
-            return CreateMultiProducer(factory, bufferSize, new BlockingWaitStrategy());
-        }
-
-        /// <summary>
-        /// Create a new single producer ValueRingBuffer with the specified wait strategy.
-        /// </summary>
-        /// <param name="factory">used to create the events within the ring buffer.</param>
-        /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
-        /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
-        /// <returns>a constructed ring buffer.</returns>
-        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        public static ValueRingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
-        {
-            SingleProducerSequencer sequencer = new SingleProducerSequencer(bufferSize, waitStrategy);
-
-            return new ValueRingBuffer<T>(factory, sequencer);
-        }
-
-        /// <summary>
-        /// Create a new single producer ValueRingBuffer using the default wait strategy <see cref="BlockingWaitStrategy"/>.
-        /// </summary>
-        /// <param name="factory">used to create the events within the ring buffer.</param>
-        /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
-        /// <returns>a constructed ring buffer.</returns>
-        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        public static ValueRingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize)
-        {
-            return CreateSingleProducer(factory, bufferSize, new BlockingWaitStrategy());
-        }
-
-        /// <summary>
-        /// Create a new ValueRingBuffer with the specified producer type.
-        /// </summary>
+        /// <param name="memory">block of memory that will store the events</param>
         /// <param name="producerType">producer type to use <see cref="ProducerType" /></param>
-        /// <param name="factory">used to create the events within the ring buffer.</param>
-        /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
         /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
-        /// <returns>a constructed ring buffer.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">if the producer type is invalid</exception>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        public static ValueRingBuffer<T> Create(ProducerType producerType, Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
+        public UnsafeRingBuffer(UnsafeRingBufferMemory memory, ProducerType producerType, IWaitStrategy waitStrategy)
+            : base(memory.PointerToFirstEvent, memory.EventSize, Sequencer.Create(producerType, memory.EventCount, waitStrategy))
         {
-            switch (producerType)
-            {
-                case ProducerType.Single:
-                    return CreateSingleProducer(factory, bufferSize, waitStrategy);
-                case ProducerType.Multi:
-                    return CreateMultiProducer(factory, bufferSize, waitStrategy);
-                default:
-                    throw new ArgumentOutOfRangeException(producerType.ToString());
-            }
         }
 
         /// <summary>
@@ -150,24 +58,11 @@ namespace Disruptor
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return ref Util.ReadValue<T>(_entries, _bufferPad + (int)(sequence & _indexMask));
+                return ref Util.ReadValue<T>(_entries, (int)(sequence & _indexMask), _eventSize);
             }
         }
 
-        /// <summary>
-        /// Sets the cursor to a specific sequence and returns the preallocated entry that is stored there.  This
-        /// can cause a data race and should only be done in controlled circumstances, e.g. during initialisation.
-        /// </summary>
-        /// <param name="sequence">the sequence to claim.</param>
-        /// <returns>the preallocated event.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T ClaimAndGetPreallocated(long sequence)
-        {
-            _sequencer.Claim(sequence);
-            return ref this[sequence];
-        }
-
-        /// <summary>
+         /// <summary>
         /// Increment the ring buffer sequence and return a scope that will publish the sequence on disposing.
         /// This method will block until there is space available in the ring buffer.
         /// buffer
@@ -260,10 +155,10 @@ namespace Disruptor
         /// </summary>
         public readonly struct UnpublishedEventScope : IDisposable
         {
-            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly UnsafeRingBuffer<T> _ringBuffer;
             private readonly long _sequence;
 
-            public UnpublishedEventScope(ValueRingBuffer<T> ringBuffer, long sequence)
+            public UnpublishedEventScope(UnsafeRingBuffer<T> ringBuffer, long sequence)
             {
                 _ringBuffer = ringBuffer;
                 _sequence = sequence;
@@ -290,11 +185,11 @@ namespace Disruptor
         /// </summary>
         public readonly struct UnpublishedEventBatchScope : IDisposable
         {
-            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly UnsafeRingBuffer<T> _ringBuffer;
             private readonly long _startSequence;
             private readonly long _endSequence;
 
-            public UnpublishedEventBatchScope(ValueRingBuffer<T> ringBuffer, long startSequence, long endSequence)
+            public UnpublishedEventBatchScope(UnsafeRingBuffer<T> ringBuffer, long startSequence, long endSequence)
             {
                 _ringBuffer = ringBuffer;
                 _startSequence = startSequence;
@@ -323,10 +218,10 @@ namespace Disruptor
         /// </summary>
         public readonly struct NullableUnpublishedEventScope : IDisposable
         {
-            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly UnsafeRingBuffer<T> _ringBuffer;
             private readonly long _sequence;
 
-            public NullableUnpublishedEventScope(ValueRingBuffer<T> ringBuffer, long sequence)
+            public NullableUnpublishedEventScope(UnsafeRingBuffer<T> ringBuffer, long sequence)
             {
                 _ringBuffer = ringBuffer;
                 _sequence = sequence;
@@ -366,10 +261,10 @@ namespace Disruptor
         /// </summary>
         public readonly struct EventRef
         {
-            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly UnsafeRingBuffer<T> _ringBuffer;
             private readonly long _sequence;
 
-            public EventRef(ValueRingBuffer<T> ringBuffer, long sequence)
+            public EventRef(UnsafeRingBuffer<T> ringBuffer, long sequence)
             {
                 _ringBuffer = ringBuffer;
                 _sequence = sequence;
@@ -390,11 +285,11 @@ namespace Disruptor
         /// </summary>
         public readonly struct NullableUnpublishedEventBatchScope : IDisposable
         {
-            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly UnsafeRingBuffer<T> _ringBuffer;
             private readonly long _startSequence;
             private readonly long _endSequence;
 
-            public NullableUnpublishedEventBatchScope(ValueRingBuffer<T> ringBuffer, long startSequence, long endSequence)
+            public NullableUnpublishedEventBatchScope(UnsafeRingBuffer<T> ringBuffer, long startSequence, long endSequence)
             {
                 _ringBuffer = ringBuffer;
                 _startSequence = startSequence;
@@ -435,11 +330,11 @@ namespace Disruptor
         /// </summary>
         public readonly struct EventBatchRef
         {
-            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly UnsafeRingBuffer<T> _ringBuffer;
             private readonly long _startSequence;
             private readonly long _endSequence;
 
-            public EventBatchRef(ValueRingBuffer<T> ringBuffer, long startSequence, long endSequence)
+            public EventBatchRef(UnsafeRingBuffer<T> ringBuffer, long startSequence, long endSequence)
             {
                 _ringBuffer = ringBuffer;
                 _startSequence = startSequence;

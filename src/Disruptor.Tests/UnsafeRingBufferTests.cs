@@ -1,15 +1,50 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
 using Disruptor.Dsl;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
 {
-    public class ValueRingBufferTests : ValueRingBufferFixture<StubValueEvent>
+    public class UnsafeRingBufferTests : ValueRingBufferFixture<StubUnmanagedEvent>
     {
-        protected override IValueRingBuffer<StubValueEvent> CreateRingBuffer(int size, ProducerType producerType)
+        private List<UnsafeRingBufferMemory> _memoryList;
+
+        public override void SetUp()
         {
-            return new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), Sequencer.Create(producerType, size));
+            _memoryList = new List<UnsafeRingBufferMemory>();
+
+            base.SetUp();
+        }
+
+        public override void Teardown()
+        {
+            base.Teardown();
+
+            foreach (var memory in _memoryList)
+            {
+                memory.Dispose();
+            }
+        }
+
+        protected override IValueRingBuffer<StubUnmanagedEvent> CreateRingBuffer(int size, ProducerType producerType)
+        {
+            var memory = UnsafeRingBufferMemory.Allocate(size, () => new StubUnmanagedEvent(-1));
+            _memoryList.Add(memory);
+
+            return new UnsafeRingBuffer<StubUnmanagedEvent>(memory, producerType, new BlockingWaitStrategy());
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        public void ShouldNotCreateRingBufferWithInvalidEventSize(int eventSize)
+        {
+            using (var memory = UnsafeRingBufferMemory.Allocate(1, 1))
+            {
+                Assert.Throws<ArgumentException>(() => GC.KeepAlive(new UnsafeRingBuffer<StubUnmanagedEvent>(memory.PointerToFirstEvent, eventSize, Sequencer.Create(ProducerType.Single, 1))));
+            }
         }
 
         [Test]

@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 using InlineIL;
 using static InlineIL.IL.Emit;
 
 namespace Disruptor.Benchmarks
 {
-    public class ValueArrayBenchmarks
+    public class ValueArrayBenchmarks : IDisposable
     {
         private readonly Event[] _array;
+        private GCHandle _handle;
+        private IntPtr _pointer;
 
         public ValueArrayBenchmarks()
         {
@@ -21,6 +24,14 @@ namespace Disruptor.Benchmarks
 
             if (ReadOneIL() != ReadOne())
                 throw new InvalidOperationException();
+
+            _handle = GCHandle.Alloc(_array, GCHandleType.Pinned);
+            _pointer = _handle.AddrOfPinnedObject();
+        }
+
+        public void Dispose()
+        {
+            _handle.Free();
         }
 
         public int Index = 371;
@@ -71,7 +82,14 @@ namespace Disruptor.Benchmarks
         {
             return Util.ReadValue<Event>(_array, Index).Value;
         }
-        
+
+        [Benchmark]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public unsafe int ReadOneILUnsafe()
+        {
+            return Util.ReadValue<Event>(_pointer, Index, sizeof(Event)).Value;
+        }
+
         public struct Event
         {
             public int Value { get; set; }

@@ -33,23 +33,25 @@ namespace Disruptor.PerfTests.Sequenced
     /// SB  - SequenceBarrier
     /// EP1 - EventProcessor 1
     /// </summary>
-    public class OneToOneSequencedValueThroughputTest : IThroughputTest
+    public class OneToOneSequencedUnsafeThroughputTest : IThroughputTest
     {
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 100L;
 
-        private readonly ValueRingBuffer<PerfValueEvent> _ringBuffer;
+        private readonly UnsafeRingBuffer<PerfValueEvent> _ringBuffer;
         private readonly AdditionEventHandler _eventHandler;
         private readonly ManualResetEvent _latch;
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
         private readonly IValueBatchEventProcessor<PerfValueEvent> _batchEventProcessor;
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
+        private readonly UnsafeRingBufferMemory _memory;
 
-        public OneToOneSequencedValueThroughputTest()
+        public OneToOneSequencedUnsafeThroughputTest()
         {
             _latch = new ManualResetEvent(false);
             _eventHandler = new AdditionEventHandler();
-            _ringBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+            _memory = UnsafeRingBufferMemory.Allocate(_bufferSize, PerfValueEvent.Size);
+            _ringBuffer = new UnsafeRingBuffer<PerfValueEvent>(_memory, ProducerType.Single, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
             _batchEventProcessor = BatchEventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
             _ringBuffer.AddGatingSequences(_batchEventProcessor.Sequence);

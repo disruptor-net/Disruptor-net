@@ -2,7 +2,7 @@ using System;
 
 namespace Disruptor.Tests.Support
 {
-    public class StubEvent : IEquatable<StubEvent>
+    public class StubEvent : IEquatable<StubEvent>, IStubEvent
     {
         public StubEvent(int i)
         {
@@ -10,6 +10,7 @@ namespace Disruptor.Tests.Support
         }
 
         public int Value { get; set; }
+
         public string TestString { get; set; }
 
         public static readonly Func<StubEvent> EventFactory = () => new StubEvent(-1);

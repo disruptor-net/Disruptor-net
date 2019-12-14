@@ -2,7 +2,7 @@ using System;
 
 namespace Disruptor.Tests.Support
 {
-    public struct StubValueEvent : IEquatable<StubValueEvent>
+    public struct StubValueEvent : IEquatable<StubValueEvent>, IStubEvent
     {
         public StubValueEvent(int i)
         {
@@ -11,6 +11,7 @@ namespace Disruptor.Tests.Support
         }
 
         public int Value { get; set; }
+
         public string TestString { get; set; }
 
         public static readonly Func<StubValueEvent> EventFactory = () => new StubValueEvent(-1);
@@ -22,7 +23,7 @@ namespace Disruptor.Tests.Support
 
         public bool Equals(StubValueEvent other)
         {
-            return other.Value == Value;
+            return other.Value == Value && other.TestString == TestString;
         }
 
         public override bool Equals(object obj)
@@ -33,29 +34,6 @@ namespace Disruptor.Tests.Support
         public override string ToString()
         {
             return string.Format("Value: {0}, TestString: {1}", Value, TestString);
-        }
-
-        public void Copy(StubValueEvent evt)
-        {
-            Value = evt.Value;
-        }
-
-        public struct Translator
-        {
-            private readonly int _value;
-            private readonly string _testString;
-
-            public Translator(int value, string testString)
-            {
-                _value = value;
-                _testString = testString;
-            }
-
-            public void TranslateTo(ref StubValueEvent eventData, long sequence)
-            {
-                eventData.Value = _value;
-                eventData.TestString = _testString;
-            }
         }
     }
 }

@@ -11,7 +11,7 @@ namespace Disruptor
     /// an event being exchanged between event producer and <see cref="IEventProcessor"/>s.
     /// </summary>
     /// <typeparam name="T">implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
-    public sealed class RingBuffer<T> : RingBuffer, IEventSequencer<T>, IEventSink<T>
+    public sealed class RingBuffer<T> : ArrayRingBuffer, IEventSequencer<T>, IEventSink<T>
         where T : class
     {
         /// <summary>
@@ -21,17 +21,17 @@ namespace Disruptor
         /// <param name="sequencer">sequencer to handle the ordering of events moving through the RingBuffer.</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public RingBuffer(Func<T> eventFactory, ISequencer sequencer)
-        : base(sequencer, typeof(T))
+        : base(sequencer, typeof(T), _bufferPadRef)
         {
             Fill(eventFactory);
         }
 
         private void Fill(Func<T> eventFactory)
         {
-            var entries = (T[]) _entries;
+            var entries = (T[])_entries;
             for (int i = 0; i < _bufferSize; i++)
             {
-                entries[_bufferPad + i] = eventFactory();
+                entries[_bufferPadRef + i] = eventFactory();
             }
         }
 
@@ -124,11 +124,11 @@ namespace Disruptor
 
         /// <summary>
         /// Get the event for a given sequence in the RingBuffer.
-        /// 
+        ///
         /// This call has 2 uses.  Firstly use this call when publishing to a ring buffer.
         /// After calling <see cref="RingBuffer.Next()"/> use this call to get hold of the
         /// preallocated event to fill with data before calling <see cref="RingBuffer.Publish(long)"/>.
-        /// 
+        ///
         /// Secondly use this call when consuming data from the ring buffer.  After calling
         /// <see cref="ISequenceBarrier.WaitFor"/> call this method with any value greater than
         /// that your current consumer sequence and less than or equal to the value returned from
@@ -141,10 +141,10 @@ namespace Disruptor
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return Util.Read<T>(_entries, _bufferPad + (int)(sequence & _indexMask));
+                return Util.Read<T>(_entries, _bufferPadRef + (int)(sequence & _indexMask));
             }
         }
-        
+
         /// <summary>
         /// Sets the cursor to a specific sequence and returns the preallocated entry that is stored there.  This
         /// can cause a data race and should only be done in controlled circumstances, e.g. during initialisation.
@@ -775,7 +775,7 @@ namespace Disruptor
         /// {
         ///     if (!scope.TryGetEvent(out var eventRef))
         ///         return;
-        /// 
+        ///
         ///     var e = eventRef.Event();
         ///     // Do some work with the event.
         /// }
@@ -818,7 +818,7 @@ namespace Disruptor
         /// {
         ///     if (!scope.TryGetEvents(out var eventsRef))
         ///         return;
-        /// 
+        ///
         ///     var e1 = eventRefs.Event(0);
         ///     var e2 = eventRefs.Event(1);
         ///     // Do some work with the events.

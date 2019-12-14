@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using Disruptor.Dsl;
 
 namespace Disruptor
 {
@@ -93,7 +94,7 @@ namespace Disruptor
         /// <summary>
         /// Attempt to claim the next event for publishing.  Will return the
         /// number of the slot if there is at least one slot available.
-        /// 
+        ///
         /// Have a look at <see cref="Next()"/> for a description on how to
         /// use this method.
         /// </summary>
@@ -105,7 +106,7 @@ namespace Disruptor
         /// Attempt to claim the next <code>n</code> events in sequence for publishing.
         /// Will return the highest numbered slot if there is at least <code>n</code> slots
         /// available.
-        /// 
+        ///
         /// Have a look at <see cref="Next(int)"/> for a description on how to
         /// use this method.
         /// </summary>
@@ -158,7 +159,7 @@ namespace Disruptor
 
         /// <summary>
         /// Add the specified gating sequences to this instance of the Disruptor.  They will
-        /// safely and atomically added to the list of gating sequences. 
+        /// safely and atomically added to the list of gating sequences.
         /// </summary>
         /// <param name="gatingSequences">The sequences to add.</param>
         public void AddGatingSequences(params ISequence[] gatingSequences)
@@ -206,6 +207,41 @@ namespace Disruptor
                    ", cursor=" + _cursor +
                    ", gatingSequences=[" + string.Join(", ", _gatingSequences.AsEnumerable()) +
                    "]}";
+        }
+
+        /// <summary>
+        /// Create a new sequencer with the specified producer type and <see cref="BlockingWaitStrategy"/>.
+        /// </summary>
+        /// <param name="producerType">producer type to use <see cref="ProducerType" /></param>
+        /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
+        /// <returns>a constructed ring buffer.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">if the producer type is invalid</exception>
+        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+        public static ISequencer Create(ProducerType producerType, int bufferSize)
+        {
+            return Create(producerType, bufferSize, new BlockingWaitStrategy());
+        }
+
+        /// <summary>
+        /// Create a new sequencer with the specified producer type.
+        /// </summary>
+        /// <param name="producerType">producer type to use <see cref="ProducerType" /></param>
+        /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
+        /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
+        /// <returns>a constructed ring buffer.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">if the producer type is invalid</exception>
+        /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+        public static ISequencer Create(ProducerType producerType, int bufferSize, IWaitStrategy waitStrategy)
+        {
+            switch (producerType)
+            {
+                case ProducerType.Single:
+                    return new SingleProducerSequencer(bufferSize, waitStrategy);
+                case ProducerType.Multi:
+                    return new MultiProducerSequencer(bufferSize, waitStrategy);
+                default:
+                    throw new ArgumentOutOfRangeException(producerType.ToString());
+            }
         }
     }
 }

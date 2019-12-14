@@ -8,21 +8,17 @@ namespace Disruptor
     /// Ring based store of reusable entries containing the data representing
     /// an event being exchanged between event producer and <see cref="IEventProcessor"/>s.
     /// </summary>
-    [StructLayout(LayoutKind.Explicit, Size = 144)]
+    [StructLayout(LayoutKind.Explicit, Size = 148)]
     public abstract class RingBuffer : ICursored
     {
-        protected static readonly int _bufferPad = 128 / IntPtr.Size;
-
         // padding: 56
 
-        [FieldOffset(56)]
-        protected object _entries;
+        // padding: 8 (for entries)
 
         [FieldOffset(64)]
         protected long _indexMask;
 
-        [FieldOffset(72)]
-        protected int _bufferSize;
+        // padding: 4 (for eventSize)
 
         [FieldOffset(76)]
         protected RingBufferSequencerType _sequencerType;
@@ -38,6 +34,9 @@ namespace Disruptor
         [FieldOffset(80)]
         protected ISequencer _sequencer;
 
+        [FieldOffset(88)]
+        protected int _bufferSize;
+
         // padding: 56
 
         protected enum RingBufferSequencerType : byte
@@ -51,9 +50,8 @@ namespace Disruptor
         /// Construct a RingBuffer with the full option set.
         /// </summary>
         /// <param name="sequencer">sequencer to handle the ordering of events moving through the RingBuffer.</param>
-        /// <param name="elementType">type of the RingBuffer elements</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        protected RingBuffer(ISequencer sequencer, Type elementType)
+        protected RingBuffer(ISequencer sequencer)
         {
             _sequencer = sequencer;
             _sequencerType = GetSequencerType();
@@ -69,7 +67,6 @@ namespace Disruptor
             }
 
             _indexMask = _bufferSize - 1;
-            _entries = Array.CreateInstance(elementType, _bufferSize + 2 * _bufferPad);
 
             RingBufferSequencerType GetSequencerType()
             {

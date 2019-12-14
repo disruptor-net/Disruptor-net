@@ -20,7 +20,7 @@ namespace Disruptor.Dsl
             _consumerRepository = consumerRepository;
             _sequences = sequences.ToArray();
         }
-        
+
         /// <summary>
         /// Create a new event handler group that combines the consumers in this group with <paramref name="otherHandlerGroup"/>
         /// </summary>
@@ -30,7 +30,7 @@ namespace Disruptor.Dsl
         {
             return new EventHandlerGroup<T>(_disruptor, _consumerRepository, _sequences.Concat(otherHandlerGroup._sequences));
         }
-        
+
         /// <summary>
         /// Create a new event handler group that combines the handlers in this group with <paramref name="processors"/>.
         /// </summary>
@@ -48,7 +48,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Set up batch handlers to consume events from the ring buffer. These handlers will only process events
         /// after every <see cref="IEventProcessor"/> in this group has processed the event.
-        /// 
+        ///
         /// This method is generally used as part of a chain. For example if the handler <code>A</code> must
         /// process events before handler<code>B</code>:
         /// <code>dw.HandleEventsWith(A).then(B);</code>
@@ -59,8 +59,8 @@ namespace Disruptor.Dsl
 
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The Disruptor will
-        /// automatically start these processors when <see cref="Disruptor{T}.Start"/> is called.
-        /// 
+        /// automatically start these processors when started.
+        ///
         /// This method is generally used as part of a chain. For example if the handler <code>A</code> must
         /// process events before handler<code>B</code>:
         /// </summary>
@@ -72,7 +72,7 @@ namespace Disruptor.Dsl
         /// Set up a worker pool to handle events from the ring buffer. The worker pool will only process events
         /// after every <see cref="IEventProcessor"/> in this group has processed the event. Each event will be processed
         /// by one of the work handler instances.
-        /// 
+        ///
         /// This method is generally used as part of a chain. For example if the handler <code>A</code> must
         /// process events before the worker pool with handlers <code>B, C</code>:
         /// <code>dw.HandleEventsWith(A).ThenHandleEventsWithWorkerPool(B, C);</code>
@@ -84,7 +84,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Set up batch handlers to handle events from the ring buffer. These handlers will only process events
         /// after every <see cref="IEventProcessor"/> in this group has processed the event.
-        /// 
+        ///
         /// This method is generally used as part of a chain. For example if <code>A</code> must
         /// process events before<code> B</code>:
         /// <code>dw.After(A).HandleEventsWith(B);</code>
@@ -95,8 +95,8 @@ namespace Disruptor.Dsl
 
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The Disruptor will
-        /// automatically start these processors when <see cref="Disruptor{T}.Start"/> is called.
-        /// 
+        /// automatically start these processors when started.
+        ///
         /// This method is generally used as part of a chain. For example if <code>A</code> must
         /// process events before<code> B</code>:
         /// <code>dw.After(A).HandleEventsWith(B);</code>
@@ -109,7 +109,7 @@ namespace Disruptor.Dsl
         /// Set up a worker pool to handle events from the ring buffer. The worker pool will only process events
         /// after every <see cref="IEventProcessor"/> in this group has processed the event. Each event will be processed
         /// by one of the work handler instances.
-        /// 
+        ///
         /// This method is generally used as part of a chain. For example if the handler <code>A</code> must
         /// process events before the worker pool with handlers <code>B, C</code>:
         /// <code>dw.After(A).HandleEventsWithWorkerPool(B, C);</code>

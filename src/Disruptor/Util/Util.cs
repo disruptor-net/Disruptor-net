@@ -10,7 +10,27 @@ namespace Disruptor
     /// </summary>
     internal static class Util
     {
+        /// <summary>
+        /// Ring buffer padding size in bytes.
+        ///
+        /// The padding should be added at the beginning and at the end of the
+        /// ring buffer arrays.
+        ///
+        /// Used to avoid false sharing.
+        /// </summary>
+        public const int RingBufferPaddingBytes = 128;
+
         private static readonly int _offsetToArrayData = OffsetToArrayData();
+
+        /// <summary>
+        /// Gets the ring buffer padding as a number of events.
+        /// </summary>
+        /// <param name="eventSize"></param>
+        /// <returns></returns>
+        public static int GetRingBufferPaddingEventCount(int eventSize)
+        {
+            return (int)Math.Ceiling((double)RingBufferPaddingBytes / eventSize);
+        }
 
         /// <summary>
         /// Calculate the next power of 2, greater than or equal to x.
@@ -46,7 +66,7 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Test whether a given integer is a power of 2 
+        /// Test whether a given integer is a power of 2
         /// </summary>
         /// <param name="x"></param>
         /// <returns></returns>
@@ -91,10 +111,7 @@ namespace Disruptor
         public static T Read<T>(object array, int index)
             where T : class
         {
-            IL.DeclareLocals(
-                false,
-                typeof(byte).MakeByRefType()
-            );
+            IL.DeclareLocals(false, typeof(byte).MakeByRefType());
 
             Ldarg(nameof(array)); // load the object
             Stloc_0(); // convert the object pointer to a byref
@@ -118,10 +135,7 @@ namespace Disruptor
         public static ref T ReadValue<T>(object array, int index)
             where T : struct
         {
-            IL.DeclareLocals(
-                false,
-                typeof(byte).MakeByRefType()
-            );
+            IL.DeclareLocals(false, typeof(byte).MakeByRefType());
 
             Ldarg(nameof(array)); // load the object
             Stloc_0(); // convert the object pointer to a byref
@@ -164,6 +178,35 @@ namespace Disruptor
             Sub();
 
             return IL.Return<IntPtr>();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T ReadValue<T>(IntPtr pointer, int index, int size)
+            where T : struct
+        {
+            IL.DeclareLocals(false, typeof(byte).MakeByRefType());
+
+            Ldarg(nameof(pointer)); // load the object
+            Stloc_0(); // convert the object pointer to a byref
+            Ldloc_0(); // load the object pointer as a byref
+
+            Ldarg(nameof(index)); // load the index
+            Ldarg(nameof(size)); // load the size
+            Mul(); // multiply the index by the offset size of the object pointer
+
+            Add(); // add the start + offset to the byref object pointer
+
+            Ret();
+
+            throw IL.Unreachable();
+        }
+
+        public static int SizeOf<T>()
+            where T : struct
+        {
+            Sizeof(typeof(T));
+
+            return IL.Return<int>();
         }
     }
 }
