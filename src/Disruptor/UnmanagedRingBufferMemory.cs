@@ -8,11 +8,11 @@ namespace Disruptor
     /// <summary>
     /// Disposable block of unmanaged memory to store events.
     /// </summary>
-    public class UnsafeRingBufferMemory : IDisposable
+    public class UnmanagedRingBufferMemory : IDisposable
     {
         private readonly SafeHandle _memoryHandle;
 
-        public UnsafeRingBufferMemory(SafeHandle memoryHandle, int padding, int eventCount, int eventSize)
+        public UnmanagedRingBufferMemory(SafeHandle memoryHandle, int padding, int eventCount, int eventSize)
         {
             _memoryHandle = memoryHandle;
             PointerToFirstEvent = memoryHandle.DangerousGetHandle() + padding;
@@ -49,7 +49,7 @@ namespace Disruptor
         /// <param name="eventCount">number of event to store</param>
         /// <param name="eventSize">size of each event</param>
         /// <returns></returns>
-        public static UnsafeRingBufferMemory Allocate(int eventCount, int eventSize)
+        public static UnmanagedRingBufferMemory Allocate(int eventCount, int eventSize)
         {
             if (eventCount < 1)
             {
@@ -71,7 +71,7 @@ namespace Disruptor
 
             var handle = new AllocSafeHandle(pointer);
 
-            return new UnsafeRingBufferMemory(handle, Util.RingBufferPaddingBytes, eventCount, eventSize);
+            return new UnmanagedRingBufferMemory(handle, Util.RingBufferPaddingBytes, eventCount, eventSize);
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace Disruptor
         /// <param name="eventCount">number of event to store</param>
         /// <param name="factory">event factory method</param>
         /// <returns></returns>
-        public static unsafe UnsafeRingBufferMemory Allocate<T>(int eventCount, Func<T> factory)
+        public static unsafe UnmanagedRingBufferMemory Allocate<T>(int eventCount, Func<T> factory)
             where T : unmanaged
         {
             var memory = Allocate(eventCount, sizeof(T));

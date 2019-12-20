@@ -4,12 +4,12 @@ using NUnit.Framework;
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class UnsafeRingBufferMemoryTests
+    public class UnmanagedRingBufferMemoryTests
     {
         [Test]
         public unsafe void ShouldCreateMemoryFromSize()
         {
-            using (var memory = UnsafeRingBufferMemory.Allocate(1024, 8))
+            using (var memory = UnmanagedRingBufferMemory.Allocate(1024, 8))
             {
                 Assert.AreEqual(1024, memory.EventCount);
                 Assert.AreEqual(8, memory.EventSize);
@@ -29,7 +29,7 @@ namespace Disruptor.Tests
         public unsafe void ShouldCreateMemoryFromFactory()
         {
             var index = 0;
-            using (var memory = UnsafeRingBufferMemory.Allocate(1024, () => new Data { Value2 = index++ }))
+            using (var memory = UnmanagedRingBufferMemory.Allocate(1024, () => new Data { Value2 = index++ }))
             {
                 Assert.AreEqual(1024, memory.EventCount);
                 Assert.AreEqual(8, memory.EventSize);
@@ -49,7 +49,7 @@ namespace Disruptor.Tests
         public void ShouldConvertMemoryToArray()
         {
             var index = 0;
-            using (var memory = UnsafeRingBufferMemory.Allocate(32, () => new Data { Value1 = index++ }))
+            using (var memory = UnmanagedRingBufferMemory.Allocate(32, () => new Data { Value1 = index++ }))
             {
                 var array = memory.ToArray<Data>();
 

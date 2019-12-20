@@ -11,30 +11,30 @@ namespace Disruptor
     /// The underlying storage is an unmanaged buffer. The buffer must be preallocated.
     /// </summary>
     /// <typeparam name="T">implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
-    public sealed class UnsafeRingBuffer<T> : UnsafeRingBuffer, IValueRingBuffer<T>
+    public sealed class UnmanagedRingBuffer<T> : UnmanagedRingBuffer, IValueRingBuffer<T>
         where T : unmanaged
     {
         /// <summary>
-        /// Construct an UnsafeRingBuffer with the full option set.
+        /// Construct an UnmanagedRingBuffer with the full option set.
         /// </summary>
         /// <param name="pointer">pointer to the first element of the buffer</param>
         /// <param name="eventSize">size of each event</param>
         /// <param name="sequencer">sequencer to handle the ordering of events moving through the ring buffer.</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        public UnsafeRingBuffer(IntPtr pointer, int eventSize, ISequencer sequencer)
+        public UnmanagedRingBuffer(IntPtr pointer, int eventSize, ISequencer sequencer)
             : base(pointer, eventSize, sequencer)
         {
         }
 
         /// <summary>
-        /// Construct an UnsafeRingBuffer with the full option set.
-        /// The <see cref="UnsafeRingBufferMemory"/> is not owned by the ring buffer and should be disposed after shutdown.
+        /// Construct an UnmanagedRingBuffer with the full option set.
+        /// The <see cref="UnmanagedRingBufferMemory"/> is not owned by the ring buffer and should be disposed after shutdown.
         /// </summary>
         /// <param name="memory">block of memory that will store the events</param>
         /// <param name="producerType">producer type to use <see cref="ProducerType" /></param>
         /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        public UnsafeRingBuffer(UnsafeRingBufferMemory memory, ProducerType producerType, IWaitStrategy waitStrategy)
+        public UnmanagedRingBuffer(UnmanagedRingBufferMemory memory, ProducerType producerType, IWaitStrategy waitStrategy)
             : base(memory.PointerToFirstEvent, memory.EventSize, Sequencer.Create(producerType, memory.EventCount, waitStrategy))
         {
         }
@@ -155,10 +155,10 @@ namespace Disruptor
         /// </summary>
         public readonly struct UnpublishedEventScope : IDisposable
         {
-            private readonly UnsafeRingBuffer<T> _ringBuffer;
+            private readonly UnmanagedRingBuffer<T> _ringBuffer;
             private readonly long _sequence;
 
-            public UnpublishedEventScope(UnsafeRingBuffer<T> ringBuffer, long sequence)
+            public UnpublishedEventScope(UnmanagedRingBuffer<T> ringBuffer, long sequence)
             {
                 _ringBuffer = ringBuffer;
                 _sequence = sequence;
@@ -185,11 +185,11 @@ namespace Disruptor
         /// </summary>
         public readonly struct UnpublishedEventBatchScope : IDisposable
         {
-            private readonly UnsafeRingBuffer<T> _ringBuffer;
+            private readonly UnmanagedRingBuffer<T> _ringBuffer;
             private readonly long _startSequence;
             private readonly long _endSequence;
 
-            public UnpublishedEventBatchScope(UnsafeRingBuffer<T> ringBuffer, long startSequence, long endSequence)
+            public UnpublishedEventBatchScope(UnmanagedRingBuffer<T> ringBuffer, long startSequence, long endSequence)
             {
                 _ringBuffer = ringBuffer;
                 _startSequence = startSequence;
@@ -218,10 +218,10 @@ namespace Disruptor
         /// </summary>
         public readonly struct NullableUnpublishedEventScope : IDisposable
         {
-            private readonly UnsafeRingBuffer<T> _ringBuffer;
+            private readonly UnmanagedRingBuffer<T> _ringBuffer;
             private readonly long _sequence;
 
-            public NullableUnpublishedEventScope(UnsafeRingBuffer<T> ringBuffer, long sequence)
+            public NullableUnpublishedEventScope(UnmanagedRingBuffer<T> ringBuffer, long sequence)
             {
                 _ringBuffer = ringBuffer;
                 _sequence = sequence;
@@ -261,10 +261,10 @@ namespace Disruptor
         /// </summary>
         public readonly struct EventRef
         {
-            private readonly UnsafeRingBuffer<T> _ringBuffer;
+            private readonly UnmanagedRingBuffer<T> _ringBuffer;
             private readonly long _sequence;
 
-            public EventRef(UnsafeRingBuffer<T> ringBuffer, long sequence)
+            public EventRef(UnmanagedRingBuffer<T> ringBuffer, long sequence)
             {
                 _ringBuffer = ringBuffer;
                 _sequence = sequence;
@@ -285,11 +285,11 @@ namespace Disruptor
         /// </summary>
         public readonly struct NullableUnpublishedEventBatchScope : IDisposable
         {
-            private readonly UnsafeRingBuffer<T> _ringBuffer;
+            private readonly UnmanagedRingBuffer<T> _ringBuffer;
             private readonly long _startSequence;
             private readonly long _endSequence;
 
-            public NullableUnpublishedEventBatchScope(UnsafeRingBuffer<T> ringBuffer, long startSequence, long endSequence)
+            public NullableUnpublishedEventBatchScope(UnmanagedRingBuffer<T> ringBuffer, long startSequence, long endSequence)
             {
                 _ringBuffer = ringBuffer;
                 _startSequence = startSequence;
@@ -330,11 +330,11 @@ namespace Disruptor
         /// </summary>
         public readonly struct EventBatchRef
         {
-            private readonly UnsafeRingBuffer<T> _ringBuffer;
+            private readonly UnmanagedRingBuffer<T> _ringBuffer;
             private readonly long _startSequence;
             private readonly long _endSequence;
 
-            public EventBatchRef(UnsafeRingBuffer<T> ringBuffer, long startSequence, long endSequence)
+            public EventBatchRef(UnmanagedRingBuffer<T> ringBuffer, long startSequence, long endSequence)
             {
                 _ringBuffer = ringBuffer;
                 _startSequence = startSequence;

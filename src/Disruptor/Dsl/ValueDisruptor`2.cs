@@ -7,7 +7,7 @@ namespace Disruptor.Dsl
     /// <summary>
     /// Base class for disruptors of value type events.
     ///
-    /// <see cref="ValueDisruptor{T}"/> and <see cref="UnsafeDisruptor{T}"/>.
+    /// <see cref="ValueDisruptor{T}"/> and <see cref="UnmanagedDisruptor{T}"/>.
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
     /// <typeparam name="TRingBuffer">the type of the underlying ring buffer.</typeparam>

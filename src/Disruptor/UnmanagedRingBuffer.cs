@@ -6,10 +6,10 @@ namespace Disruptor
     /// <summary>
     /// Base type for unmanaged-memory-backed ring buffers.
     ///
-    /// <see cref="UnsafeRingBuffer{T}"/>.
+    /// <see cref="UnmanagedRingBuffer{T}"/>.
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = 148)]
-    public abstract class UnsafeRingBuffer : RingBuffer
+    public abstract class UnmanagedRingBuffer : RingBuffer
     {
         [FieldOffset(56)]
         protected IntPtr _entries;
@@ -17,7 +17,7 @@ namespace Disruptor
         [FieldOffset(72)]
         protected int _eventSize;
 
-        protected UnsafeRingBuffer(IntPtr entries, int eventSize, ISequencer sequencer)
+        protected UnmanagedRingBuffer(IntPtr entries, int eventSize, ISequencer sequencer)
             : base(sequencer)
         {
             if (eventSize < 1)

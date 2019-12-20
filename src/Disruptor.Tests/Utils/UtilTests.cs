@@ -102,7 +102,7 @@ namespace Disruptor.Tests.Utils
         public void ShouldReadValueFromPointer()
         {
             var index = 0;
-            using (var memory = UnsafeRingBufferMemory.Allocate(2048, () => new StubUnmanagedEvent(index++)))
+            using (var memory = UnmanagedRingBufferMemory.Allocate(2048, () => new StubUnmanagedEvent(index++)))
             {
                 for (var i = 0; i < memory.EventCount; i++)
                 {
@@ -155,7 +155,7 @@ namespace Disruptor.Tests.Utils
         public void ShouldMutateValueFromPointer()
         {
             var index = 0;
-            using (var memory = UnsafeRingBufferMemory.Allocate(2048, () => new StubUnmanagedEvent(index++)))
+            using (var memory = UnmanagedRingBufferMemory.Allocate(2048, () => new StubUnmanagedEvent(index++)))
             {
                 for (var i = 0; i < memory.EventCount; i++)
                 {

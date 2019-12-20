@@ -9,18 +9,18 @@ using NUnit.Framework;
 namespace Disruptor.Tests.Dsl
 {
     [TestFixture]
-    public class UnsafeDisruptorTests
+    public class UnmanagedDisruptorTests
     {
-        private UnsafeDisruptor<TestValueEvent> _disruptor;
+        private UnmanagedDisruptor<TestValueEvent> _disruptor;
         private StubExecutor _executor;
-        private UnsafeRingBufferMemory _memory;
+        private UnmanagedRingBufferMemory _memory;
 
         [SetUp]
         public void SetUp()
         {
             _executor = new StubExecutor();
-            _memory = UnsafeRingBufferMemory.Allocate(4, TestValueEvent.Size);
-            _disruptor = new UnsafeDisruptor<TestValueEvent>(_memory.PointerToFirstEvent, _memory.EventSize, _memory.EventCount, _executor);
+            _memory = UnmanagedRingBufferMemory.Allocate(4, TestValueEvent.Size);
+            _disruptor = new UnmanagedDisruptor<TestValueEvent>(_memory.PointerToFirstEvent, _memory.EventSize, _memory.EventCount, _executor);
         }
 
         [TearDown]
