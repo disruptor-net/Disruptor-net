@@ -50,7 +50,7 @@ namespace Disruptor
         /// <param name="eventFactory"> eventFactory to create entries for filling the ring buffer</param>
         /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
         public ValueRingBuffer(Func<T> eventFactory, int bufferSize)
-            : this(eventFactory, new MultiProducerSequencer(bufferSize, new BlockingWaitStrategy()))
+            : this(eventFactory, new MultiProducerSequencer(bufferSize))
         {
         }
 

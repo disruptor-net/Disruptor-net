@@ -43,7 +43,7 @@ namespace Disruptor.Tests
         {
             using (var memory = UnmanagedRingBufferMemory.Allocate(1, 1))
             {
-                Assert.Throws<ArgumentException>(() => GC.KeepAlive(new UnmanagedRingBuffer<StubUnmanagedEvent>(memory.PointerToFirstEvent, eventSize, Sequencer.Create(ProducerType.Single, 1))));
+                Assert.Throws<ArgumentException>(() => GC.KeepAlive(new UnmanagedRingBuffer<StubUnmanagedEvent>(memory.PointerToFirstEvent, eventSize, new SingleProducerSequencer(1))));
             }
         }
 

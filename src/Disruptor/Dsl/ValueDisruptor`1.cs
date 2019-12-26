@@ -50,7 +50,7 @@ namespace Disruptor.Dsl
         /// <param name="producerType">the claim strategy to use for the ring buffer</param>
         /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
         public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
-            : this(new ValueRingBuffer<T>(eventFactory, Sequencer.Create(producerType, ringBufferSize, waitStrategy)), new BasicExecutor(taskScheduler))
+            : this(new ValueRingBuffer<T>(eventFactory, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy)), new BasicExecutor(taskScheduler))
         {
         }
 

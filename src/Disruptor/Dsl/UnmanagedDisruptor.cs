@@ -42,7 +42,7 @@ namespace Disruptor.Dsl
         /// <param name="ringBufferSize">the number of events of the ring buffer, must be power of 2</param>
         /// <param name="executor">an <see cref="IExecutor"/> to create threads for processors</param>
         public UnmanagedDisruptor(IntPtr pointer, int eventSize, int ringBufferSize, IExecutor executor)
-            : this(new UnmanagedRingBuffer<T>(pointer, eventSize, Sequencer.Create(ProducerType.Multi, ringBufferSize)), executor)
+            : this(new UnmanagedRingBuffer<T>(pointer, eventSize, SequencerFactory.Create(ProducerType.Multi, ringBufferSize)), executor)
         {
         }
 
@@ -55,7 +55,7 @@ namespace Disruptor.Dsl
         /// <param name="producerType">the claim strategy to use for the ring buffer</param>
         /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
         public UnmanagedDisruptor(IntPtr pointer, int eventSize, int ringBufferSize, ProducerType producerType, IWaitStrategy waitStrategy)
-            : this(new UnmanagedRingBuffer<T>(pointer, eventSize, Sequencer.Create(producerType, ringBufferSize, waitStrategy)), new BasicExecutor(TaskScheduler.Default))
+            : this(new UnmanagedRingBuffer<T>(pointer, eventSize, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy)), new BasicExecutor(TaskScheduler.Default))
         {
         }
 
@@ -82,7 +82,7 @@ namespace Disruptor.Dsl
         /// <param name="producerType">the claim strategy to use for the ring buffer</param>
         /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
         public UnmanagedDisruptor(IntPtr pointer, int eventSize, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
-            : this(new UnmanagedRingBuffer<T>(pointer, eventSize, Sequencer.Create(producerType, ringBufferSize, waitStrategy)), new BasicExecutor(taskScheduler))
+            : this(new UnmanagedRingBuffer<T>(pointer, eventSize, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy)), new BasicExecutor(taskScheduler))
         {
         }
 

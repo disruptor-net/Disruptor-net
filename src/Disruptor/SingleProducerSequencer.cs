@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Disruptor.Dsl;
 
 namespace Disruptor
 {
@@ -35,6 +36,11 @@ namespace Disruptor
         private long _cachedValue = Sequence.InitialCursorValue;
 
         // padding: 56
+
+        public SingleProducerSequencer(int bufferSize)
+            : this(bufferSize, SequencerFactory.DefaultWaitStrategy())
+        {
+        }
 
         public SingleProducerSequencer(int bufferSize, IWaitStrategy waitStrategy)
         {
@@ -174,7 +180,7 @@ namespace Disruptor
         /// <summary>
         /// Attempt to claim the next event for publishing.  Will return the
         /// number of the slot if there is at least one slot available.
-        /// 
+        ///
         /// Have a look at <see cref="Next()"/> for a description on how to
         /// use this method.
         /// </summary>
@@ -190,7 +196,7 @@ namespace Disruptor
         /// Attempt to claim the next <code>n</code> events in sequence for publishing.
         /// Will return the highest numbered slot if there is at least <code>n</code> slots
         /// available.
-        /// 
+        ///
         /// Have a look at <see cref="Next(int)"/> for a description on how to
         /// use this method.
         /// </summary>
@@ -302,7 +308,7 @@ namespace Disruptor
 
         /// <summary>
         /// Add the specified gating sequences to this instance of the Disruptor.  They will
-        /// safely and atomically added to the list of gating sequences. 
+        /// safely and atomically added to the list of gating sequences.
         /// </summary>
         /// <param name="gatingSequences">The sequences to add.</param>
         public void AddGatingSequences(params ISequence[] gatingSequences)

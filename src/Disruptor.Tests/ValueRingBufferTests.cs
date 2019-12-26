@@ -9,7 +9,7 @@ namespace Disruptor.Tests
     {
         protected override IValueRingBuffer<StubValueEvent> CreateRingBuffer(int size, ProducerType producerType)
         {
-            return new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), Sequencer.Create(producerType, size));
+            return new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), SequencerFactory.Create(producerType, size));
         }
 
         [Test]

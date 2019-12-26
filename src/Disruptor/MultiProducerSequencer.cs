@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Disruptor.Dsl;
 
 namespace Disruptor
 {
@@ -8,9 +9,9 @@ namespace Disruptor
     /// <para>Coordinator for claiming sequences for access to a data structure while tracking dependent <see cref="Sequence"/>s.
     /// Suitable for use for sequencing across multiple publisher threads.</para>
     /// <para/>
-    /// <para/>Note on <see cref="Sequencer.Cursor"/>:  With this sequencer the cursor value is updated after the call
-    /// to <see cref="Sequencer.Next()"/>, to determine the highest available sequence that can be read, then
-    /// <see cref="GetHighestPublishedSequence"/> should be used. 
+    /// <para/>Note on <see cref="ICursored.Cursor"/>:  With this sequencer the cursor value is updated after the call
+    /// to <see cref="ISequenced.Next()"/>, to determine the highest available sequence that can be read, then
+    /// <see cref="GetHighestPublishedSequence"/> should be used.
     /// </summary>
     public class MultiProducerSequencer : ISequencer
     {
@@ -29,6 +30,11 @@ namespace Disruptor
         private readonly int[] _availableBuffer;
         private readonly int _indexMask;
         private readonly int _indexShift;
+
+        public MultiProducerSequencer(int bufferSize)
+            : this(bufferSize, SequencerFactory.DefaultWaitStrategy())
+        {
+        }
 
         public MultiProducerSequencer(int bufferSize, IWaitStrategy waitStrategy)
         {
@@ -185,7 +191,7 @@ namespace Disruptor
         /// <summary>
         /// Attempt to claim the next event for publishing.  Will return the
         /// number of the slot if there is at least one slot available.
-        /// 
+        ///
         /// Have a look at <see cref="Next()"/> for a description on how to
         /// use this method.
         /// </summary>
@@ -201,7 +207,7 @@ namespace Disruptor
         /// Attempt to claim the next <code>n</code> events in sequence for publishing.
         /// Will return the highest numbered slot if there is at least <code>n</code> slots
         /// available.
-        /// 
+        ///
         /// Have a look at <see cref="Next(int)"/> for a description on how to
         /// use this method.
         /// </summary>
@@ -350,7 +356,7 @@ namespace Disruptor
 
         /// <summary>
         /// Add the specified gating sequences to this instance of the Disruptor.  They will
-        /// safely and atomically added to the list of gating sequences. 
+        /// safely and atomically added to the list of gating sequences.
         /// </summary>
         /// <param name="gatingSequences">The sequences to add.</param>
         public void AddGatingSequences(params ISequence[] gatingSequences)

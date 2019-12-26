@@ -35,7 +35,7 @@ namespace Disruptor
         /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public UnmanagedRingBuffer(UnmanagedRingBufferMemory memory, ProducerType producerType, IWaitStrategy waitStrategy)
-            : base(Sequencer.Create(producerType, memory.EventCount, waitStrategy), memory.PointerToFirstEvent, memory.EventSize)
+            : base(SequencerFactory.Create(producerType, memory.EventCount, waitStrategy), memory.PointerToFirstEvent, memory.EventSize)
         {
         }
 

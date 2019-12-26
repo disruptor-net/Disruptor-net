@@ -16,7 +16,7 @@
         long WaitFor(long sequence);
 
         /// <summary>
-        /// Delegate a call to the <see cref="Sequencer.Cursor"/>
+        /// Delegate a call to the <see cref="ISequencer"/>.
         /// Returns the value of the cursor for events that have been published.
         /// </summary>
         long Cursor { get; }

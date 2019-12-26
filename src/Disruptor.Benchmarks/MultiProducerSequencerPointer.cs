@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Disruptor.Dsl;
 
 namespace Disruptor.Benchmarks
 {
@@ -9,8 +10,8 @@ namespace Disruptor.Benchmarks
     /// <para>Coordinator for claiming sequences for access to a data structure while tracking dependent <see cref="Sequence"/>s.
     /// Suitable for use for sequencing across multiple publisher threads.</para>
     /// <para/>
-    /// <para/>Note on <see cref="Sequencer.Cursor"/>:  With this sequencer the cursor value is updated after the call
-    /// to <see cref="Sequencer.Next()"/>, to determine the highest available sequence that can be read, then
+    /// <para/>Note on <see cref="SequencerFactory.Cursor"/>:  With this sequencer the cursor value is updated after the call
+    /// to <see cref="SequencerFactory.Next()"/>, to determine the highest available sequence that can be read, then
     /// <see cref="GetHighestPublishedSequence"/> should be used. 
     /// </summary>
     public unsafe class MultiProducerSequencerPointer : ISequencer
