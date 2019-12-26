@@ -2,6 +2,8 @@
 {
     public class TestEvent
     {
-        public override string ToString() => "Test Event";
+        public int Value { get; set; }
+
+        public override string ToString() => $"Test Event {Value}";
     }
 }

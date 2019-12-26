@@ -1,90 +1,40 @@
 using System;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Disruptor.Dsl
 {
     /// <summary>
-    /// A DSL-style API for setting up the disruptor pattern around a ring buffer
-    /// (aka the Builder pattern).
-    /// 
-    /// A simple example of setting up the disruptor with two event handlers that
-    /// must process events in order:
-    /// <code>var disruptor = new ValueDisruptor{MyEvent}(() => new MyEvent(), 32, TaskScheduler.Default);
-    /// var handler1 = new EventHandler1{MyEvent}() { ... };
-    /// var handler2 = new EventHandler2{MyEvent}() { ... };
-    /// disruptor.HandleEventsWith(handler1).Then(handler2);
-    /// 
-    /// var ringBuffer = disruptor.Start();</code>
+    /// Base class for disruptors of value type events.
+    ///
+    /// <see cref="ValueDisruptor{T}"/> and <see cref="UnmanagedDisruptor{T}"/>.
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
-    public class ValueDisruptor<T>
+    /// <typeparam name="TRingBuffer">the type of the underlying ring buffer.</typeparam>
+    public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
         where T : struct
+        where TRingBuffer : IValueRingBuffer<T>
     {
-        private readonly ValueRingBuffer<T> _ringBuffer;
+        protected readonly TRingBuffer _ringBuffer;
         private readonly IExecutor _executor;
         private readonly ConsumerRepository _consumerRepository = new ConsumerRepository();
         private readonly ValueExceptionHandlerWrapper<T> _exceptionHandler = new ValueExceptionHandlerWrapper<T>();
         private int _started;
 
-        /// <summary>
-        /// Create a new ValueDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
-        /// </summary>
-        /// <param name="eventFactory">the factory to create events in the ring buffer</param>
-        /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
-        public ValueDisruptor(Func<T> eventFactory, int ringBufferSize)
-            : this(eventFactory, ringBufferSize, TaskScheduler.Default)
-        {
-        }
-
-        /// <summary>
-        /// Create a new ValueDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
-        /// </summary>
-        /// <param name="eventFactory">the factory to create events in the ring buffer</param>
-        /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
-        /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
-        public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler)
-            : this(ValueRingBuffer<T>.CreateMultiProducer(eventFactory, ringBufferSize), new BasicExecutor(taskScheduler))
-        {
-        }
-
-        /// <summary>
-        /// Create a new ValueDisruptor.
-        /// </summary>
-        /// <param name="eventFactory">the factory to create events in the ring buffer</param>
-        /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
-        /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
-        /// <param name="producerType">the claim strategy to use for the ring buffer</param>
-        /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
-        public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
-            : this(ValueRingBuffer<T>.Create(producerType, eventFactory, ringBufferSize, waitStrategy), new BasicExecutor(taskScheduler))
-        {
-        }
-
-        /// <summary>
-        /// Create a new ValueDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
-        /// </summary>
-        /// <param name="eventFactory">the factory to create events in the ring buffer</param>
-        /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
-        /// <param name="executor">an <see cref="IExecutor"/> to create threads for processors</param>
-        public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, IExecutor executor)
-            : this(ValueRingBuffer<T>.CreateMultiProducer(eventFactory, ringBufferSize), executor)
-        {
-        }
-
-        private ValueDisruptor(ValueRingBuffer<T> ringBuffer, IExecutor executor)
+        protected ValueDisruptor(TRingBuffer ringBuffer, IExecutor executor)
         {
             _ringBuffer = ringBuffer;
             _executor = executor;
         }
 
+        IValueRingBuffer<T> IValueDisruptor<T>.RingBuffer => _ringBuffer;
+
         /// <summary>
         /// Set up event handlers to handle events from the ring buffer. These handlers will process events
         /// as soon as they become available, in parallel.
-        /// 
+        ///
         /// <code>dw.HandleEventsWith(A).Then(B);</code>
-        /// 
+        ///
         /// This call is additive, but generally should only be called once when setting up the disruptor instance.
         /// </summary>
         /// <param name="handlers">the event handlers that will process events</param>
@@ -97,7 +47,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The disruptor will
         /// automatically start this processors when <see cref="Start"/> is called.
-        /// 
+        ///
         /// This method can be used as the start of a chain. For example if the processor <code>A</code> must
         /// process events before handler<code>B</code>:
         /// <code>dw.HandleEventsWith(A).Then(B);</code>
@@ -160,16 +110,16 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The disruptor will
         /// automatically start these processors when <see cref="Start"/> is called.
-        /// 
+        ///
         /// This method can be used as the start of a chain. For example if the handler <code>A</code> must
         /// process events before handler<code>B</code>:
         /// <code>dw.HandleEventsWith(A).Then(B);</code>
-        /// 
+        ///
         /// Since this is the start of the chain, the processor factories will always be passed an empty <code>Sequence</code>
         /// array, so the factory isn't necessary in this case. This method is provided for consistency with
         /// <see cref="ValueEventHandlerGroup{T}.HandleEventsWith(IValueEventProcessorFactory{T}[])"/> and <see cref="ValueEventHandlerGroup{T}.Then(IValueEventProcessorFactory{T}[])"/>
         /// which do have barrier sequences to provide.
-        /// 
+        ///
         /// This call is additive, but generally should only be called once when setting up the disruptor instance.
         /// </summary>
         /// <param name="eventProcessorFactories">eventProcessorFactories the event processor factories to use to create the event processors that will process events.</param>
@@ -192,25 +142,15 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
-        /// <see cref="ValueRingBuffer{T}.PublishEvent"/>
-        /// </summary>
-        public ValueRingBuffer<T>.UnpublishedEventScope PublishEvent() => _ringBuffer.PublishEvent();
-
-        /// <summary>
-        /// <see cref="ValueRingBuffer{T}.PublishEvents"/>
-        /// </summary>
-        public ValueRingBuffer<T>.UnpublishedEventBatchScope PublishEvents(int count) => _ringBuffer.PublishEvents(count);
-
-        /// <summary>
         /// Starts the event processors and returns the fully configured ring buffer.
-        /// 
+        ///
         /// The ring buffer is set up to prevent overwriting any entry that is yet to
         /// be processed by the slowest event processor.
-        /// 
+        ///
         /// This method must only be called once after all event processors have been added.
         /// </summary>
         /// <returns>the configured ring buffer</returns>
-        public ValueRingBuffer<T> Start()
+        public TRingBuffer Start()
         {
             CheckOnlyStartedOnce();
             foreach (var consumerInfo in _consumerRepository)
@@ -236,7 +176,7 @@ namespace Disruptor.Dsl
         /// Waits until all events currently in the disruptor have been processed by all event processors
         /// and then halts the processors.It is critical that publishing to the ring buffer has stopped
         /// before calling this method, otherwise it may never return.
-        /// 
+        ///
         /// This method will not shutdown the executor, nor will it await the final termination of the
         /// processor threads
         /// </summary>
@@ -255,7 +195,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Waits until all events currently in the disruptor have been processed by all event processors
         /// and then halts the processors.
-        /// 
+        ///
         /// This method will not shutdown the executor, nor will it await the final termination of the
         /// processor threads
         /// </summary>
@@ -274,29 +214,6 @@ namespace Disruptor.Dsl
             }
             Halt();
         }
-
-        /// <summary>
-        /// The <see cref="ValueRingBuffer{T}"/> used by this disruptor. This is useful for creating custom
-        /// event processors if the behaviour of <see cref="IValueBatchEventProcessor{T}"/> is not suitable.
-        /// </summary>
-        public ValueRingBuffer<T> RingBuffer => _ringBuffer;
-
-        /// <summary>
-        /// Get the value of the cursor indicating the published sequence.
-        /// </summary>
-        public long Cursor => _ringBuffer.Cursor;
-
-        /// <summary>
-        /// The capacity of the data structure to hold entries.
-        /// </summary>
-        public long BufferSize => _ringBuffer.BufferSize;
-
-        /// <summary>
-        /// Get the event for a given sequence in the RingBuffer.
-        /// </summary>
-        /// <param name="sequence">sequence for the event</param>
-        /// <returns>event for the sequence</returns>
-        public ref T this[long sequence] => ref _ringBuffer[sequence];
 
         /// <summary>
         /// Get the <see cref="ISequenceBarrier"/> used by a specific handler. Note that the <see cref="ISequenceBarrier"/>
@@ -323,7 +240,12 @@ namespace Disruptor.Dsl
             return _consumerRepository.HasBacklog(cursor, false);
         }
 
-        internal ValueEventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
+        ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(ISequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
+        {
+            return CreateEventProcessors(barrierSequences, eventHandlers);
+        }
+
+        private ValueEventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
         {
             CheckNotStarted();
 
@@ -362,7 +284,12 @@ namespace Disruptor.Dsl
             }
         }
 
-        internal ValueEventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
+        ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(ISequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
+        {
+            return CreateEventProcessors(barrierSequences, processorFactories);
+        }
+
+        private ValueEventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
         {
             var eventProcessors = processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, barrierSequences)).ToArray();
 

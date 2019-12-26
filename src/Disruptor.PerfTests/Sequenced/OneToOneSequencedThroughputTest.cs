@@ -8,7 +8,6 @@ using Disruptor.PerfTests.Support;
 namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
-    /// 
     /// UniCast a series of items between 1 publisher and 1 event processor.
     ///
     /// +----+    +-----+

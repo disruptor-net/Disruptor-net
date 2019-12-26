@@ -50,28 +50,50 @@ namespace Disruptor.Tests.Dsl
         public void ShouldPublishAndHandleEvent()
         {
             var eventCounter = new CountdownEvent(2);
-            _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>(e => eventCounter.Signal()));
+            var values = new List<int>();
+
+            _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>(e => values.Add(e.Value)))
+                      .Then(new TestEventHandler<TestEvent>(e => eventCounter.Signal()));
 
             _disruptor.Start();
 
-            _disruptor.PublishEvent().Dispose();
-            _disruptor.PublishEvent().Dispose();
+            using (var scope = _disruptor.PublishEvent())
+            {
+                scope.Event().Value = 101;
+            }
+            using (var scope = _disruptor.PublishEvent())
+            {
+                scope.Event().Value = 102;
+            }
 
             Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+            Assert.AreEqual(new List<int> { 101, 102 }, values);
         }
 
         [Test]
         public void ShouldPublishAndHandleEvents()
         {
             var eventCounter = new CountdownEvent(4);
-            _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>(e => eventCounter.Signal()));
+            var values = new List<int>();
+
+            _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>(e => values.Add(e.Value)))
+                      .Then(new TestEventHandler<TestEvent>(e => eventCounter.Signal()));
 
             _disruptor.Start();
 
-            _disruptor.PublishEvents(2).Dispose();
-            _disruptor.PublishEvents(2).Dispose();
+            using (var scope = _disruptor.PublishEvents(2))
+            {
+                scope.Event(0).Value = 101;
+                scope.Event(1).Value = 102;
+            }
+            using (var scope = _disruptor.PublishEvents(2))
+            {
+                scope.Event(0).Value = 103;
+                scope.Event(1).Value = 104;
+            }
 
             Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+            Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
         }
 
         [Test]

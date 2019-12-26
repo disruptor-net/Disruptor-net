@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Disruptor
+﻿namespace Disruptor
 {
     public interface ISequenced
     {
@@ -47,7 +45,7 @@ namespace Disruptor
         /// <summary>
         /// Attempt to claim the next event for publishing.  Will return the
         /// number of the slot if there is at least one slot available.
-        /// 
+        ///
         /// Have a look at <see cref="Next()"/> for a description on how to
         /// use this method.
         /// </summary>
@@ -59,7 +57,7 @@ namespace Disruptor
         /// Attempt to claim the next <code>n</code> events in sequence for publishing.
         /// Will return the highest numbered slot if there is at least <code>n</code> slots
         /// available.
-        /// 
+        ///
         /// Have a look at <see cref="Next(int)"/> for a description on how to
         /// use this method.
         /// </summary>

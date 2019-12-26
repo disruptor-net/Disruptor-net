@@ -2,6 +2,10 @@
 {
     public struct TestValueEvent
     {
-        public override string ToString() => "Test Event";
+        public static readonly unsafe int Size = sizeof(TestValueEvent);
+
+        public int Value { get; set; }
+
+        public override string ToString() => $"Test Event {Value}";
     }
 }

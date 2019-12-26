@@ -21,17 +21,17 @@ namespace Disruptor
         /// <param name="sequencer">sequencer to handle the ordering of events moving through the RingBuffer.</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public RingBuffer(Func<T> eventFactory, ISequencer sequencer)
-        : base(sequencer, typeof(T))
+        : base(sequencer, typeof(T), _bufferPadRef)
         {
             Fill(eventFactory);
         }
 
         private void Fill(Func<T> eventFactory)
         {
-            var entries = (T[]) _entries;
+            var entries = (T[])_entries;
             for (int i = 0; i < _bufferSize; i++)
             {
-                entries[_bufferPad + i] = eventFactory();
+                entries[_bufferPadRef + i] = eventFactory();
             }
         }
 
@@ -124,11 +124,11 @@ namespace Disruptor
 
         /// <summary>
         /// Get the event for a given sequence in the RingBuffer.
-        /// 
+        ///
         /// This call has 2 uses.  Firstly use this call when publishing to a ring buffer.
         /// After calling <see cref="RingBuffer.Next()"/> use this call to get hold of the
         /// preallocated event to fill with data before calling <see cref="RingBuffer.Publish(long)"/>.
-        /// 
+        ///
         /// Secondly use this call when consuming data from the ring buffer.  After calling
         /// <see cref="ISequenceBarrier.WaitFor"/> call this method with any value greater than
         /// that your current consumer sequence and less than or equal to the value returned from
@@ -141,10 +141,10 @@ namespace Disruptor
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return Util.Read<T>(_entries, _bufferPad + (int)(sequence & _indexMask));
+                return Util.Read<T>(_entries, _bufferPadRef + (int)(sequence & _indexMask));
             }
         }
-        
+
         /// <summary>
         /// Sets the cursor to a specific sequence and returns the preallocated entry that is stored there.  This
         /// can cause a data race and should only be done in controlled circumstances, e.g. during initialisation.
@@ -154,7 +154,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T ClaimAndGetPreallocated(long sequence)
         {
-            _sequencer.Claim(sequence);
+            _sequencerDispatcher.Sequencer.Claim(sequence);
             return this[sequence];
         }
 
@@ -168,7 +168,7 @@ namespace Disruptor
         [Obsolete("Please don't use this method. It probably won't do what you think that it does.")]
         public bool IsPublished(long sequence)
         {
-            return _sequencer.IsAvailable(sequence);
+            return _sequencerDispatcher.Sequencer.IsAvailable(sequence);
         }
 
         /// <summary>
@@ -178,7 +178,7 @@ namespace Disruptor
         /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
         public EventPoller<T> NewPoller(params ISequence[] gatingSequences)
         {
-            return _sequencer.NewPoller(this, gatingSequences);
+            return _sequencerDispatcher.Sequencer.NewPoller(this, gatingSequences);
         }
 
         /// <summary>
@@ -187,7 +187,7 @@ namespace Disruptor
         [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent(IEventTranslator<T> translator)
         {
-            long sequence = _sequencer.Next();
+            long sequence = _sequencerDispatcher.Sequencer.Next();
             TranslateAndPublish(translator, sequence);
         }
 
@@ -197,7 +197,7 @@ namespace Disruptor
         [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvent(IEventTranslator<T> translator)
         {
-            if (_sequencer.TryNext(out var sequence))
+            if (_sequencerDispatcher.Sequencer.TryNext(out var sequence))
             {
                 TranslateAndPublish(translator, sequence);
                 return true;
@@ -212,7 +212,7 @@ namespace Disruptor
         [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent<A>(IEventTranslatorOneArg<T, A> translator, A arg0)
         {
-            long sequence = _sequencer.Next();
+            long sequence = _sequencerDispatcher.Sequencer.Next();
             TranslateAndPublish(translator, sequence, arg0);
         }
 
@@ -222,7 +222,7 @@ namespace Disruptor
         [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvent<A>(IEventTranslatorOneArg<T, A> translator, A arg0)
         {
-            if (_sequencer.TryNext(out var sequence))
+            if (_sequencerDispatcher.Sequencer.TryNext(out var sequence))
             {
                 TranslateAndPublish(translator, sequence, arg0);
                 return true;
@@ -237,7 +237,7 @@ namespace Disruptor
         [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A arg0, B arg1)
         {
-            long sequence = _sequencer.Next();
+            long sequence = _sequencerDispatcher.Sequencer.Next();
             TranslateAndPublish(translator, sequence, arg0, arg1);
         }
 
@@ -247,7 +247,7 @@ namespace Disruptor
         [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvent<A, B>(IEventTranslatorTwoArg<T, A, B> translator, A arg0, B arg1)
         {
-            if (_sequencer.TryNext(out var sequence))
+            if (_sequencerDispatcher.Sequencer.TryNext(out var sequence))
             {
                 TranslateAndPublish(translator, sequence, arg0, arg1);
                 return true;
@@ -262,7 +262,7 @@ namespace Disruptor
         [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A arg0, B arg1, C arg2)
         {
-            long sequence = _sequencer.Next();
+            long sequence = _sequencerDispatcher.Sequencer.Next();
             TranslateAndPublish(translator, sequence, arg0, arg1, arg2);
         }
 
@@ -272,7 +272,7 @@ namespace Disruptor
         [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvent<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, A arg0, B arg1, C arg2)
         {
-            if (_sequencer.TryNext(out var sequence))
+            if (_sequencerDispatcher.Sequencer.TryNext(out var sequence))
             {
                 TranslateAndPublish(translator, sequence, arg0, arg1, arg2);
                 return true;
@@ -287,7 +287,7 @@ namespace Disruptor
         [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public void PublishEvent(IEventTranslatorVararg<T> translator, params object[] args)
         {
-            long sequence = _sequencer.Next();
+            long sequence = _sequencerDispatcher.Sequencer.Next();
             TranslateAndPublish(translator, sequence, args);
         }
 
@@ -297,7 +297,7 @@ namespace Disruptor
         [Obsolete(Constants.ObsoletePublicationApiMessage)]
         public bool TryPublishEvent(IEventTranslatorVararg<T> translator, params object[] args)
         {
-            if (_sequencer.TryNext(out var sequence))
+            if (_sequencerDispatcher.Sequencer.TryNext(out var sequence))
             {
                 TranslateAndPublish(translator, sequence, args);
                 return true;
@@ -322,7 +322,7 @@ namespace Disruptor
         public void PublishEvents(IEventTranslator<T>[] translators, int batchStartsAt, int batchSize)
         {
             CheckBounds(translators, batchStartsAt, batchSize);
-            long finalSequence = _sequencer.Next(batchSize);
+            long finalSequence = _sequencerDispatcher.Sequencer.Next(batchSize);
             TranslateAndPublishBatch(translators, batchStartsAt, batchSize, finalSequence);
         }
 
@@ -343,7 +343,7 @@ namespace Disruptor
         {
             CheckBounds(translators, batchStartsAt, batchSize);
 
-            if (_sequencer.TryNext(batchSize, out var finalSequence))
+            if (_sequencerDispatcher.Sequencer.TryNext(batchSize, out var finalSequence))
             {
                 TranslateAndPublishBatch(translators, batchStartsAt, batchSize, finalSequence);
                 return true;
@@ -368,7 +368,7 @@ namespace Disruptor
         public void PublishEvents<A>(IEventTranslatorOneArg<T, A> translator, int batchStartsAt, int batchSize, A[] arg0)
         {
             CheckBounds(arg0, batchStartsAt, batchSize);
-            long finalSequence = _sequencer.Next(batchSize);
+            long finalSequence = _sequencerDispatcher.Sequencer.Next(batchSize);
             TranslateAndPublishBatch(translator, arg0, batchStartsAt, batchSize, finalSequence);
         }
 
@@ -389,7 +389,7 @@ namespace Disruptor
         {
             CheckBounds(arg0, batchStartsAt, batchSize);
 
-            if (_sequencer.TryNext(batchSize, out var finalSequence))
+            if (_sequencerDispatcher.Sequencer.TryNext(batchSize, out var finalSequence))
             {
                 TranslateAndPublishBatch(translator, arg0, batchStartsAt, batchSize, finalSequence);
                 return true;
@@ -414,7 +414,7 @@ namespace Disruptor
         public void PublishEvents<A, B>(IEventTranslatorTwoArg<T, A, B> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1)
         {
             CheckBounds(arg0, arg1, batchStartsAt, batchSize);
-            long finalSequence = _sequencer.Next(batchSize);
+            long finalSequence = _sequencerDispatcher.Sequencer.Next(batchSize);
             TranslateAndPublishBatch(translator, arg0, arg1, batchStartsAt, batchSize, finalSequence);
         }
 
@@ -435,7 +435,7 @@ namespace Disruptor
         {
             CheckBounds(arg0, arg1, batchStartsAt, batchSize);
 
-            if (_sequencer.TryNext(batchSize, out var finalSequence))
+            if (_sequencerDispatcher.Sequencer.TryNext(batchSize, out var finalSequence))
             {
                 TranslateAndPublishBatch(translator, arg0, arg1, batchStartsAt, batchSize, finalSequence);
                 return true;
@@ -460,7 +460,7 @@ namespace Disruptor
         public void PublishEvents<A, B, C>(IEventTranslatorThreeArg<T, A, B, C> translator, int batchStartsAt, int batchSize, A[] arg0, B[] arg1, C[] arg2)
         {
             CheckBounds(arg0, arg1, arg2, batchStartsAt, batchSize);
-            long finalSequence = _sequencer.Next(batchSize);
+            long finalSequence = _sequencerDispatcher.Sequencer.Next(batchSize);
             TranslateAndPublishBatch(translator, arg0, arg1, arg2, batchStartsAt, batchSize, finalSequence);
         }
 
@@ -481,7 +481,7 @@ namespace Disruptor
         {
             CheckBounds(arg0, arg1, arg2, batchStartsAt, batchSize);
 
-            if (_sequencer.TryNext(batchSize, out var finalSequence))
+            if (_sequencerDispatcher.Sequencer.TryNext(batchSize, out var finalSequence))
             {
                 TranslateAndPublishBatch(translator, arg0, arg1, arg2, batchStartsAt, batchSize, finalSequence);
                 return true;
@@ -511,7 +511,7 @@ namespace Disruptor
         private void PublishEventsInternal(IEventTranslatorVararg<T> translator, int batchStartsAt, int batchSize, object[][] args)
         {
             CheckBounds(batchStartsAt, batchSize, args);
-            var finalSequence = _sequencer.Next(batchSize);
+            var finalSequence = _sequencerDispatcher.Sequencer.Next(batchSize);
             TranslateAndPublishBatch(translator, batchStartsAt, batchSize, finalSequence, args);
         }
 
@@ -532,7 +532,7 @@ namespace Disruptor
         {
             CheckBounds(args, batchStartsAt, batchSize);
 
-            if (_sequencer.TryNext(batchSize, out var finalSequence))
+            if (_sequencerDispatcher.Sequencer.TryNext(batchSize, out var finalSequence))
             {
                 TranslateAndPublishBatch(translator, batchStartsAt, batchSize, finalSequence, args);
                 return true;
@@ -599,7 +599,7 @@ namespace Disruptor
             }
             finally
             {
-                _sequencer.Publish(sequence);
+                _sequencerDispatcher.Sequencer.Publish(sequence);
             }
         }
 
@@ -611,7 +611,7 @@ namespace Disruptor
             }
             finally
             {
-                _sequencer.Publish(sequence);
+                _sequencerDispatcher.Sequencer.Publish(sequence);
             }
         }
 
@@ -623,7 +623,7 @@ namespace Disruptor
             }
             finally
             {
-                _sequencer.Publish(sequence);
+                _sequencerDispatcher.Sequencer.Publish(sequence);
             }
         }
 
@@ -636,7 +636,7 @@ namespace Disruptor
             }
             finally
             {
-                _sequencer.Publish(sequence);
+                _sequencerDispatcher.Sequencer.Publish(sequence);
             }
         }
 
@@ -648,7 +648,7 @@ namespace Disruptor
             }
             finally
             {
-                _sequencer.Publish(sequence);
+                _sequencerDispatcher.Sequencer.Publish(sequence);
             }
         }
 
@@ -667,7 +667,7 @@ namespace Disruptor
             }
             finally
             {
-                _sequencer.Publish(initialSequence, finalSequence);
+                _sequencerDispatcher.Sequencer.Publish(initialSequence, finalSequence);
             }
         }
 
@@ -686,7 +686,7 @@ namespace Disruptor
             }
             finally
             {
-                _sequencer.Publish(initialSequence, finalSequence);
+                _sequencerDispatcher.Sequencer.Publish(initialSequence, finalSequence);
             }
         }
 
@@ -706,7 +706,7 @@ namespace Disruptor
             }
             finally
             {
-                _sequencer.Publish(initialSequence, finalSequence);
+                _sequencerDispatcher.Sequencer.Publish(initialSequence, finalSequence);
             }
         }
 
@@ -726,7 +726,7 @@ namespace Disruptor
             }
             finally
             {
-                _sequencer.Publish(initialSequence, finalSequence);
+                _sequencerDispatcher.Sequencer.Publish(initialSequence, finalSequence);
             }
         }
 
@@ -744,7 +744,7 @@ namespace Disruptor
             }
             finally
             {
-                _sequencer.Publish(initialSequence, finalSequence);
+                _sequencerDispatcher.Sequencer.Publish(initialSequence, finalSequence);
             }
         }
 
@@ -775,7 +775,7 @@ namespace Disruptor
         /// {
         ///     if (!scope.TryGetEvent(out var eventRef))
         ///         return;
-        /// 
+        ///
         ///     var e = eventRef.Event();
         ///     // Do some work with the event.
         /// }
@@ -818,7 +818,7 @@ namespace Disruptor
         /// {
         ///     if (!scope.TryGetEvents(out var eventsRef))
         ///         return;
-        /// 
+        ///
         ///     var e1 = eventRefs.Event(0);
         ///     var e2 = eventRefs.Event(1);
         ///     // Do some work with the events.

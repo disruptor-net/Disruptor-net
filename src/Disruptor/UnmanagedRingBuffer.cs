@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Disruptor.Internal;
@@ -6,24 +6,25 @@ using Disruptor.Internal;
 namespace Disruptor
 {
     /// <summary>
-    /// Base type for array-backed ring buffers.
+    /// Base type for unmanaged-memory-backed ring buffers.
     ///
-    /// <see cref="RingBuffer{T}"/> and <see cref="ValueRingBuffer{T}"/>.
+    /// <see cref="UnmanagedRingBuffer{T}"/>.
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = 148)]
-    public abstract class RingBuffer : ICursored
+    public abstract class UnmanagedRingBuffer : ICursored
     {
-        protected static readonly int _bufferPadRef = Util.GetRingBufferPaddingEventCount(IntPtr.Size);
-
         // padding: 56
 
         [FieldOffset(56)]
-        protected object _entries;
+        protected IntPtr _entries;
 
         [FieldOffset(64)]
         protected long _indexMask;
 
         [FieldOffset(72)]
+        protected int _eventSize;
+
+        [FieldOffset(76)]
         protected int _bufferSize;
 
         [FieldOffset(80)]
@@ -32,28 +33,32 @@ namespace Disruptor
         // padding: 52
 
         /// <summary>
-        /// Construct a RingBuffer with the full option set.
+        /// Construct a UnmanagedRingBuffer with the full option set.
         /// </summary>
-        /// <param name="sequencer">sequencer to handle the ordering of events moving through the RingBuffer.</param>
-        /// <param name="eventType">type of ring buffer events</param>
-        /// <param name="bufferPad">ring buffer padding  as a number of events</param>
+        /// <param name="sequencer">sequencer to handle the ordering of events moving through the UnmanagedRingBuffer.</param>
+        /// <param name="pointer">pointer to the first element of the buffer</param>
+        /// <param name="eventSize">size of each event</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        protected RingBuffer(ISequencer sequencer, Type eventType, int bufferPad)
+        protected UnmanagedRingBuffer(ISequencer sequencer, IntPtr pointer, int eventSize)
         {
-            _sequencerDispatcher = new SequencerDispatcher(sequencer);
-            _bufferSize = sequencer.BufferSize;
-
-            if (_bufferSize < 1)
+            if (eventSize < 1)
+            {
+                throw new ArgumentException("eventSize must not be less than 1");
+            }
+            if (sequencer.BufferSize < 1)
             {
                 throw new ArgumentException("bufferSize must not be less than 1");
             }
-            if (!_bufferSize.IsPowerOf2())
+            if (!sequencer.BufferSize.IsPowerOf2())
             {
                 throw new ArgumentException("bufferSize must be a power of 2");
             }
 
-            _entries = Array.CreateInstance(eventType, _bufferSize + 2 * bufferPad);
+            _sequencerDispatcher = new SequencerDispatcher(sequencer);
+            _bufferSize = sequencer.BufferSize;
+            _entries = pointer;
             _indexMask = _bufferSize - 1;
+            _eventSize = eventSize;
         }
 
         /// <summary>
@@ -258,7 +263,7 @@ namespace Disruptor
 
         public override string ToString()
         {
-            return $"RingBuffer{{bufferSize={_bufferSize}sequencer={_sequencerDispatcher.Sequencer}}}";
+            return $"UnmanagedRingBuffer{{bufferSize={_bufferSize}sequencer={_sequencerDispatcher.Sequencer}}}";
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
