@@ -1,60 +1,46 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Disruptor.Internal;
 
 namespace Disruptor
 {
     /// <summary>
-    /// Ring based store of reusable entries containing the data representing
-    /// an event being exchanged between event producer and <see cref="IEventProcessor"/>s.
+    /// Base type for array-backed ring buffers.
+    ///
+    /// <see cref="RingBuffer{T}"/> and <see cref="ValueRingBuffer{T}"/>.
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = 148)]
     public abstract class RingBuffer : ICursored
     {
+        protected static readonly int _bufferPadRef = Util.GetRingBufferPaddingEventCount(IntPtr.Size);
+
         // padding: 56
 
-        // padding: 8 (for entries)
+        [FieldOffset(56)]
+        protected object _entries;
 
         [FieldOffset(64)]
         protected long _indexMask;
 
-        // padding: 4 (for eventSize)
-
-        [FieldOffset(76)]
-        protected RingBufferSequencerType _sequencerType;
-
-        // padding: 3
-
-        [FieldOffset(80)]
-        protected SingleProducerSequencer _singleProducerSequencer;
-
-        [FieldOffset(80)]
-        protected MultiProducerSequencer _multiProducerSequencer;
-
-        [FieldOffset(80)]
-        protected ISequencer _sequencer;
-
-        [FieldOffset(88)]
+        [FieldOffset(72)]
         protected int _bufferSize;
 
-        // padding: 56
+        [FieldOffset(80)]
+        protected SequencerDispatcher _sequencerDispatcher; // includes 7 bytes of padding
 
-        protected enum RingBufferSequencerType : byte
-        {
-            SingleProducer,
-            MultiProducer,
-            Unknown,
-        }
+        // padding: 52
 
         /// <summary>
         /// Construct a RingBuffer with the full option set.
         /// </summary>
         /// <param name="sequencer">sequencer to handle the ordering of events moving through the RingBuffer.</param>
+        /// <param name="eventType">type of ring buffer events</param>
+        /// <param name="bufferPad">ring buffer padding  as a number of events</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-        protected RingBuffer(ISequencer sequencer)
+        protected RingBuffer(ISequencer sequencer, Type eventType, int bufferPad)
         {
-            _sequencer = sequencer;
-            _sequencerType = GetSequencerType();
+            _sequencerDispatcher = new SequencerDispatcher(sequencer);
             _bufferSize = sequencer.BufferSize;
 
             if (_bufferSize < 1)
@@ -66,20 +52,8 @@ namespace Disruptor
                 throw new ArgumentException("bufferSize must be a power of 2");
             }
 
+            _entries = Array.CreateInstance(eventType, _bufferSize + 2 * bufferPad);
             _indexMask = _bufferSize - 1;
-
-            RingBufferSequencerType GetSequencerType()
-            {
-                switch (sequencer)
-                {
-                    case SingleProducerSequencer s:
-                        return RingBufferSequencerType.SingleProducer;
-                    case MultiProducerSequencer m:
-                        return RingBufferSequencerType.MultiProducer;
-                    default:
-                        return RingBufferSequencerType.Unknown;
-                }
-            }
         }
 
         /// <summary>
@@ -97,7 +71,7 @@ namespace Disruptor
         /// <returns><c>true</c> if the specified <paramref name="requiredCapacity"/> is available <c>false</c> if not.</returns>
         public bool HasAvailableCapacity(int requiredCapacity)
         {
-            return _sequencer.HasAvailableCapacity(requiredCapacity);
+            return _sequencerDispatcher.Sequencer.HasAvailableCapacity(requiredCapacity);
         }
 
         /// <summary>
@@ -120,15 +94,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next()
         {
-            switch (_sequencerType)
-            {
-                case RingBufferSequencerType.SingleProducer:
-                    return _singleProducerSequencer.NextInternal(1);
-                case RingBufferSequencerType.MultiProducer:
-                    return _multiProducerSequencer.NextInternal(1);
-                default:
-                    return _sequencer.Next();
-            }
+            return _sequencerDispatcher.Next();
         }
 
         /// <summary>
@@ -145,15 +111,7 @@ namespace Disruptor
                 ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
             }
 
-            switch (_sequencerType)
-            {
-                case RingBufferSequencerType.SingleProducer:
-                    return _singleProducerSequencer.NextInternal(n);
-                case RingBufferSequencerType.MultiProducer:
-                    return _multiProducerSequencer.NextInternal(n);
-                default:
-                    return _sequencer.Next(n);
-            }
+            return _sequencerDispatcher.Next(n);
         }
 
         /// <summary>
@@ -183,15 +141,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryNext(out long sequence)
         {
-            switch (_sequencerType)
-            {
-                case RingBufferSequencerType.SingleProducer:
-                    return _singleProducerSequencer.TryNextInternal(1, out sequence);
-                case RingBufferSequencerType.MultiProducer:
-                    return _multiProducerSequencer.TryNextInternal(1, out sequence);
-                default:
-                    return _sequencer.TryNext(out sequence);
-            }
+            return _sequencerDispatcher.TryNext(out sequence);
         }
 
         /// <summary>
@@ -209,15 +159,7 @@ namespace Disruptor
                 ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
             }
 
-            switch (_sequencerType)
-            {
-                case RingBufferSequencerType.SingleProducer:
-                    return _singleProducerSequencer.TryNextInternal(n, out sequence);
-                case RingBufferSequencerType.MultiProducer:
-                    return _multiProducerSequencer.TryNextInternal(n, out sequence);
-                default:
-                    return _sequencer.TryNext(n, out sequence);
-            }
+            return _sequencerDispatcher.TryNext(n, out sequence);
         }
 
         /// <summary>
@@ -230,8 +172,8 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ResetTo(long sequence)
         {
-            _sequencer.Claim(sequence);
-            _sequencer.Publish(sequence);
+            _sequencerDispatcher.Sequencer.Claim(sequence);
+            _sequencerDispatcher.Sequencer.Publish(sequence);
         }
 
         /// <summary>
@@ -241,7 +183,7 @@ namespace Disruptor
         /// <param name="gatingSequences">the sequences to add.</param>
         public void AddGatingSequences(params ISequence[] gatingSequences)
         {
-            _sequencer.AddGatingSequences(gatingSequences);
+            _sequencerDispatcher.Sequencer.AddGatingSequences(gatingSequences);
         }
 
         /// <summary>
@@ -252,7 +194,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long GetMinimumGatingSequence()
         {
-            return _sequencer.GetMinimumSequence();
+            return _sequencerDispatcher.Sequencer.GetMinimumSequence();
         }
 
         /// <summary>
@@ -262,7 +204,7 @@ namespace Disruptor
         /// <returns><c>true</c> if this sequence was found, <c>false</c> otherwise.</returns>
         public bool RemoveGatingSequence(ISequence sequence)
         {
-            return _sequencer.RemoveGatingSequence(sequence);
+            return _sequencerDispatcher.Sequencer.RemoveGatingSequence(sequence);
         }
 
         /// <summary>
@@ -273,14 +215,14 @@ namespace Disruptor
         /// <returns>A sequence barrier that will track the specified sequences.</returns>
         public ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
         {
-            return _sequencer.NewBarrier(sequencesToTrack);
+            return _sequencerDispatcher.Sequencer.NewBarrier(sequencesToTrack);
         }
 
         /// <summary>
         /// Get the current cursor value for the ring buffer.  The actual value received
         /// will depend on the type of <see cref="ISequencer"/> that is being used.
         /// </summary>
-        public long Cursor => _sequencer.Cursor;
+        public long Cursor => _sequencerDispatcher.Sequencer.Cursor;
 
         /// <summary>
         /// Publish the specified sequence.  This action marks this particular
@@ -290,18 +232,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Publish(long sequence)
         {
-            switch (_sequencerType)
-            {
-                case RingBufferSequencerType.SingleProducer:
-                    _singleProducerSequencer.Publish(sequence);
-                    break;
-                case RingBufferSequencerType.MultiProducer:
-                    _multiProducerSequencer.Publish(sequence);
-                    break;
-                default:
-                    _sequencer.Publish(sequence);
-                    break;
-            }
+            _sequencerDispatcher.Publish(sequence);
         }
 
         /// <summary>
@@ -313,18 +244,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Publish(long lo, long hi)
         {
-            switch (_sequencerType)
-            {
-                case RingBufferSequencerType.SingleProducer:
-                    _singleProducerSequencer.Publish(hi);
-                    break;
-                case RingBufferSequencerType.MultiProducer:
-                    _multiProducerSequencer.Publish(lo, hi);
-                    break;
-                default:
-                    _sequencer.Publish(lo, hi);
-                    break;
-            }
+            _sequencerDispatcher.Publish(lo, hi);
         }
 
         /// <summary>
@@ -333,15 +253,12 @@ namespace Disruptor
         /// <returns>The number of slots remaining.</returns>
         public long GetRemainingCapacity()
         {
-            return _sequencer.GetRemainingCapacity();
+            return _sequencerDispatcher.Sequencer.GetRemainingCapacity();
         }
 
         public override string ToString()
         {
-            return "RingBuffer{" +
-                   "bufferSize=" + _bufferSize +
-                   "sequencer=" + _sequencer +
-                   "}";
+            return $"RingBuffer{{bufferSize={_bufferSize}sequencer={_sequencerDispatcher.Sequencer}}}";
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

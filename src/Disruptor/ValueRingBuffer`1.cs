@@ -9,7 +9,7 @@ namespace Disruptor
     /// an event being exchanged between event producer and <see cref="IEventProcessor"/>s.
     /// </summary>
     /// <typeparam name="T">implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
-    public sealed class ValueRingBuffer<T> : ArrayRingBuffer, IValueRingBuffer<T>
+    public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
         where T : struct
     {
         private static readonly int _bufferPad = Util.GetRingBufferPaddingEventCount(Util.SizeOf<T>());
@@ -163,7 +163,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T ClaimAndGetPreallocated(long sequence)
         {
-            _sequencer.Claim(sequence);
+            _sequencerDispatcher.Sequencer.Claim(sequence);
             return ref this[sequence];
         }
 

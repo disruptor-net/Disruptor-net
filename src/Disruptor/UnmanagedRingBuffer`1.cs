@@ -22,7 +22,7 @@ namespace Disruptor
         /// <param name="sequencer">sequencer to handle the ordering of events moving through the ring buffer.</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public UnmanagedRingBuffer(IntPtr pointer, int eventSize, ISequencer sequencer)
-            : base(pointer, eventSize, sequencer)
+            : base(sequencer, pointer, eventSize)
         {
         }
 
@@ -35,7 +35,7 @@ namespace Disruptor
         /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
         /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
         public UnmanagedRingBuffer(UnmanagedRingBufferMemory memory, ProducerType producerType, IWaitStrategy waitStrategy)
-            : base(memory.PointerToFirstEvent, memory.EventSize, Sequencer.Create(producerType, memory.EventCount, waitStrategy))
+            : base(Sequencer.Create(producerType, memory.EventCount, waitStrategy), memory.PointerToFirstEvent, memory.EventSize)
         {
         }
 
