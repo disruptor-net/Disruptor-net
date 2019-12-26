@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Disruptor.Internal
+namespace Disruptor
 {
     [StructLayout(LayoutKind.Explicit, Size = 16)]
     public readonly struct SequencerDispatcher
