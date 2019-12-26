@@ -255,10 +255,5 @@ namespace Disruptor
         {
             return _sequencerDispatcher.Sequencer.GetRemainingCapacity();
         }
-
-        public override string ToString()
-        {
-            return $"RingBuffer{{bufferSize={_bufferSize}sequencer={_sequencerDispatcher.Sequencer}}}";
-        }
     }
 }

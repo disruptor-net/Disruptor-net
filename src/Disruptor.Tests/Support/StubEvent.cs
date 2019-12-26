@@ -32,7 +32,7 @@ namespace Disruptor.Tests.Support
 
         public override string ToString()
         {
-            return string.Format("Value: {0}, TestString: {1}", Value, TestString);
+            return $"Value: {Value}, TestString: {TestString}";
         }
 
         public void Copy(StubEvent evt)

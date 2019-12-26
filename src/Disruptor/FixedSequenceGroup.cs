@@ -65,7 +65,7 @@ namespace Disruptor
 
         public override string ToString()
         {
-            return string.Join(", ", _sequences.Select(x => x.ToString()));
+            return $"FixedSequenceGroup {{{string.Join(", ", _sequences.Select(x => x.ToString()))}}}";
         }
     }
 }

@@ -62,6 +62,11 @@ namespace Disruptor
             }
         }
 
+        public override string ToString()
+        {
+            return $"UnmanagedRingBuffer {{Type={typeof(T).Name}, BufferSize={_bufferSize}, Sequencer={_sequencerDispatcher.Sequencer.GetType().Name}}}";
+        }
+
          /// <summary>
         /// Increment the ring buffer sequence and return a scope that will publish the sequence on disposing.
         /// This method will block until there is space available in the ring buffer.

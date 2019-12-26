@@ -8,14 +8,14 @@ namespace Disruptor.Dsl
     /// <summary>
     /// A DSL-style API for setting up the disruptor pattern around a ring buffer
     /// (aka the Builder pattern).
-    /// 
+    ///
     /// A simple example of setting up the disruptor with two event handlers that
     /// must process events in order:
     /// <code>var disruptor = new Disruptor{MyEvent}(() => new MyEvent(), 32, TaskScheduler.Default);
     /// var handler1 = new EventHandler1() { ... };
     /// var handler2 = new EventHandler2() { ... };
     /// disruptor.HandleEventsWith(handler1).Then(handler2);
-    /// 
+    ///
     /// var ringBuffer = disruptor.Start();</code>
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
@@ -82,9 +82,9 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Set up event handlers to handle events from the ring buffer. These handlers will process events
         /// as soon as they become available, in parallel.
-        /// 
+        ///
         /// <code>dw.HandleEventsWith(A).Then(B);</code>
-        /// 
+        ///
         /// This call is additive, but generally should only be called once when setting up the disruptor instance.
         /// </summary>
         /// <param name="handlers">the event handlers that will process events</param>
@@ -97,16 +97,16 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The disruptor will
         /// automatically start these processors when <see cref="Start"/> is called.
-        /// 
+        ///
         /// This method can be used as the start of a chain. For example if the handler <code>A</code> must
         /// process events before handler<code>B</code>:
         /// <code>dw.HandleEventsWith(A).Then(B);</code>
-        /// 
+        ///
         /// Since this is the start of the chain, the processor factories will always be passed an empty <code>Sequence</code>
         /// array, so the factory isn't necessary in this case. This method is provided for consistency with
         /// <see cref="EventHandlerGroup{T}.HandleEventsWith(IEventProcessorFactory{T}[])"/> and <see cref="EventHandlerGroup{T}.Then(IEventProcessorFactory{T}[])"/>
         /// which do have barrier sequences to provide.
-        /// 
+        ///
         /// This call is additive, but generally should only be called once when setting up the disruptor instance.
         /// </summary>
         /// <param name="eventProcessorFactories">eventProcessorFactories the event processor factories to use to create the event processors that will process events.</param>
@@ -119,7 +119,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The disruptor will
         /// automatically start this processors when <see cref="Start"/> is called.
-        /// 
+        ///
         /// This method can be used as the start of a chain. For example if the processor <code>A</code> must
         /// process events before handler<code>B</code>:
         /// <code>dw.HandleEventsWith(A).Then(B);</code>
@@ -284,10 +284,10 @@ namespace Disruptor.Dsl
 
         /// <summary>
         /// Starts the event processors and returns the fully configured ring buffer.
-        /// 
+        ///
         /// The ring buffer is set up to prevent overwriting any entry that is yet to
         /// be processed by the slowest event processor.
-        /// 
+        ///
         /// This method must only be called once after all event processors have been added.
         /// </summary>
         /// <returns>the configured ring buffer</returns>
@@ -317,7 +317,7 @@ namespace Disruptor.Dsl
         /// Waits until all events currently in the disruptor have been processed by all event processors
         /// and then halts the processors.It is critical that publishing to the ring buffer has stopped
         /// before calling this method, otherwise it may never return.
-        /// 
+        ///
         /// This method will not shutdown the executor, nor will it await the final termination of the
         /// processor threads
         /// </summary>
@@ -336,7 +336,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Waits until all events currently in the disruptor have been processed by all event processors
         /// and then halts the processors.
-        /// 
+        ///
         /// This method will not shutdown the executor, nor will it await the final termination of the
         /// processor threads
         /// </summary>
@@ -483,7 +483,7 @@ namespace Disruptor.Dsl
 
         public override string ToString()
         {
-            return $"Disruptor{{ringBuffer={_ringBuffer}, started={_started}, executor={_executor}}}";
+            return $"Disruptor {{RingBuffer={_ringBuffer}, Started={_started}, Executor={_executor}}}";
         }
     }
 }

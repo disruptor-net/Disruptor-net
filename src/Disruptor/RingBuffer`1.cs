@@ -158,6 +158,11 @@ namespace Disruptor
             return this[sequence];
         }
 
+        public override string ToString()
+        {
+            return $"RingBuffer {{Type={typeof(T).Name}, BufferSize={_bufferSize}, Sequencer={_sequencerDispatcher.Sequencer.GetType().Name}}}";
+        }
+
         /// <summary>
         /// Determines if a particular entry is available.  Note that using this when not within a context that is
         /// maintaining a sequence barrier, it is likely that using this to determine if you can read a value is likely

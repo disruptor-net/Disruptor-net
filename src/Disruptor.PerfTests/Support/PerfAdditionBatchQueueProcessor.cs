@@ -75,11 +75,7 @@ namespace Disruptor.PerfTests.Support
 
         public override string ToString()
         {
-            return "PerfAdditionBatchQueueProcessor{" +
-                "value=" + _value +
-                ", sequence=" + _sequence +
-                ", count=" + _count +
-                '}';
+            return $"PerfAdditionBatchQueueProcessor {{Value={_value}, Sequence={_sequence}, Count={_count}}}";
         }
 
     }

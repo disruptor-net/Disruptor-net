@@ -314,7 +314,7 @@ namespace Disruptor.Dsl
 
         public override string ToString()
         {
-            return $"ValueDisruptor{{ringBuffer={_ringBuffer}, started={_started}, executor={_executor}}}";
+            return $"ValueDisruptor {{RingBuffer={_ringBuffer}, Started={_started}, Executor={_executor}}}";
         }
     }
 }

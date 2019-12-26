@@ -41,7 +41,7 @@ namespace Disruptor.Tests.Support
 
         public override string ToString()
         {
-            return string.Format("Value: {0}, DoubleValue: {1}", DoubleValue);
+            return $"Value: {Value}, DoubleValue: {DoubleValue}";
         }
     }
 }

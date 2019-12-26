@@ -24,6 +24,17 @@ namespace Disruptor.Dsl
             _taskScheduler = taskScheduler;
         }
 
+        public int ThreadCount
+        {
+            get
+            {
+                lock (_threads)
+                {
+                    return _threads.Count;
+                }
+            }
+        }
+
         /// <summary>
         /// Start a new task executing the given command in the current TaskScheduler.
         /// </summary>
@@ -55,28 +66,7 @@ namespace Disruptor.Dsl
 
         public override string ToString()
         {
-            return "BasicExecutor{" +
-                   "threads=" + DumpThreadInfo() +
-                   "}";
-        }
-
-        private string DumpThreadInfo()
-        {
-            List<Thread> threads;
-            lock (_threads)
-            {
-                threads = _threads.ToList();
-            }
-            var sb = new StringBuilder();
-            foreach (var t in threads)
-            {
-                sb.Append("{");
-                sb.Append("name=").Append(t.Name).Append(",");
-                sb.Append("id=").Append(t.ManagedThreadId).Append(",");
-                sb.Append("state=").Append(t.ThreadState).Append(",");
-                sb.Append("}");
-            }
-            return sb.ToString();
+            return $"BasicExecutor {{ThreadCount={ThreadCount}}}";
         }
     }
 }
