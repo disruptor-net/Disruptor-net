@@ -803,9 +803,6 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnpublishedEventBatchScope PublishEvents(int count)
         {
-            if ((uint)count > _bufferSize)
-                ThrowInvalidPublishCountException();
-
             var endSequence = Next(count);
             return new UnpublishedEventBatchScope(this, endSequence + 1 - count, endSequence);
         }
@@ -828,9 +825,6 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NullableUnpublishedEventBatchScope TryPublishEvents(int count)
         {
-            if ((uint)count > _bufferSize)
-                ThrowInvalidPublishCountException();
-
             var success = TryNext(count, out var endSequence);
             return new NullableUnpublishedEventBatchScope(success ? this : null, endSequence + 1 - count, endSequence);
         }

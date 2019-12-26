@@ -265,11 +265,5 @@ namespace Disruptor
         {
             return $"UnmanagedRingBuffer{{bufferSize={_bufferSize}sequencer={_sequencerDispatcher.Sequencer}}}";
         }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        protected void ThrowInvalidPublishCountException()
-        {
-            throw new ArgumentException($"Invalid publish count: It should be >= 0 and <= {_bufferSize}");
-        }
     }
 }
