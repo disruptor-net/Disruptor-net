@@ -2,17 +2,40 @@
 
 namespace Disruptor.Benchmarks
 {
-    //[DisassemblyDiagnoser]
     public class RingBufferBenchmarks
     {
         private readonly RingBuffer<Event> _ringBuffer;
+        private ISequenceBarrier _sequenceBarrier;
 
         public RingBufferBenchmarks()
         {
             _ringBuffer = new RingBuffer<Event>(() => new Event(), new SingleProducerSequencer(4096, new BusySpinWaitStrategy()));
+            _sequenceBarrier = _ringBuffer.NewBarrier();
         }
 
-        [Benchmark(Baseline = true)]
+        [Benchmark]
+        public void PublishAndWait()
+        {
+            var sequence = _ringBuffer.Next();
+            try
+            {
+                var data = _ringBuffer[sequence];
+                data.L1 = 1;
+                data.L2 = 2;
+                data.L3 = 3;
+                data.L4 = 4;
+                data.L5 = 5;
+                data.L6 = 6;
+            }
+            finally
+            {
+                _ringBuffer.Publish(sequence);
+            }
+
+            _sequenceBarrier.WaitFor(sequence);
+        }
+
+        // [Benchmark(Baseline = true)]
         public void PublishClassic()
         {
             var sequence = _ringBuffer.Next();
@@ -32,7 +55,7 @@ namespace Disruptor.Benchmarks
             }
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void PublishScope()
         {
             using (var scope = _ringBuffer.PublishEvent())
@@ -47,7 +70,7 @@ namespace Disruptor.Benchmarks
             }
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void TryPublishClassic()
         {
             if (!_ringBuffer.TryNext(out var sequence))
@@ -69,7 +92,7 @@ namespace Disruptor.Benchmarks
             }
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void TryPublishScope()
         {
             using (var scope = _ringBuffer.TryPublishEvent())
@@ -87,7 +110,7 @@ namespace Disruptor.Benchmarks
             }
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void PublishManyClassic()
         {
             var sequence = _ringBuffer.Next(2);
@@ -107,7 +130,7 @@ namespace Disruptor.Benchmarks
             }
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void PublishManyScope()
         {
             using (var scope = _ringBuffer.PublishEvents(2))
@@ -122,7 +145,7 @@ namespace Disruptor.Benchmarks
             }
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void TryPublishManyClassic()
         {
             if (!_ringBuffer.TryNext(1, out var s))
@@ -144,7 +167,7 @@ namespace Disruptor.Benchmarks
             }
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void TryPublishManyScope()
         {
             using (var scope = _ringBuffer.TryPublishEvents(2))

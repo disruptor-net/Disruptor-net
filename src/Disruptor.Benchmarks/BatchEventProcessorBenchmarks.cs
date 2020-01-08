@@ -1,78 +1,130 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
+using Disruptor.Internal;
 
 namespace Disruptor.Benchmarks
 {
     public class BatchEventProcessorBenchmarks
     {
-        private readonly Sequence _sequence = new Sequence();
-        private readonly RingBuffer<TestEvent> _ringBuffer;
-        private readonly TestEventHandler _eventHandler;
-        private readonly ISequenceBarrier _sequenceBarrier;
+        private readonly IRunner _runner;
 
         public BatchEventProcessorBenchmarks()
         {
-            _ringBuffer = new RingBuffer<TestEvent>(() => new TestEvent(), new SingleProducerSequencer(4096, new SpinWaitWaitStrategy()));
-            _eventHandler = new TestEventHandler();
-            _sequenceBarrier = _ringBuffer.NewBarrier();
+            var ringBuffer = new RingBuffer<XEvent>(() => new XEvent(), new SingleProducerSequencer(4096, new SpinWaitWaitStrategy()));
+            var eventHandler = new XEventHandler();
+            var sequenceBarrier = ringBuffer.NewBarrier();
 
-            _ringBuffer.PublishEvent().Dispose();
+            ringBuffer.PublishEvent().Dispose();
+
+            var dataProviderProxy = StructProxy.CreateProxyInstance<IDataProvider<XEvent>>(ringBuffer);
+            var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrier);
+            var eventHandlerProxy = StructProxy.CreateProxyInstance<IEventHandler<XEvent>>(eventHandler);
+            var batchStartAwareProxy = new NoopBatchStartAware();
+
+            var runnerType = typeof(Runner<,,,,>).MakeGenericType(typeof(XEvent), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), batchStartAwareProxy.GetType());
+            _runner = (IRunner)Activator.CreateInstance(runnerType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy);
         }
-
-        public volatile int Running;
 
         [Benchmark]
         public long ProcessEvent()
         {
-            var nextSequence = 0L;
-            try
-            {
-                var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
-
-                while (nextSequence <= availableSequence)
-                {
-                    var evt = _ringBuffer[nextSequence];
-                    _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
-                    nextSequence++;
-                }
-
-                _sequence.SetValue(availableSequence);
-            }
-            catch (TimeoutException)
-            {
-                NotifyTimeout(_sequence.Value);
-            }
-            catch (AlertException)
-            {
-                if (Running != 2)
-                {
-                    return nextSequence;
-                }
-            }
-            catch (Exception)
-            {
-                _sequence.SetValue(nextSequence);
-                nextSequence++;
-            }
-
-            return nextSequence;
+            return _runner.ProcessEvent();
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void NotifyTimeout(long sequenceValue)
-        {
-        }
-
-        public class TestEvent
+        public class XEvent
         {
             public long Data { get; set; }
         }
 
-        public class TestEventHandler : IEventHandler<TestEvent>
+        public class XEventHandler : IEventHandler<XEvent>
         {
-            public void OnEvent(TestEvent data, long sequence, bool endOfBatch)
+            public long Sum;
+
+            public void OnEvent(XEvent data, long sequence, bool endOfBatch)
             {
+                Sum += data.Data;
+            }
+        }
+
+        private struct NoopBatchStartAware : IBatchStartAware
+        {
+            public void OnBatchStart(long batchSize)
+            {
+            }
+        }
+
+        public interface IRunner
+        {
+            long ProcessEvent();
+        }
+
+        public class Runner<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IRunner
+            where T : class
+            where TDataProvider : IDataProvider<T>
+            where TSequenceBarrier : ISequenceBarrier
+            where TEventHandler : IEventHandler<T>
+            where TBatchStartAware : IBatchStartAware
+        {
+            private readonly Sequence _sequence = new Sequence();
+            private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler();
+
+            private TDataProvider _dataProvider;
+            private TSequenceBarrier _sequenceBarrier;
+            private TEventHandler _eventHandler;
+            private TBatchStartAware _batchStartAware;
+
+            public volatile int Running;
+
+            public Runner(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
+            {
+                _dataProvider = dataProvider;
+                _sequenceBarrier = sequenceBarrier;
+                _eventHandler = eventHandler;
+                _batchStartAware = batchStartAware;
+            }
+
+            public long ProcessEvent()
+            {
+                T evt = null;
+                var nextSequence = _sequence.Value + 1L;
+
+                try
+                {
+                    var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
+
+                    _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
+
+                    while (nextSequence <= availableSequence)
+                    {
+                        evt = _dataProvider[nextSequence];
+                        _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
+                        nextSequence++;
+                    }
+
+                    //_sequence.SetValue(availableSequence);
+                }
+                catch (TimeoutException)
+                {
+                    NotifyTimeout(_sequence.Value);
+                }
+                catch (AlertException)
+                {
+                }
+                catch (Exception ex)
+                {
+                    _exceptionHandler.HandleEventException(ex, nextSequence, evt);
+                    _sequence.SetValue(nextSequence);
+                    nextSequence++;
+                }
+
+                return nextSequence;
+            }
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            private void NotifyTimeout(long sequence)
+            {
+                Console.WriteLine(sequence);
             }
         }
     }

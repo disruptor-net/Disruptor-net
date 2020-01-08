@@ -29,7 +29,7 @@ namespace Disruptor.Benchmarks
 
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run();
 
-            //Console.ReadLine();
+            Console.ReadLine();
         }
 
         private static void RunMultiProducerSequencerBenchmarks()
@@ -71,21 +71,6 @@ namespace Disruptor.Benchmarks
             //bench.WriteUnsafe();
             bench.Read();
             bench.ReadFixed();
-        }
-
-        private static void RunObjectArrayBenchmarks()
-        {
-            var bench = new ObjectArrayBenchmarks();
-
-            bench.ReadImplPublic(371);
-            bench.ReadUnsafeImplPublic(371);
-
-            Console.WriteLine("YYY");
-            Console.ReadLine();
-            Console.WriteLine("ZZZ");
-
-            bench.ReadImplPublic(371);
-            bench.ReadUnsafeImplPublic(371);
         }
     }
 }
