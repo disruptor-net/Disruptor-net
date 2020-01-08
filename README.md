@@ -17,6 +17,12 @@ There is no specific documentation for this project, but most of the information
 
 ## What's new?
 
+08/01/2020 (v3.6.0):
+
+* Add UnmanagedDisruptor
+* Support IEventProcessorSequenceAware for value event handlers
+* Remove Sequencer
+
 22/11/2019 (v3.5.0):
 
 * Add ValueDisruptor
