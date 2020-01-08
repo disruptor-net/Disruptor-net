@@ -1,8 +1,7 @@
 namespace Disruptor
 {
     /// <summary>
-    /// Implement this interface in your <see cref="IEventHandler{T}"/> to be notified when a thread for the
-    /// <see cref="IBatchEventProcessor{T}"/> starts and shuts down.
+    /// Implement this interface in your event handler to be notified when the processing thread starts and shuts down.
     /// </summary>
     public interface ILifecycleAware
     {
@@ -13,7 +12,7 @@ namespace Disruptor
 
         /// <summary>
         /// Called once just before the thread is shutdown.
-        /// 
+        ///
         /// Sequence event processing will already have stopped before this method is called. No events will
         /// be processed after this message.
         /// </summary>

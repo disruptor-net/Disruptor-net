@@ -6,7 +6,7 @@ namespace Disruptor
     /// <summary>
     /// Convenience class for handling the batching semantics of consuming events from a <see cref="ValueRingBuffer{T}"/>
     /// and delegating the available events to an <see cref="IValueEventHandler{T}"/>.
-    /// 
+    ///
     /// If the <see cref="IValueEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
     /// is started and just before the thread is shutdown.
     /// </summary>
@@ -46,7 +46,7 @@ namespace Disruptor
         /// <summary>
         /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
         /// the <see cref="IValueEventHandler{T}.OnEvent"/> method returns.
-        /// 
+        ///
         /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
         /// </summary>
         /// <param name="dataProvider">dataProvider to which events are published</param>
@@ -60,8 +60,8 @@ namespace Disruptor
             _eventHandler = eventHandler;
             _batchStartAware = batchStartAware;
 
-            if (eventHandler is ISequenceReportingEventHandler<T> sequenceReportingEventHandler)
-                sequenceReportingEventHandler.SetSequenceCallback(_sequence);
+            if (eventHandler is IEventProcessorSequenceAware sequenceAware)
+                sequenceAware.SetSequenceCallback(_sequence);
 
             _timeoutHandler = eventHandler as ITimeoutHandler;
         }

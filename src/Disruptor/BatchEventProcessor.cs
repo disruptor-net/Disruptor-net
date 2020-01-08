@@ -6,12 +6,12 @@ namespace Disruptor
     /// <summary>
     /// Convenience class for handling the batching semantics of consuming events from a <see cref="RingBuffer{T}"/>
     /// and delegating the available events to an <see cref="IEventHandler{T}"/>.
-    /// 
+    ///
     /// If the <see cref="IEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
     /// is started and just before the thread is shutdown.
-    /// 
+    ///
     /// This class is kept mainly for compatibility reasons.
-    /// 
+    ///
     /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
@@ -21,7 +21,7 @@ namespace Disruptor
         /// <summary>
         /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
         /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
-        /// 
+        ///
         /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
         /// </summary>
         /// <param name="dataProvider">dataProvider to which events are published</param>
@@ -52,7 +52,7 @@ namespace Disruptor
     /// <summary>
     /// Convenience class for handling the batching semantics of consuming events from a <see cref="RingBuffer{T}"/>
     /// and delegating the available events to an <see cref="IEventHandler{T}"/>.
-    /// 
+    ///
     /// If the <see cref="IEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
     /// is started and just before the thread is shutdown.
     /// </summary>
@@ -63,7 +63,6 @@ namespace Disruptor
     /// <typeparam name="TBatchStartAware">the type of the <see cref="IBatchStartAware"/> used.</typeparam>
     public class BatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IBatchEventProcessor<T>
         where T : class
-
         where TDataProvider : IDataProvider<T>
         where TSequenceBarrier : ISequenceBarrier
         where TEventHandler : IEventHandler<T>
@@ -92,7 +91,7 @@ namespace Disruptor
         /// <summary>
         /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
         /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
-        /// 
+        ///
         /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
         /// </summary>
         /// <param name="dataProvider">dataProvider to which events are published</param>
@@ -106,8 +105,8 @@ namespace Disruptor
             _eventHandler = eventHandler;
             _batchStartAware = batchStartAware;
 
-            if (eventHandler is ISequenceReportingEventHandler<T> sequenceReportingEventHandler)
-                sequenceReportingEventHandler.SetSequenceCallback(_sequence);
+            if (eventHandler is IEventProcessorSequenceAware sequenceAware)
+                sequenceAware.SetSequenceCallback(_sequence);
 
             _timeoutHandler = eventHandler as ITimeoutHandler;
         }
