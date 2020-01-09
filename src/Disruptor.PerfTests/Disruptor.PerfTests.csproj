@@ -8,8 +8,9 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.11.5" />
     <PackageReference Include="HdrHistogram" Version="2.5.0" />
+    <PackageReference Include="System.Threading.Channels" Version="4.7.0" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
 	  <ProjectReference Include="..\Disruptor.Tests\Disruptor.Tests.csproj" />

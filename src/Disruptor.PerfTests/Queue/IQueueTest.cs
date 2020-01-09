@@ -1,7 +1,7 @@
 ﻿namespace Disruptor.PerfTests.Queue
 {
-    interface IQueueTest
+    public interface IQueueTest
     {
-        
+
     }
 }

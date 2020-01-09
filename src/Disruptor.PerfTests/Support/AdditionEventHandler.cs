@@ -6,17 +6,17 @@ namespace Disruptor.PerfTests.Support
     public class AdditionEventHandler : IEventHandler<PerfEvent>, IValueEventHandler<PerfValueEvent>, IBatchStartAware
     {
         private PaddedLong _value;
-        public long Count { get; private set; }
-        private ManualResetEvent Latch { get; set; }
+        private long _latchSequence;
+        private ManualResetEvent _latch;
         public PaddedLong BatchesProcessedCount;
 
         public long Value => _value.Value;
 
-        public void Reset(ManualResetEvent latch, long expectedCount)
+        public void Reset(ManualResetEvent latch, long latchSequence)
         {
             _value.Value = 0;
-            Latch = latch;
-            Count = expectedCount;
+            _latch = latch;
+            _latchSequence = latchSequence;
             BatchesProcessedCount.Value = 0;
         }
 
@@ -24,9 +24,9 @@ namespace Disruptor.PerfTests.Support
         {
             _value.Value = _value.Value + data.Value;
 
-            if(Count == sequence)
+            if(_latchSequence == sequence)
             {
-                Latch?.Set();
+                _latch?.Set();
             }
         }
 
@@ -34,9 +34,9 @@ namespace Disruptor.PerfTests.Support
         {
             _value.Value = _value.Value + data.Value;
 
-            if (Count == sequence)
+            if (_latchSequence == sequence)
             {
-                Latch?.Set();
+                _latch?.Set();
             }
         }
 
