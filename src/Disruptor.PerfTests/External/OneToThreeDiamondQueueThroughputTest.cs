@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Diagnostics;
+﻿using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 
-namespace Disruptor.PerfTests.Queue
+namespace Disruptor.PerfTests.External
 {
-    public class OneToThreeDiamondQueueThroughputTest : IThroughputTest, IQueueTest
+    public class OneToThreeDiamondQueueThroughputTest : IThroughputTest, IExternalTest
     {
         private const int _eventProcessorCount = 3;
         private const int _bufferSize = 1024 * 8;

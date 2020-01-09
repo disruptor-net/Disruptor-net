@@ -1,22 +1,39 @@
-﻿using System.Diagnostics;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
 
-namespace Disruptor.PerfTests.Queue
+namespace Disruptor.PerfTests.External
 {
-    public class OneToOneQueueBatchedThroughputTest : IThroughputTest, IQueueTest
+    /// <summary>
+    /// UniCast a series of items between 1 publisher and 1 event processor.
+    /// 
+    /// +----+    +-----+
+    /// | P1 |--->| EP1 |
+    /// +----+    +-----+
+    /// 
+    /// Queue Based:
+    /// ============
+    ///        put      take
+    /// +----+    +====+    +-----+
+    /// | P1 |--->| Q1 |/---| EP1 |
+    /// +----+    +====+    +-----+
+    /// 
+    /// P1  - Publisher 1
+    /// Q1  - Queue 1
+    /// EP1 - EventeProcessor 1
+    /// </summary>
+    public class OneToOneQueueThroughputTest : IThroughputTest, IExternalTest
     {
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 10L;
         private const long _expectedResult = _iterations * 3L;
 
         private readonly ArrayConcurrentQueue<long> _blockingQueue = new ArrayConcurrentQueue<long>(_bufferSize);
-        private readonly PerfAdditionBatchQueueProcessor _queueProcessor;
-        
-        public OneToOneQueueBatchedThroughputTest()
+        private readonly PerfAdditionQueueProcessor _queueProcessor;
+
+        public OneToOneQueueThroughputTest()
         {
-            _queueProcessor = new PerfAdditionBatchQueueProcessor(_blockingQueue, _iterations);
+            _queueProcessor = new PerfAdditionQueueProcessor(_blockingQueue, _iterations - 1);
         }
 
         public int RequiredProcessorCount => 2;
@@ -42,5 +59,6 @@ namespace Disruptor.PerfTests.Queue
 
             return _iterations;
         }
+
     }
 }

@@ -1,27 +1,31 @@
-using System;
-using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
 
-namespace Disruptor.PerfTests.Queue
+namespace Disruptor.PerfTests.External
 {
-    public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IQueueTest
+    public class OneToOneChannelThroughputTest : IThroughputTest, IExternalTest
     {
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 100L;
 
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
 
-        private readonly BlockingCollection<PerfEvent> _queue;
+        private readonly Channel<PerfEvent> _channel;
         private readonly AdditionEventHandler _eventHandler;
         private readonly Consumer _consumer;
 
-        public OneToOneBlockingCollectionThroughputTest()
+        public OneToOneChannelThroughputTest()
         {
-            _queue = new BlockingCollection<PerfEvent>(_bufferSize);
+            _channel = Channel.CreateBounded<PerfEvent>(new BoundedChannelOptions(_bufferSize)
+            {
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = true,
+                SingleWriter = true,
+            });
             _eventHandler = new AdditionEventHandler();
-            _consumer = new Consumer(_queue, _eventHandler);
+            _consumer = new Consumer(_channel.Reader, _eventHandler);
         }
 
         public int RequiredProcessorCount => 2;
@@ -33,10 +37,15 @@ namespace Disruptor.PerfTests.Queue
 
             sessionContext.Start();
 
+            var spinWait = new SpinWait();
             for (long i = 0; i < _iterations; i++)
             {
                 var data = new PerfEvent { Value = i };
-                _queue.Add(data);
+                while (!_channel.Writer.TryWrite(data))
+                {
+                    spinWait.SpinOnce();
+                }
+                spinWait.Reset();
             }
 
             _eventHandler.Latch.WaitOne();
@@ -52,14 +61,14 @@ namespace Disruptor.PerfTests.Queue
 
         private class Consumer
         {
-            private readonly BlockingCollection<PerfEvent> _queue;
+            private readonly ChannelReader<PerfEvent> _channelReader;
             private readonly AdditionEventHandler _eventHandler;
+            private volatile bool _running;
             private Task _task;
-            private CancellationTokenSource _cancellationTokenSource;
 
-            public Consumer(BlockingCollection<PerfEvent> queue, AdditionEventHandler eventHandler)
+            public Consumer(ChannelReader<PerfEvent> channelReader, AdditionEventHandler eventHandler)
             {
-                _queue = queue;
+                _channelReader = channelReader;
                 _eventHandler = eventHandler;
             }
 
@@ -67,21 +76,28 @@ namespace Disruptor.PerfTests.Queue
             {
                 var started = new ManualResetEventSlim();
 
-                _cancellationTokenSource = new CancellationTokenSource();
+                _running = true;
                 _task = Task.Run(() =>
                 {
                     started.Set();
 
-                    try
+                    var spinWait = new SpinWait();
+                    while (true)
                     {
-                        foreach (var perfEvent in _queue.GetConsumingEnumerable(_cancellationTokenSource.Token))
+                        PerfEvent perfEvent;
+
+                        while (!_channelReader.TryRead(out perfEvent))
                         {
-                            _eventHandler.OnBatchStart(1);
-                            _eventHandler.OnEvent(perfEvent, perfEvent.Value, true);
+                            if (!_running)
+                                return;
+
+                            spinWait.SpinOnce();
                         }
-                    }
-                    catch (OperationCanceledException)
-                    {
+
+                        spinWait.Reset();
+
+                        _eventHandler.OnBatchStart(1);
+                        _eventHandler.OnEvent(perfEvent, perfEvent.Value, true);
                     }
                 });
 
@@ -90,7 +106,7 @@ namespace Disruptor.PerfTests.Queue
 
             public void Stop()
             {
-                _cancellationTokenSource.Cancel();
+                _running = false;
                 _task.Wait();
             }
         }

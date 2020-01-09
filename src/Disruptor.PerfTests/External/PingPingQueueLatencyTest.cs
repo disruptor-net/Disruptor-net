@@ -1,14 +1,13 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 using HdrHistogram;
 
-namespace Disruptor.PerfTests.Queue
+namespace Disruptor.PerfTests.External
 {
-    public class PingPingQueueLatencyTest : ILatencyTest, IQueueTest
+    public class PingPingQueueLatencyTest : ILatencyTest, IExternalTest
     {
         private const int _bufferSize = 1024;
         private const long _iterations = 100 * 1000 * 30;

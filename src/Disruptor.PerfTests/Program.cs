@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Disruptor.PerfTests.Queue;
+using Disruptor.PerfTests.External;
 
 namespace Disruptor.PerfTests
 {
@@ -32,7 +32,7 @@ namespace Disruptor.PerfTests
         {
             if ("all".Equals(target, StringComparison.OrdinalIgnoreCase))
             {
-                perfTestTypes = typeof(Program).Assembly.GetTypes().Where(x => IsValidTestType(x) && !typeof(IQueueTest).IsAssignableFrom(x)).ToArray();
+                perfTestTypes = typeof(Program).Assembly.GetTypes().Where(x => IsValidTestType(x) && !typeof(IExternalTest).IsAssignableFrom(x)).ToArray();
                 return true;
             }
 
