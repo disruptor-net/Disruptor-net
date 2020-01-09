@@ -13,14 +13,12 @@ namespace Disruptor.PerfTests.Queue
 
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
 
-        private readonly ManualResetEvent _latch;
         private readonly BlockingCollection<PerfEvent> _queue;
         private readonly AdditionEventHandler _eventHandler;
         private readonly Consumer _consumer;
 
         public OneToOneBlockingCollectionThroughputTest()
         {
-            _latch = new ManualResetEvent(false);
             _queue = new BlockingCollection<PerfEvent>(_bufferSize);
             _eventHandler = new AdditionEventHandler();
             _consumer = new Consumer(_queue, _eventHandler);
@@ -30,8 +28,7 @@ namespace Disruptor.PerfTests.Queue
 
         public long Run(ThroughputSessionContext sessionContext)
         {
-            _latch.Reset();
-            _eventHandler.Reset(_latch, _iterations - 1);
+            _eventHandler.Reset(_iterations - 1);
             _consumer.Start();
 
             sessionContext.Start();
@@ -42,7 +39,7 @@ namespace Disruptor.PerfTests.Queue
                 _queue.Add(data);
             }
 
-            _latch.WaitOne();
+            _eventHandler.Latch.WaitOne();
             sessionContext.Stop();
             _consumer.Stop();
 

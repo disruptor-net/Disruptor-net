@@ -9,12 +9,12 @@ namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
     /// UniCast a series of items between 1 publisher and 1 event processor
-    /// 
+    ///
     /// <code>
     /// +----+    +-----+
     /// | P1 |--->| EP1 |
     /// +----+    +-----+
-    /// 
+    ///
     /// Disruptor:
     /// ==========
     ///              track to prevent wrap
@@ -28,7 +28,7 @@ namespace Disruptor.PerfTests.Sequenced
     ///                        |        |
     ///                        +--------+
     ///                          waitFor
-    /// 
+    ///
     /// P1  - Publisher 1
     /// RB  - RingBuffer
     /// SB  - SequenceBarrier
@@ -64,9 +64,8 @@ namespace Disruptor.PerfTests.Sequenced
 
         public long Run(ThroughputSessionContext sessionContext)
         {
-            var signal = new ManualResetEvent(false);
             var expectedCount = _batchEventProcessor.Sequence.Value + _iterations * _batchSize;
-            _handler.Reset(signal, expectedCount);
+            _handler.Reset(expectedCount);
             var processorTask = _executor.Execute(_batchEventProcessor.Run);
             _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
@@ -84,7 +83,7 @@ namespace Disruptor.PerfTests.Sequenced
                 rb.Publish(lo, hi);
             }
 
-            signal.WaitOne();
+            _handler.Latch.WaitOne();
             sessionContext.Stop();
             PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _batchEventProcessor);
             _batchEventProcessor.Halt();

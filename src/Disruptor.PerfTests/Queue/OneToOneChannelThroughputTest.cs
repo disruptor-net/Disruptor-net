@@ -12,14 +12,12 @@ namespace Disruptor.PerfTests.Queue
 
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
 
-        private readonly ManualResetEvent _latch;
         private readonly Channel<PerfEvent> _channel;
         private readonly AdditionEventHandler _eventHandler;
         private readonly Consumer _consumer;
 
         public OneToOneChannelThroughputTest()
         {
-            _latch = new ManualResetEvent(false);
             _channel = Channel.CreateBounded<PerfEvent>(new BoundedChannelOptions(_bufferSize)
             {
                 FullMode = BoundedChannelFullMode.Wait,
@@ -34,8 +32,7 @@ namespace Disruptor.PerfTests.Queue
 
         public long Run(ThroughputSessionContext sessionContext)
         {
-            _latch.Reset();
-            _eventHandler.Reset(_latch, _iterations - 1);
+            _eventHandler.Reset(_iterations - 1);
             _consumer.Start();
 
             sessionContext.Start();
@@ -51,7 +48,7 @@ namespace Disruptor.PerfTests.Queue
                 spinWait.Reset();
             }
 
-            _latch.WaitOne();
+            _eventHandler.Latch.WaitOne();
             sessionContext.Stop();
             _consumer.Stop();
 

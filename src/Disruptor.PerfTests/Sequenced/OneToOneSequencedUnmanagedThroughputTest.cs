@@ -40,7 +40,6 @@ namespace Disruptor.PerfTests.Sequenced
 
         private readonly UnmanagedRingBuffer<PerfValueEvent> _ringBuffer;
         private readonly AdditionEventHandler _eventHandler;
-        private readonly ManualResetEvent _latch;
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
         private readonly IValueBatchEventProcessor<PerfValueEvent> _batchEventProcessor;
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
@@ -48,7 +47,6 @@ namespace Disruptor.PerfTests.Sequenced
 
         public OneToOneSequencedUnmanagedThroughputTest()
         {
-            _latch = new ManualResetEvent(false);
             _eventHandler = new AdditionEventHandler();
             _memory = UnmanagedRingBufferMemory.Allocate(_bufferSize, PerfValueEvent.Size);
             _ringBuffer = new UnmanagedRingBuffer<PerfValueEvent>(_memory, ProducerType.Single, new YieldingWaitStrategy());
@@ -63,8 +61,7 @@ namespace Disruptor.PerfTests.Sequenced
         {
             long expectedCount = _batchEventProcessor.Sequence.Value + _iterations;
 
-            _latch.Reset();
-            _eventHandler.Reset(_latch, expectedCount);
+            _eventHandler.Reset( expectedCount);
             var processorTask = _executor.Execute(_batchEventProcessor.Run);
             _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
@@ -77,7 +74,7 @@ namespace Disruptor.PerfTests.Sequenced
                 _ringBuffer.Publish(sequence);
             }
 
-            _latch.WaitOne();
+            _eventHandler.Latch.WaitOne();
             sessionContext.Stop();
             PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _batchEventProcessor);
             _batchEventProcessor.Halt();

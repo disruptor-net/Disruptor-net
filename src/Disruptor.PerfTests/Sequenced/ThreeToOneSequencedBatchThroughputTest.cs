@@ -73,8 +73,7 @@ namespace Disruptor.PerfTests.Sequenced
         {
             _cyclicBarrier.Reset();
 
-            var latch = new ManualResetEvent(false);
-            _handler.Reset(latch, _batchEventProcessor.Sequence.Value + ((_iterations / _numPublishers) * _numPublishers));
+            _handler.Reset(_batchEventProcessor.Sequence.Value + ((_iterations / _numPublishers) * _numPublishers));
 
             var futures = new Task[_numPublishers];
             for (var i = 0; i < _numPublishers; i++)
@@ -94,7 +93,7 @@ namespace Disruptor.PerfTests.Sequenced
                 futures[i].Wait();
             }
 
-            latch.WaitOne();
+            _handler.Latch.WaitOne();
 
             sessionContext.Stop();
             _batchEventProcessor.Halt();

@@ -7,15 +7,15 @@ namespace Disruptor.PerfTests.Support
     {
         private PaddedLong _value;
         private long _latchSequence;
-        private ManualResetEvent _latch;
+        public readonly ManualResetEvent Latch = new ManualResetEvent(false);
         public PaddedLong BatchesProcessedCount;
 
         public long Value => _value.Value;
 
-        public void Reset(ManualResetEvent latch, long latchSequence)
+        public void Reset(long latchSequence)
         {
             _value.Value = 0;
-            _latch = latch;
+            Latch.Reset();
             _latchSequence = latchSequence;
             BatchesProcessedCount.Value = 0;
         }
@@ -26,7 +26,7 @@ namespace Disruptor.PerfTests.Support
 
             if(_latchSequence == sequence)
             {
-                _latch?.Set();
+                Latch?.Set();
             }
         }
 
@@ -36,7 +36,7 @@ namespace Disruptor.PerfTests.Support
 
             if (_latchSequence == sequence)
             {
-                _latch?.Set();
+                Latch?.Set();
             }
         }
 

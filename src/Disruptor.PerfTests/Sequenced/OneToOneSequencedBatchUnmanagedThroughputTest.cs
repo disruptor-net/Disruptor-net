@@ -66,9 +66,8 @@ namespace Disruptor.PerfTests.Sequenced
 
         public long Run(ThroughputSessionContext sessionContext)
         {
-            var signal = new ManualResetEvent(false);
             var expectedCount = _batchEventProcessor.Sequence.Value + _iterations * _batchSize;
-            _handler.Reset(signal, expectedCount);
+            _handler.Reset(expectedCount);
             var processorTask = _executor.Execute(_batchEventProcessor.Run);
             _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
@@ -86,7 +85,7 @@ namespace Disruptor.PerfTests.Sequenced
                 rb.Publish(lo, hi);
             }
 
-            signal.WaitOne();
+            _handler.Latch.WaitOne();
             sessionContext.Stop();
             PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _batchEventProcessor);
             _batchEventProcessor.Halt();
