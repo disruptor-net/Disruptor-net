@@ -6,6 +6,6 @@ namespace Disruptor.PerfTests.Support
     {
         public static readonly Func<PerfEvent> EventFactory = () => new PerfEvent();
 
-        public long Value { get; set; }
+        public long Value;
     }
 }
