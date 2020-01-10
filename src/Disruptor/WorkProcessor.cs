@@ -1,15 +1,16 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Disruptor
 {
     /// <summary>
     /// A <see cref="WorkProcessor{T}"/> wraps a single <see cref="IWorkHandler{T}"/>, effectively consuming the sequence and ensuring appropriate barriers.
-    /// 
+    ///
     /// Generally, this will be used as part of a <see cref="WorkerPool{T}"/>.
     /// </summary>
     /// <typeparam name="T">event implementation storing the details for the work to processed.</typeparam>
-    public sealed class WorkProcessor<T> : IEventProcessor where T : class 
+    public sealed class WorkProcessor<T> : IEventProcessor where T : class
     {
         private volatile int _running;
         private readonly Sequence _sequence = new Sequence();
@@ -66,6 +67,7 @@ namespace Disruptor
         /// <summary>
         /// It is ok to have another thread re-run this method after a halt().
         /// </summary>
+        [MethodImpl(Constants.AggressiveOptimization)]
         public void Run()
         {
             if (Interlocked.Exchange(ref _running, 1) != 0)

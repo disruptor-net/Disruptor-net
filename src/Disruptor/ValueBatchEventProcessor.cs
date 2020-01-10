@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Disruptor
@@ -143,6 +144,7 @@ namespace Disruptor
             }
         }
 
+        [MethodImpl(Constants.AggressiveOptimization)]
         private void ProcessEvents()
         {
             var nextSequence = _sequence.Value + 1L;
