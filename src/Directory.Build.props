@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>3.6.0</Version>
+    <Version>3.6.1</Version>
     <LastPortedJavaRevision>a18f8198ab94590f0a5ec7c3378ba87f997ea670</LastPortedJavaRevision>
     <Product>Disruptor</Product>
     <Description>A High Performance Inter-Thread Messaging Library</Description>
