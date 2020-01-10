@@ -2,12 +2,12 @@
 
 namespace Disruptor.Benchmarks
 {
-    public class RingBufferBenchmarks
+    public class RingBufferPublicationBenchmarks
     {
         private readonly RingBuffer<Event> _ringBuffer;
         private ISequenceBarrier _sequenceBarrier;
 
-        public RingBufferBenchmarks()
+        public RingBufferPublicationBenchmarks()
         {
             _ringBuffer = new RingBuffer<Event>(() => new Event(), new SingleProducerSequencer(4096, new BusySpinWaitStrategy()));
             _sequenceBarrier = _ringBuffer.NewBarrier();

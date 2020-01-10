@@ -20,8 +20,6 @@ namespace Disruptor
         /// </summary>
         public const int RingBufferPaddingBytes = 128;
 
-        private static readonly int _offsetToArrayData = OffsetToArrayData();
-
         /// <summary>
         /// Gets the ring buffer padding as a number of events.
         /// </summary>
@@ -62,6 +60,7 @@ namespace Disruptor
             {
                 ++r;
             }
+
             return r;
         }
 
@@ -88,6 +87,7 @@ namespace Disruptor
                 var sequence = sequences[i].Value;
                 minimum = Math.Min(minimum, sequence);
             }
+
             return minimum;
         }
 
@@ -107,24 +107,36 @@ namespace Disruptor
             return sequences;
         }
 
+        //
+        // The offset from an array to the start of the array data is assumed to be 8 bytes for BIT32 and 16 bytes for BIT64 (= 2 x sizeof(object)).
+        // This offset was previously computed and stored in a static readonly field but in NetCore this field access introduces
+        // a method call that has a strong negative impact on performance.
+        //
+        // Read<T> returns the element @ address = array + array_data_offset + index x sizeof(object)
+        //                                       = array + (index + 2) x sizeof(object)
+        //
+        // ReadValue<T> returns the element @ address = array + array_data_offset + index x sizeof(T)
+        //                                            = array + sizeof(object) + sizeof(object) + index x sizeof(T)
+        //
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Read<T>(object array, int index)
             where T : class
         {
             IL.DeclareLocals(false, typeof(byte).MakeByRefType());
 
-            Ldarg(nameof(array)); // load the object
+            Ldarg(nameof(array));
             Stloc_0(); // convert the object pointer to a byref
             Ldloc_0(); // load the object pointer as a byref
 
-            Ldarg(nameof(index)); // load the index
-            Sizeof(typeof(object)); // get the size of the object pointer
-            Mul(); // multiply the index by the offset size of the object pointer
+            Ldarg(nameof(index));
+            Ldc_I4_2();
+            Add(); // index + 2
 
-            Ldsfld(new FieldRef(typeof(Util), nameof(_offsetToArrayData))); // get the offset to the start of the array
-            Add(); // add the start offset to the element offset
+            Sizeof(typeof(object));
+            Mul(); // (index + 2) x sizeof(object)
 
-            Add(); // add the start + offset to the byref object pointer
+            Add(); // array + (index + 2) x sizeof(object)
 
             Ldobj(typeof(T)); // load a T value from the computed address
 
@@ -137,47 +149,25 @@ namespace Disruptor
         {
             IL.DeclareLocals(false, typeof(byte).MakeByRefType());
 
-            Ldarg(nameof(array)); // load the object
+            Ldarg(nameof(array));
             Stloc_0(); // convert the object pointer to a byref
             Ldloc_0(); // load the object pointer as a byref
 
-            Ldarg(nameof(index)); // load the index
-            Sizeof(typeof(T)); // get the size of the object pointer
-            Mul(); // multiply the index by the offset size of the object pointer
+            Ldarg(nameof(index));
+            Sizeof(typeof(T));
+            Mul(); // index x sizeof(T)
 
-            Ldsfld(new FieldRef(typeof(Util), nameof(_offsetToArrayData))); // get the offset to the start of the array
-            Add(); // add the start offset to the element offset
+            Sizeof(typeof(object));
+            Add(); // index x sizeof(T) +  sizeof(object)
 
-            Add(); // add the start + offset to the byref object pointer
+            Sizeof(typeof(object));
+            Add(); // index x sizeof(T) +  sizeof(object) +  sizeof(object)
+
+            Add(); // array + index x sizeof(T) +  sizeof(object) +  sizeof(object)
 
             Ret();
 
             throw IL.Unreachable();
-        }
-
-        private static int OffsetToArrayData()
-        {
-            var array = new object[1];
-
-            return (int)ElemOffset(array, ref array[0]);
-        }
-
-        private static IntPtr ElemOffset(object origin, ref object target)
-        {
-            IL.DeclareLocals(
-                false,
-                typeof(byte).MakeByRefType()
-            );
-
-            Ldarg(nameof(target));
-
-            Ldarg(nameof(origin)); // load the object
-            Stloc_0(); // convert the object pointer to a byref
-            Ldloc_0(); // load the object pointer as a byref
-
-            Sub();
-
-            return IL.Return<IntPtr>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -186,15 +176,15 @@ namespace Disruptor
         {
             IL.DeclareLocals(false, typeof(byte).MakeByRefType());
 
-            Ldarg(nameof(pointer)); // load the object
+            Ldarg(nameof(pointer));
             Stloc_0(); // convert the object pointer to a byref
             Ldloc_0(); // load the object pointer as a byref
 
-            Ldarg(nameof(index)); // load the index
-            Ldarg(nameof(size)); // load the size
-            Mul(); // multiply the index by the offset size of the object pointer
+            Ldarg(nameof(index));
+            Ldarg(nameof(size));
+            Mul(); // index x size
 
-            Add(); // add the start + offset to the byref object pointer
+            Add(); // pointer + index x size
 
             Ret();
 
