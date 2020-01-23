@@ -4,8 +4,18 @@ using System.Threading;
 namespace Disruptor
 {
     /// <summary>
-    /// Represent a <see cref="SpinWait"/> that never calls <code>Thread.Sleep(1)</code>.
+    /// Provides support for spin-based waiting, without using <code>Thread.Sleep(1)</code>.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Using this type is less aggressive than a busy-spin. The use of <code>Thread.Sleep(0)</code> allows the thread to give up
+    /// its time-slice, thus preventing starvation.
+    ///</para>
+    /// <para>
+    /// Using this type is more aggressive than a <see cref="SpinWait"/>. <code>Thread.Sleep(1)</code> is not used to avoid generating pauses
+    /// that are not acceptable for many low latency use cases.
+    /// </para>
+    /// </remarks>
     public struct AggressiveSpinWait
     {
         private static readonly bool _isSingleProcessor = Environment.ProcessorCount == 1;

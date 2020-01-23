@@ -3,7 +3,7 @@
     public interface ISequenced
     {
         /// <summary>
-        /// The capacity of the data structure to hold entries.
+        /// Gets the size of the buffer.
         /// </summary>
         int BufferSize { get; }
 
@@ -21,49 +21,65 @@
         long GetRemainingCapacity();
 
         /// <summary>
-        /// Claim the next event in sequence for publishing.
+        /// Claim an available sequence in the ring buffer.
         /// </summary>
-        /// <returns>the claimed sequence value</returns>
+        /// <remarks>
+        /// <para>
+        /// Calls of this method should ensure that they always publish the sequence afterward.
+        /// </para>
+        /// <para>
+        /// If there is not enough space available in the ring buffer, this method will block and spin-wait, which can generate high CPU usage.
+        /// Consider using <see cref="TryNext(out long)"/> with your own waiting policy if you need to change this behavior.
+        /// </para>
+        /// </remarks>
+        /// <returns>The claimed sequence number.</returns>
         long Next();
 
         /// <summary>
-        /// Claim the next n events in sequence for publishing.  This is for batch event producing.  Using batch producing requires a little care and some math.
-        /// <code>
-        ///     int n = 10;
-        ///     long hi = sequencer.next(n);
-        ///     long lo = hi - (n - 1);
-        ///     for (long sequence = lo; sequence &lt;= hi; sequence++) {
-        ///        // Do work.
-        ///     }
-        ///     sequencer.publish(lo, hi);
-        /// </code>
+        /// Claim a range of <paramref name="n"/> available sequences in the ring buffer.
         /// </summary>
-        /// <param name="n">the number of sequences to claim</param>
-        /// <returns>the highest claimed sequence value</returns>
+        /// <remarks>
+        /// <para>
+        /// Calls of this method should ensure that they always publish the sequences afterward.
+        /// </para>
+        /// <para>
+        /// If there is not enough space available in the ring buffer, this method will block and spin-wait, which can generate high CPU usage.
+        /// Consider using <see cref="TryNext(int, out long)"/> with your own waiting policy if you need to change this behavior.
+        /// </para>
+        /// </remarks>
+        /// <param name="n">number of slots to claim</param>
+        /// <returns>The sequence number of the highest slot claimed.</returns>
         long Next(int n);
 
         /// <summary>
-        /// Attempt to claim the next event for publishing.  Will return the
-        /// number of the slot if there is at least one slot available.
-        ///
-        /// Have a look at <see cref="Next()"/> for a description on how to
-        /// use this method.
+        /// Try to claim an available sequence in the ring buffer.
         /// </summary>
-        /// <param name="sequence">the claimed sequence value</param>
-        /// <returns>true of there is space available in the ring buffer, otherwise false.</returns>
+        /// <remarks>
+        /// <para>
+        /// Calls of this method should ensure that they always publish the sequence afterward.
+        /// </para>
+        /// <para>
+        /// If there is not enough space available in the ring buffer, this method will return false.
+        /// </para>
+        /// </remarks>
+        /// <param name="sequence">the next sequence to publish to</param>
+        /// <returns>true if the necessary space in the ring buffer is not available, otherwise false.</returns>
         bool TryNext(out long sequence);
 
         /// <summary>
-        /// Attempt to claim the next <code>n</code> events in sequence for publishing.
-        /// Will return the highest numbered slot if there is at least <code>n</code> slots
-        /// available.
-        ///
-        /// Have a look at <see cref="Next(int)"/> for a description on how to
-        /// use this method.
+        /// Try to claim a range of <paramref name="n"/> available sequences in the ring buffer.
         /// </summary>
-        /// <param name="n">the number of sequences to claim</param>
-        /// <param name="sequence">the claimed sequence value</param>
-        /// <returns>true of there is space available in the ring buffer, otherwise false.</returns>
+        /// <remarks>
+        /// <para>
+        /// Calls of this method should ensure that they always publish the sequences afterward.
+        /// </para>
+        /// <para>
+        /// If there is not enough space available in the ring buffer, this method will return false.
+        /// </para>
+        /// </remarks>
+        /// <param name="n">number of slots to claim</param>
+        /// <param name="sequence">sequence number of the highest slot claimed</param>
+        /// <returns>true if the necessary space in the ring buffer is not available, otherwise false.</returns>
         bool TryNext(int n, out long sequence);
 
         /// <summary>

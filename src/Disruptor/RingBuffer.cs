@@ -75,22 +75,32 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Increment and return the next sequence for the ring buffer.  Calls of this
-        /// method should ensure that they always publish the sequence afterward. E.g.
+        /// Claim an available sequence in the ring buffer.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Calls of this method should ensure that they always publish the sequence afterward.
+        /// </para>
+        /// <para>
+        /// If there is not enough space available in the ring buffer, this method will block and spin-wait using <see cref="AggressiveSpinWait"/>, which can generate high CPU usage.
+        /// Consider using <see cref="TryNext(out long)"/> with your own waiting policy if you need to change this behavior.
+        /// </para>
+        /// <para>
+        /// Example:
         /// <code>
         /// long sequence = ringBuffer.Next();
         /// try
         /// {
-        ///     Event e = ringBuffer[sequence];
-        ///     // Do some work with the event.
+        ///     // Do some work with ringBuffer[sequence];
         /// }
         /// finally
         /// {
         ///     ringBuffer.Publish(sequence);
         /// }
         /// </code>
-        /// </summary>
-        /// <returns>The next sequence to publish to.</returns>
+        /// </para>
+        /// </remarks>
+        /// <returns>The claimed sequence number.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next()
         {
@@ -98,11 +108,37 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// The same functionality as <see cref="Next()"/>, but allows the caller to claim
-        /// the next n sequences.
+        /// Claim a range of <paramref name="n"/> available sequences in the ring buffer.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Calls of this method should ensure that they always publish the sequences afterward.
+        /// </para>
+        /// <para>
+        /// If there is not enough space available in the ring buffer, this method will block and spin-wait using <see cref="AggressiveSpinWait"/>, which can generate high CPU usage.
+        /// Consider using <see cref="TryNext(int, out long)"/> with your own waiting policy if you need to change this behavior.
+        /// </para>
+        /// <para>
+        /// Example:
+        /// <code>
+        /// long hi = ringBuffer.Next(_batchSize);
+        /// long lo = hi - _batchSize + 1;
+        /// try
+        /// {
+        ///     for (long s = lo; s &lt;= hi; s++)
+        ///     {
+        ///         // Do some work with ringBuffer[s];
+        ///     }
+        /// }
+        /// finally
+        /// {
+        ///     ringBuffer.Publish(lo, hi);
+        /// }
+        /// </code>
+        /// </para>
+        /// </remarks>
         /// <param name="n">number of slots to claim</param>
-        /// <returns>sequence number of the highest slot claimed</returns>
+        /// <returns>The sequence number of the highest slot claimed.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next(int n)
         {
@@ -115,8 +151,17 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Increment and return the next sequence for the ring buffer.  Calls of this
-        /// method should ensure that they always publish the sequence afterward. E.g.
+        /// Try to claim an available sequence in the ring buffer.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Calls of this method should ensure that they always publish the sequence afterward.
+        /// </para>
+        /// <para>
+        /// If there is not enough space available in the ring buffer, this method will return false.
+        /// </para>
+        /// <para>
+        /// Example:
         /// <code>
         /// if (!ringBuffer.TryNext(out var sequence))
         /// {
@@ -125,17 +170,15 @@ namespace Disruptor
         /// }
         /// try
         /// {
-        ///     Event e = ringBuffer[sequence];
-        ///     // Do some work with the event.
+        ///     // Do some work with ringBuffer[sequence];
         /// }
         /// finally
         /// {
         ///     ringBuffer.Publish(sequence);
         /// }
         /// </code>
-        /// This method will not block if there is not space available in the ring
-        /// buffer, instead it will return false.
-        /// </summary>
+        /// </para>
+        /// </remarks>
         /// <param name="sequence">the next sequence to publish to</param>
         /// <returns>true if the necessary space in the ring buffer is not available, otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -145,9 +188,38 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// The same functionality as <see cref="TryNext(out long)"/>, but allows the caller to attempt
-        /// to claim the next n sequences.
+        /// Try to claim a range of <paramref name="n"/> available sequences in the ring buffer.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Calls of this method should ensure that they always publish the sequences afterward.
+        /// </para>
+        /// <para>
+        /// If there is not enough space available in the ring buffer, this method will return false.
+        /// </para>
+        /// <para>
+        /// Example:
+        /// <code>
+        /// if (!ringBuffer.TryNext(_batchSize, out var hi))
+        /// {
+        ///     // Handle full ring buffer
+        ///     return;
+        /// }
+        /// long lo = hi - _batchSize + 1;
+        /// try
+        /// {
+        ///     for (long s = lo; s &lt;= hi; s++)
+        ///     {
+        ///         // Do some work with ringBuffer[s];
+        ///     }
+        /// }
+        /// finally
+        /// {
+        ///     ringBuffer.Publish(lo, hi);
+        /// }
+        /// </code>
+        /// </para>
+        /// </remarks>
         /// <param name="n">number of slots to claim</param>
         /// <param name="sequence">sequence number of the highest slot claimed</param>
         /// <returns>true if the necessary space in the ring buffer is not available, otherwise false.</returns>

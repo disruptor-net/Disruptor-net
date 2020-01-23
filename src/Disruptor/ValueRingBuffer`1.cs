@@ -174,8 +174,14 @@ namespace Disruptor
 
         /// <summary>
         /// Increment the ring buffer sequence and return a scope that will publish the sequence on disposing.
-        /// This method will block until there is space available in the ring buffer.
-        /// buffer
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// If there is not enough space available in the ring buffer, this method will block and spin-wait using <see cref="AggressiveSpinWait"/>, which can generate high CPU usage.
+        /// Consider using <see cref="TryPublishEvent()"/> with your own waiting policy if you need to change this behavior.
+        /// </para>
+        /// <para>
+        /// Example:
         /// <code>
         /// using (var scope = _ringBuffer.PublishEvent())
         /// {
@@ -183,7 +189,8 @@ namespace Disruptor
         ///     // Do some work with the event.
         /// }
         /// </code>
-        /// </summary>
+        /// </para>
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnpublishedEventScope PublishEvent()
         {
@@ -193,7 +200,13 @@ namespace Disruptor
 
         /// <summary>
         /// Try to increment the ring buffer sequence and return a scope that will publish the sequence on disposing.
-        /// This method will not block if there is not space available in the ring buffer.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This method will not block if there is not enough space available in the ring buffer.
+        /// </para>
+        /// <para>
+        /// Example:
         /// <code>
         /// using (var scope = _ringBuffer.TryPublishEvent())
         /// {
@@ -204,7 +217,8 @@ namespace Disruptor
         ///     // Do some work with the event.
         /// }
         /// </code>
-        /// </summary>
+        /// </para>
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NullableUnpublishedEventScope TryPublishEvent()
         {
@@ -214,7 +228,14 @@ namespace Disruptor
 
         /// <summary>
         /// Increment the ring buffer sequence by <paramref name="count"/> and return a scope that will publish the sequences on disposing.
-        /// This method will block until there is space available in the ring buffer.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// If there is not enough space available in the ring buffer, this method will block and spin-wait using <see cref="AggressiveSpinWait"/>, which can generate high CPU usage.
+        /// Consider using <see cref="TryPublishEvents(int)"/> with your own waiting policy if you need to change this behavior.
+        /// </para>
+        /// <para>
+        /// Example:
         /// <code>
         /// using (var scope = _ringBuffer.PublishEvents(2))
         /// {
@@ -223,7 +244,8 @@ namespace Disruptor
         ///     // Do some work with the events.
         /// }
         /// </code>
-        /// </summary>
+        /// </para>
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnpublishedEventBatchScope PublishEvents(int count)
         {
@@ -233,7 +255,13 @@ namespace Disruptor
 
         /// <summary>
         /// Try to increment the ring buffer sequence by <paramref name="count"/> and return a scope that will publish the sequences on disposing.
-        /// This method will not block if there is not space available in the ring buffer.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This method will not block when there is not enough space available in the ring buffer.
+        /// </para>
+        /// <para>
+        /// Example:
         /// <code>
         /// using (var scope = _ringBuffer.TryPublishEvent(2))
         /// {
@@ -245,7 +273,8 @@ namespace Disruptor
         ///     // Do some work with the events.
         /// }
         /// </code>
-        /// </summary>
+        /// </para>
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NullableUnpublishedEventBatchScope TryPublishEvents(int count)
         {
