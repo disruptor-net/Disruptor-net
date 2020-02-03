@@ -2,20 +2,20 @@
 
   <PropertyGroup>
     <AssemblyName>Disruptor.HeapWalker</AssemblyName>
-	<RootNamespace>Disruptor.HeapWalker</RootNamespace>
-	<Title>Disruptor.HeapWalker</Title>
-    <TargetFramework>net47</TargetFramework>
-	<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-	<OutputType>exe</OutputType>
+    <RootNamespace>Disruptor.HeapWalker</RootNamespace>
+    <Title>Disruptor.HeapWalker</Title>
+    <TargetFramework>net48</TargetFramework>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <OutputType>exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
-	<ProjectReference Include="..\Disruptor.Tests\Disruptor.Tests.csproj" />
+    <ProjectReference Include="..\Disruptor\Disruptor.csproj"/>
+    <ProjectReference Include="..\Disruptor.Tests\Disruptor.Tests.csproj"/>
   </ItemGroup>
-  
+
   <ItemGroup>
-    <PackageReference Include="Microsoft.Diagnostics.Runtime" Version="0.9.180305.1" />
+    <PackageReference Include="Microsoft.Diagnostics.Runtime" Version="0.9.180305.1"/>
   </ItemGroup>
-  
+
 </Project>
