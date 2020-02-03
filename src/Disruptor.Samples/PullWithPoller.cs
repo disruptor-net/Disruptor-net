@@ -1,4 +1,4 @@
-﻿namespace Disruptor.Tests.Example
+﻿namespace Disruptor.Samples
 {
     public class PullWithPoller
     {

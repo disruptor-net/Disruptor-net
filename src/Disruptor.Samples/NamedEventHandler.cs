@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace Disruptor.Tests.Example
+namespace Disruptor.Samples
 {
     public class NamedEventHandler<T> : IEventHandler<T>, ILifecycleAware
     {

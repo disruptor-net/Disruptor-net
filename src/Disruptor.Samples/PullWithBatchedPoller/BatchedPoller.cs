@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Disruptor.Tests.Example.PullWithBatchedPoller
+namespace Disruptor.Samples.PullWithBatchedPoller
 {
     public class BatchedPoller<T> where T : class 
     {

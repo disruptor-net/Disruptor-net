@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Disruptor.Tests.Example.PullWithBatchedPoller
+﻿namespace Disruptor.Samples.PullWithBatchedPoller
 {
     public class PullWithBatchedPoller
     {

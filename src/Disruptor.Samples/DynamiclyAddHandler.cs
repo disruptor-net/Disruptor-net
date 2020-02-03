@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 
-namespace Disruptor.Tests.Example
+namespace Disruptor.Samples
 {
     public class DynamiclyAddHandler
     {

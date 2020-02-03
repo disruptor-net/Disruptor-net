@@ -14,20 +14,18 @@ namespace Disruptor.Samples.Wiki.GettingStarted
 
         public void ProduceUsingRawApi(ReadOnlyMemory<byte> input)
         {
-            // Grab the next sequence
+            // (1) Claim the next sequence
             var sequence = _ringBuffer.Next();
             try
             {
-                // Get the event in the Disruptor for the sequence
+                // (2) Get and configure the event for the sequence
                 var data = _ringBuffer[sequence];
-
-                // Fill with data
                 data.Id = MemoryMarshal.Read<int>(input.Span);
                 data.Value = MemoryMarshal.Read<double>(input.Span.Slice(4));
             }
             finally
             {
-                // Publish the event
+                // (3) Publish the event
                 _ringBuffer.Publish(sequence);
             }
         }
@@ -37,12 +35,30 @@ namespace Disruptor.Samples.Wiki.GettingStarted
             using (var scope = _ringBuffer.PublishEvent())
             {
                 var data = scope.Event();
-
-                // Fill with data
                 data.Id = MemoryMarshal.Read<int>(input.Span);
                 data.Value = MemoryMarshal.Read<double>(input.Span.Slice(4));
 
                 // The event is published at the end of the scope
+            }
+        }
+
+        public void ProduceUsingCustomWaitStrategy(ReadOnlyMemory<byte> input)
+        {
+            // Claim the next sequence
+            var sequence = _ringBuffer.Next();
+            try
+            {
+                // Get the event for the sequence
+                var data = _ringBuffer[sequence];
+
+                // Configure the event
+                data.Id = MemoryMarshal.Read<int>(input.Span);
+                data.Value = MemoryMarshal.Read<double>(input.Span.Slice(4));
+            }
+            finally
+            {
+                // Publish the event
+                _ringBuffer.Publish(sequence);
             }
         }
     }
