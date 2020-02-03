@@ -44,11 +44,10 @@ public class SampleEventHandler : IEventHandler<SampleEvent>
 Then you can setup the Disruptor:
 
 ```cs
-// Construct the Disruptor
 var disruptor = new Disruptor<SampleEvent>(() => new SampleEvent(), bufferSize: 1024);
-// Connect the handler
+
 disruptor.HandleEventsWith(new SampleEventHandler());
-// Start the Disruptor
+
 disruptor.Start();
 ```
 
@@ -62,6 +61,8 @@ using (var scope = disruptor.PublishEvent())
     data.Value = 1.1;
 }
 ```
+
+Other event [publication options](https://github.com/disruptor-net/Disruptor-net/wiki/Publication-Options) are described in the Wiki.
 
 ## Roadmap
 
