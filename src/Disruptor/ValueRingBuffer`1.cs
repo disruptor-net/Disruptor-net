@@ -300,7 +300,7 @@ namespace Disruptor
             public long Sequence => _sequence;
 
             /// <summary>
-            /// Gets the event for the associated sequence number.
+            /// Gets the event at the claimed sequence number.
             /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ref T Event() => ref _ringBuffer[_sequence];
@@ -333,7 +333,7 @@ namespace Disruptor
             public long EndSequence => _endSequence;
 
             /// <summary>
-            /// Gets the event for the associated sequence number.
+            /// Gets the event at the specified index in the claimed sequence batch.
             /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ref T Event(int index) => ref _ringBuffer[_startSequence + index];
@@ -366,7 +366,7 @@ namespace Disruptor
             public bool HasEvent => _ringBuffer != null;
 
             /// <summary>
-            /// Gets the event for the associated sequence number.
+            /// Gets the event at the claimed sequence number.
             /// </summary>
             /// <returns>
             /// true if the sequence number was successfully claimed, false otherwise.
@@ -406,7 +406,7 @@ namespace Disruptor
             public long Sequence => _sequence;
 
             /// <summary>
-            /// Gets the event for the associated sequence number.
+            /// Gets the event at the claimed sequence number.
             /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ref T Event() => ref _ringBuffer[_sequence];
@@ -478,7 +478,7 @@ namespace Disruptor
             public long EndSequence => _endSequence;
 
             /// <summary>
-            /// Gets the event for the associated sequence number and the specified index.
+            /// Gets the event at the specified index in the claimed sequence batch.
             /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ref T Event(int index) => ref _ringBuffer[_startSequence + index];
