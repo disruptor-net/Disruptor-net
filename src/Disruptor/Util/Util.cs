@@ -107,17 +107,22 @@ namespace Disruptor
             return sequences;
         }
 
-        //
-        // The offset from an array to the start of the array data is assumed to be 8 bytes for BIT32 and 16 bytes for BIT64 (= 2 x sizeof(object)).
-        // This offset was previously computed and stored in a static readonly field but in NetCore this field access introduces
-        // a method call that has a strong negative impact on performance.
-        //
-        // Read<T> returns the element @ address = array + array_data_offset + index x sizeof(object)
-        //                                       = array + (index + 2) x sizeof(object)
-        //
-        // ReadValue<T> returns the element @ address = array + array_data_offset + index x sizeof(T)
-        //                                            = array + sizeof(object) + sizeof(object) + index x sizeof(T)
-        //
+        // +----------+-----------------+--------------------+
+        // | Runtime  | ArrayDataOffset | OffsetToStringData |
+        // +----------+-----------------+--------------------+
+        // | Core-x32 |               8 |                  8 |
+        // | Core-x64 |              16 |                 12 |
+        // | Mono-x32 |              16 |                 12 |
+        // | Mono-x64 |              32 |                 20 |
+        // +----------+-----------------+--------------------+
+
+        public static unsafe int ArrayDataOffset
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => sizeof(IntPtr) == 4
+                ? RuntimeHelpers.OffsetToStringData == 8 ? 8 : 16
+                : RuntimeHelpers.OffsetToStringData == 12 ? 16 : 32;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Read<T>(object array, int index)
@@ -130,13 +135,13 @@ namespace Disruptor
             Ldloc_0(); // load the object pointer as a byref
 
             Ldarg(nameof(index));
-            Ldc_I4_2();
-            Add(); // index + 2
-
             Sizeof(typeof(object));
-            Mul(); // (index + 2) x sizeof(object)
+            Mul(); // index x sizeof(object)
 
-            Add(); // array + (index + 2) x sizeof(object)
+            Call(MethodRef.PropertyGet(typeof(Util), nameof(ArrayDataOffset)));
+            Add(); // index x sizeof(object) +  ArrayDataOffset
+
+            Add(); // array + index x sizeof(object) + ArrayDataOffset
 
             Ldobj(typeof(T)); // load a T value from the computed address
 
@@ -157,13 +162,10 @@ namespace Disruptor
             Sizeof(typeof(T));
             Mul(); // index x sizeof(T)
 
-            Sizeof(typeof(object));
-            Add(); // index x sizeof(T) +  sizeof(object)
+            Call(MethodRef.PropertyGet(typeof(Util), nameof(ArrayDataOffset)));
+            Add(); // index x sizeof(T) +  ArrayDataOffset
 
-            Sizeof(typeof(object));
-            Add(); // index x sizeof(T) +  sizeof(object) +  sizeof(object)
-
-            Add(); // array + index x sizeof(T) +  sizeof(object) +  sizeof(object)
+            Add(); // array + index x sizeof(T) +  ArrayDataOffset
 
             Ret();
 

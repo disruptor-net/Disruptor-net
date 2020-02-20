@@ -1,7 +1,10 @@
+using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Disruptor.Tests.Support;
+using InlineIL;
 using NUnit.Framework;
+using static InlineIL.IL.Emit;
 
 namespace Disruptor.Tests.Utils
 {
@@ -186,6 +189,36 @@ namespace Disruptor.Tests.Utils
 
             [FieldOffset(11)]
             public int Value;
+        }
+
+        [Test]
+        public void ShouldGetArrayDataOffset()
+        {
+            Console.WriteLine(Environment.Is64BitProcess ? "64BIT" : "32BIT");
+
+            Assert.AreEqual(ComputeArrayDataOffset(), Util.ArrayDataOffset);
+        }
+
+        private static int ComputeArrayDataOffset()
+        {
+            var array = new object[1];
+
+            return (int)GetElementOffset(array, ref array[0]);
+        }
+
+        private static IntPtr GetElementOffset(object origin, ref object target)
+        {
+            IL.DeclareLocals(false, typeof(byte).MakeByRefType());
+
+            Ldarg(nameof(target));
+
+            Ldarg(nameof(origin)); // load the object
+            Stloc_0(); // convert the object pointer to a byref
+            Ldloc_0(); // load the object pointer as a byref
+
+            Sub();
+
+            return IL.Return<IntPtr>();
         }
     }
 }
