@@ -7,7 +7,15 @@
     <PackageId>Disruptor</PackageId>
     <NoWarn>1701;1702;1591</NoWarn>
     <LangVersion>latest</LangVersion>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
   
   <ItemGroup>
     <PackageReference Include="System.Reflection.Emit" Version="4.0.1" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
