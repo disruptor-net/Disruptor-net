@@ -10,7 +10,8 @@ namespace Disruptor
     /// Generally, this will be used as part of a <see cref="WorkerPool{T}"/>.
     /// </summary>
     /// <typeparam name="T">event implementation storing the details for the work to processed.</typeparam>
-    public sealed class WorkProcessor<T> : IEventProcessor where T : class
+    public sealed class WorkProcessor<T> : IEventProcessor
+        where T : class
     {
         private volatile int _running;
         private readonly Sequence _sequence = new Sequence();
@@ -18,7 +19,7 @@ namespace Disruptor
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IWorkHandler<T> _workHandler;
         private readonly IExceptionHandler<T> _exceptionHandler;
-        private readonly ISequence _workSequence;
+        private readonly Sequence _workSequence;
         private readonly IEventReleaser _eventReleaser;
         private readonly ITimeoutHandler _timeoutHandler;
 
@@ -31,7 +32,7 @@ namespace Disruptor
         /// <param name="exceptionHandler">exceptionHandler to be called back when an error occurs</param>
         /// <param name="workSequence">workSequence from which to claim the next event to be worked on.  It should always be initialised
         /// as <see cref="Disruptor.Sequence.InitialCursorValue"/></param>
-        public WorkProcessor(RingBuffer<T> ringBuffer, ISequenceBarrier sequenceBarrier, IWorkHandler<T> workHandler, IExceptionHandler<T> exceptionHandler, ISequence workSequence)
+        public WorkProcessor(RingBuffer<T> ringBuffer, ISequenceBarrier sequenceBarrier, IWorkHandler<T> workHandler, IExceptionHandler<T> exceptionHandler, Sequence workSequence)
         {
             _ringBuffer = ringBuffer;
             _sequenceBarrier = sequenceBarrier;
@@ -45,13 +46,12 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Return a reference to the <see cref="IEventProcessor.Sequence"/> being used by this <see cref="IEventProcessor"/>
+        /// <see cref="IEventProcessor.Sequence"/>.
         /// </summary>
         public ISequence Sequence => _sequence;
 
         /// <summary>
-        /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
-        /// It will call <see cref="ISequenceBarrier.Alert"/> to notify the thread to check status.
+        /// <see cref="IEventProcessor.Halt"/>.
         /// </summary>
         public void Halt()
         {
@@ -60,12 +60,20 @@ namespace Disruptor
         }
 
         /// <summary>
+        /// Signal that this <see cref="WorkProcessor{T}"/> should stop when it has finished processing its work sequence.
+        /// </summary>
+        public void HaltLater()
+        {
+            _running = 0;
+        }
+
+        /// <summary>
         /// <see cref="IEventProcessor.IsRunning"/>
         /// </summary>
         public bool IsRunning => _running == 1;
 
         /// <summary>
-        /// It is ok to have another thread re-run this method after a halt().
+        /// <see cref="IEventProcessor.Run"/>.
         /// </summary>
         [MethodImpl(Constants.AggressiveOptimization)]
         public void Run()
@@ -74,6 +82,7 @@ namespace Disruptor
             {
                 throw new InvalidOperationException("Thread is already running");
             }
+
             _sequenceBarrier.ClearAlert();
 
             NotifyStart();
@@ -86,14 +95,26 @@ namespace Disruptor
             {
                 try
                 {
+                    // if previous sequence was processed - fetch the next sequence and set
+                    // that we have successfully processed the previous sequence
+                    // typically, this will be true
+                    // this prevents the sequence getting too far forward if an exception
+                    // is thrown from the WorkHandler
+
                     if (processedSequence)
                     {
+                        if (_running == 0)
+                        {
+                            _sequenceBarrier.Alert();
+                            _sequenceBarrier.CheckAlert();
+                        }
                         processedSequence = false;
                         do
                         {
                             nextSequence = _workSequence.Value + 1L;
                             _sequence.SetValue(nextSequence - 1L);
-                        } while (!_workSequence.CompareAndSet(nextSequence - 1L, nextSequence));
+                        }
+                        while (!_workSequence.CompareAndSet(nextSequence - 1L, nextSequence));
                     }
 
                     if (cachedAvailableSequence >= nextSequence)
