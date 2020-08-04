@@ -1,14 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project>
+
   <PropertyGroup>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>8.0</LangVersion>
     <Prefer32Bit>false</Prefer32Bit>
     <DefaultItemExcludes>$(DefaultItemExcludes);*.DotSettings;*.ncrunchproject</DefaultItemExcludes>
     <DebugType>embedded</DebugType>
     <IsPackable>false</IsPackable>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)Disruptor.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -16,19 +18,13 @@
     <LastPortedJavaRevision>a18f8198ab94590f0a5ec7c3378ba87f997ea670</LastPortedJavaRevision>
     <Product>Disruptor</Product>
     <Description>A High Performance Inter-Thread Messaging Library</Description>
-    <Authors>Olivier Deheurles, Mendel Monteiro Beckerman, Antoine Blanchet, Olivier Coanet</Authors>
+    <Authors>Olivier Deheurles;Mendel Monteiro Beckerman;Antoine Blanchet;Olivier Coanet</Authors>
     <PackageProjectUrl>https://github.com/disruptor-net/Disruptor-net</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>Concurrency;Disruptor;Latency;Throughput;Queue</PackageTags>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(APPVEYOR)' == 'True'">
-    <Deterministic>true</Deterministic>
-    <DeterministicSourcePaths>true</DeterministicSourcePaths>
-    <PackageVersion Condition="'$(PackageVersion)' == ''">$(Version)</PackageVersion>
-    <PackageVersion Condition="'$(APPVEYOR_REPO_TAG)' == 'false' and '$(APPVEYOR_BUILD_NUMBER)' != ''">$(PackageVersion)-pre$(APPVEYOR_BUILD_NUMBER)</PackageVersion>
-    <PackageVersion Condition="'$(APPVEYOR_REPO_TAG)' == 'true' and '$(APPVEYOR_REPO_TAG_NAME)' != ''">$(APPVEYOR_REPO_TAG_NAME)</PackageVersion>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(TF_BUILD)' != ''">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(NCrunch)' == '1'">
@@ -37,8 +33,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JetBrains.Annotations" Version="2018.2.1" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All" />
+    <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
