@@ -3,7 +3,7 @@
     public interface ISequenced
     {
         /// <summary>
-        /// Gets the size of the buffer.
+        /// Gets the capacity of the data structure to hold entries.
         /// </summary>
         int BufferSize { get; }
 
