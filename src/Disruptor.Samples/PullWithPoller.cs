@@ -8,7 +8,7 @@
             var poller = ringBuffer.NewPoller();
 
             var value = GetNextValue(poller);
-            
+
             // Value could be null if no events are available.
             if (null != value)
             {
@@ -21,7 +21,7 @@
             var output = new object[1];
             poller.Poll((ev, sequence, endOfBatch) =>
                         {
-                            output[0] = ev.Data;
+                            output[0] = ev.CopyOfData();
                             return false;
                         });
             return output[0];

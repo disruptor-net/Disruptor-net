@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class EventPollerTest
+    public class EventPollerTests
     {
         [Test]
         public void ShouldPollForEvents()
@@ -15,22 +15,20 @@ namespace Disruptor.Tests
 
             bool Handler(object e, long s, bool b) => false;
 
-            var data = new object[16];
-            var provider = new DataProvider(data);
+            var provider = new ArrayDataProvider<object>(new object[16]);
+            provider.Data[0] = new object();
 
             var poller = sequencer.NewPoller(provider, gatingSequence);
-            var evt = new object();
-            data[0] = evt;
 
-            Assert.That(poller.Poll(Handler), Is.EqualTo(PollState.Idle));
+            Assert.That(poller.Poll(Handler), Is.EqualTo(EventPoller.PollState.Idle));
 
             // Publish Event.
             sequencer.Publish(sequencer.Next());
-            Assert.That(poller.Poll(Handler), Is.EqualTo(PollState.Gating));
+            Assert.That(poller.Poll(Handler), Is.EqualTo(EventPoller.PollState.Gating));
 
             gatingSequence.IncrementAndGet();
 
-            Assert.That(poller.Poll(Handler), Is.EqualTo(PollState.Processing));
+            Assert.That(poller.Poll(Handler), Is.EqualTo(EventPoller.PollState.Processing));
         }
 
         [Test]
@@ -64,18 +62,6 @@ namespace Disruptor.Tests
             poller.Poll(Handler);
 
             Assert.That(events.Count, Is.EqualTo(4));
-        }
-
-        private class DataProvider : IDataProvider<object>
-        {
-            private readonly object[] _data;
-
-            public DataProvider(object[] data)
-            {
-                _data = data;
-            }
-
-            public object this[long sequence] => _data[sequence];
         }
     }
 }

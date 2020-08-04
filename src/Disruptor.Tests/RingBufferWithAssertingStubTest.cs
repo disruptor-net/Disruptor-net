@@ -145,6 +145,12 @@ namespace Disruptor.Tests
             {
                 return null;
             }
+
+            public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params ISequence[] gatingSequences)
+                where T : struct
+            {
+                return null;
+            }
         }
     }
 }

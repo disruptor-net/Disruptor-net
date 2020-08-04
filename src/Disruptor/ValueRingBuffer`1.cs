@@ -173,6 +173,16 @@ namespace Disruptor
         }
 
         /// <summary>
+        /// Creates an event poller for this ring buffer gated on the supplied sequences.
+        /// </summary>
+        /// <param name="gatingSequences">gatingSequences to be gated on.</param>
+        /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
+        public ValueEventPoller<T> NewPoller(params ISequence[] gatingSequences)
+        {
+            return _sequencerDispatcher.Sequencer.NewPoller(this, gatingSequences);
+        }
+
+        /// <summary>
         /// Increment the ring buffer sequence and return a scope that will publish the sequence on disposing.
         /// </summary>
         /// <remarks>

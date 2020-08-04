@@ -20,7 +20,7 @@ namespace Disruptor
 
         /// <summary>
         /// Add the specified gating sequences to this instance of the Disruptor.  They will
-        /// safely and atomically added to the list of gating sequences. 
+        /// safely and atomically added to the list of gating sequences.
         /// </summary>
         /// <param name="gatingSequences">The sequences to add.</param>
         void AddGatingSequences(params ISequence[] gatingSequences);
@@ -64,5 +64,12 @@ namespace Disruptor
         /// gating sequences.
         /// </summary>
         EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences);
+
+        /// <summary>
+        /// Creates an event poller for this sequence that will use the supplied data provider and
+        /// gating sequences.
+        /// </summary>
+        ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params ISequence[] gatingSequences)
+            where T : struct;
     }
 }

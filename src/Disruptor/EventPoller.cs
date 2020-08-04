@@ -1,86 +1,32 @@
-using System;
-
 namespace Disruptor
 {
-    public enum PollState
+    public static class EventPoller
     {
-        Processing,
-        Gating,
-        Idle
-    }
-
-    /// <summary>
-    /// Experimental poll-based interface for the Disruptor.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class EventPoller<T>
-    {
-        private readonly IDataProvider<T> _dataProvider;
-        private readonly ISequencer _sequencer;
-        private readonly ISequence _sequence;
-        private readonly ISequence _gatingSequence;
-
-        public EventPoller(IDataProvider<T> dataProvider,
-                           ISequencer sequencer,
-                           ISequence sequence,
-                           ISequence gatingSequence)
+        public enum PollState
         {
-            _dataProvider = dataProvider;
-            _sequencer = sequencer;
-            _sequence = sequence;
-            _gatingSequence = gatingSequence;
+            Processing,
+            Gating,
+            Idle
         }
 
-        public PollState Poll(Func<T, long, bool, bool> eventHandler)
-        {
-            long currentSequence = _sequence.Value;
-            long nextSequence = currentSequence + 1;
-            long availableSequence = _sequencer.GetHighestPublishedSequence(nextSequence, _gatingSequence.Value);
+        public delegate bool Handler<T>(T data, long sequence, bool endOfBatch);
 
-            if (nextSequence <= availableSequence)
-            {
-                bool processNextEvent;
-                long processedSequence = currentSequence;
+        public delegate bool ValueHandler<T>(ref T data, long sequence, bool endOfBatch)
+            where T : struct;
 
-                try
-                {
-                    do
-                    {
-                        T @event = _dataProvider[nextSequence];
-                        processNextEvent = eventHandler(@event, nextSequence, nextSequence == availableSequence);
-                        processedSequence = nextSequence;
-                        nextSequence++;
-
-                    } while (nextSequence <= availableSequence & processNextEvent);
-                }
-                finally
-                {
-                    _sequence.SetValue(processedSequence);
-                }
-
-                return PollState.Processing;
-            }
-            else if (_sequencer.Cursor >= nextSequence)
-            {
-                return PollState.Gating;
-            }
-            else
-            {
-                return PollState.Idle;
-            }
-        }
-
-        public static EventPoller<T> NewInstance(IDataProvider<T> dataProvider,
-                                                    ISequencer sequencer,
-                                                    Sequence sequence,
-                                                    Sequence cursorSequence,
-                                                    params ISequence[] gatingSequences)
+        public static EventPoller<T> Create<T>(IDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
         {
             var gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
 
             return new EventPoller<T>(dataProvider, sequencer, sequence, gatingSequence);
         }
 
-        public ISequence Sequence => _sequence;
+        public static ValueEventPoller<T> Create<T>(IValueDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
+            where T : struct
+        {
+            var gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
+
+            return new ValueEventPoller<T>(dataProvider, sequencer, sequence, gatingSequence);
+        }
     }
 }

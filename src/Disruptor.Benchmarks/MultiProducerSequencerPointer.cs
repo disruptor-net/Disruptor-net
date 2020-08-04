@@ -327,11 +327,20 @@ namespace Disruptor.Benchmarks
         }
 
         /// <summary>
-        /// <see cref="ISequencer.NewPoller{T}"/>.
+        /// <see cref="ISequencer.NewPoller{T}(IDataProvider{T}, ISequence[])"/>.
         /// </summary>
         public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
         {
-            return EventPoller<T>.NewInstance(provider, this, new Sequence(), _cursor, gatingSequences);
+            return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
+        }
+
+        /// <summary>
+        /// <see cref="ISequencer.NewPoller{T}(IValueDataProvider{T}, ISequence[])"/>.
+        /// </summary>
+        public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params ISequence[] gatingSequences)
+            where T : struct
+        {
+            return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
         }
     }
 }

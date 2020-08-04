@@ -2,7 +2,7 @@
 
 namespace Disruptor.Samples.PullWithBatchedPoller
 {
-    public class BatchedPoller<T> where T : class 
+    public class BatchedPoller<T> where T : class
     {
         private readonly EventPoller<DataEvent> _poller;
         private readonly int _maxBatchSize;
@@ -32,7 +32,7 @@ namespace Disruptor.Samples.PullWithBatchedPoller
             return _polledData.GetMsgCount() > 0 ? _polledData.PollMessage() : null;
         }
 
-        private PollState LoadNextValues(EventPoller<DataEvent> poller, BatchedData batch)
+        private EventPoller.PollState LoadNextValues(EventPoller<DataEvent> poller, BatchedData batch)
         {
             return poller.Poll((ev, sequence, endOfBatch) =>
                                {
