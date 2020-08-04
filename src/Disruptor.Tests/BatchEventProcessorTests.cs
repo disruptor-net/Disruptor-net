@@ -71,7 +71,7 @@ namespace Disruptor.Tests
 
             batchEventProcessor.Halt();
 
-            Assert.IsTrue(task.Wait(500));
+            Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
         }
 
         [Test]
@@ -93,7 +93,7 @@ namespace Disruptor.Tests
 
             batchEventProcessor.Halt();
 
-            Assert.IsTrue(task.Wait(500));
+            Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
         }
 
         [Test]
@@ -109,11 +109,11 @@ namespace Disruptor.Tests
             _ringBuffer.Publish(_ringBuffer.Next());
 
             var task = Task.Run(() => batchEventProcessor.Run());
-            signal.Wait();
+            Assert.IsTrue(signal.Wait(TimeSpan.FromSeconds(2)));
 
             batchEventProcessor.Halt();
 
-            Assert.IsTrue(task.Wait(500));
+            Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
             Assert.That(batchSizes, Is.EqualTo(new List<long> { 3, 2, 1 }));
         }
 
