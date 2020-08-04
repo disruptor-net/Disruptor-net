@@ -6,7 +6,8 @@
     <IsPackable>true</IsPackable>
     <PackageId>Disruptor</PackageId>
     <NoWarn>1701;1702;1591</NoWarn>
-    <LangVersion>latest</LangVersion>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Disruptor.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   
   <ItemGroup>
@@ -14,5 +15,5 @@
     <PackageReference Include="Fody" Version="3.2.4" PrivateAssets="all" />
     <PackageReference Include="InlineIL.Fody" Version="0.7.0" PrivateAssets="all" />
   </ItemGroup>
-
+  
 </Project>

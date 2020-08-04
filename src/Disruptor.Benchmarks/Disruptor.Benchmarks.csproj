@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFrameworks>net48;netcoreapp3.1</TargetFrameworks>
     <OutputType>exe</OutputType>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Disruptor.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
