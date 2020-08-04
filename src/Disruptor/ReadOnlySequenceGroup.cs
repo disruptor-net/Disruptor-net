@@ -6,13 +6,13 @@ namespace Disruptor
     /// <summary>
     /// Hides a group of Sequences behind a single Sequence
     /// </summary>
-    internal sealed class FixedSequenceGroup : ISequence
+    internal sealed class ReadOnlySequenceGroup : ISequence
     {
         private readonly ISequence[] _sequences;
 
         /// <summary> </summary>
         /// <param name="sequences">sequences the list of sequences to be tracked under this sequence group</param>
-        public FixedSequenceGroup(ISequence[] sequences)
+        public ReadOnlySequenceGroup(ISequence[] sequences)
         {
             _sequences = sequences.ToArray();
         }

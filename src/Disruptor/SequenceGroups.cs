@@ -4,11 +4,26 @@ using System.Threading;
 namespace Disruptor
 {
     /// <summary>
-    /// Provides static methods for managing a <see cref="SequenceGroup"/> object
+    /// Provides static methods for managing groups of <see cref="ISequence"/>.
     /// </summary>
     internal static class SequenceGroups
     {
-        public static void AddSequences(ref ISequence[] sequences, ICursored cursor, params ISequence[] sequencesToAdd) 
+        public static ISequence CreateReadOnlySequence(Sequence cursorSequence, ISequence[] dependentSequences)
+        {
+            if (dependentSequences.Length == 0)
+            {
+                return cursorSequence;
+            }
+
+            if (dependentSequences.Length == 1)
+            {
+                return dependentSequences[0];
+            }
+
+            return new ReadOnlySequenceGroup(dependentSequences);
+        }
+
+        public static void AddSequences(ref ISequence[] sequences, ICursored cursor, params ISequence[] sequencesToAdd)
         {
             long cursorSequence;
             ISequence[] updatedSequences;

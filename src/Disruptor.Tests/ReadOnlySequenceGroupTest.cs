@@ -3,14 +3,14 @@
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class FixedSequenceGroupTest
+    public class ReadOnlySequenceGroupTest
     {
         [Test]
         public void ShouldReturnMinimumOf2Sequences()
         {
             var sequence1 = new Sequence(34);
             var sequnece2 = new Sequence(47);
-            var group = new FixedSequenceGroup(new[] { sequence1, sequnece2 });
+            var group = new ReadOnlySequenceGroup(new[] { sequence1, sequnece2 });
 
             Assert.That(group.Value, Is.EqualTo(34L));
             sequence1.SetValue(35);

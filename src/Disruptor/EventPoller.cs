@@ -72,23 +72,11 @@ namespace Disruptor
 
         public static EventPoller<T> NewInstance(IDataProvider<T> dataProvider,
                                                     ISequencer sequencer,
-                                                    ISequence sequence,
-                                                    ISequence cursorSequence,
+                                                    Sequence sequence,
+                                                    Sequence cursorSequence,
                                                     params ISequence[] gatingSequences)
         {
-            ISequence gatingSequence;
-            if (gatingSequences.Length == 0)
-            {
-                gatingSequence = cursorSequence;
-            }
-            else if (gatingSequences.Length == 1)
-            {
-                gatingSequence = gatingSequences[0];
-            }
-            else
-            {
-                gatingSequence = new FixedSequenceGroup(gatingSequences);
-            }
+            var gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
 
             return new EventPoller<T>(dataProvider, sequencer, sequence, gatingSequence);
         }

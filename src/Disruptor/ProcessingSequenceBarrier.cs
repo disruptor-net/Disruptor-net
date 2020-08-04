@@ -26,8 +26,7 @@ namespace Disruptor
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
             _cursorSequence = cursorSequence;
-
-            _dependentSequence = 0 == dependentSequences.Length ? (ISequence)cursorSequence : new FixedSequenceGroup(dependentSequences);
+            _dependentSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, dependentSequences);
         }
 
         public long WaitFor(long sequence)
