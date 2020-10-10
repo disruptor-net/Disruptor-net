@@ -9,11 +9,11 @@ namespace Disruptor.PerfTests.Sequenced
     /// <summary>
     /// Pipeline a series of stages from a publisher to ultimate event processor.
     /// Each event processor depends on the output of the event processor.
-    /// 
+    ///
     /// +----+    +-----+    +-----+    +-----+
     /// | P1 |--->| EP1 |--->| EP2 |--->| EP3 |
     /// +----+    +-----+    +-----+    +-----+
-    /// 
+    ///
     /// Disruptor:
     /// ==========
     ///                           track to prevent wrap
@@ -26,7 +26,7 @@ namespace Disruptor.PerfTests.Sequenced
     ///      claim   ^  get    |   waitFor           |   waitFor           |  waitFor
     ///              |         |                     |                     |
     ///              +---------+---------------------+---------------------+
-    ///        
+    ///
     /// P1  - Publisher 1
     /// RB  - RingBuffer
     /// SB1 - SequenceBarrier 1

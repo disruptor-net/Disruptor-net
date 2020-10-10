@@ -90,7 +90,8 @@ namespace Disruptor.PerfTests
             File.WriteAllText(path, BuildReport(computerSpecifications));
 
             var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
-            File.AppendAllText(totalsPath, $"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{_results.Average(x => x.TotalOperationsInRun / x.Duration.TotalSeconds)}\n");
+            var average = _results.Average(x => x.TotalOperationsInRun / x.Duration.TotalSeconds);
+            File.AppendAllText(totalsPath, FormattableString.Invariant($"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{average}\n"));
 
             if (options.ShouldOpenReport)
                 Process.Start(path);

@@ -39,11 +39,11 @@ namespace Disruptor.PerfTests.External
                 _queue.Add(data);
             }
 
-            _eventHandler.Latch.WaitOne();
+            _eventHandler.WaitForSequence();
             sessionContext.Stop();
             _consumer.Stop();
 
-            sessionContext.SetBatchData(_eventHandler.BatchesProcessedCount.Value, _iterations);
+            sessionContext.SetBatchData(_eventHandler.BatchesProcessed, _iterations);
 
             PerfTestUtil.FailIfNot(_expectedResult, _eventHandler.Value, $"Handler should have processed {_expectedResult} events, but was: {_eventHandler.Value}");
 

@@ -93,13 +93,13 @@ namespace Disruptor.PerfTests.Sequenced
                 futures[i].Wait();
             }
 
-            _handler.Latch.WaitOne();
+            _handler.WaitForSequence();
 
             sessionContext.Stop();
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
 
-            sessionContext.SetBatchData(_handler.BatchesProcessedCount.Value, _iterations);
+            sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations);
 
             return _iterations;
         }

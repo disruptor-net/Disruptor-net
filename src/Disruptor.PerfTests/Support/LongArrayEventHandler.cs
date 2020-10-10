@@ -6,20 +6,19 @@ namespace Disruptor.PerfTests.Support
     public class LongArrayEventHandler : IEventHandler<long[]>, IBatchStartAware
     {
         private PaddedLong _value;
-
-        public long Count { get; private set; }
-
-        public ManualResetEvent Signal { get; private set; }
+        private PaddedLong _batchesProcessed;
+        private long _count;
+        private ManualResetEvent _signal;
 
         public long Value => _value.Value;
-        public PaddedLong BatchesProcessedCount;
+        public long BatchesProcessed => _batchesProcessed.Value;
 
         public void Reset(ManualResetEvent signal, long expectedCount)
         {
-            _value.Value = 0L;
-            Signal = signal;
-            Count = expectedCount;
-            BatchesProcessedCount.Value = 0;
+            _value.Value = 0;
+            _signal = signal;
+            _count = expectedCount;
+            _batchesProcessed.Value = 0;
         }
 
         public void OnEvent(long[] value, long sequence, bool endOfBatch)
@@ -28,16 +27,16 @@ namespace Disruptor.PerfTests.Support
             {
                 _value.Value = _value.Value + value[i];
             }
-          
-            if (--Count == 0)
+
+            if (--_count == 0)
             {
-                Signal?.Set();
+                _signal?.Set();
             }
         }
 
         public void OnBatchStart(long batchSize)
         {
-            BatchesProcessedCount.Value = BatchesProcessedCount.Value + 1;
+            _batchesProcessed.Value = _batchesProcessed.Value + 1;
         }
     }
 }

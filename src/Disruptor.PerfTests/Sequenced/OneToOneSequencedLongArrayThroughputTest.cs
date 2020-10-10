@@ -9,7 +9,7 @@ namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
     /// UniCast a series of items between 1 publisher and 1 event processor.
-    /// 
+    ///
     /// <code>
     /// +----+    +-----+
     /// | P1 |--->| EP1 |
@@ -30,7 +30,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// P1  - Publisher 1
     /// RB  - RingBuffer
     /// SB  - SequenceBarrier
-    /// EP1 - EventProcessor 1    
+    /// EP1 - EventProcessor 1
     /// </code>
     /// </summary>
     public class OneToOneSequencedLongArrayThroughputTest : IThroughputTest
@@ -87,7 +87,7 @@ namespace Disruptor.PerfTests.Sequenced
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
 
-            sessionContext.SetBatchData(_handler.BatchesProcessedCount.Value, _iterations);
+            sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations);
 
             PerfTestUtil.FailIf(0, _handler.Value, "Handler has not processed any event");
 

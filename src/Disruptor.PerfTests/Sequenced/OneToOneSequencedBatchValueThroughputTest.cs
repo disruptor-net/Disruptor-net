@@ -83,13 +83,13 @@ namespace Disruptor.PerfTests.Sequenced
                 ringBuffer.Publish(lo, hi);
             }
 
-            _handler.Latch.WaitOne();
+            _handler.WaitForSequence();
             sessionContext.Stop();
             PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _batchEventProcessor);
             _batchEventProcessor.Halt();
             processorTask.Wait(2000);
 
-            sessionContext.SetBatchData(_handler.BatchesProcessedCount.Value, _iterations * _batchSize);
+            sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations * _batchSize);
 
             PerfTestUtil.FailIfNot(_expectedResult, _handler.Value, $"Handler should have processed {_expectedResult} events, but was: {_handler.Value}");
 

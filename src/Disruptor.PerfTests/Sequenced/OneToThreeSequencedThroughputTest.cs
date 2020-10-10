@@ -53,7 +53,7 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly long[] _results = new long[_numEventProcessors];
         private readonly PerfMutationEventHandler[] _handlers = new PerfMutationEventHandler[_numEventProcessors];
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
-        
+
         public OneToThreeSequencedThroughputTest()
         {
             for (long i = 0; i < _iterations; i++)

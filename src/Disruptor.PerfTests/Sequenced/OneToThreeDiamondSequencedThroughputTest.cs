@@ -37,7 +37,7 @@ namespace Disruptor.PerfTests.Sequenced
     ///              |       +-----+      |
     ///              +-------| EP2 |/-----+
     ///             waitFor  +-----+
-    /// 
+    ///
     /// P1  - Publisher 1
     /// RB  - RingBuffer
     /// SB1 - SequenceBarrier 1

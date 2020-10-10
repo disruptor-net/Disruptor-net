@@ -76,7 +76,7 @@ namespace Disruptor.PerfTests.Sequenced
                 _value.Value = _value.Value + @event.Value;
 
                 if (endOfBatch)
-                    BatchesProcessedCount.Value = BatchesProcessedCount.Value + 1;
+                    BatchesProcessedCount.Value++;
 
                 if (_count == sequence)
                 {
