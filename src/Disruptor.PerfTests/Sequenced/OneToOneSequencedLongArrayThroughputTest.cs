@@ -69,16 +69,16 @@ namespace Disruptor.PerfTests.Sequenced
 
             sessionContext.Start();
 
-            var rb = _ringBuffer;
+            var ringBuffer = _ringBuffer;
             for (var i = 0; i < _iterations; i++)
             {
-                var next = rb.Next();
-                var @event = rb[next];
+                var next = ringBuffer.Next();
+                var @event = ringBuffer[next];
                 for (var j = 0; j < @event.Length; j++)
                 {
                     @event[j] = i;
                 }
-                rb.Publish(next);
+                ringBuffer.Publish(next);
             }
 
             signal.WaitOne();

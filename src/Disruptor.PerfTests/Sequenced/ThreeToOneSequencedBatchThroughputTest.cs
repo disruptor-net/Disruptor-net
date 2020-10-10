@@ -124,16 +124,18 @@ namespace Disruptor.PerfTests.Sequenced
                 _cyclicBarrier.Signal();
                 _cyclicBarrier.Wait();
 
+                var ringBuffer = _ringBuffer;
+
                 for (long i = 0; i < _iterations; i += _batchSize)
                 {
-                    var hi = _ringBuffer.Next(_batchSize);
+                    var hi = ringBuffer.Next(_batchSize);
                     var lo = hi - (_batchSize - 1);
                     for (var l = lo; l <= hi; l++)
                     {
-                        var @event = _ringBuffer[l];
+                        var @event = ringBuffer[l];
                         @event.Value = l;
                     }
-                    _ringBuffer.Publish(lo, hi);
+                    ringBuffer.Publish(lo, hi);
                 }
             }
         }

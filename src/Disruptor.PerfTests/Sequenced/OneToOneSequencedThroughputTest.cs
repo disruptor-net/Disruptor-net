@@ -65,11 +65,13 @@ namespace Disruptor.PerfTests.Sequenced
 
             sessionContext.Start();
 
+            var ringBuffer = _ringBuffer;
+
             for (long i = 0; i < _iterations; i++)
             {
-                long sequence = _ringBuffer.Next();
-                _ringBuffer[sequence].Value = i;
-                _ringBuffer.Publish(sequence);
+                var s = ringBuffer.Next();
+                ringBuffer[s].Value = i;
+                ringBuffer.Publish(s);
             }
 
             _eventHandler.Latch.WaitOne();

@@ -102,15 +102,17 @@ namespace Disruptor.PerfTests.Sequenced
 
             sessionContext.Start();
 
+            var ringBuffer = _ringBuffer;
+
             var operandTwo = _operandTwoInitialValue;
             for (long i = 0; i < _iterations; i++)
             {
-                var sequence = _ringBuffer.Next();
+                var sequence = ringBuffer.Next();
                 var @event =
-                _ringBuffer[sequence];
+                ringBuffer[sequence];
                 @event.OperandOne = i;
                 @event.OperandTwo = operandTwo--;
-                _ringBuffer.Publish(sequence);
+                ringBuffer.Publish(sequence);
             }
 
             latch.WaitOne();

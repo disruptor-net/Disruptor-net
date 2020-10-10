@@ -106,12 +106,12 @@ namespace Disruptor.PerfTests.Sequenced
             var processorTask = _executor.Execute(_pollRunnable.Run);
             sessionContext.Start();
 
-            var rb = _ringBuffer;
+            var ringBuffer = _ringBuffer;
             for (var i = 0; i < _iterations; i++)
             {
-                var next = rb.Next();
-                rb[next].Value = i;
-                rb.Publish(next);
+                var next = ringBuffer.Next();
+                ringBuffer[next].Value = i;
+                ringBuffer.Publish(next);
             }
 
             latch.WaitOne();
