@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
@@ -32,7 +33,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// SB  - SequenceBarrier
     /// EP1 - EventProcessor 1
     /// </summary>
-    public class OneToOneSequencedThroughputTest : IThroughputTest
+    public class OneToOneSequencedThreadAffinityThroughputTest : IThroughputTest
     {
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 100L;
@@ -43,7 +44,7 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly IBatchEventProcessor<PerfEvent> _batchEventProcessor;
         private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
-        public OneToOneSequencedThroughputTest()
+        public OneToOneSequencedThreadAffinityThroughputTest()
         {
             _eventHandler = new AdditionEventHandler();
             _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
@@ -60,9 +61,20 @@ namespace Disruptor.PerfTests.Sequenced
             long expectedCount = _batchEventProcessor.Sequence.Value + _iterations;
 
             _eventHandler.Reset(expectedCount);
-            var processorTask = _executor.Execute(() => _batchEventProcessor.Run());
+            var processorTask = _executor.Execute(() =>
+            {
+                using var _ = ThreadAffinityUtil.SetThreadAffinity(0);
+
+                Thread.CurrentThread.Priority = ThreadPriority.Highest;
+
+                _batchEventProcessor.Run();
+            });
 
             _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+
+            using var _ = ThreadAffinityUtil.SetThreadAffinity(1);
+
+            Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
             sessionContext.Start();
 
