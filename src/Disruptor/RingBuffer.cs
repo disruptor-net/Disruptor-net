@@ -20,7 +20,7 @@ namespace Disruptor
         protected object _entries;
 
         [FieldOffset(64)]
-        protected long _indexMask;
+        protected int _indexMask;
 
         [FieldOffset(72)]
         protected int _bufferSize;
@@ -46,19 +46,19 @@ namespace Disruptor
             {
                 throw new ArgumentException("bufferSize must not be less than 1");
             }
-            if (!_bufferSize.IsPowerOf2())
+            if (!((int)_bufferSize).IsPowerOf2())
             {
                 throw new ArgumentException("bufferSize must be a power of 2");
             }
 
             _entries = Array.CreateInstance(eventType, _bufferSize + 2 * bufferPad);
-            _indexMask = _bufferSize - 1;
+            _indexMask = (int)(_bufferSize - 1);
         }
 
         /// <summary>
         /// Gets the size of the buffer.
         /// </summary>
-        public int BufferSize => _bufferSize;
+        public int BufferSize => (int)_bufferSize;
 
         /// <summary>
         /// Given specified <paramref name="requiredCapacity"/> determines if that amount of space
