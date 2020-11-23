@@ -6,7 +6,7 @@ using Disruptor.Dsl;
 
 namespace Disruptor
 {
-    [StructLayout(LayoutKind.Explicit, Size = 160)]
+    [StructLayout(LayoutKind.Explicit, Size = 192)]
     public class SingleProducerSequencer : ISequencer
     {
         // padding: 56
@@ -22,17 +22,17 @@ namespace Disruptor
         private ISequence[] _gatingSequences = new ISequence[0];
 
         [FieldOffset(80)]
-        private readonly int _bufferSize;
-
-        [FieldOffset(84)]
         private readonly bool _isBlockingWaitStrategy;
+
+        [FieldOffset(88)]
+        private readonly long _bufferSize;
 
         // padding: 3
 
-        [FieldOffset(88)]
+        [FieldOffset(96)]
         private long _nextValue = Sequence.InitialCursorValue;
 
-        [FieldOffset(96)]
+        [FieldOffset(104)]
         private long _cachedValue = Sequence.InitialCursorValue;
 
         // padding: 56
@@ -69,7 +69,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="ISequenced.BufferSize"/>.
         /// </summary>
-        public int BufferSize => _bufferSize;
+        public int BufferSize => (int)_bufferSize;
 
         /// <summary>
         /// <see cref="ICursored.Cursor"/>.
@@ -133,6 +133,7 @@ namespace Disruptor
             return NextInternal(n);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal long NextInternal(int n)
         {
             long nextValue = _nextValue;
@@ -183,6 +184,7 @@ namespace Disruptor
             return TryNextInternal(n, out sequence);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryNextInternal(int n, out long sequence)
         {
             if (!HasAvailableCapacity(n, true))
