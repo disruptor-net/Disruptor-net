@@ -80,6 +80,7 @@ namespace Disruptor
         private TDataProvider _dataProvider;
         private TSequenceBarrier _sequenceBarrier;
         private TEventHandler _eventHandler;
+
         private TBatchStartAware _batchStartAware;
         // ReSharper restore FieldCanBeMadeReadOnly.Local
 
@@ -192,9 +193,7 @@ namespace Disruptor
         [MethodImpl(Constants.AggressiveOptimization)]
         private void ProcessEvents()
         {
-            T evt = null;
             var nextSequence = _sequence.Value + 1L;
-
             while (true)
             {
                 try
@@ -208,13 +207,17 @@ namespace Disruptor
                     // => The test is currently implemented on struct proxies. See BatchEventProcessor<T>.BatchStartAware and StructProxy.
                     // For some reason this also improves BatchEventProcessor performance for IBatchStartAware event handlers.
 
-                    _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
+                    var diff = availableSequence - nextSequence;
 
-                    while (nextSequence <= availableSequence)
+                    if (diff >= 0)
                     {
-                        evt = _dataProvider[nextSequence];
-                        _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
-                        nextSequence++;
+                        _batchStartAware.OnBatchStart(diff + 1);
+
+                        do
+                        {
+                            _eventHandler.OnEvent(_dataProvider[nextSequence], nextSequence, diff == 0);
+                            nextSequence++;
+                        } while ((diff = availableSequence - nextSequence) >= 0);
                     }
 
                     _sequence.SetValue(availableSequence);
@@ -232,7 +235,7 @@ namespace Disruptor
                 }
                 catch (Exception ex)
                 {
-                    _exceptionHandler.HandleEventException(ex, nextSequence, evt);
+                    _exceptionHandler.HandleEventException(ex, nextSequence, _dataProvider[nextSequence]);
                     _sequence.SetValue(nextSequence);
                     nextSequence++;
                 }
