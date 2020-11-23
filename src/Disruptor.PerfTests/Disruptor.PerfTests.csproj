@@ -4,15 +4,19 @@
     <TargetFrameworks>net48;netcoreapp3.1</TargetFrameworks>
     <OutputType>exe</OutputType>
     <SignAssembly>false</SignAssembly>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <TieredCompilation>False</TieredCompilation>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Disruptor.Tests\Disruptor.Tests.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
     <PackageReference Include="HdrHistogram" Version="2.5.0" />
+    <PackageReference Include="ObjectLayoutInspector" Version="0.1.2" />
     <PackageReference Include="System.Threading.Channels" Version="4.7.1" />
   </ItemGroup>
 

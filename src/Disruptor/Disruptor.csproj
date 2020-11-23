@@ -6,6 +6,8 @@
     <IsPackable>true</IsPackable>
     <PackageId>Disruptor</PackageId>
     <NoWarn>1701;1702;1591</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
