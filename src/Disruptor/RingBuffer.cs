@@ -9,26 +9,26 @@ namespace Disruptor
     ///
     /// <see cref="RingBuffer{T}"/> and <see cref="ValueRingBuffer{T}"/>.
     /// </summary>
-    [StructLayout(LayoutKind.Explicit, Size = 148)]
+    [StructLayout(LayoutKind.Explicit, Size = 288)]
     public abstract class RingBuffer : ICursored
     {
         protected static readonly int _bufferPadRef = Util.GetRingBufferPaddingEventCount(IntPtr.Size);
 
-        // padding: 56
+        // padding: 128
 
-        [FieldOffset(56)]
+        [FieldOffset(128)]
         protected object _entries;
 
-        [FieldOffset(64)]
+        [FieldOffset(136)]
         protected int _indexMask;
 
-        [FieldOffset(72)]
+        [FieldOffset(144)]
         protected int _bufferSize;
 
-        [FieldOffset(80)]
+        [FieldOffset(152)]
         protected SequencerDispatcher _sequencerDispatcher; // includes 7 bytes of padding
 
-        // padding: 52
+        // padding: 128
 
         /// <summary>
         /// Construct a RingBuffer with the full option set.
@@ -58,7 +58,7 @@ namespace Disruptor
         /// <summary>
         /// Gets the size of the buffer.
         /// </summary>
-        public int BufferSize => (int)_bufferSize;
+        public int BufferSize => _bufferSize;
 
         /// <summary>
         /// Given specified <paramref name="requiredCapacity"/> determines if that amount of space
