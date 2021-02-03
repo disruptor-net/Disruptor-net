@@ -3,39 +3,38 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Disruptor.Dsl;
+using static Disruptor.Constants;
 
 namespace Disruptor
 {
-    [StructLayout(LayoutKind.Explicit, Size = 192)]
+    [StructLayout(LayoutKind.Explicit, Size = CacheLineSize * 2 + 56)]
     public class SingleProducerSequencer : ISequencer
     {
-        // padding: 56
+        // padding: CacheLineSize
 
-        [FieldOffset(56)]
+        [FieldOffset(CacheLineSize)]
         private readonly IWaitStrategy _waitStrategy;
 
-        [FieldOffset(64)]
+        [FieldOffset(CacheLineSize + 8)]
         private readonly Sequence _cursor = new Sequence();
 
-        [FieldOffset(72)]
+        [FieldOffset(CacheLineSize + 16)]
         // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
         private ISequence[] _gatingSequences = new ISequence[0];
 
-        [FieldOffset(80)]
+        [FieldOffset(CacheLineSize + 24)]
         private readonly bool _isBlockingWaitStrategy;
 
-        [FieldOffset(88)]
+        [FieldOffset(CacheLineSize + 32)]
         private readonly long _bufferSize;
 
-        // padding: 3
-
-        [FieldOffset(96)]
+        [FieldOffset(CacheLineSize + 40)]
         private long _nextValue = Sequence.InitialCursorValue;
 
-        [FieldOffset(104)]
+        [FieldOffset(CacheLineSize + 48)]
         private long _cachedValue = Sequence.InitialCursorValue;
 
-        // padding: 56
+        // padding: CacheLineSize
 
         public SingleProducerSequencer(int bufferSize)
             : this(bufferSize, SequencerFactory.DefaultWaitStrategy())

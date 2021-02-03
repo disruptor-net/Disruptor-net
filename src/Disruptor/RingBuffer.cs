@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using static Disruptor.Constants;
 
 namespace Disruptor
 {
@@ -9,26 +10,26 @@ namespace Disruptor
     ///
     /// <see cref="RingBuffer{T}"/> and <see cref="ValueRingBuffer{T}"/>.
     /// </summary>
-    [StructLayout(LayoutKind.Explicit, Size = 288)]
+    [StructLayout(LayoutKind.Explicit, Size = CacheLineSize * 2 + 32)]
     public abstract class RingBuffer : ICursored
     {
         protected static readonly int _bufferPadRef = Util.GetRingBufferPaddingEventCount(IntPtr.Size);
 
-        // padding: 128
+        // padding: CacheLineSize
 
-        [FieldOffset(128)]
+        [FieldOffset(CacheLineSize)]
         protected object _entries;
 
-        [FieldOffset(136)]
+        [FieldOffset(CacheLineSize + 8)]
         protected int _indexMask;
 
-        [FieldOffset(144)]
+        [FieldOffset(CacheLineSize + 16)]
         protected int _bufferSize;
 
-        [FieldOffset(152)]
+        [FieldOffset(CacheLineSize + 24)]
         protected SequencerDispatcher _sequencerDispatcher; // includes 7 bytes of padding
 
-        // padding: 128
+        // padding: CacheLineSize
 
         /// <summary>
         /// Construct a RingBuffer with the full option set.

@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Disruptor.Internal;
+using static Disruptor.Constants;
 
 namespace Disruptor
 {
@@ -10,27 +10,27 @@ namespace Disruptor
     ///
     /// <see cref="UnmanagedRingBuffer{T}"/>.
     /// </summary>
-    [StructLayout(LayoutKind.Explicit, Size = 148)]
+    [StructLayout(LayoutKind.Explicit, Size = CacheLineSize * 2 + 40)]
     public abstract class UnmanagedRingBuffer : ICursored
     {
-        // padding: 56
+        // padding: CacheLineSize
 
-        [FieldOffset(56)]
+        [FieldOffset(CacheLineSize)]
         protected IntPtr _entries;
 
-        [FieldOffset(64)]
+        [FieldOffset(CacheLineSize + 8)]
         protected long _indexMask;
 
-        [FieldOffset(72)]
+        [FieldOffset(CacheLineSize + 16)]
         protected int _eventSize;
 
-        [FieldOffset(76)]
+        [FieldOffset(CacheLineSize + 20)]
         protected int _bufferSize;
 
-        [FieldOffset(80)]
+        [FieldOffset(CacheLineSize + 24)]
         protected SequencerDispatcher _sequencerDispatcher; // includes 7 bytes of padding
 
-        // padding: 52
+        // padding: CacheLineSize
 
         /// <summary>
         /// Construct a UnmanagedRingBuffer with the full option set.

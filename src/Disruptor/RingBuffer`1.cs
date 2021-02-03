@@ -138,10 +138,7 @@ namespace Disruptor
         public T this[long sequence]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return Util.Read<T>(_entries, _bufferPadRef + (int) (unchecked((int) sequence) & _indexMask));
-            }
+            get => Util.Read<T>(_entries, _bufferPadRef + (unchecked((int) sequence) & _indexMask));
         }
 
         /// <summary>

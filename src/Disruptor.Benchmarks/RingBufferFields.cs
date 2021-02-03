@@ -1,39 +1,40 @@
 using System;
 using System.Runtime.InteropServices;
+using static Disruptor.Constants;
 
 namespace Disruptor
 {
-    [StructLayout(LayoutKind.Explicit, Size = 144)]
+    [StructLayout(LayoutKind.Explicit, Size = CacheLineSize * 2 + 32)]
     internal struct RingBufferFields
     {
         public static readonly int BufferPad = 128 / IntPtr.Size;
 
-        // padding: 56
+        // padding: CacheLineSize
 
-        [FieldOffset(56)]
+        [FieldOffset(CacheLineSize)]
         public object[] Entries;
 
-        [FieldOffset(64)]
+        [FieldOffset(CacheLineSize + 8)]
         public long IndexMask;
 
-        [FieldOffset(72)]
+        [FieldOffset(CacheLineSize + 16)]
         public int BufferSize;
 
-        [FieldOffset(76)]
+        [FieldOffset(CacheLineSize + 20)]
         public RingBufferSequencerType SequencerType;
 
         // padding: 3
 
-        [FieldOffset(80)]
+        [FieldOffset(CacheLineSize + 24)]
         public SingleProducerSequencer SingleProducerSequencer;
 
-        [FieldOffset(80)]
+        [FieldOffset(CacheLineSize + 24)]
         public MultiProducerSequencer MultiProducerSequencer;
 
-        [FieldOffset(80)]
+        [FieldOffset(CacheLineSize + 24)]
         public ISequencer Sequencer;
 
-        // padding: 56
+        // padding: CacheLineSize
 
         public enum RingBufferSequencerType : byte
         {
