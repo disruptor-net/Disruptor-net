@@ -11,7 +11,6 @@ namespace Disruptor.PerfTests
     {
         public static void Main(string[] args)
         {
-            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
             if (!Options.TryParse(args, out var options))
             {
                 Options.PrintUsage();

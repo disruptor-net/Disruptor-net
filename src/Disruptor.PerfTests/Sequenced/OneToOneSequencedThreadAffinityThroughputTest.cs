@@ -63,7 +63,7 @@ namespace Disruptor.PerfTests.Sequenced
             _eventHandler.Reset(expectedCount);
             var processorTask = _executor.Execute(() =>
             {
-                using var _ = ThreadAffinityUtil.SetThreadAffinity(2);
+                using var _ = ThreadAffinityUtil.SetThreadAffinity(0);
 
                 Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
@@ -72,24 +72,18 @@ namespace Disruptor.PerfTests.Sequenced
 
             _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
-            using var _ = ThreadAffinityUtil.SetThreadAffinity(4);
+            using var _ = ThreadAffinityUtil.SetThreadAffinity(1);
 
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
             sessionContext.Start();
 
             var ringBuffer = _ringBuffer;
-            long sum = 0;
             for (long i = 0; i < _iterations; i++)
             {
                 var s = ringBuffer.Next();
                 ringBuffer[s].Value = i;
-                sum += i;
-                sum += i % 2;
-                sum += i % 3;
-                sum += i % 4;
-                sum += i % 5;
-                sum += i % 6;
+                // ExtraWork(1);
                 ringBuffer.Publish(s);
             }
 
@@ -104,6 +98,21 @@ namespace Disruptor.PerfTests.Sequenced
             PerfTestUtil.FailIfNot(_expectedResult, _eventHandler.Value, $"Handler should have processed {_expectedResult} events, but was: {_eventHandler.Value}");
 
             return _iterations;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void ExtraWork(long cycles)
+        {
+            long sum = 0;
+            for (int i = 0; i < cycles; i++)
+            {
+                sum += i;
+            }
+
+            if (sum < 0)
+            {
+                throw new Exception("Avoid sum optimization");
+            }
         }
     }
 }
