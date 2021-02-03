@@ -124,7 +124,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next(int n)
         {
-            if (n < 1 || n > _bufferSize)
+            if (unchecked((uint)(n - 1)) >= _bufferSize)
             {
                 ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
             }
@@ -143,21 +143,28 @@ namespace Disruptor
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
             {
-                _cursor.SetValueVolatile(nextValue);
-
-                var spinWait = default(AggressiveSpinWait);
-                long minSequence;
-                while (wrapPoint > (minSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue)))
-                {
-                    spinWait.SpinOnce();
-                }
-
-                _cachedValue = minSequence;
+                NextInternalWrap(nextValue, wrapPoint);
             }
 
             _nextValue = nextSequence;
 
             return nextSequence;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void NextInternalWrap(long nextValue, long wrapPoint)
+        {
+
+            _cursor.SetValueVolatile(nextValue);
+
+            var spinWait = default(AggressiveSpinWait);
+            long minSequence;
+            while (wrapPoint > (minSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue)))
+            {
+                spinWait.SpinOnce();
+            }
+
+            _cachedValue = minSequence;
         }
 
         /// <summary>

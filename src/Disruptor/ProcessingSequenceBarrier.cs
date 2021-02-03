@@ -29,6 +29,7 @@ namespace Disruptor
             _dependentSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, dependentSequences);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long WaitFor(long sequence)
         {
             CheckAlert();

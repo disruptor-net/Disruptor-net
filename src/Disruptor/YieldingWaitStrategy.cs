@@ -1,14 +1,15 @@
-﻿using System.Threading;
+﻿using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Disruptor
 {
     /// <summary>
     /// Yielding strategy that uses a Thread.Yield() for <see cref="IEventProcessor"/>s waiting on a barrier
     /// after an initially spinning.
-    /// 
+    ///
     /// This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.
     /// </summary>
-    public sealed class YieldingWaitStrategy : INonBlockingWaitStrategy
+    public readonly struct YieldingWaitStrategy : INonBlockingWaitStrategy
     {
         private const int _spinTries = 100;
 
@@ -21,6 +22,7 @@ namespace Disruptor
         /// <param name="dependentSequence">dependents further back the chain that must advance first</param>
         /// <param name="barrier">barrier the <see cref="IEventProcessor"/> is waiting on.</param>
         /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
             long availableSequence;
@@ -41,6 +43,7 @@ namespace Disruptor
         {
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int ApplyWaitMethod(ISequenceBarrier barrier, int counter)
         {
             barrier.CheckAlert();

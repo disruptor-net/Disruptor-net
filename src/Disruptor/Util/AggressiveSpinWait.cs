@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Disruptor
@@ -25,6 +26,7 @@ namespace Disruptor
 
         private bool NextSpinWillYield => _count > _yieldThreshold || _isSingleProcessor;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SpinOnce()
         {
             if (NextSpinWillYield)

@@ -80,14 +80,15 @@ namespace Disruptor
         /// <param name="sequences">sequences to compare.</param>
         /// <param name="minimum">an initial default minimum.  If the array is empty this value will returned.</param>
         /// <returns>the minimum sequence found or lon.MaxValue if the array is empty.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long GetMinimumSequence(ISequence[] sequences, long minimum = long.MaxValue)
         {
             for (var i = 0; i < sequences.Length; i++)
             {
                 var sequence = sequences[i].Value;
-                minimum = Math.Min(minimum, sequence);
+                if (sequence < minimum)
+                    minimum = sequence;
             }
-
             return minimum;
         }
 
