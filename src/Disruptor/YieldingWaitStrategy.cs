@@ -9,7 +9,7 @@ namespace Disruptor
     ///
     /// This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.
     /// </summary>
-    public readonly struct YieldingWaitStrategy : INonBlockingWaitStrategy
+    public sealed class YieldingWaitStrategy : INonBlockingWaitStrategy
     {
         private const int _spinTries = 100;
 
@@ -22,7 +22,6 @@ namespace Disruptor
         /// <param name="dependentSequence">dependents further back the chain that must advance first</param>
         /// <param name="barrier">barrier the <see cref="IEventProcessor"/> is waiting on.</param>
         /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
         {
             long availableSequence;
@@ -43,7 +42,6 @@ namespace Disruptor
         {
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int ApplyWaitMethod(ISequenceBarrier barrier, int counter)
         {
             barrier.CheckAlert();
