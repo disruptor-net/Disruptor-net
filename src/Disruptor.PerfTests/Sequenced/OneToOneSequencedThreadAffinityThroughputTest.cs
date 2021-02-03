@@ -63,7 +63,7 @@ namespace Disruptor.PerfTests.Sequenced
             _eventHandler.Reset(expectedCount);
             var processorTask = _executor.Execute(() =>
             {
-                using var _ = ThreadAffinityUtil.SetThreadAffinity(0);
+                using var _ = ThreadAffinityUtil.SetThreadAffinity(2);
 
                 Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
@@ -72,18 +72,24 @@ namespace Disruptor.PerfTests.Sequenced
 
             _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
-            using var _ = ThreadAffinityUtil.SetThreadAffinity(1);
+            using var _ = ThreadAffinityUtil.SetThreadAffinity(4);
 
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
             sessionContext.Start();
 
             var ringBuffer = _ringBuffer;
-
+            long sum = 0;
             for (long i = 0; i < _iterations; i++)
             {
                 var s = ringBuffer.Next();
                 ringBuffer[s].Value = i;
+                sum += i;
+                sum += i % 2;
+                sum += i % 3;
+                sum += i % 4;
+                sum += i % 5;
+                sum += i % 6;
                 ringBuffer.Publish(s);
             }
 

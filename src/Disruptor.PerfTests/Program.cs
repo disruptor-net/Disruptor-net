@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -10,6 +11,7 @@ namespace Disruptor.PerfTests
     {
         public static void Main(string[] args)
         {
+            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
             if (!Options.TryParse(args, out var options))
             {
                 Options.PrintUsage();
