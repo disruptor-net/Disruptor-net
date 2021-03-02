@@ -86,10 +86,10 @@ public class ThroughputTestSession
         if (!options.ShouldGenerateReport)
             return;
 
-        var path = Path.Combine(Environment.CurrentDirectory, _perfTestType.Name + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
+        var path = Path.Combine(Environment.CurrentDirectory, "results", _perfTestType.Name + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
         File.WriteAllText(path, BuildReport(computerSpecifications));
 
-        var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
+        var totalsPath = Path.Combine(Environment.CurrentDirectory, "results", $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
         var average = _results.Average(x => x.TotalOperationsInRun / x.Duration.TotalSeconds);
         File.AppendAllText(totalsPath, FormattableString.Invariant($"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{average}\n"));
 

@@ -45,5 +45,6 @@ output/**
 src/packages/**
 launchSettings.json
 src/Disruptor.PerfTests/Properties/launchSettings.json
+/src/Disruptor.PerfTests/results
 /src/.idea
 *.nupkg
