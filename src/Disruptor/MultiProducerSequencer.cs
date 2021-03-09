@@ -28,6 +28,24 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
     private readonly Sequence _gatingSequenceCache = new();
 
     [SuppressMessage("ReSharper", "PrivateFieldCanBeConvertedToLocalVariable", Justification = "Prevents the GC from collecting the array")]
+        // availableBuffer tracks the state of each ringbuffer slot
+        // see below for more details on the approach:
+        // <p>
+        // The prime reason is to avoid a shared sequence object between publisher threads.
+        // (Keeping single pointers tracking start and end would require coordination
+        // between the threads).
+        // <p>
+        // --  Firstly we have the constraint that the delta between the cursor and minimum
+        // gating sequence will never be larger than the buffer size (the code in
+        // next/tryNext in the Sequence takes care of that).
+        // -- Given that; take the sequence value and mask off the lower portion of the
+        // sequence as the index into the buffer (indexMask). (aka modulo operator)
+        // -- The upper portion of the sequence becomes the value to check for availability.
+        // ie: it tells us how many times around the ring buffer we've been (aka division)
+        // -- Because we can't wrap without the gating sequences moving forward (i.e. the
+        // minimum gating sequence is effectively our last available position in the
+        // buffer), when we have new data and successfully claimed a slot we can simply
+        // write over the top.
     private readonly int[] _availableBuffer;
 
 #if NETCOREAPP
