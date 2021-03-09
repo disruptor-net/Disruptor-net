@@ -35,6 +35,7 @@ _ReSharper*/
 .vs/*
 src/.vs/*
 BenchmarkDotNet.Artifacts/
+.vscode/*
 
 #ncrunch
 *.ncrunchsolution
