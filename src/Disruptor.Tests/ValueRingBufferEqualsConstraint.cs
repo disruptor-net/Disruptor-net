@@ -15,7 +15,7 @@ namespace Disruptor.Tests
         public override ConstraintResult ApplyTo<TActual>(TActual actual)
         {
             var valid = true;
-            var ringBuffer = (ValueRingBuffer<long>)(object)actual;
+            var ringBuffer = (IValueDataProvider<long>)actual;
             for (var i = 0; i < _values.Length; i++)
             {
                 valid &= ringBuffer[i].Equals(_values[i]);

@@ -37,6 +37,15 @@ namespace Disruptor.Tests
             return new UnmanagedRingBuffer<StubUnmanagedEvent>(memory, producerType, new BlockingWaitStrategy());
         }
 
+        private UnmanagedRingBuffer<T> CreateSingleProducer<T>(Func<T> eventFactory, int size)
+            where T : unmanaged
+        {
+            var memory = UnmanagedRingBufferMemory.Allocate(size, eventFactory);
+            _memoryList.Add(memory);
+
+            return new UnmanagedRingBuffer<T>(memory, ProducerType.Single, new BlockingWaitStrategy());
+        }
+
         [TestCase(0)]
         [TestCase(-1)]
         public void ShouldNotCreateRingBufferWithInvalidEventSize(int eventSize)
@@ -50,7 +59,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldPublishEvent()
         {
-            var ringBuffer = ValueRingBuffer<long>.CreateSingleProducer(() => -1L, 4);
+            var ringBuffer = CreateSingleProducer(() => -1L, 4);
 
             using (var scope = ringBuffer.PublishEvent())
             {
@@ -70,7 +79,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldPublishEvents()
         {
-            var ringBuffer = ValueRingBuffer<long>.CreateSingleProducer(() => -1L, 4);
+            var ringBuffer = CreateSingleProducer(() => -1L, 4);
 
             using (var scope = ringBuffer.PublishEvents(2))
             {
@@ -94,7 +103,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldNotPublishEventsIfBatchIsLargerThanRingBuffer()
         {
-            var ringBuffer = ValueRingBuffer<long>.CreateSingleProducer(() => -1L, 4);
+            var ringBuffer = CreateSingleProducer(() => -1L, 4);
 
             try
             {
@@ -109,7 +118,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldNotPublishEventsWhenBatchSizeIs0()
         {
-            var ringBuffer = ValueRingBuffer<long>.CreateSingleProducer(() => -1L, 4);
+            var ringBuffer = CreateSingleProducer(() => -1L, 4);
 
             try
             {
@@ -124,7 +133,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldNotTryPublishEventsWhenBatchSizeIs0()
         {
-            var ringBuffer = ValueRingBuffer<long>.CreateSingleProducer(() => -1L, 4);
+            var ringBuffer = CreateSingleProducer(() => -1L, 4);
 
             try
             {
@@ -139,7 +148,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldNotPublishEventsWhenBatchSizeIsNegative()
         {
-            var ringBuffer = ValueRingBuffer<long>.CreateSingleProducer(() => -1L, 4);
+            var ringBuffer = CreateSingleProducer(() => -1L, 4);
 
             try
             {
@@ -154,7 +163,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldNotTryPublishEventsWhenBatchSizeIsNegative()
         {
-            var ringBuffer = ValueRingBuffer<long>.CreateSingleProducer(() => -1L, 4);
+            var ringBuffer = CreateSingleProducer(() => -1L, 4);
 
             try
             {
