@@ -174,5 +174,23 @@ namespace Disruptor.Tests
                 AssertEmptyRingBuffer(ringBuffer);
             }
         }
+
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(31)]
+        [TestCase(32)]
+        [TestCase(int.MaxValue)]
+        [TestCase(int.MaxValue +1L)]
+        public void ShouldGetEventFromSequence(long sequence)
+        {
+            var index = 0;
+            using var memory = UnmanagedRingBufferMemory.Allocate(32, () => new StubUnmanagedEvent(index++));
+            var ringBuffer = new UnmanagedRingBuffer<StubUnmanagedEvent>(memory, ProducerType.Single, new BlockingWaitStrategy());
+
+            ref var evt = ref ringBuffer[sequence];
+
+            var expectedIndex = sequence % 32;
+            Assert.That(evt.Value, Is.EqualTo(expectedIndex));
+        }
     }
 }

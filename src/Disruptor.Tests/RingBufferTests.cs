@@ -11,7 +11,7 @@ using static Disruptor.Tests.RingBufferEqualsConstraint;
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public partial class RingBufferTests
+    public class RingBufferTests
     {
         private RingBuffer<StubEvent> _ringBuffer;
         private ISequenceBarrier _sequenceBarrier;
@@ -346,6 +346,23 @@ namespace Disruptor.Tests
         public void ShouldHandleResetToAndNotWrapUnnecessarilyMultiProducer()
         {
             AssertHandleResetAndNotWrap(RingBuffer<StubEvent>.CreateMultiProducer(StubEvent.EventFactory, 4));
+        }
+
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(31)]
+        [TestCase(32)]
+        [TestCase(int.MaxValue)]
+        [TestCase(int.MaxValue +1L)]
+        public void ShouldGetEventFromSequence(long sequence)
+        {
+            var index = 0;
+            var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(index++), 32);
+
+            var evt = ringBuffer[sequence];
+
+            var expectedIndex = sequence % 32;
+            Assert.That(evt.Value, Is.EqualTo(expectedIndex));
         }
 
         private static void AssertHandleResetAndNotWrap(RingBuffer<StubEvent> rb)

@@ -130,5 +130,22 @@ namespace Disruptor.Tests
                 AssertEmptyRingBuffer(ringBuffer);
             }
         }
+
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(31)]
+        [TestCase(32)]
+        [TestCase(int.MaxValue)]
+        [TestCase(int.MaxValue +1L)]
+        public void ShouldGetEventFromSequence(long sequence)
+        {
+            var index = 0;
+            var ringBuffer = new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(index++), 32);
+
+            ref var evt = ref ringBuffer[sequence];
+
+            var expectedIndex = sequence % 32;
+            Assert.That(evt.Value, Is.EqualTo(expectedIndex));
+        }
     }
 }
