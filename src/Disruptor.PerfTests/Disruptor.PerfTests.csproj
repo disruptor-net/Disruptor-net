@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net48;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net48;net5.0-windows</TargetFrameworks>
     <OutputType>exe</OutputType>
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
@@ -9,7 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Disruptor.Tests\Disruptor.Tests.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
     <PackageReference Include="HdrHistogram" Version="2.5.0" />
