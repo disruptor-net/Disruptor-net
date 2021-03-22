@@ -1,6 +1,6 @@
 # Disruptor-net
 
-[![Build Status](https://dev.azure.com/Disruptor-net/Disruptor-net/_apis/build/status/Default?branchName=master)](https://dev.azure.com/Disruptor-net/Disruptor-net/_build/latest?definitionId=1&branchName=master)
+[![Build](https://github.com/Disruptor-net/Disruptor-net/workflows/Build/badge.svg)](https://github.com/Disruptor-net/Disruptor-net/actions?query=workflow%3ABuild)
 [![NuGet](https://buildstats.info/nuget/Disruptor)](http://www.nuget.org/packages/Disruptor/)
 
 ## Overview
