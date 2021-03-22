@@ -729,7 +729,7 @@ namespace Disruptor.Tests.Dsl
         private static void AssertProducerReaches(StubPublisher stubPublisher, int expectedPublicationCount, bool strict)
         {
             var stopwatch = Stopwatch.StartNew();
-            var timeout = TimeSpan.FromMilliseconds(50);
+            var timeout = TimeSpan.FromMilliseconds(200);
 
             while (stubPublisher.GetPublicationCount() < expectedPublicationCount && stopwatch.Elapsed < timeout)
             {
