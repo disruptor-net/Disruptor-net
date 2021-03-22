@@ -3,12 +3,9 @@ on: [push, pull_request]
 env:
   DOTNET_NOLOGO: 1
 jobs:
-  build:
-    name: Build/Pack/Test on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
+  windows:
+    name: Build-Test-Publish (Windows)
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -31,3 +28,21 @@ jobs:
         with:
           name: NuGet
           path: output/*.nupkg
+  linux:
+    name: Build-Test (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+      - name: Clear NuGet Cache
+        run: dotnet nuget locals all --clear
+      - name: Restore
+        run: dotnet restore src/Disruptor-net.sln
+      - name: Build
+        run: dotnet build --configuration Release --no-restore src/Disruptor-net.sln
+      - name: Test
+        run: dotnet test --configuration Release --no-build src/Disruptor-net.sln
