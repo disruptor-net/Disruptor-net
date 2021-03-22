@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using Disruptor.Dsl;
 using Disruptor.Tests.Dsl.Stubs;
@@ -727,8 +728,10 @@ namespace Disruptor.Tests.Dsl
 
         private static void AssertProducerReaches(StubPublisher stubPublisher, int expectedPublicationCount, bool strict)
         {
-            var loopStart = DateTime.UtcNow;
-            while (stubPublisher.GetPublicationCount() < expectedPublicationCount && DateTime.UtcNow - loopStart < TimeSpan.FromMilliseconds(5))
+            var stopwatch = Stopwatch.StartNew();
+            var timeout = TimeSpan.FromMilliseconds(50);
+
+            while (stubPublisher.GetPublicationCount() < expectedPublicationCount && stopwatch.Elapsed < timeout)
             {
                 Thread.Yield();
             }
