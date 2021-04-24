@@ -69,13 +69,6 @@ namespace Disruptor
         where TEventHandler : IEventHandler<T>
         where TBatchStartAware : IBatchStartAware
     {
-        private static class RunningStates
-        {
-            public const int Idle = 0;
-            public const int Halted = Idle + 1;
-            public const int Running = Halted + 1;
-        }
-
         // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
         private TDataProvider _dataProvider;
         private TSequenceBarrier _sequenceBarrier;
@@ -87,7 +80,7 @@ namespace Disruptor
         private readonly ITimeoutHandler _timeoutHandler;
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim();
         private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler();
-        private volatile int _running;
+        private volatile int _runState = ProcessorRunStates.Idle;
 
         /// <summary>
         /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
@@ -123,14 +116,14 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running = RunningStates.Halted;
+            _runState = ProcessorRunStates.Halted;
             _sequenceBarrier.Alert();
         }
 
         /// <summary>
         /// <see cref="IEventProcessor.IsRunning"/>
         /// </summary>
-        public bool IsRunning => _running != RunningStates.Idle;
+        public bool IsRunning => _runState != ProcessorRunStates.Idle;
 
         /// <summary>
         /// Set a new <see cref="IExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IEventHandler{T}"/>
@@ -157,22 +150,22 @@ namespace Disruptor
         public void Run()
         {
 #pragma warning disable 420
-            var previousRunning = Interlocked.CompareExchange(ref _running, RunningStates.Running, RunningStates.Idle);
+            var previousRunning = Interlocked.CompareExchange(ref _runState, ProcessorRunStates.Running, ProcessorRunStates.Idle);
 #pragma warning restore 420
 
-            if (previousRunning == RunningStates.Running)
+            if (previousRunning == ProcessorRunStates.Running)
             {
                 throw new InvalidOperationException("Thread is already running");
             }
 
-            if (previousRunning == RunningStates.Idle)
+            if (previousRunning == ProcessorRunStates.Idle)
             {
                 _sequenceBarrier.ClearAlert();
 
                 NotifyStart();
                 try
                 {
-                    if (_running == RunningStates.Running)
+                    if (_runState == ProcessorRunStates.Running)
                     {
                         ProcessEvents();
                     }
@@ -180,7 +173,7 @@ namespace Disruptor
                 finally
                 {
                     NotifyShutdown();
-                    _running = RunningStates.Idle;
+                    _runState = ProcessorRunStates.Idle;
                 }
             }
             else
@@ -225,7 +218,7 @@ namespace Disruptor
                 }
                 catch (AlertException)
                 {
-                    if (_running != RunningStates.Running)
+                    if (_runState != ProcessorRunStates.Running)
                     {
                         break;
                     }
