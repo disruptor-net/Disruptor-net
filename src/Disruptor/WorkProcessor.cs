@@ -13,7 +13,7 @@ namespace Disruptor
     public sealed class WorkProcessor<T> : IEventProcessor
         where T : class
     {
-        private volatile int _running;
+        private volatile int _runState = ProcessorRunStates.Idle;
         private readonly Sequence _sequence = new Sequence();
         private readonly RingBuffer<T> _ringBuffer;
         private readonly ISequenceBarrier _sequenceBarrier;
@@ -55,7 +55,7 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _running = 0;
+            _runState = ProcessorRunStates.Halted;
             _sequenceBarrier.Alert();
         }
 
@@ -64,13 +64,13 @@ namespace Disruptor
         /// </summary>
         public void HaltLater()
         {
-            _running = 0;
+            _runState = ProcessorRunStates.Halted;
         }
 
         /// <summary>
         /// <see cref="IEventProcessor.IsRunning"/>
         /// </summary>
-        public bool IsRunning => _running == 1;
+        public bool IsRunning => _runState == ProcessorRunStates.Running;
 
         /// <summary>
         /// <see cref="IEventProcessor.Run"/>.
@@ -78,9 +78,15 @@ namespace Disruptor
         [MethodImpl(Constants.AggressiveOptimization)]
         public void Run()
         {
-            if (Interlocked.Exchange(ref _running, 1) != 0)
+            var previousRunState = Interlocked.CompareExchange(ref _runState, ProcessorRunStates.Running, ProcessorRunStates.Idle);
+            if (previousRunState == ProcessorRunStates.Running)
             {
-                throw new InvalidOperationException("Thread is already running");
+                throw new InvalidOperationException("WorkProcessor is already running");
+            }
+
+            if (previousRunState == ProcessorRunStates.Halted)
+            {
+                throw new InvalidOperationException("WorkProcessor is halted and cannot be restarted");
             }
 
             _sequenceBarrier.ClearAlert();
@@ -103,7 +109,7 @@ namespace Disruptor
 
                     if (processedSequence)
                     {
-                        if (_running == 0)
+                        if (_runState != ProcessorRunStates.Running)
                         {
                             _sequenceBarrier.Alert();
                             _sequenceBarrier.CheckAlert();
@@ -134,7 +140,7 @@ namespace Disruptor
                 }
                 catch (AlertException)
                 {
-                    if (_running == 0)
+                    if (_runState != ProcessorRunStates.Running)
                     {
                         break;
                     }
@@ -148,7 +154,7 @@ namespace Disruptor
 
             NotifyShutdown();
 
-            _running = 0;
+            _runState = ProcessorRunStates.Halted;
         }
 
         private void NotifyTimeout(long availableSequence)
