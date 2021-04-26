@@ -12,7 +12,7 @@ namespace Disruptor
     [StructLayout(LayoutKind.Explicit, Size = 148)]
     public abstract class RingBuffer : ICursored
     {
-        protected static readonly int _bufferPadRef = Util.GetRingBufferPaddingEventCount(IntPtr.Size);
+        protected static readonly int _bufferPadRef = InternalUtil.GetRingBufferPaddingEventCount(IntPtr.Size);
 
         // padding: 56
 

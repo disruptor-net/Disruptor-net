@@ -144,7 +144,7 @@ namespace Disruptor
         public void DrainAndHalt()
         {
             var workerSequences = GetWorkerSequences();
-            while (_ringBuffer.Cursor > Util.GetMinimumSequence(workerSequences))
+            while (_ringBuffer.Cursor > DisruptorUtil.GetMinimumSequence(workerSequences))
             {
                 Thread.Sleep(0);
             }

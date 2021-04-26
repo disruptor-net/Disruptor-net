@@ -58,7 +58,7 @@ namespace Disruptor
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return ref Util.ReadValue<T>(_entries, (int)(sequence & _indexMask), _eventSize);
+                return ref InternalUtil.ReadValue<T>(_entries, (int)(sequence & _indexMask), _eventSize);
             }
         }
 

@@ -47,7 +47,7 @@ namespace Disruptor.Tests
                 workers[i] = new StubEventProcessor(expectedNumberMessages - 1);
             }
 
-            var dependencyBarrier = _ringBuffer.NewBarrier(Util.GetSequencesFor(workers));
+            var dependencyBarrier = _ringBuffer.NewBarrier(DisruptorUtil.GetSequencesFor(workers));
 
             Task.Run(() =>
                     {
@@ -111,7 +111,7 @@ namespace Disruptor.Tests
                 eventProcessors[i] = new StubEventProcessor(expectedNumberMessages - 2);
             }
 
-            var eventProcessorBarrier = _ringBuffer.NewBarrier(Util.GetSequencesFor(eventProcessors));
+            var eventProcessorBarrier = _ringBuffer.NewBarrier(DisruptorUtil.GetSequencesFor(eventProcessors));
 
             Task.Factory.StartNew(() =>
                                   {

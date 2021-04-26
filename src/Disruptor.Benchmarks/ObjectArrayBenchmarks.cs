@@ -27,7 +27,7 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.NoInlining)]
         public int ReadOneIL()
         {
-            return Util.Read<Event>(_array, Index).Value;
+            return InternalUtil.Read<Event>(_array, Index).Value;
         }
 
         public class Event

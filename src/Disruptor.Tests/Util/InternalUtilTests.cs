@@ -6,10 +6,10 @@ using InlineIL;
 using NUnit.Framework;
 using static InlineIL.IL.Emit;
 
-namespace Disruptor.Tests.Utils
+namespace Disruptor.Tests.Util
 {
     [TestFixture]
-    public class UtilTests
+    public class InternalUtilTests
     {
         [TestCase(129, 1)]
         [TestCase(128, 1)]
@@ -24,42 +24,10 @@ namespace Disruptor.Tests.Utils
         [TestCase(1, 128)]
         public void ShouldGetRingBufferPaddingEventCount(int eventSize, int expectedPadding)
         {
-            var padding = Util.GetRingBufferPaddingEventCount(eventSize);
+            var padding = InternalUtil.GetRingBufferPaddingEventCount(eventSize);
 
             Assert.AreEqual(expectedPadding, padding);
             Assert.GreaterOrEqual(padding * eventSize, 128);
-        }
-
-        [Test]
-        public void ShouldReturnNextPowerOfTwo()
-        {
-            var powerOfTwo = Util.CeilingNextPowerOfTwo(1000);
-
-            Assert.AreEqual(1024, powerOfTwo);
-        }
-
-        [Test]
-        public void ShouldReturnExactPowerOfTwo()
-        {
-            var powerOfTwo = Util.CeilingNextPowerOfTwo(1024);
-
-            Assert.AreEqual(1024, powerOfTwo);
-        }
-
-        [Test]
-        public void ShouldReturnMinimumSequence()
-        {
-            var sequences = new[] {new Sequence(11), new Sequence(4), new Sequence(13)};
-
-            Assert.AreEqual(4L, Util.GetMinimumSequence(sequences));
-        }
-
-        [Test]
-        public void ShouldReturnLongMaxWhenNoEventProcessors()
-        {
-            var sequences = new Sequence[0];
-
-            Assert.AreEqual(long.MaxValue, Util.GetMinimumSequence(sequences));
         }
 
         [Test]
@@ -69,7 +37,7 @@ namespace Disruptor.Tests.Utils
 
             for (var i = 0; i < array.Length; i++)
             {
-                var evt = Util.Read<StubEvent>(array, i);
+                var evt = InternalUtil.Read<StubEvent>(array, i);
 
                 Assert.AreEqual(new StubEvent(i), evt);
             }
@@ -82,7 +50,7 @@ namespace Disruptor.Tests.Utils
 
             for (var i = 0; i < array.Length; i++)
             {
-                var evt = Util.ReadValue<StubValueEvent>(array, i);
+                var evt = InternalUtil.ReadValue<StubValueEvent>(array, i);
 
                 Assert.AreEqual(new StubValueEvent(i), evt);
             }
@@ -95,7 +63,7 @@ namespace Disruptor.Tests.Utils
 
             for (var i = 0; i < array.Length; i++)
             {
-                var evt = Util.ReadValue<UnalignedEvent>(array, i);
+                var evt = InternalUtil.ReadValue<UnalignedEvent>(array, i);
 
                 Assert.AreEqual(new UnalignedEvent(i), evt);
             }
@@ -109,7 +77,7 @@ namespace Disruptor.Tests.Utils
             {
                 for (var i = 0; i < memory.EventCount; i++)
                 {
-                    var evt = Util.ReadValue<StubUnmanagedEvent>(memory.PointerToFirstEvent, i, memory.EventSize);
+                    var evt = InternalUtil.ReadValue<StubUnmanagedEvent>(memory.PointerToFirstEvent, i, memory.EventSize);
 
                     Assert.AreEqual(new StubUnmanagedEvent(i), evt);
                 }
@@ -123,13 +91,13 @@ namespace Disruptor.Tests.Utils
 
             for (var i = 0; i < array.Length; i++)
             {
-                ref var evt = ref Util.ReadValue<StubValueEvent>(array, i);
+                ref var evt = ref InternalUtil.ReadValue<StubValueEvent>(array, i);
                 evt.TestString = evt.Value.ToString();
             }
 
             for (var i = 0; i < array.Length; i++)
             {
-                var evt = Util.ReadValue<StubValueEvent>(array, i);
+                var evt = InternalUtil.ReadValue<StubValueEvent>(array, i);
 
                 Assert.AreEqual(evt.Value.ToString(), evt.TestString);
             }
@@ -142,13 +110,13 @@ namespace Disruptor.Tests.Utils
 
             for (var i = 0; i < array.Length; i++)
             {
-                ref var evt = ref Util.ReadValue<UnalignedEvent>(array, i);
+                ref var evt = ref InternalUtil.ReadValue<UnalignedEvent>(array, i);
                 evt.TestString = evt.Value.ToString();
             }
 
             for (var i = 0; i < array.Length; i++)
             {
-                var evt = Util.ReadValue<UnalignedEvent>(array, i);
+                var evt = InternalUtil.ReadValue<UnalignedEvent>(array, i);
 
                 Assert.AreEqual(evt.Value.ToString(), evt.TestString);
             }
@@ -162,13 +130,13 @@ namespace Disruptor.Tests.Utils
             {
                 for (var i = 0; i < memory.EventCount; i++)
                 {
-                    ref var evt = ref Util.ReadValue<StubUnmanagedEvent>(memory.PointerToFirstEvent, i, memory.EventSize);
+                    ref var evt = ref InternalUtil.ReadValue<StubUnmanagedEvent>(memory.PointerToFirstEvent, i, memory.EventSize);
                     evt.DoubleValue = evt.Value + 0.1;
                 }
 
                 for (var i = 0; i < memory.EventCount; i++)
                 {
-                    var evt = Util.ReadValue<StubUnmanagedEvent>(memory.PointerToFirstEvent, i, memory.EventSize);
+                    var evt = InternalUtil.ReadValue<StubUnmanagedEvent>(memory.PointerToFirstEvent, i, memory.EventSize);
 
                     Assert.AreEqual(evt.Value + 0.1, evt.DoubleValue);
                 }
@@ -196,7 +164,7 @@ namespace Disruptor.Tests.Utils
         {
             Console.WriteLine(Environment.Is64BitProcess ? "64BIT" : "32BIT");
 
-            Assert.AreEqual(ComputeArrayDataOffset(), Util.ArrayDataOffset);
+            Assert.AreEqual(ComputeArrayDataOffset(), InternalUtil.ArrayDataOffset);
         }
 
         private static int ComputeArrayDataOffset()

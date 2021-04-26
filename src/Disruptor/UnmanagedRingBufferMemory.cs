@@ -64,14 +64,14 @@ namespace Disruptor
                 throw new ArgumentException($"{nameof(eventSize)} must not be less than 1");
             }
 
-            var size = eventCount * eventSize + Util.RingBufferPaddingBytes * 2;
+            var size = eventCount * eventSize + InternalUtil.RingBufferPaddingBytes * 2;
             var pointer = Marshal.AllocHGlobal(size);
 
             InitBlock(pointer, 0, (uint)size);
 
             var handle = new AllocSafeHandle(pointer);
 
-            return new UnmanagedRingBufferMemory(handle, Util.RingBufferPaddingBytes, eventCount, eventSize);
+            return new UnmanagedRingBufferMemory(handle, InternalUtil.RingBufferPaddingBytes, eventCount, eventSize);
         }
 
         /// <summary>

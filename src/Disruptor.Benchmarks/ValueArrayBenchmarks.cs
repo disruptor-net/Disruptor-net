@@ -80,14 +80,14 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.NoInlining)]
         public int ReadOneIL()
         {
-            return Util.ReadValue<Event>(_array, Index).Value;
+            return InternalUtil.ReadValue<Event>(_array, Index).Value;
         }
 
         [Benchmark]
         [MethodImpl(MethodImplOptions.NoInlining)]
         public unsafe int ReadOneILUnsafe()
         {
-            return Util.ReadValue<Event>(_pointer, Index, sizeof(Event)).Value;
+            return InternalUtil.ReadValue<Event>(_pointer, Index, sizeof(Event)).Value;
         }
 
         public struct Event

@@ -20,7 +20,7 @@ namespace Disruptor
         /// <summary>
         /// Get the minimum sequence value for the group.
         /// </summary>
-        public long Value => Util.GetMinimumSequence(_sequences);
+        public long Value => DisruptorUtil.GetMinimumSequence(_sequences);
 
         /// <summary>
         /// Not supported.

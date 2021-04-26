@@ -52,7 +52,7 @@ namespace Disruptor
             _isBlockingWaitStrategy = !(waitStrategy is INonBlockingWaitStrategy);
             _availableBuffer = new int[bufferSize];
             _indexMask = bufferSize - 1;
-            _indexShift = Util.Log2(bufferSize);
+            _indexShift = DisruptorUtil.Log2(bufferSize);
 
             InitialiseAvailableBuffer();
         }
@@ -91,7 +91,7 @@ namespace Disruptor
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > cursorValue)
             {
-                long minSequence = Util.GetMinimumSequence(gatingSequences, cursorValue);
+                long minSequence = DisruptorUtil.GetMinimumSequence(gatingSequences, cursorValue);
                 _gatingSequenceCache.SetValue(minSequence);
 
                 if (wrapPoint > minSequence)
@@ -151,7 +151,7 @@ namespace Disruptor
 
                 if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
                 {
-                    long gatingSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current);
+                    long gatingSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current);
 
                     if (wrapPoint > gatingSequence)
                     {
@@ -220,7 +220,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long GetRemainingCapacity()
         {
-            var consumed = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
+            var consumed = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
             var produced = _cursor.Value;
             return BufferSize - (produced - consumed);
         }
@@ -332,7 +332,7 @@ namespace Disruptor
         /// </summary>
         public long GetMinimumSequence()
         {
-            return Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
+            return DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
         }
 
         /// <summary>

@@ -98,7 +98,7 @@ namespace Disruptor
                     _cursor.SetValueVolatile(nextValue);
                 }
 
-                long minSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
+                long minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
                 _cachedValue = minSequence;
 
                 if (wrapPoint > minSequence)
@@ -147,7 +147,7 @@ namespace Disruptor
 
                 var spinWait = default(AggressiveSpinWait);
                 long minSequence;
-                while (wrapPoint > (minSequence = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue)))
+                while (wrapPoint > (minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue)))
                 {
                     spinWait.SpinOnce();
                 }
@@ -206,7 +206,7 @@ namespace Disruptor
         {
             var nextValue = _nextValue;
 
-            var consumed = Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
+            var consumed = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
             var produced = nextValue;
             return BufferSize - (produced - consumed);
         }
@@ -282,7 +282,7 @@ namespace Disruptor
         /// </summary>
         public long GetMinimumSequence()
         {
-            return Util.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
+            return DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
         }
 
         /// <summary>

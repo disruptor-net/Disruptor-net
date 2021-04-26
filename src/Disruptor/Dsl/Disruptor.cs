@@ -130,7 +130,7 @@ namespace Disruptor.Dsl
 
             _ringBuffer.AddGatingSequences(sequences);
 
-            return new EventHandlerGroup<T>(this, _consumerRepository, Util.GetSequencesFor(processors));
+            return new EventHandlerGroup<T>(this, _consumerRepository, DisruptorUtil.GetSequencesFor(processors));
         }
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace Disruptor.Dsl
         /// <returns>an <see cref="EventHandlerGroup{T}"/> that can be used to setup a <see cref="ISequenceBarrier"/> over the specified event processors.</returns>
         public EventHandlerGroup<T> After(params IEventProcessor[] processors)
         {
-            return new EventHandlerGroup<T>(this, _consumerRepository, Util.GetSequencesFor(processors));
+            return new EventHandlerGroup<T>(this, _consumerRepository, DisruptorUtil.GetSequencesFor(processors));
         }
 
         /// <summary>

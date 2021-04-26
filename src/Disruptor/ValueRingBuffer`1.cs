@@ -12,7 +12,7 @@ namespace Disruptor
     public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
         where T : struct
     {
-        private static readonly int _bufferPad = Util.GetRingBufferPaddingEventCount(Util.SizeOf<T>());
+        private static readonly int _bufferPad = InternalUtil.GetRingBufferPaddingEventCount(InternalUtil.SizeOf<T>());
 
         /// <summary>
         /// Construct a ValueRingBuffer with the full option set.
@@ -150,7 +150,7 @@ namespace Disruptor
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return ref Util.ReadValue<T>(_entries, _bufferPad + (int)(sequence & _indexMask));
+                return ref InternalUtil.ReadValue<T>(_entries, _bufferPad + (int)(sequence & _indexMask));
             }
         }
 

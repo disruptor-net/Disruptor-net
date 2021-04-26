@@ -18,7 +18,7 @@ namespace Disruptor
         /// <summary>
         /// Get the minimum sequence value for the group.
         /// </summary>
-        public long Value => Util.GetMinimumSequence(Volatile.Read(ref _sequences));
+        public long Value => DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _sequences));
 
         /// <summary>
         /// Set all <see cref="Sequence"/>s in the group to a given value.
