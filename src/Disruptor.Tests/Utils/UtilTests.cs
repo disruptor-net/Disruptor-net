@@ -33,7 +33,7 @@ namespace Disruptor.Tests.Utils
         [Test]
         public void ShouldReturnNextPowerOfTwo()
         {
-            var powerOfTwo = 1000.CeilingNextPowerOfTwo();
+            var powerOfTwo = Util.CeilingNextPowerOfTwo(1000);
 
             Assert.AreEqual(1024, powerOfTwo);
         }
@@ -41,7 +41,7 @@ namespace Disruptor.Tests.Utils
         [Test]
         public void ShouldReturnExactPowerOfTwo()
         {
-            var powerOfTwo = 1024.CeilingNextPowerOfTwo();
+            var powerOfTwo = Util.CeilingNextPowerOfTwo(1024);
 
             Assert.AreEqual(1024, powerOfTwo);
         }

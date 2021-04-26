@@ -35,7 +35,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="x">Value to round up</param>
         /// <returns>The next power of 2 from x inclusive</returns>
-        public static int CeilingNextPowerOfTwo(this int x)
+        public static int CeilingNextPowerOfTwo(int x)
         {
             var result = 2;
 
