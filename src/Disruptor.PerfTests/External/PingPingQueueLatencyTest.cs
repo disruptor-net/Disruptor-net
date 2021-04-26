@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
-using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 using HdrHistogram;
 
@@ -12,7 +10,6 @@ namespace Disruptor.PerfTests.External
         private const int _bufferSize = 1024;
         private const long _iterations = 100 * 1000 * 30;
         private const long _pauseDurationInNano = 1000;
-        private static readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
         private readonly ArrayConcurrentQueue<long> _pingQueue = new ArrayConcurrentQueue<long>(_bufferSize);
         private readonly ArrayConcurrentQueue<long> _pongQueue = new ArrayConcurrentQueue<long>(_bufferSize);
@@ -33,8 +30,8 @@ namespace Disruptor.PerfTests.External
             _pinger.Reset(globalSignal, signal, histogram);
             _ponger.Reset(globalSignal, cancellationToken.Token);
 
-            _executor.Execute(_pinger.Run);
-            _executor.Execute(_ponger.Run);
+            _pinger.Start();
+            _ponger.Start();
 
             globalSignal.Signal();
             globalSignal.Wait();
@@ -100,6 +97,11 @@ namespace Disruptor.PerfTests.External
                 _signal = signal;
                 _histogram = histogram;
             }
+
+            public void Start()
+            {
+                PerfTestUtil.StartLongRunning(Run);
+            }
         }
 
         public class QueuePonger
@@ -134,6 +136,11 @@ namespace Disruptor.PerfTests.External
             {
                 _globalSignal = globalSignal;
                 _cancellationToken = cancellationToken;
+            }
+
+            public void Start()
+            {
+                PerfTestUtil.StartLongRunning(Run);
             }
         }
     }

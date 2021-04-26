@@ -16,7 +16,7 @@ namespace Disruptor.Tests
                                                         new AtomicLongWorkHandler(),
                                                         new AtomicLongWorkHandler());
 
-            var ringBuffer = pool.Start(new BasicExecutor(TaskScheduler.Current));
+            var ringBuffer = pool.Start();
 
             ringBuffer.Next();
             ringBuffer.Next();
@@ -37,7 +37,7 @@ namespace Disruptor.Tests
                                                         new AtomicLongWorkHandler(),
                                                         new AtomicLongWorkHandler());
 
-            var ringBuffer = pool.Start(new BasicExecutor(TaskScheduler.Current));
+            var ringBuffer = pool.Start();
 
             ringBuffer.Next();
             ringBuffer.Next();

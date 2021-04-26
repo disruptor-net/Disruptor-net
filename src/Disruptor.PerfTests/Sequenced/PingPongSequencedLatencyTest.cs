@@ -10,7 +10,6 @@ namespace Disruptor.PerfTests.Sequenced
 {
     public class PingPongSequencedLatencyTest : ILatencyTest
     {
-        private static readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
         private const int _bufferSize = 1024;
         private const long _iterations = 100 * 1000 * 30;
         private const long _pauseNanos = 1000;
@@ -57,8 +56,8 @@ namespace Disruptor.PerfTests.Sequenced
             _pinger.Reset(globalSignal, signal, histogram);
             _ponger.Reset(globalSignal);
 
-            var processorTask1 = _executor.Execute(_pongProcessor.Run);
-            var processorTask2 = _executor.Execute(_pingProcessor.Run);
+            var processorTask1 = _pongProcessor.Start();
+            var processorTask2 = _pingProcessor.Start();
             _pongProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
             _pingProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 

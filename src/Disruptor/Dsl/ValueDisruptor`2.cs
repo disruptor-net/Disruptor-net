@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Disruptor.Dsl
 {
@@ -16,15 +17,15 @@ namespace Disruptor.Dsl
         where TRingBuffer : IValueRingBuffer<T>
     {
         protected readonly TRingBuffer _ringBuffer;
-        private readonly IExecutor _executor;
+        private readonly TaskScheduler _taskScheduler;
         private readonly ConsumerRepository _consumerRepository = new ConsumerRepository();
         private readonly ValueExceptionHandlerWrapper<T> _exceptionHandler = new ValueExceptionHandlerWrapper<T>();
         private int _started;
 
-        protected ValueDisruptor(TRingBuffer ringBuffer, IExecutor executor)
+        protected ValueDisruptor(TRingBuffer ringBuffer, TaskScheduler taskScheduler)
         {
             _ringBuffer = ringBuffer;
-            _executor = executor;
+            _taskScheduler = taskScheduler;
         }
 
         IValueRingBuffer<T> IValueDisruptor<T>.RingBuffer => _ringBuffer;
@@ -155,7 +156,7 @@ namespace Disruptor.Dsl
             CheckOnlyStartedOnce();
             foreach (var consumerInfo in _consumerRepository)
             {
-                consumerInfo.Start(_executor);
+                consumerInfo.Start(_taskScheduler);
             }
 
             return _ringBuffer;
@@ -177,8 +178,7 @@ namespace Disruptor.Dsl
         /// and then halts the processors.It is critical that publishing to the ring buffer has stopped
         /// before calling this method, otherwise it may never return.
         ///
-        /// This method will not shutdown the executor, nor will it await the final termination of the
-        /// processor threads
+        /// This method will not await the final termination of the processor threads.
         /// </summary>
         public void Shutdown()
         {
@@ -196,8 +196,7 @@ namespace Disruptor.Dsl
         /// Waits until all events currently in the disruptor have been processed by all event processors
         /// and then halts the processors.
         ///
-        /// This method will not shutdown the executor, nor will it await the final termination of the
-        /// processor threads
+        /// This method will not await the final termination of the processor threads.
         /// </summary>
         /// <param name="timeout">the amount of time to wait for all events to be processed. <code>TimeSpan.MaxValue</code> will give an infinite timeout</param>
         /// <exception cref="TimeoutException">if a timeout occurs before shutdown completes.</exception>
@@ -314,7 +313,7 @@ namespace Disruptor.Dsl
 
         public override string ToString()
         {
-            return $"ValueDisruptor {{RingBuffer={_ringBuffer}, Started={_started}, Executor={_executor}}}";
+            return $"ValueDisruptor {{RingBuffer={_ringBuffer}, Started={_started}}}";
         }
     }
 }

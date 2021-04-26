@@ -8,7 +8,6 @@ namespace Disruptor.Samples
     {
         public static void Main(string[] args)
         {
-            var executor = new BasicExecutor(TaskScheduler.Current);
             var disruptor = new Disruptor<DynamicEvent>(() => new DynamicEvent(), 1024, TaskScheduler.Current);
             var ringBuffer = disruptor.Start();
 
@@ -23,9 +22,9 @@ namespace Disruptor.Samples
             ringBuffer.AddGatingSequences(processor1.Sequence, processor2.Sequence);
 
             // Start the new batch processors.
-            executor.Execute(processor1.Run);
-            executor.Execute(processor2.Run);
-            
+            processor1.Start();
+            processor2.Start();
+
             // Remove a processor.
 
             // Stop the processor

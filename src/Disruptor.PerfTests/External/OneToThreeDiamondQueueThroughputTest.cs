@@ -11,7 +11,6 @@ namespace Disruptor.PerfTests.External
         private const int _eventProcessorCount = 3;
         private const int _bufferSize = 1024 * 8;
         private const long _iterations = 1000 * 1000 * 100;
-        private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
         private readonly long _expectedResult;
         private readonly ConcurrentQueue<long> _fizzInputQueue = new ConcurrentQueue<long>();
@@ -49,9 +48,9 @@ namespace Disruptor.PerfTests.External
             var signal = new ManualResetEvent(false);
             _fizzBuzzQueueProcessor.Reset(signal);
             var tasks = new Task[_eventProcessorCount];
-            tasks[0] = _executor.Execute(_fizzQueueProcessor.Run);
-            tasks[1] = _executor.Execute(_buzzQueueProcessor.Run);
-            tasks[2] = _executor.Execute(_fizzBuzzQueueProcessor.Run);
+            tasks[0] = _fizzQueueProcessor.Start();
+            tasks[1] = _buzzQueueProcessor.Start();
+            tasks[2] = _fizzBuzzQueueProcessor.Start();
 
             sessionContext.Start();
 

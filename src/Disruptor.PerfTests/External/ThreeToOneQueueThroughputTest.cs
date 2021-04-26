@@ -11,7 +11,6 @@ namespace Disruptor.PerfTests.External
         private const int _publisherCount = 3;
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000 * 1000 * 20;
-        private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
         private readonly Barrier _signal = new Barrier(_publisherCount + 1);
         private readonly ConcurrentQueue<long> _blockingQueue = new ConcurrentQueue<long>();
         private readonly PerfAdditionQueueEventProcessor _queueProcessor;
@@ -36,9 +35,10 @@ namespace Disruptor.PerfTests.External
             var tasks = new Task[_publisherCount];
             for (var i = 0; i < _publisherCount; i++)
             {
-                tasks[i] = _executor.Execute(_perfQueueProducers[i].Run);
+                tasks[i] = _perfQueueProducers[i].Start();
             }
-            var processorTask = _executor.Execute(_queueProcessor.Run);
+
+            var processorTask = _queueProcessor.Start();
 
             sessionContext.Start();
             _signal.SignalAndWait();

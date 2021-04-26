@@ -1,4 +1,6 @@
-﻿namespace Disruptor.Dsl
+﻿using System.Threading.Tasks;
+
+namespace Disruptor.Dsl
 {
     public class WorkerPoolInfo<T> : IConsumerInfo where T : class
     {
@@ -17,9 +19,9 @@
 
         public bool IsEndOfChain { get; private set; }
 
-        public void Start(IExecutor executor)
+        public void Start(TaskScheduler taskScheduler)
         {
-            _workerPool.Start(executor);
+            _workerPool.Start(taskScheduler);
         }
 
         public void Halt()

@@ -38,7 +38,6 @@ namespace Disruptor.PerfTests.Sequenced
         private const int _bufferSize = 1024 * 1;
         private const long _iterations = 1000L * 1000L * 1L;
         private const int _arraySize = 2 * 1024;
-        private static readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -64,7 +63,7 @@ namespace Disruptor.PerfTests.Sequenced
             var signal = new ManualResetEvent(false);
             var expectedCount = _batchEventProcessor.Sequence.Value + _iterations;
             _handler.Reset(signal, _iterations);
-            var processorTask = _executor.Execute(_batchEventProcessor.Run);
+            var processorTask = _batchEventProcessor.Start();
             _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();

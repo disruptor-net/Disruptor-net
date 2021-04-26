@@ -13,7 +13,6 @@ namespace Disruptor.PerfTests.External
         private const long _iterations = 1000 * 1000 * 10;
         private const long _operandTwoInitialValue = 777;
         private readonly long _expectedResult;
-        private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
         private readonly ConcurrentQueue<long[]> _stepOneQueue = new ConcurrentQueue<long[]>();
         private readonly ConcurrentQueue<long> _stepTwoQueue = new ConcurrentQueue<long>();
@@ -54,9 +53,9 @@ namespace Disruptor.PerfTests.External
             _stepThreeQueueProcessor.Reset(signal);
 
             var tasks = new Task[_eventProcessorCount];
-            tasks[0] = _executor.Execute(_stepOneQueueProcessor.Run);
-            tasks[1] = _executor.Execute(_stepTwoQueueProcessor.Run);
-            tasks[2] = _executor.Execute(_stepThreeQueueProcessor.Run);
+            tasks[0] = _stepOneQueueProcessor.Start();
+            tasks[1] = _stepTwoQueueProcessor.Start();
+            tasks[2] = _stepThreeQueueProcessor.Start();
 
             sessionContext.Start();
 

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
+using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Sequenced
 {
@@ -42,7 +43,6 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly AdditionEventHandler _eventHandler;
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
         private readonly IBatchEventProcessor<PerfEvent> _batchEventProcessor;
-        private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
         public OneToOneSequencedThreadAffinityThroughputTest()
         {
@@ -61,7 +61,8 @@ namespace Disruptor.PerfTests.Sequenced
             long expectedCount = _batchEventProcessor.Sequence.Value + _iterations;
 
             _eventHandler.Reset(expectedCount);
-            var processorTask = _executor.Execute(() =>
+
+            var processorTask = PerfTestUtil.StartLongRunning(() =>
             {
                 using var _ = ThreadAffinityUtil.SetThreadAffinity(0);
 

@@ -12,7 +12,6 @@ namespace Disruptor.PerfTests.Sequenced
     {
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 100L;
-        private static readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -96,6 +95,11 @@ namespace Disruptor.PerfTests.Sequenced
                 _running = 1;
                 BatchesProcessedCount.Value = 0;
             }
+
+            public Task Start()
+            {
+                return PerfTestUtil.StartLongRunning(Run);
+            }
         }
 
         public long Run(ThroughputSessionContext sessionContext)
@@ -103,7 +107,7 @@ namespace Disruptor.PerfTests.Sequenced
             var latch = new ManualResetEvent(false);
             var expectedCount = _poller.Sequence.Value + _iterations;
             _pollRunnable.Reset(latch, expectedCount);
-            var processorTask = _executor.Execute(_pollRunnable.Run);
+            var processorTask = _pollRunnable.Start();
             sessionContext.Start();
 
             var ringBuffer = _ringBuffer;

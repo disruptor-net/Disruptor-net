@@ -1,6 +1,6 @@
 using System;
 using System.Threading;
-using Disruptor.Dsl;
+using System.Threading.Tasks;
 
 namespace Disruptor
 {
@@ -81,6 +81,11 @@ namespace Disruptor
         }
 
         /// <summary>
+        /// The <see cref="RingBuffer{T}"/> used by this worker pool.
+        /// </summary>
+        public RingBuffer<T> RingBuffer => _ringBuffer;
+
+        /// <summary>
         /// Get an array of <see cref="Sequence"/>s representing the progress of the workers.
         /// </summary>
         public ISequence[] GetWorkerSequences()
@@ -98,9 +103,17 @@ namespace Disruptor
         /// <summary>
         /// Start the worker pool processing events in sequence.
         /// </summary>
-        /// <returns>the <see cref="RingBuffer{T}"/> used for the work queue.</returns>
         /// <exception cref="InvalidOperationException">if the pool is already started or halted</exception>
-        public RingBuffer<T> Start(IExecutor executor)
+        public RingBuffer<T> Start()
+        {
+            return Start(TaskScheduler.Default);
+        }
+
+        /// <summary>
+        /// Start the worker pool processing events in sequence.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">if the pool is already started or halted</exception>
+        public RingBuffer<T> Start(TaskScheduler taskScheduler)
         {
             var previousRunState = Interlocked.CompareExchange(ref _runState, ProcessorRunStates.Running, ProcessorRunStates.Idle);
             if (previousRunState == ProcessorRunStates.Running)
@@ -119,7 +132,7 @@ namespace Disruptor
             foreach (var workProcessor in _workProcessors)
             {
                 workProcessor.Sequence.SetValue(cursor);
-                executor.Execute(workProcessor.Run);
+                workProcessor.Start(taskScheduler);
             }
 
             return _ringBuffer;

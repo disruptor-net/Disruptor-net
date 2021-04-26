@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 
 namespace Disruptor.PerfTests.Sequenced
@@ -40,7 +41,6 @@ namespace Disruptor.PerfTests.Sequenced
     {
         private const int _bufferSize = 1024 * 8;
         private const long _iterations = 1000L * 1000L * 100L;
-        private readonly ExecutorService<FunctionEvent> _executor = new ExecutorService<FunctionEvent>();
 
         private const long _operandTwoInitialValue = 777L;
         private readonly long _expectedResult;
@@ -92,9 +92,9 @@ namespace Disruptor.PerfTests.Sequenced
             var latch = new ManualResetEvent(false);
             _stepThreeFunctionHandler.Reset(latch, _stepThreeBatchProcessor.Sequence.Value + _iterations);
 
-            var processorTask1 = _executor.Submit(_stepOneBatchProcessor);
-            var processorTask2 = _executor.Submit(_stepTwoBatchProcessor);
-            var processorTask3 = _executor.Submit(_stepThreeBatchProcessor);
+            var processorTask1 = _stepOneBatchProcessor.Start();
+            var processorTask2 = _stepTwoBatchProcessor.Start();
+            var processorTask3 = _stepThreeBatchProcessor.Start();
 
             _stepOneBatchProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
             _stepTwoBatchProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));

@@ -12,22 +12,22 @@ namespace Disruptor.Tests.Dsl
     public class UnmanagedDisruptorTests
     {
         private UnmanagedDisruptor<TestValueEvent> _disruptor;
-        private StubExecutor _executor;
+        private StubTaskScheduler _taskScheduler;
         private UnmanagedRingBufferMemory _memory;
 
         [SetUp]
         public void SetUp()
         {
-            _executor = new StubExecutor();
+            _taskScheduler = new StubTaskScheduler();
             _memory = UnmanagedRingBufferMemory.Allocate(4, TestValueEvent.Size);
-            _disruptor = new UnmanagedDisruptor<TestValueEvent>(_memory.PointerToFirstEvent, _memory.EventSize, _memory.EventCount, _executor);
+            _disruptor = new UnmanagedDisruptor<TestValueEvent>(_memory.PointerToFirstEvent, _memory.EventSize, _memory.EventCount, _taskScheduler);
         }
 
         [TearDown]
         public void TearDown()
         {
             _disruptor.Halt();
-            _executor.JoinAllThreads();
+            _taskScheduler.JoinAllThreads();
             _memory.Dispose();
         }
 

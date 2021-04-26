@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Disruptor.PerfTests.Support
 {
@@ -67,7 +68,7 @@ namespace Disruptor.PerfTests.Support
                         _fizzOutputQueue.Enqueue(0 == (value % 3));
                         break;
                     }
-                    
+
                     case FizzBuzzStep.Buzz:
                     {
 
@@ -111,6 +112,11 @@ namespace Disruptor.PerfTests.Support
                     _signal?.Set();
                 }
             }
+        }
+
+        public Task Start()
+        {
+            return PerfTestUtil.StartLongRunning(Run);
         }
     }
 }

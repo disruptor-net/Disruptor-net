@@ -55,12 +55,15 @@ namespace Disruptor.PerfTests.WorkHandler
         public long Run(ThroughputSessionContext sessionContext)
         {
             ResetCounters();
-            RingBuffer<PerfEvent> ringBuffer = _workerPool.Start(new BasicExecutor(TaskScheduler.Default));
+
+            _workerPool.Start();
+
             sessionContext.Start();
 
+            var ringBuffer = _ringBuffer;
             for (long i = 0; i < _iterations; i++)
             {
-                long sequence = ringBuffer.Next();
+                var sequence = ringBuffer.Next();
                 ringBuffer[sequence].Value = i;
                 ringBuffer.Publish(sequence);
             }

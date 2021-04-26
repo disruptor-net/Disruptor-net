@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Disruptor.PerfTests.Support
 {
@@ -97,6 +98,11 @@ namespace Disruptor.PerfTests.Support
                     _signal?.Set();
                 }
             }
+        }
+
+        public Task Start()
+        {
+            return PerfTestUtil.StartLongRunning(Run);
         }
     }
 }

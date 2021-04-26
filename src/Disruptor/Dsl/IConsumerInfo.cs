@@ -1,4 +1,6 @@
-﻿namespace Disruptor.Dsl
+﻿using System.Threading.Tasks;
+
+namespace Disruptor.Dsl
 {
     public interface IConsumerInfo
     {
@@ -8,7 +10,7 @@
 
         bool IsEndOfChain { get; }
 
-        void Start(IExecutor executor);
+        void Start(TaskScheduler taskScheduler);
 
         void Halt();
 

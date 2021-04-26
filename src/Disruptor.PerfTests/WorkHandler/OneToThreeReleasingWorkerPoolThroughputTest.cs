@@ -1,7 +1,4 @@
-﻿using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using Disruptor.Dsl;
+﻿using System.Threading;
 using Disruptor.PerfTests.Support;
 using Disruptor.Tests.Support;
 
@@ -43,9 +40,12 @@ namespace Disruptor.PerfTests.WorkHandler
         public long Run(ThroughputSessionContext sessionContext)
         {
             ResetCounters();
-            var ringBuffer = _workerPool.Start(new BasicExecutor(TaskScheduler.Default));
+
+            _workerPool.Start();
+
             sessionContext.Start();
 
+            var ringBuffer = _ringBuffer;
             for (long i = 0; i < _iterations; i++)
             {
                 var sequence = ringBuffer.Next();

@@ -42,7 +42,6 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly AdditionEventHandler _eventHandler;
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
         private readonly IValueBatchEventProcessor<PerfValueEvent> _batchEventProcessor;
-        private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
         public OneToOneSequencedValueThroughputTest()
         {
@@ -60,7 +59,7 @@ namespace Disruptor.PerfTests.Sequenced
             long expectedCount = _batchEventProcessor.Sequence.Value + _iterations;
 
             _eventHandler.Reset(expectedCount);
-            var processorTask = _executor.Execute(_batchEventProcessor.Run);
+            var processorTask = _batchEventProcessor.Start();
             _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();

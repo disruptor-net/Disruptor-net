@@ -23,7 +23,7 @@ namespace Disruptor.Dsl
         where T : class
     {
         private readonly RingBuffer<T> _ringBuffer;
-        private readonly IExecutor _executor;
+        private readonly TaskScheduler _taskScheduler;
         private readonly ConsumerRepository _consumerRepository = new ConsumerRepository();
         private IExceptionHandler<T> _exceptionHandler = new ExceptionHandlerWrapper<T>();
         private int _started;
@@ -45,7 +45,7 @@ namespace Disruptor.Dsl
         /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
         /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
         public Disruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler)
-            : this(RingBuffer<T>.CreateMultiProducer(eventFactory, ringBufferSize), new BasicExecutor(taskScheduler))
+            : this(RingBuffer<T>.CreateMultiProducer(eventFactory, ringBufferSize), taskScheduler)
         {
         }
 
@@ -58,25 +58,14 @@ namespace Disruptor.Dsl
         /// <param name="producerType">the claim strategy to use for the ring buffer</param>
         /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
         public Disruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
-            : this(RingBuffer<T>.Create(producerType, eventFactory, ringBufferSize, waitStrategy), new BasicExecutor(taskScheduler))
+            : this(RingBuffer<T>.Create(producerType, eventFactory, ringBufferSize, waitStrategy), taskScheduler)
         {
         }
 
-        /// <summary>
-        /// Create a new Disruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
-        /// </summary>
-        /// <param name="eventFactory">the factory to create events in the ring buffer</param>
-        /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
-        /// <param name="executor">an <see cref="IExecutor"/> to create threads for processors</param>
-        public Disruptor(Func<T> eventFactory, int ringBufferSize, IExecutor executor)
-            : this(RingBuffer<T>.CreateMultiProducer(eventFactory, ringBufferSize), executor)
-        {
-        }
-
-        private Disruptor(RingBuffer<T> ringBuffer, IExecutor executor)
+        private Disruptor(RingBuffer<T> ringBuffer, TaskScheduler taskScheduler)
         {
             _ringBuffer = ringBuffer;
-            _executor = executor;
+            _taskScheduler = taskScheduler;
         }
 
         /// <summary>
@@ -238,7 +227,7 @@ namespace Disruptor.Dsl
             CheckOnlyStartedOnce();
             foreach (var consumerInfo in _consumerRepository)
             {
-                consumerInfo.Start(_executor);
+                consumerInfo.Start(_taskScheduler);
             }
 
             return _ringBuffer;
@@ -260,8 +249,7 @@ namespace Disruptor.Dsl
         /// and then halts the processors.It is critical that publishing to the ring buffer has stopped
         /// before calling this method, otherwise it may never return.
         ///
-        /// This method will not shutdown the executor, nor will it await the final termination of the
-        /// processor threads
+        /// This method will not await the final termination of the processor threads.
         /// </summary>
         public void Shutdown()
         {
@@ -279,8 +267,7 @@ namespace Disruptor.Dsl
         /// Waits until all events currently in the disruptor have been processed by all event processors
         /// and then halts the processors.
         ///
-        /// This method will not shutdown the executor, nor will it await the final termination of the
-        /// processor threads
+        /// This method will not await the final termination of the processor threads.
         /// </summary>
         /// <param name="timeout">the amount of time to wait for all events to be processed. <code>TimeSpan.MaxValue</code> will give an infinite timeout</param>
         /// <exception cref="TimeoutException">if a timeout occurs before shutdown completes.</exception>
@@ -425,7 +412,7 @@ namespace Disruptor.Dsl
 
         public override string ToString()
         {
-            return $"Disruptor {{RingBuffer={_ringBuffer}, Started={_started}, Executor={_executor}}}";
+            return $"Disruptor {{RingBuffer={_ringBuffer}, Started={_started}}}";
         }
     }
 }

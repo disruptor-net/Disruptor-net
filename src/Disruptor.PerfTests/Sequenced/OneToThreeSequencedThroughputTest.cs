@@ -52,7 +52,6 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly IBatchEventProcessor<PerfEvent>[] _batchEventProcessors = new IBatchEventProcessor<PerfEvent>[_numEventProcessors];
         private readonly long[] _results = new long[_numEventProcessors];
         private readonly PerfMutationEventHandler[] _handlers = new PerfMutationEventHandler[_numEventProcessors];
-        private readonly IExecutor _executor = new BasicExecutor(TaskScheduler.Current);
 
         public OneToThreeSequencedThroughputTest()
         {
@@ -88,7 +87,7 @@ namespace Disruptor.PerfTests.Sequenced
             for (var i = 0; i < _numEventProcessors; i++)
             {
                 _handlers[i].Reset(latch, _batchEventProcessors[i].Sequence.Value + _iterations);
-                processorTasks.Add(_executor.Execute(_batchEventProcessors[i].Run));
+                processorTasks.Add(_batchEventProcessors[i].Start());
                 _batchEventProcessors[i].WaitUntilStarted(TimeSpan.FromSeconds(5));
             }
 

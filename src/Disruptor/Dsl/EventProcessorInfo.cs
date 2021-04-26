@@ -1,8 +1,10 @@
-﻿namespace Disruptor.Dsl
+﻿using System.Threading.Tasks;
+
+namespace Disruptor.Dsl
 {
     /// <summary>
     /// Wrapper class to tie together a particular event processing stage
-    /// 
+    ///
     /// Tracks the event processor instance, the event handler instance, and sequence barrier which the stage is attached to.
     /// </summary>
     internal class EventProcessorInfo : IConsumerInfo
@@ -25,9 +27,9 @@
 
         public bool IsEndOfChain { get; private set; }
 
-        public void Start(IExecutor executor)
+        public void Start(TaskScheduler taskScheduler)
         {
-            executor.Execute(EventProcessor.Run);
+            EventProcessor.Start(taskScheduler);
         }
 
         public void Halt()

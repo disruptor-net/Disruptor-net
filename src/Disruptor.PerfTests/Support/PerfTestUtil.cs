@@ -1,10 +1,16 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Disruptor.PerfTests.Support
 {
     public class PerfTestUtil
     {
+        public static Task StartLongRunning(Action action)
+        {
+            return Task.Factory.StartNew(action, TaskCreationOptions.LongRunning);
+        }
+
         public static long AccumulatedAddition(long iterations)
         {
             long temp = 0L;
