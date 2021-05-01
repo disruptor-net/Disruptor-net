@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
@@ -308,10 +309,9 @@ namespace Disruptor.Tests.Dsl
             var stubPublisher = new StubPublisher(ringBuffer);
             try
             {
-                var taskFactory = new TaskFactory(_taskScheduler);
-                taskFactory.StartNew(() => stubPublisher.Run());
+                stubPublisher.Start();
 
-                AssertProducerReaches(stubPublisher, 4, true);
+                stubPublisher.AssertProducerReaches(4, true);
 
                 delayedEventHandler.ProcessEvent();
                 delayedEventHandler.ProcessEvent();
@@ -319,7 +319,7 @@ namespace Disruptor.Tests.Dsl
                 delayedEventHandler.ProcessEvent();
                 delayedEventHandler.ProcessEvent();
 
-                AssertProducerReaches(stubPublisher, 5, false);
+                stubPublisher.AssertProducerReaches(5, false);
             }
             finally
             {
@@ -540,25 +540,6 @@ namespace Disruptor.Tests.Dsl
             }
 
             AssertThatCountDownLatchIsZero(countDownLatch);
-        }
-
-        private static void AssertProducerReaches(StubPublisher stubPublisher, int expectedPublicationCount, bool strict)
-        {
-            var loopStart = DateTime.UtcNow;
-            while (stubPublisher.GetPublicationCount() < expectedPublicationCount && DateTime.UtcNow - loopStart < TimeSpan.FromMilliseconds(5))
-            {
-                Thread.Yield();
-            }
-
-            if (strict)
-            {
-                Assert.That(stubPublisher.GetPublicationCount(), Is.EqualTo(expectedPublicationCount));
-            }
-            else
-            {
-                var actualPublicationCount = stubPublisher.GetPublicationCount();
-                Assert.IsTrue(actualPublicationCount >= expectedPublicationCount, "Producer reached unexpected count. Expected at least " + expectedPublicationCount + " but only reached " + actualPublicationCount);
-            }
         }
 
         private void PublishEvent()

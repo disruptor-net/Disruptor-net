@@ -38,7 +38,7 @@ namespace Disruptor.Tests
             handler1.AwaitStart();
             handler2.AwaitStart();
 
-            Thread.Sleep(10);
+            Thread.Sleep(100);
 
             // processor1 should own an unavailable work sequence
             // => this sequence will be dropped by Halt
@@ -83,7 +83,7 @@ namespace Disruptor.Tests
             handler1.AwaitStart();
             handler2.AwaitStart();
 
-            Thread.Sleep(10);
+            Thread.Sleep(100);
 
             // processor1 should own an unavailable work sequence
             // => this sequence should not be dropped by HaltLater
