@@ -36,6 +36,7 @@ namespace Disruptor
         // | Mono-x64 |              32 |                 20 |
         // +----------+-----------------+--------------------+
 
+#pragma warning disable 618
         public static unsafe int ArrayDataOffset
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -43,6 +44,7 @@ namespace Disruptor
                 ? RuntimeHelpers.OffsetToStringData == 8 ? 8 : 16
                 : RuntimeHelpers.OffsetToStringData == 12 ? 16 : 32;
         }
+#pragma warning restore 618
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Read<T>(object array, int index)
