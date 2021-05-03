@@ -5,7 +5,13 @@ namespace Disruptor.Tests
     [TestFixture]
     public class MultiProducerSequencerTest
     {
-        private readonly MultiProducerSequencer _publisher = new MultiProducerSequencer(1024);
+        private MultiProducerSequencer _publisher;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _publisher = new MultiProducerSequencer(1024);
+        }
 
         [Test]
         public void ShouldOnlyAllowMessagesToBeAvailableIfSpecificallyPublished()
