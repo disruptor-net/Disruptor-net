@@ -18,6 +18,14 @@ namespace Disruptor
     /// </remarks>
     public struct AggressiveSpinWait
     {
+#if NETCOREAPP
+        private SpinWait _spinWait;
+
+        public void SpinOnce()
+        {
+            _spinWait.SpinOnce(-1);
+        }
+#else
         private static readonly bool _isSingleProcessor = Environment.ProcessorCount == 1;
         private const int _yieldThreshold = 10;
         private const int _sleep0EveryHowManyTimes = 5;
@@ -47,5 +55,6 @@ namespace Disruptor
 
             _count = (_count == int.MaxValue ? _yieldThreshold : _count + 1);
         }
+#endif
     }
 }
