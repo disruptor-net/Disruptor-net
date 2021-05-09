@@ -32,25 +32,6 @@ namespace Disruptor.Benchmarks
             Console.ReadLine();
         }
 
-        private static void RunMultiProducerSequencerBenchmarks()
-        {
-            var bench = new MultiProducerSequencerBenchmarks();
-
-            bench.IsAvailable();
-            bench.IsAvailablePointer();
-            bench.Publish();
-            bench.PublishPointer();
-
-            Console.WriteLine("YYY");
-            Console.ReadLine();
-            Console.WriteLine("ZZZ");
-
-            bench.IsAvailable();
-            bench.IsAvailablePointer();
-            bench.Publish();
-            bench.PublishPointer();
-        }
-
         private static void RunInt32ArrayBenchmarks()
         {
             var bench = new Int32ArrayBenchmarks();

@@ -161,40 +161,37 @@ namespace Disruptor.Tests
         {
             const int ringBufferSize = 4;
             var mre = new ManualResetEvent(false);
-            var producerComplete = false;
             var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), ringBufferSize);
             var processor = new TestEventProcessor(ringBuffer.NewBarrier());
             ringBuffer.AddGatingSequences(processor.Sequence);
 
-            var thread = new Thread(
-                () =>
+            var task = Task.Run(() =>
+            {
+                // Attempt to put in enough events to wrap around the ring buffer
+                for (var i = 0; i < ringBufferSize + 1; i++)
                 {
-                    for (var i = 0; i <= ringBufferSize; i++) // produce 5 events
+                    var sequence = ringBuffer.Next();
+                    var evt = ringBuffer[sequence];
+                    evt.Value = i;
+                    ringBuffer.Publish(sequence);
+
+                    if (i == 3) // unblock main thread after 4th eventData published
                     {
-                        var sequence = ringBuffer.Next();
-                        var evt = ringBuffer[sequence];
-                        evt.Value = i;
-                        ringBuffer.Publish(sequence);
-
-                        if (i == 3) // unblock main thread after 4th eventData published
-                        {
-                            mre.Set();
-                        }
+                        mre.Set();
                     }
-
-                    producerComplete = true;
-                });
-
-            thread.Start();
+                }
+            });
 
             mre.WaitOne();
-            Assert.That(ringBuffer.Cursor, Is.EqualTo(ringBufferSize - 1));
-            Assert.IsFalse(producerComplete);
 
+            // Publisher should not be complete, blocked at RingBuffer.Next
+            Assert.IsFalse(task.IsCompleted);
+
+            // Run the processor, freeing up entries in the ring buffer for the producer to continue and "complete"
             processor.Run();
-            thread.Join();
 
-            Assert.IsTrue(producerComplete);
+            // Check producer completes
+            Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(1)));
         }
 
         [Test]
@@ -395,32 +392,6 @@ namespace Disruptor.Tests
             Assert.That(ringBuffer[1][0], Is.EqualTo(null));
             Assert.That(ringBuffer[2][0], Is.EqualTo(null));
             Assert.That(ringBuffer[3][0], Is.EqualTo(null));
-        }
-
-        private class TestEventProcessor : IEventProcessor
-        {
-            private readonly ISequenceBarrier _sequenceBarrier;
-
-            public TestEventProcessor(ISequenceBarrier sequenceBarrier)
-            {
-                _sequenceBarrier = sequenceBarrier;
-            }
-
-            public ISequence Sequence { get; } = new Sequence();
-
-            public void Halt()
-            {
-                IsRunning = false;
-            }
-
-            public void Run()
-            {
-                IsRunning = true;
-                _sequenceBarrier.WaitFor(0L);
-                Sequence.SetValue(Sequence.Value + 1);
-            }
-
-            public bool IsRunning { get; private set; }
         }
 
         private class TestWaiter

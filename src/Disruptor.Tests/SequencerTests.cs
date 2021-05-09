@@ -103,7 +103,7 @@ namespace Disruptor.Tests
             });
 
             waitingSignal.WaitOne(TimeSpan.FromMilliseconds(500));
-            Assert.That(_sequencer.Cursor, Is.EqualTo(expectedFullSequence));
+            Assert.That(_sequencer.ComputeHighestPublishedSequence(), Is.EqualTo(expectedFullSequence));
 
             _gatingSequence.SetValue(Sequence.InitialCursorValue + 1L);
 
@@ -271,7 +271,7 @@ namespace Disruptor.Tests
             _sequencer.Publish(sequence);
             Assert.That(_sequencer.Next(), Is.EqualTo(sequence + 1));
         }
-        
+
         [Test]
         public void ShouldNotAllowBulkNextLessThanZero()
         {

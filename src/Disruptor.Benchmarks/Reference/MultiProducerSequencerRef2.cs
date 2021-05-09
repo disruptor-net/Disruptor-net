@@ -3,17 +3,12 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Disruptor.Dsl;
 
-namespace Disruptor.Benchmarks
+namespace Disruptor.Benchmarks.Reference
 {
     /// <summary>
-    /// <para>Coordinator for claiming sequences for access to a data structure while tracking dependent <see cref="Sequence"/>s.
-    /// Suitable for use for sequencing across multiple publisher threads.</para>
-    /// <para/>
-    /// <para/>Note on <see cref="ICursored.Cursor"/>:  With this sequencer the cursor value is updated after the call
-    /// to <see cref="ISequenced.Next()"/>, to determine the highest available sequence that can be read, then
-    /// <see cref="GetHighestPublishedSequence"/> should be used.
+    /// Reference implementation before removing CAS loop from Next.
     /// </summary>
-    public class MultiProducerSequencerRef : ISequencer
+    public unsafe class MultiProducerSequencerRef2 : ISequencer
     {
         private readonly int _bufferSize;
         private readonly IWaitStrategy _waitStrategy;
@@ -24,19 +19,19 @@ namespace Disruptor.Benchmarks
         private ISequence[] _gatingSequences = new ISequence[0];
 
         private readonly Sequence _gatingSequenceCache = new Sequence();
-
-        // availableBuffer tracks the state of each ringbuffer slot
-        // see below for more details on the approach
         private readonly int[] _availableBuffer;
+#if NETCOREAPP
+        private readonly int* _availableBufferPointer;
+#endif
         private readonly int _indexMask;
         private readonly int _indexShift;
 
-        public MultiProducerSequencerRef(int bufferSize)
+        public MultiProducerSequencerRef2(int bufferSize)
             : this(bufferSize, SequencerFactory.DefaultWaitStrategy())
         {
         }
 
-        public MultiProducerSequencerRef(int bufferSize, IWaitStrategy waitStrategy)
+        public MultiProducerSequencerRef2(int bufferSize, IWaitStrategy waitStrategy)
         {
             if (bufferSize < 1)
             {
@@ -50,7 +45,12 @@ namespace Disruptor.Benchmarks
             _bufferSize = bufferSize;
             _waitStrategy = waitStrategy;
             _isBlockingWaitStrategy = !(waitStrategy is INonBlockingWaitStrategy);
+#if NETCOREAPP
+            _availableBuffer = GC.AllocateArray<int>(bufferSize, pinned: true);
+            _availableBufferPointer = (int*)Unsafe.AsPointer(ref _availableBuffer[0]);
+#else
             _availableBuffer = new int[bufferSize];
+#endif
             _indexMask = bufferSize - 1;
             _indexShift = DisruptorUtil.Log2(bufferSize);
 
@@ -91,7 +91,7 @@ namespace Disruptor.Benchmarks
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > cursorValue)
             {
-                long minSequence = DisruptorUtil.GetMinimumSequence(gatingSequences, cursorValue);
+                var minSequence = DisruptorUtil.GetMinimumSequence(gatingSequences, cursorValue);
                 _gatingSequenceCache.SetValue(minSequence);
 
                 if (wrapPoint > minSequence)
@@ -146,12 +146,12 @@ namespace Disruptor.Benchmarks
                 current = _cursor.Value;
                 next = current + n;
 
-                long wrapPoint = next - _bufferSize;
-                long cachedGatingSequence = _gatingSequenceCache.Value;
+                var wrapPoint = next - _bufferSize;
+                var cachedGatingSequence = _gatingSequenceCache.Value;
 
                 if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
                 {
-                    long gatingSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current);
+                    var gatingSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current);
 
                     if (wrapPoint > gatingSequence)
                     {
@@ -227,12 +227,16 @@ namespace Disruptor.Benchmarks
 
         private void InitialiseAvailableBuffer()
         {
+#if NETCOREAPP
+            _availableBuffer.AsSpan().Fill(-1);
+#else
             for (int i = _availableBuffer.Length - 1; i != 0; i--)
             {
                 SetAvailableBufferValue(i, -1);
             }
 
             SetAvailableBufferValue(0, -1);
+#endif
         }
 
         /// <summary>
@@ -254,7 +258,7 @@ namespace Disruptor.Benchmarks
         /// </summary>
         public void Publish(long lo, long hi)
         {
-            for (long l = lo; l <= hi; l++)
+            for (var l = lo; l <= hi; l++)
             {
                 SetAvailableBufferValue(CalculateIndex(l), CalculateAvailabilityFlag(l));
             }
@@ -268,7 +272,11 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetAvailableBufferValue(int index, int flag)
         {
+#if NETCOREAPP
+            _availableBufferPointer[index] = flag;
+#else
             _availableBuffer[index] = flag;
+#endif
         }
 
         /// <summary>
@@ -277,10 +285,14 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAvailable(long sequence)
         {
-            int index = CalculateIndex(sequence);
-            int flag = CalculateAvailabilityFlag(sequence);
+            var index = CalculateIndex(sequence);
+            var flag = CalculateAvailabilityFlag(sequence);
 
+#if NETCOREAPP
+            return Volatile.Read(ref _availableBufferPointer[index]) == flag;
+#else
             return Volatile.Read(ref _availableBuffer[index]) == flag;
+#endif
         }
 
         /// <summary>
@@ -288,7 +300,7 @@ namespace Disruptor.Benchmarks
         /// </summary>
         public long GetHighestPublishedSequence(long lowerBound, long availableSequence)
         {
-            for (long sequence = lowerBound; sequence <= availableSequence; sequence++)
+            for (var sequence = lowerBound; sequence <= availableSequence; sequence++)
             {
                 if (!IsAvailable(sequence))
                 {
@@ -308,7 +320,7 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int CalculateIndex(long sequence)
         {
-            return ((int)sequence) & _indexMask;
+            return (int)sequence & _indexMask;
         }
 
         /// <summary>

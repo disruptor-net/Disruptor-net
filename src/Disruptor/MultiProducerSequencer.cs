@@ -86,17 +86,17 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasAvailableCapacity(int requiredCapacity)
         {
-            return HasAvailableCapacity(Volatile.Read(ref _gatingSequences), requiredCapacity, _cursor.Value);
+            return HasAvailableCapacity(requiredCapacity, _cursor.Value);
         }
 
-        private bool HasAvailableCapacity(ISequence[] gatingSequences, int requiredCapacity, long cursorValue)
+        private bool HasAvailableCapacity(int requiredCapacity, long cursorValue)
         {
             var wrapPoint = (cursorValue + requiredCapacity) - _bufferSize;
             var cachedGatingSequence = _gatingSequenceCache.Value;
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > cursorValue)
             {
-                var minSequence = DisruptorUtil.GetMinimumSequence(gatingSequences, cursorValue);
+                var minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), cursorValue);
                 _gatingSequenceCache.SetValue(minSequence);
 
                 if (wrapPoint > minSequence)
@@ -140,39 +140,28 @@ namespace Disruptor
             return NextInternal(n);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal long NextInternal(int n)
         {
-            long current;
-            long next;
+            var nextSequence = _cursor.AddAndGet(n);
+            var current = nextSequence - n;
+            var wrapPoint = nextSequence - _bufferSize;
+            var cachedGatingSequence = _gatingSequenceCache.Value;
 
-            var spinWait = default(AggressiveSpinWait);
-            do
+            if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
             {
-                current = _cursor.Value;
-                next = current + n;
+                var spinWait = default(AggressiveSpinWait);
+                long gatingSequence;
 
-                var wrapPoint = next - _bufferSize;
-                var cachedGatingSequence = _gatingSequenceCache.Value;
-
-                if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
+                while (wrapPoint > (gatingSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current)))
                 {
-                    var gatingSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current);
-
-                    if (wrapPoint > gatingSequence)
-                    {
-                        spinWait.SpinOnce();
-                        continue;
-                    }
-
-                    _gatingSequenceCache.SetValue(gatingSequence);
+                    spinWait.SpinOnce();
                 }
-                else if (_cursor.CompareAndSet(current, next))
-                {
-                    break;
-                }
-            } while (true);
 
-            return next;
+                _gatingSequenceCache.SetValue(gatingSequence);
+            }
+
+            return nextSequence;
         }
 
         /// <summary>
@@ -208,12 +197,13 @@ namespace Disruptor
                 current = _cursor.Value;
                 next = current + n;
 
-                if (!HasAvailableCapacity(Volatile.Read(ref _gatingSequences), n, current))
+                if (!HasAvailableCapacity(n, current))
                 {
-                    sequence = default(long);
+                    sequence = default;
                     return false;
                 }
-            } while (!_cursor.CompareAndSet(current, next));
+            }
+            while (!_cursor.CompareAndSet(current, next));
 
             sequence = next;
             return true;

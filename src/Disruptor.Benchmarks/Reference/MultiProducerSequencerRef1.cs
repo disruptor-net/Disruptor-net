@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using Disruptor.Dsl;
 
-namespace Disruptor.Benchmarks
+namespace Disruptor.Benchmarks.Reference
 {
     /// <summary>
-    /// <see cref="MultiProducerSequencer"/> using an unmanaged buffer to avoid bound checks.
+    /// Reference implementation before using a pointer for _availableBuffer.
     /// </summary>
-    public unsafe class MultiProducerSequencerPointer : ISequencer
+    public class MultiProducerSequencerRef1 : ISequencer
     {
         private readonly int _bufferSize;
         private readonly IWaitStrategy _waitStrategy;
@@ -23,11 +22,16 @@ namespace Disruptor.Benchmarks
 
         // availableBuffer tracks the state of each ringbuffer slot
         // see below for more details on the approach
-        private readonly int* _availableBuffer;
+        private readonly int[] _availableBuffer;
         private readonly int _indexMask;
         private readonly int _indexShift;
 
-        public MultiProducerSequencerPointer(int bufferSize, IWaitStrategy waitStrategy)
+        public MultiProducerSequencerRef1(int bufferSize)
+            : this(bufferSize, SequencerFactory.DefaultWaitStrategy())
+        {
+        }
+
+        public MultiProducerSequencerRef1(int bufferSize, IWaitStrategy waitStrategy)
         {
             if (bufferSize < 1)
             {
@@ -41,7 +45,7 @@ namespace Disruptor.Benchmarks
             _bufferSize = bufferSize;
             _waitStrategy = waitStrategy;
             _isBlockingWaitStrategy = !(waitStrategy is INonBlockingWaitStrategy);
-            _availableBuffer = (int*)Marshal.AllocHGlobal(bufferSize * sizeof(int));
+            _availableBuffer = new int[bufferSize];
             _indexMask = bufferSize - 1;
             _indexShift = DisruptorUtil.Log2(bufferSize);
 
@@ -49,7 +53,7 @@ namespace Disruptor.Benchmarks
         }
 
         /// <summary>
-        /// <see cref="ISequencer.NewBarrier"/>.
+        /// <see cref="ISequencer.NewBarrier"/>
         /// </summary>
         public ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
         {
@@ -118,9 +122,9 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next(int n)
         {
-            if (n < 1)
+            if (n < 1 || n > _bufferSize)
             {
-                throw new ArgumentException("n must be > 0");
+                ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
             }
 
             return NextInternal(n);
@@ -167,7 +171,7 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryNext(out long sequence)
         {
-            return TryNext(1, out sequence);
+            return TryNextInternal(1, out sequence);
         }
 
         /// <summary>
@@ -176,9 +180,9 @@ namespace Disruptor.Benchmarks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryNext(int n, out long sequence)
         {
-            if (n < 1)
+            if (n < 1 || n > _bufferSize)
             {
-                throw new ArgumentException("n must be > 0");
+                ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
             }
 
             return TryNextInternal(n, out sequence);
@@ -218,7 +222,7 @@ namespace Disruptor.Benchmarks
 
         private void InitialiseAvailableBuffer()
         {
-            for (int i = _bufferSize - 1; i != 0; i--)
+            for (int i = _availableBuffer.Length - 1; i != 0; i--)
             {
                 SetAvailableBufferValue(i, -1);
             }
@@ -266,12 +270,12 @@ namespace Disruptor.Benchmarks
         /// <see cref="ISequencer.IsAvailable"/>.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe bool IsAvailable(long sequence)
+        public bool IsAvailable(long sequence)
         {
             int index = CalculateIndex(sequence);
             int flag = CalculateAvailabilityFlag(sequence);
 
-            return _availableBuffer[index] == flag;
+            return Volatile.Read(ref _availableBuffer[index]) == flag;
         }
 
         /// <summary>
