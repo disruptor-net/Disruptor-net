@@ -41,6 +41,16 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
+        public void ShouldHaveStartedAfterStartCalled()
+        {
+            Assert.IsFalse(_disruptor.HasStarted, "Should only be set to started after start is called");
+
+            _disruptor.Start();
+
+            Assert.IsTrue(_disruptor.HasStarted, "Should be set to started after start is called");
+        }
+
+        [Test]
         public void ShouldPublishAndHandleEvent()
         {
             var eventCounter = new CountdownEvent(2);

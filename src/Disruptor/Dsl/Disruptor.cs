@@ -26,7 +26,7 @@ namespace Disruptor.Dsl
         private readonly TaskScheduler _taskScheduler;
         private readonly ConsumerRepository _consumerRepository = new ConsumerRepository();
         private IExceptionHandler<T> _exceptionHandler = new ExceptionHandlerWrapper<T>();
-        private int _started;
+        private volatile int _started;
 
         /// <summary>
         /// Create a new Disruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
@@ -320,12 +320,12 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Gets the sequence value for the specified event handlers.
         /// </summary>
-        /// <param name="handler">eventHandler to get the sequence for.</param>
+        /// <param name="handler">eventHandler to get the sequence for</param>
         /// <returns>eventHandler's sequence</returns>
         public long GetSequenceValueFor(IEventHandler<T> handler) => _consumerRepository.GetSequenceFor(handler).Value;
 
         /// <summary>
-        /// Confirms if all messages have been consumed by all event processors
+        /// Confirms if all messages have been consumed by all event processors.
         /// </summary>
         /// <returns></returns>
         private bool HasBacklog()
@@ -333,6 +333,12 @@ namespace Disruptor.Dsl
             var cursor = _ringBuffer.Cursor;
             return _consumerRepository.HasBacklog(cursor, false);
         }
+
+        /// <summary>
+        /// Checks if disruptor has been started.
+        /// </summary>
+        /// <value>true when start has been called on this instance; otherwise false</value>
+        public bool HasStarted => _started == 1;
 
         internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IEventHandler<T>[] eventHandlers)
         {

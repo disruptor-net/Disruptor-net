@@ -20,7 +20,7 @@ namespace Disruptor.Dsl
         private readonly TaskScheduler _taskScheduler;
         private readonly ConsumerRepository _consumerRepository = new ConsumerRepository();
         private readonly ValueExceptionHandlerWrapper<T> _exceptionHandler = new ValueExceptionHandlerWrapper<T>();
-        private int _started;
+        private volatile int _started;
 
         protected ValueDisruptor(TRingBuffer ringBuffer, TaskScheduler taskScheduler)
         {
@@ -225,12 +225,12 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Gets the sequence value for the specified event handlers.
         /// </summary>
-        /// <param name="handler">eventHandler to get the sequence for.</param>
+        /// <param name="handler">eventHandler to get the sequence for</param>
         /// <returns>eventHandler's sequence</returns>
         public long GetSequenceValueFor(IValueEventHandler<T> handler) => _consumerRepository.GetSequenceFor(handler).Value;
 
         /// <summary>
-        /// Confirms if all messages have been consumed by all event processors
+        /// Confirms if all messages have been consumed by all event processors.
         /// </summary>
         /// <returns></returns>
         private bool HasBacklog()
@@ -238,6 +238,12 @@ namespace Disruptor.Dsl
             var cursor = _ringBuffer.Cursor;
             return _consumerRepository.HasBacklog(cursor, false);
         }
+
+        /// <summary>
+        /// Checks if disruptor has been started.
+        /// </summary>
+        /// <value>true when start has been called on this instance; otherwise false</value>
+        public bool HasStarted => _started == 1;
 
         ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(ISequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
         {
