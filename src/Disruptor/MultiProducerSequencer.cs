@@ -132,7 +132,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next(int n)
         {
-            if (n < 1 || n > _bufferSize)
+            if ((uint)(n - 1) >= _bufferSize)
             {
                 ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
             }
