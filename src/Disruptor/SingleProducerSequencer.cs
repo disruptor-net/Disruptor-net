@@ -249,7 +249,8 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAvailable(long sequence)
         {
-            return sequence <= _cursor.Value;
+            var currentSequence = _cursor.Value;
+            return sequence <= currentSequence && sequence > currentSequence - _bufferSize;
         }
 
         /// <summary>

@@ -319,5 +319,30 @@ namespace Disruptor.Tests
         {
             Assert.Throws<ArgumentException>(() => _sequencer.TryNext(_bufferSize + 1, out _));
         }
+
+        [Test]
+        public void SequencesBecomeAvailableAfterAPublish()
+        {
+            var seq = _sequencer.Next();
+            Assert.IsFalse(_sequencer.IsAvailable(seq));
+            _sequencer.Publish(seq);
+
+            Assert.IsTrue(_sequencer.IsAvailable(seq));
+        }
+
+        [Test]
+        public void SequencesBecomeUnavailableAfterWrapping()
+        {
+            var seq = _sequencer.Next();
+            _sequencer.Publish(seq);
+            Assert.IsTrue(_sequencer.IsAvailable(seq));
+
+            for (var i = 0; i < _bufferSize; i++)
+            {
+                _sequencer.Publish(_sequencer.Next());
+            }
+
+            Assert.IsFalse(_sequencer.IsAvailable(seq));
+        }
     }
 }

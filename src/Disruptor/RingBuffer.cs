@@ -326,5 +326,32 @@ namespace Disruptor
         {
             return _sequencerDispatcher.Sequencer.GetRemainingCapacity();
         }
+
+        /// <summary>
+        /// Determines if the event for a given sequence is currently available.
+        /// <para>
+        /// Note that this does not guarantee that event will still be available
+        /// on the next interaction with the RingBuffer. For example, it is not
+        /// necessarily safe to write code like this:
+        /// <code>
+        /// if (ringBuffer.IsAvailable(sequence))
+        /// {
+        ///     var e = ringBuffer[sequence];
+        ///     // ...do something with e
+        /// }
+        /// </code>
+        /// because there is a race between the reading thread and the writing thread.
+        /// </para>
+        /// <para>
+        /// This method will also return false when querying for sequences that are
+        /// behind the ring buffer's wrap point.
+        /// </para>
+        /// </summary>
+        /// <param name="sequence">The sequence to identify the entry.</param>
+        /// <returns>If the event published with the given sequence number is currently available.</returns>
+        public bool IsAvailable(long sequence)
+        {
+            return _sequencerDispatcher.Sequencer.IsAvailable(sequence);
+        }
     }
 }
