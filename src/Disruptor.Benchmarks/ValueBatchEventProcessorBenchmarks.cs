@@ -4,17 +4,17 @@ using Disruptor.Benchmarks.Reference;
 
 namespace Disruptor.Benchmarks
 {
-    public class BatchEventProcessorBenchmarks
+    public class ValueBatchEventProcessorBenchmarks
     {
         private const int _ringBufferSize = 131072;
 
-        private readonly RingBuffer<XEvent> _ringBuffer;
-        private IBatchEventProcessor<XEvent> _processor;
-        private IBatchEventProcessor<XEvent> _processorRef;
+        private readonly ValueRingBuffer<XEvent> _ringBuffer;
+        private IValueBatchEventProcessor<XEvent> _processor;
+        private IValueBatchEventProcessor<XEvent> _processorRef;
 
-        public BatchEventProcessorBenchmarks()
+        public ValueBatchEventProcessorBenchmarks()
         {
-            _ringBuffer = new RingBuffer<XEvent>(() => new XEvent(), new SingleProducerSequencer(_ringBufferSize, new BusySpinWaitStrategy()));
+            _ringBuffer = new ValueRingBuffer<XEvent>(() => new XEvent(), new SingleProducerSequencer(_ringBufferSize, new BusySpinWaitStrategy()));
 
             for (var i = 0; i < _ringBufferSize; i++)
             {
@@ -27,7 +27,7 @@ namespace Disruptor.Benchmarks
         public void Setup()
         {
             _processor = BatchEventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processor.Halt()));
-            _processorRef = BatchEventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processorRef.Halt()), typeof(BatchEventProcessorRef<,,,,>));
+            _processorRef = BatchEventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processorRef.Halt()), typeof(ValueBatchEventProcessorRef<,,,,>));
         }
 
         [Benchmark(OperationsPerInvoke = _ringBufferSize)]
@@ -42,12 +42,12 @@ namespace Disruptor.Benchmarks
             _processorRef.Run();
         }
 
-        public class XEvent
+        public struct XEvent
         {
             public long Data { get; set; }
         }
 
-        public class XEventHandler : IEventHandler<XEvent>
+        public class XEventHandler : IValueEventHandler<XEvent>
         {
             private readonly Action _shutdown;
 
@@ -56,7 +56,7 @@ namespace Disruptor.Benchmarks
                 _shutdown = shutdown;
             }
 
-            public void OnEvent(XEvent data, long sequence, bool endOfBatch)
+            public void OnEvent(ref XEvent data, long sequence, bool endOfBatch)
             {
                 if (sequence == _ringBufferSize - 1)
                     _shutdown.Invoke();

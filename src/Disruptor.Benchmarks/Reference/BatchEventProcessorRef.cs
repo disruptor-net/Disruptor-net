@@ -1,68 +1,10 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Disruptor
+namespace Disruptor.Benchmarks.Reference
 {
-    /// <summary>
-    /// Convenience class for handling the batching semantics of consuming events from a <see cref="RingBuffer{T}"/>
-    /// and delegating the available events to an <see cref="IEventHandler{T}"/>.
-    ///
-    /// If the <see cref="IEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
-    /// is started and just before the thread is shutdown.
-    ///
-    /// This class is kept mainly for compatibility reasons.
-    ///
-    /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
-    /// </summary>
-    /// <typeparam name="T">the type of event used.</typeparam>
-    public class BatchEventProcessor<T> : BatchEventProcessor<T, IDataProvider<T>, ISequenceBarrier, IEventHandler<T>, BatchEventProcessor<T>.BatchStartAware>
-        where T : class
-    {
-        /// <summary>
-        /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
-        /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
-        ///
-        /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
-        /// </summary>
-        /// <param name="dataProvider">dataProvider to which events are published</param>
-        /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
-        /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
-        public BatchEventProcessor(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
-            : base(dataProvider, sequenceBarrier, eventHandler, new BatchStartAware(eventHandler))
-        {
-        }
-
-        public struct BatchStartAware : IBatchStartAware
-        {
-            private readonly IBatchStartAware _batchStartAware;
-
-            public BatchStartAware(object eventHandler)
-            {
-                _batchStartAware = eventHandler as IBatchStartAware;
-            }
-
-            public void OnBatchStart(long batchSize)
-            {
-                if (_batchStartAware != null && batchSize != 0)
-                    _batchStartAware.OnBatchStart(batchSize);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Convenience class for handling the batching semantics of consuming events from a <see cref="RingBuffer{T}"/>
-    /// and delegating the available events to an <see cref="IEventHandler{T}"/>.
-    ///
-    /// If the <see cref="IEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
-    /// is started and just before the thread is shutdown.
-    /// </summary>
-    /// <typeparam name="T">the type of event used.</typeparam>
-    /// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
-    /// <typeparam name="TSequenceBarrier">the type of the <see cref="ISequenceBarrier"/> used.</typeparam>
-    /// <typeparam name="TEventHandler">the type of the <see cref="IEventHandler{T}"/> used.</typeparam>
-    /// <typeparam name="TBatchStartAware">the type of the <see cref="IBatchStartAware"/> used.</typeparam>
-    public class BatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IBatchEventProcessor<T>
+    public class BatchEventProcessorRef<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IBatchEventProcessor<T>
         where T : class
         where TDataProvider : IDataProvider<T>
         where TSequenceBarrier : ISequenceBarrier
@@ -92,7 +34,7 @@ namespace Disruptor
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
         /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
         /// <param name="batchStartAware"></param>
-        public BatchEventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
+        public BatchEventProcessorRef(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
         {
             _dataProvider = dataProvider;
             _sequenceBarrier = sequenceBarrier;
@@ -185,6 +127,7 @@ namespace Disruptor
         [MethodImpl(Constants.AggressiveOptimization)]
         private void ProcessEvents()
         {
+            T evt = null;
             var nextSequence = _sequence.Value + 1L;
 
             while (true)
@@ -204,7 +147,7 @@ namespace Disruptor
 
                     while (nextSequence <= availableSequence)
                     {
-                        var evt = _dataProvider[nextSequence];
+                        evt = _dataProvider[nextSequence];
                         _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
                         nextSequence++;
                     }
@@ -224,7 +167,6 @@ namespace Disruptor
                 }
                 catch (Exception ex)
                 {
-                    var evt = _dataProvider[nextSequence];
                     _exceptionHandler.HandleEventException(ex, nextSequence, evt);
                     _sequence.SetValue(nextSequence);
                     nextSequence++;

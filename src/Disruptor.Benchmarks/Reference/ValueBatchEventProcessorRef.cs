@@ -1,74 +1,24 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Disruptor
+namespace Disruptor.Benchmarks.Reference
 {
-    /// <summary>
-    /// Convenience class for handling the batching semantics of consuming events from a <see cref="RingBuffer{T}"/>
-    /// and delegating the available events to an <see cref="IEventHandler{T}"/>.
-    ///
-    /// If the <see cref="IEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
-    /// is started and just before the thread is shutdown.
-    ///
-    /// This class is kept mainly for compatibility reasons.
-    ///
-    /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
-    /// </summary>
-    /// <typeparam name="T">the type of event used.</typeparam>
-    public class BatchEventProcessor<T> : BatchEventProcessor<T, IDataProvider<T>, ISequenceBarrier, IEventHandler<T>, BatchEventProcessor<T>.BatchStartAware>
-        where T : class
-    {
-        /// <summary>
-        /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
-        /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
-        ///
-        /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
-        /// </summary>
-        /// <param name="dataProvider">dataProvider to which events are published</param>
-        /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
-        /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
-        public BatchEventProcessor(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
-            : base(dataProvider, sequenceBarrier, eventHandler, new BatchStartAware(eventHandler))
-        {
-        }
+   public class ValueBatchEventProcessorRef<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IValueBatchEventProcessor<T>
+        where T : struct
 
-        public struct BatchStartAware : IBatchStartAware
-        {
-            private readonly IBatchStartAware _batchStartAware;
-
-            public BatchStartAware(object eventHandler)
-            {
-                _batchStartAware = eventHandler as IBatchStartAware;
-            }
-
-            public void OnBatchStart(long batchSize)
-            {
-                if (_batchStartAware != null && batchSize != 0)
-                    _batchStartAware.OnBatchStart(batchSize);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Convenience class for handling the batching semantics of consuming events from a <see cref="RingBuffer{T}"/>
-    /// and delegating the available events to an <see cref="IEventHandler{T}"/>.
-    ///
-    /// If the <see cref="IEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
-    /// is started and just before the thread is shutdown.
-    /// </summary>
-    /// <typeparam name="T">the type of event used.</typeparam>
-    /// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
-    /// <typeparam name="TSequenceBarrier">the type of the <see cref="ISequenceBarrier"/> used.</typeparam>
-    /// <typeparam name="TEventHandler">the type of the <see cref="IEventHandler{T}"/> used.</typeparam>
-    /// <typeparam name="TBatchStartAware">the type of the <see cref="IBatchStartAware"/> used.</typeparam>
-    public class BatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IBatchEventProcessor<T>
-        where T : class
-        where TDataProvider : IDataProvider<T>
+        where TDataProvider : IValueDataProvider<T>
         where TSequenceBarrier : ISequenceBarrier
-        where TEventHandler : IEventHandler<T>
+        where TEventHandler : IValueEventHandler<T>
         where TBatchStartAware : IBatchStartAware
     {
+        private static class RunningStates
+        {
+            public const int Idle = 0;
+            public const int Halted = Idle + 1;
+            public const int Running = Halted + 1;
+        }
+
         // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
         private TDataProvider _dataProvider;
         private TSequenceBarrier _sequenceBarrier;
@@ -79,12 +29,12 @@ namespace Disruptor
         private readonly Sequence _sequence = new Sequence();
         private readonly ITimeoutHandler _timeoutHandler;
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim();
-        private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler();
-        private volatile int _runState = ProcessorRunStates.Idle;
+        private IValueExceptionHandler<T> _exceptionHandler = new ValueFatalExceptionHandler<T>();
+        private volatile int _running;
 
         /// <summary>
         /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
-        /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
+        /// the <see cref="IValueEventHandler{T}.OnEvent"/> method returns.
         ///
         /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
         /// </summary>
@@ -92,7 +42,7 @@ namespace Disruptor
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
         /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
         /// <param name="batchStartAware"></param>
-        public BatchEventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
+        public ValueBatchEventProcessorRef(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
         {
             _dataProvider = dataProvider;
             _sequenceBarrier = sequenceBarrier;
@@ -116,20 +66,20 @@ namespace Disruptor
         /// </summary>
         public void Halt()
         {
-            _runState = ProcessorRunStates.Halted;
+            _running = RunningStates.Halted;
             _sequenceBarrier.Alert();
         }
 
         /// <summary>
         /// <see cref="IEventProcessor.IsRunning"/>
         /// </summary>
-        public bool IsRunning => _runState != ProcessorRunStates.Idle;
+        public bool IsRunning => _running != RunningStates.Idle;
 
         /// <summary>
-        /// Set a new <see cref="IExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IEventHandler{T}"/>
+        /// Set a new <see cref="IValueExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IValueEventHandler{T}"/>
         /// </summary>
         /// <param name="exceptionHandler">exceptionHandler to replace the existing exceptionHandler.</param>
-        public void SetExceptionHandler(IExceptionHandler<T> exceptionHandler)
+        public void SetExceptionHandler(IValueExceptionHandler<T> exceptionHandler)
         {
             _exceptionHandler = exceptionHandler ?? throw new ArgumentNullException(nameof(exceptionHandler));
         }
@@ -150,22 +100,22 @@ namespace Disruptor
         public void Run()
         {
 #pragma warning disable 420
-            var previousRunning = Interlocked.CompareExchange(ref _runState, ProcessorRunStates.Running, ProcessorRunStates.Idle);
+            var previousRunning = Interlocked.CompareExchange(ref _running, RunningStates.Running, RunningStates.Idle);
 #pragma warning restore 420
 
-            if (previousRunning == ProcessorRunStates.Running)
+            if (previousRunning == RunningStates.Running)
             {
                 throw new InvalidOperationException("Thread is already running");
             }
 
-            if (previousRunning == ProcessorRunStates.Idle)
+            if (previousRunning == RunningStates.Idle)
             {
                 _sequenceBarrier.ClearAlert();
 
                 NotifyStart();
                 try
                 {
-                    if (_runState == ProcessorRunStates.Running)
+                    if (_running == RunningStates.Running)
                     {
                         ProcessEvents();
                     }
@@ -173,7 +123,7 @@ namespace Disruptor
                 finally
                 {
                     NotifyShutdown();
-                    _runState = ProcessorRunStates.Idle;
+                    _running = RunningStates.Idle;
                 }
             }
             else
@@ -193,19 +143,12 @@ namespace Disruptor
                 {
                     var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
 
-                    // WaitFor can return a value lower than nextSequence, for example when using a MultiProducerSequencer.
-                    // The Java version includes the test "if (availableSequence >= nextSequence)" to avoid invoking OnBatchStart on empty batches.
-                    // However, this test has a negative impact on performance even for event handlers that are not IBatchStartAware.
-                    // This is unfortunate because this test should be removed by the JIT when OnBatchStart is a noop.
-                    // => The test is currently implemented on struct proxies. See BatchEventProcessor<T>.BatchStartAware and StructProxy.
-                    // For some reason this also improves BatchEventProcessor performance for IBatchStartAware event handlers.
-
                     _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
 
                     while (nextSequence <= availableSequence)
                     {
-                        var evt = _dataProvider[nextSequence];
-                        _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
+                        ref T evt = ref _dataProvider[nextSequence];
+                        _eventHandler.OnEvent(ref evt, nextSequence, nextSequence == availableSequence);
                         nextSequence++;
                     }
 
@@ -217,15 +160,16 @@ namespace Disruptor
                 }
                 catch (AlertException)
                 {
-                    if (_runState != ProcessorRunStates.Running)
+                    if (_running != RunningStates.Running)
                     {
                         break;
                     }
                 }
                 catch (Exception ex)
                 {
-                    var evt = _dataProvider[nextSequence];
-                    _exceptionHandler.HandleEventException(ex, nextSequence, evt);
+                    ref T evt = ref _dataProvider[nextSequence];
+
+                    _exceptionHandler.HandleEventException(ex, nextSequence, ref evt);
                     _sequence.SetValue(nextSequence);
                     nextSequence++;
                 }
@@ -246,7 +190,7 @@ namespace Disruptor
             }
             catch (Exception ex)
             {
-                _exceptionHandler.HandleEventException(ex, availableSequence, null);
+                _exceptionHandler.HandleOnTimeoutException(ex, availableSequence);
             }
         }
 
