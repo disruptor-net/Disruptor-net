@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Disruptor
@@ -21,6 +22,7 @@ namespace Disruptor
 #if NETCOREAPP
         private SpinWait _spinWait;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SpinOnce()
         {
             _spinWait.SpinOnce(-1);
@@ -33,6 +35,7 @@ namespace Disruptor
 
         private bool NextSpinWillYield => _count > _yieldThreshold || _isSingleProcessor;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SpinOnce()
         {
             if (NextSpinWillYield)

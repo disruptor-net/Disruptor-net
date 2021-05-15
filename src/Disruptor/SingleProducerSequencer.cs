@@ -3,39 +3,38 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Disruptor.Dsl;
+using static Disruptor.Constants;
 
 namespace Disruptor
 {
-    [StructLayout(LayoutKind.Explicit, Size = 160)]
+    [StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 48)]
     public class SingleProducerSequencer : ISequencer
     {
-        // padding: 56
+        // padding: DefaultPadding
 
-        [FieldOffset(56)]
+        [FieldOffset(DefaultPadding)]
         private readonly IWaitStrategy _waitStrategy;
 
-        [FieldOffset(64)]
+        [FieldOffset(DefaultPadding + 8)]
         private readonly Sequence _cursor = new Sequence();
 
-        [FieldOffset(72)]
+        [FieldOffset(DefaultPadding + 16)]
         // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
         private ISequence[] _gatingSequences = new ISequence[0];
 
-        [FieldOffset(80)]
+        [FieldOffset(DefaultPadding + 24)]
         private readonly int _bufferSize;
 
-        [FieldOffset(84)]
+        [FieldOffset(DefaultPadding + 28)]
         private readonly bool _isBlockingWaitStrategy;
 
-        // padding: 3
-
-        [FieldOffset(88)]
+        [FieldOffset(DefaultPadding + 32)]
         private long _nextValue = Sequence.InitialCursorValue;
 
-        [FieldOffset(96)]
+        [FieldOffset(DefaultPadding + 40)]
         private long _cachedValue = Sequence.InitialCursorValue;
 
-        // padding: 56
+        // padding: DefaultPadding
 
         public SingleProducerSequencer(int bufferSize)
             : this(bufferSize, SequencerFactory.DefaultWaitStrategy())
@@ -125,7 +124,7 @@ namespace Disruptor
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Next(int n)
         {
-            if (n < 1 || n > _bufferSize)
+            if ((uint)(n - 1) >= _bufferSize)
             {
                 ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
             }
@@ -133,6 +132,7 @@ namespace Disruptor
             return NextInternal(n);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal long NextInternal(int n)
         {
             long nextValue = _nextValue;
@@ -143,21 +143,27 @@ namespace Disruptor
 
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
             {
-                _cursor.SetValueVolatile(nextValue);
-
-                var spinWait = default(AggressiveSpinWait);
-                long minSequence;
-                while (wrapPoint > (minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue)))
-                {
-                    spinWait.SpinOnce();
-                }
-
-                _cachedValue = minSequence;
+                NextInternalWrap(nextValue, wrapPoint);
             }
 
             _nextValue = nextSequence;
 
             return nextSequence;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void NextInternalWrap(long nextValue, long wrapPoint)
+        {
+            _cursor.SetValueVolatile(nextValue);
+
+            var spinWait = default(AggressiveSpinWait);
+            long minSequence;
+            while (wrapPoint > (minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue)))
+            {
+                spinWait.SpinOnce();
+            }
+
+            _cachedValue = minSequence;
         }
 
         /// <summary>
@@ -183,6 +189,7 @@ namespace Disruptor
             return TryNextInternal(n, out sequence);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryNextInternal(int n, out long sequence)
         {
             if (!HasAvailableCapacity(n, true))

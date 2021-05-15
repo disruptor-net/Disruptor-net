@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using static Disruptor.Constants;
 
 namespace Disruptor
 {
@@ -12,7 +13,7 @@ namespace Disruptor
     /// <p>Also attempts to be more efficient with regards to false
     /// sharing by adding padding around the volatile field.</p>
     /// </summary>
-    [StructLayout(LayoutKind.Explicit, Size = 120)]
+    [StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 8)]
     public class Sequence : ISequence
     {
         /// <summary>
@@ -20,13 +21,13 @@ namespace Disruptor
         /// </summary>
         public const long InitialCursorValue = -1;
 
-        // padding: 56
+        // padding: DefaultPadding
 
-        [FieldOffset(56)]
+        [FieldOffset(DefaultPadding)]
         // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
         private long _value;
 
-        // padding: 56
+        // padding: DefaultPadding
 
         /// <summary>
         /// Construct a new sequence counter that can be tracked across threads.
@@ -61,7 +62,7 @@ namespace Disruptor
 
         /// <summary>
         /// Performs a volatile write of this sequence.  The intent is a Store/Store barrier between this write and any previous
-        /// write and a Store/Load barrier between this write and any subsequent volatile read. 
+        /// write and a Store/Load barrier between this write and any subsequent volatile read.
         /// </summary>
         /// <param name="value"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
