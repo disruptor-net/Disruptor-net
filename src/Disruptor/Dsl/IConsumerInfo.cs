@@ -2,7 +2,7 @@
 
 namespace Disruptor.Dsl
 {
-    public interface IConsumerInfo
+    internal interface IConsumerInfo
     {
         ISequence[] Sequences { get; }
 

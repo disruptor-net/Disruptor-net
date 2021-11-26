@@ -3,7 +3,7 @@ using Disruptor.Processing;
 
 namespace Disruptor.Dsl
 {
-    public class WorkerPoolInfo<T> : IConsumerInfo where T : class
+    internal class WorkerPoolInfo<T> : IConsumerInfo where T : class
     {
         private readonly WorkerPool<T> _workerPool;
 
