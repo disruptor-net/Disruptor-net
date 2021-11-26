@@ -1,10 +1,13 @@
 ﻿namespace Disruptor.Processing
 {
     /// <summary>
-    /// An IEventProcessor needs to poll for events from the <see cref="RingBuffer{T}"/>
-    /// using the appropriate wait strategy. It is unlikely that you will need to implement this interface yourself.
-    /// Look at using the <see cref="IEventHandler{T}"/> interface along with the pre-supplied BatchEventProcessor in the first
-    /// instance.
+    /// An event processor needs to be an implementation of a runnable that will poll for events from the ring buffer
+    /// using the appropriate wait strategy.
+    ///
+    /// It is unlikely that you will need to implement this interface yourself.
+    /// Event processors are automatically created by the disruptor for your event handlers.
+    ///
+    /// An event process will generally be associated with a thread (long running task) for execution.
     /// </summary>
     public interface IEventProcessor
     {
@@ -20,7 +23,7 @@
         void Halt();
 
         /// <summary>
-        /// Starts this instance 
+        /// Starts this instance
         /// </summary>
         void Run();
 

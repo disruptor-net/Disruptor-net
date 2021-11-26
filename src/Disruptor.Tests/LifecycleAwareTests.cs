@@ -15,30 +15,30 @@ namespace Disruptor.Tests
 
         private ISequenceBarrier _sequenceBarrier;
         private LifecycleAwareEventHandler _eventHandler;
-        private IBatchEventProcessor<StubEvent> _batchEventProcessor;
+        private IEventProcessor<StubEvent> _eventProcessor;
 
         [SetUp]
         public void SetUp()
         {
             _sequenceBarrier = _ringBuffer.NewBarrier();
             _eventHandler = new LifecycleAwareEventHandler(_startSignal, _shutdownSignal);
-            _batchEventProcessor = BatchEventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, _eventHandler);
+            _eventProcessor = EventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, _eventHandler);
         }
 
         [Test]
         public void ShouldNotifyOfBatchProcessorLifecycle()
         {
-            new Thread(_batchEventProcessor.Run).Start();
+            new Thread(_eventProcessor.Run).Start();
 
             _startSignal.WaitOne();
-            _batchEventProcessor.Halt();
+            _eventProcessor.Halt();
 
             _shutdownSignal.WaitOne();
 
             Assert.AreEqual(_eventHandler.StartCounter, 1);
             Assert.AreEqual(_eventHandler.ShutdownCounter, 1);
         }
-        
+
         private sealed class LifecycleAwareEventHandler : IEventHandler<StubEvent>, ILifecycleAware
         {
             private readonly ManualResetEvent _startSignal;
@@ -70,5 +70,5 @@ namespace Disruptor.Tests
                 _shutdownSignal.Set();
             }
         }
-    }    
+    }
 }

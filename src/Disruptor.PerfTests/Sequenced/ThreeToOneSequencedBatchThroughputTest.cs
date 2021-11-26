@@ -53,7 +53,7 @@ namespace Disruptor.PerfTests.Sequenced
 
         private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
         private readonly AdditionEventHandler _handler = new AdditionEventHandler();
-        private readonly IBatchEventProcessor<PerfEvent> _batchEventProcessor;
+        private readonly IEventProcessor<PerfEvent> _eventProcessor;
         private readonly ValueBatchPublisher[] _valuePublishers = new ValueBatchPublisher[_numPublishers];
 
         public ThreeToOneSequencedBatchThroughputTest()
@@ -64,8 +64,8 @@ namespace Disruptor.PerfTests.Sequenced
                 _valuePublishers[i] = new ValueBatchPublisher(_cyclicBarrier, _ringBuffer, _iterations / _numPublishers, 10);
             }
 
-            _batchEventProcessor = BatchEventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);
-            _ringBuffer.AddGatingSequences(_batchEventProcessor.Sequence);
+            _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);
+            _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);
         }
 
         public int RequiredProcessorCount => 4;
@@ -74,7 +74,7 @@ namespace Disruptor.PerfTests.Sequenced
         {
             _cyclicBarrier.Reset();
 
-            _handler.Reset(_batchEventProcessor.Sequence.Value + ((_iterations / _numPublishers) * _numPublishers));
+            _handler.Reset(_eventProcessor.Sequence.Value + ((_iterations / _numPublishers) * _numPublishers));
 
             var futures = new Task[_numPublishers];
             for (var i = 0; i < _numPublishers; i++)
@@ -82,8 +82,8 @@ namespace Disruptor.PerfTests.Sequenced
                 var index = i;
                 futures[i] = Task.Run(() => _valuePublishers[index].Run());
             }
-            var processorTask = Task.Run(() => _batchEventProcessor.Run());
-            _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            var processorTask = Task.Run(() => _eventProcessor.Run());
+            _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();
             _cyclicBarrier.Signal();
@@ -97,7 +97,7 @@ namespace Disruptor.PerfTests.Sequenced
             _handler.WaitForSequence();
 
             sessionContext.Stop();
-            _batchEventProcessor.Halt();
+            _eventProcessor.Halt();
             processorTask.Wait(2000);
 
             sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations);

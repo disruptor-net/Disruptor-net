@@ -55,18 +55,18 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly TaskScheduler _scheduler = RoundRobinThreadAffinedTaskScheduler.IsSupported ? new RoundRobinThreadAffinedTaskScheduler(5) : TaskScheduler.Default;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly AdditionEventHandler _handler = new AdditionEventHandler();
-        private readonly IBatchEventProcessor<PerfEvent> _batchEventProcessor;
+        private readonly IEventProcessor<PerfEvent> _eventProcessor;
         private readonly ValuePublisher[] _valuePublishers = new ValuePublisher[_numPublishers];
 
         public ThreeToOneSequencedThroughputTest()
         {
             _sequenceBarrier = _ringBuffer.NewBarrier();
-            _batchEventProcessor = BatchEventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, _handler);
+            _eventProcessor = EventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, _handler);
             for (var i = 0; i < _numPublishers; i++)
             {
                 _valuePublishers[i] = ValuePublisher;
             }
-            _ringBuffer.AddGatingSequences(_batchEventProcessor.Sequence);
+            _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);
         }
 
         public int RequiredProcessorCount => 4;
@@ -74,7 +74,7 @@ namespace Disruptor.PerfTests.Sequenced
         public long Run(ThroughputSessionContext sessionContext)
         {
             _cyclicBarrier.Reset();
-            _handler.Reset(_batchEventProcessor.Sequence.Value + ((_iterations / _numPublishers) * _numPublishers));
+            _handler.Reset(_eventProcessor.Sequence.Value + ((_iterations / _numPublishers) * _numPublishers));
 
             var futures = new Task[_numPublishers];
             for (var i = 0; i < _numPublishers; i++)
@@ -82,8 +82,8 @@ namespace Disruptor.PerfTests.Sequenced
                 var index = i;
                 futures[i] = Task.Factory.StartNew(() => _valuePublishers[index](_cyclicBarrier, _ringBuffer, _iterations / _numPublishers), CancellationToken.None, TaskCreationOptions.None, _scheduler);
             }
-            var processorTask = Task.Factory.StartNew(() => _batchEventProcessor.Run(), CancellationToken.None, TaskCreationOptions.None, _scheduler);
-            _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            var processorTask = Task.Factory.StartNew(() => _eventProcessor.Run(), CancellationToken.None, TaskCreationOptions.None, _scheduler);
+            _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();
             _cyclicBarrier.Signal();
@@ -97,7 +97,7 @@ namespace Disruptor.PerfTests.Sequenced
             _handler.WaitForSequence();
 
             sessionContext.Stop();
-            _batchEventProcessor.Halt();
+            _eventProcessor.Halt();
             processorTask.Wait(2000);
 
             sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations);

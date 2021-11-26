@@ -4,7 +4,7 @@ using Disruptor.Processing;
 
 namespace Disruptor.PerfTests.Support
 {
-    public class MultiBufferBatchEventProcessor<T> : IEventProcessor
+    public class MultiBufferEventProcessor<T> : IEventProcessor
     {
         private volatile int _isRunning;
         private readonly IDataProvider<T>[] _providers;
@@ -13,7 +13,7 @@ namespace Disruptor.PerfTests.Support
         private readonly Sequence[] _sequences;
         private long _count;
 
-        public MultiBufferBatchEventProcessor(IDataProvider<T>[] providers, ISequenceBarrier[] barriers, IEventHandler<T> handler)
+        public MultiBufferEventProcessor(IDataProvider<T>[] providers, ISequenceBarrier[] barriers, IEventHandler<T> handler)
         {
             if (providers.Length != barriers.Length)
                 throw new ArgumentException();
@@ -81,7 +81,7 @@ namespace Disruptor.PerfTests.Support
             }
         }
 
-        
+
 
         public ISequence Sequence { get { throw new NotSupportedException(); } }
 

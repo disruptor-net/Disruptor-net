@@ -8,15 +8,15 @@ using NUnit.Framework;
 
 namespace Disruptor.Tests.Processing
 {
-    [TestFixture(BatchEventProcessorType.Legacy)]
-    [TestFixture(BatchEventProcessorType.Optimized)]
-    public class BatchEventProcessorTests
+    [TestFixture(EventProcessorType.Legacy)]
+    [TestFixture(EventProcessorType.Optimized)]
+    public class EventProcessorTests
     {
-        private readonly BatchEventProcessorType _targetType;
+        private readonly EventProcessorType _targetType;
         private RingBuffer<StubEvent> _ringBuffer;
         private ISequenceBarrier _sequenceBarrier;
 
-        public BatchEventProcessorTests(BatchEventProcessorType targetType)
+        public EventProcessorTests(EventProcessorType targetType)
         {
             _targetType = targetType;
         }
@@ -28,16 +28,16 @@ namespace Disruptor.Tests.Processing
             _sequenceBarrier = _ringBuffer.NewBarrier();
         }
 
-        private IBatchEventProcessor<T> CreateBatchEventProcessor<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
+        private IEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
             where T : class
         {
             switch (_targetType)
             {
-                case BatchEventProcessorType.Legacy:
-                    return new BatchEventProcessor<T>(dataProvider, sequenceBarrier, eventHandler);
+                case EventProcessorType.Legacy:
+                    return new EventProcessor<T>(dataProvider, sequenceBarrier, eventHandler);
 
-                case BatchEventProcessorType.Optimized:
-                    return BatchEventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
+                case EventProcessorType.Optimized:
+                    return EventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
 
                 default:
                     throw new NotSupportedException();
@@ -48,9 +48,9 @@ namespace Disruptor.Tests.Processing
         public void ShouldThrowExceptionOnSettingNullExceptionHandler()
         {
             var eventHandler = new TestEventHandler<StubEvent>(x => throw new NullReferenceException());
-            var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+            var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
-            Assert.Throws<ArgumentNullException>(() => batchEventProcessor.SetExceptionHandler(null));
+            Assert.Throws<ArgumentNullException>(() => eventProcessor.SetExceptionHandler(null));
         }
 
         [Test]
@@ -58,19 +58,19 @@ namespace Disruptor.Tests.Processing
         {
             var eventSignal = new CountdownEvent(3);
             var eventHandler = new TestEventHandler<StubEvent>(x => eventSignal.Signal());
-            var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+            var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
-            _ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
+            _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
 
-            var task = Task.Run(() => batchEventProcessor.Run());
+            var task = Task.Run(() => eventProcessor.Run());
 
             Assert.IsTrue(eventSignal.Wait(TimeSpan.FromSeconds(2)));
 
-            batchEventProcessor.Halt();
+            eventProcessor.Halt();
 
             Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
         }
@@ -81,18 +81,18 @@ namespace Disruptor.Tests.Processing
             var exceptionSignal = new CountdownEvent(1);
             var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
             var eventHandler = new TestEventHandler<StubEvent>(x => throw new NullReferenceException());
-            var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
-            _ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
+            var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+            _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
-            batchEventProcessor.SetExceptionHandler(exceptionHandler);
+            eventProcessor.SetExceptionHandler(exceptionHandler);
 
-            var task = Task.Run(() => batchEventProcessor.Run());
+            var task = Task.Run(() => eventProcessor.Run());
 
             _ringBuffer.Publish(_ringBuffer.Next());
 
             Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
 
-            batchEventProcessor.Halt();
+            eventProcessor.Halt();
 
             Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
         }
@@ -103,16 +103,16 @@ namespace Disruptor.Tests.Processing
             var batchSizes = new List<long>();
             var signal = new CountdownEvent(6);
 
-            var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, _sequenceBarrier, new LoopbackEventHandler(_ringBuffer, batchSizes, signal));
+            var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, new LoopbackEventHandler(_ringBuffer, batchSizes, signal));
 
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
 
-            var task = Task.Run(() => batchEventProcessor.Run());
+            var task = Task.Run(() => eventProcessor.Run());
             Assert.IsTrue(signal.Wait(TimeSpan.FromSeconds(2)));
 
-            batchEventProcessor.Halt();
+            eventProcessor.Halt();
 
             Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
             Assert.That(batchSizes, Is.EqualTo(new List<long> { 3, 2, 1 }));
@@ -153,7 +153,7 @@ namespace Disruptor.Tests.Processing
             var dp = new DummyDataProvider<object>();
 
             var h1 = new LifeCycleHandler();
-            var p1 = CreateBatchEventProcessor(dp, barrier, h1);
+            var p1 = CreateEventProcessor(dp, barrier, h1);
 
             var t1 = new Thread(p1.Run);
             p1.Halt();
@@ -165,7 +165,7 @@ namespace Disruptor.Tests.Processing
             for (int i = 0; i < 1000; i++)
             {
                 var h2 = new LifeCycleHandler();
-                var p2 = CreateBatchEventProcessor(dp, barrier, h2);
+                var p2 = CreateEventProcessor(dp, barrier, h2);
                 var t2 = new Thread(p2.Run);
 
                 t2.Start();
@@ -178,7 +178,7 @@ namespace Disruptor.Tests.Processing
             for (int i = 0; i < 1000; i++)
             {
                 var h2 = new LifeCycleHandler();
-                var p2 = CreateBatchEventProcessor(dp, barrier, h2);
+                var p2 = CreateEventProcessor(dp, barrier, h2);
 
                 var t2 = new Thread(p2.Run);
                 t2.Start();
@@ -228,18 +228,18 @@ namespace Disruptor.Tests.Processing
 
             var eventHandler = (BatchAwareEventHandler)Activator.CreateInstance(eventHandlerType, (Action<StubEvent>)(x => latch.Signal()));
 
-            var batchEventProcessor = CreateBatchEventProcessor(_ringBuffer, new DelegatingSequenceBarrier(_sequenceBarrier), eventHandler);
+            var eventProcessor = CreateEventProcessor(_ringBuffer, new DelegatingSequenceBarrier(_sequenceBarrier), eventHandler);
 
-            _ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
+            _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
-            var task = Task.Run(() => batchEventProcessor.Run());
+            var task = Task.Run(() => eventProcessor.Run());
             latch.Wait(TimeSpan.FromSeconds(2));
 
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
 
-            batchEventProcessor.Halt();
+            eventProcessor.Halt();
             task.Wait();
 
             Assert.That(eventHandler.BatchSizeToCount.Count, Is.Not.EqualTo(0));

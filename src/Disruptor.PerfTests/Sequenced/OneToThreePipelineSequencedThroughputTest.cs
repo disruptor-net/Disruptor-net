@@ -48,9 +48,9 @@ namespace Disruptor.PerfTests.Sequenced
 
         private readonly RingBuffer<FunctionEvent> _ringBuffer = RingBuffer<FunctionEvent>.CreateSingleProducer(FunctionEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
 
-        private readonly IBatchEventProcessor<FunctionEvent> _stepOneBatchProcessor;
-        private readonly IBatchEventProcessor<FunctionEvent> _stepTwoBatchProcessor;
-        private readonly IBatchEventProcessor<FunctionEvent> _stepThreeBatchProcessor;
+        private readonly IEventProcessor<FunctionEvent> _stepOneEventProcessor;
+        private readonly IEventProcessor<FunctionEvent> _stepTwoEventProcessor;
+        private readonly IEventProcessor<FunctionEvent> _stepThreeEventProcessor;
         private readonly FunctionEventHandler _stepThreeFunctionHandler;
 
         public OneToThreePipelineSequencedThroughputTest()
@@ -60,13 +60,13 @@ namespace Disruptor.PerfTests.Sequenced
             _stepThreeFunctionHandler = new FunctionEventHandler(FunctionStep.Three);
 
             var stepOneSequenceBarrier = _ringBuffer.NewBarrier();
-            _stepOneBatchProcessor = BatchEventProcessorFactory.Create(_ringBuffer, stepOneSequenceBarrier, stepOneFunctionHandler);
+            _stepOneEventProcessor = EventProcessorFactory.Create(_ringBuffer, stepOneSequenceBarrier, stepOneFunctionHandler);
 
-            var stepTwoSequenceBarrier = _ringBuffer.NewBarrier(_stepOneBatchProcessor.Sequence);
-            _stepTwoBatchProcessor = BatchEventProcessorFactory.Create(_ringBuffer, stepTwoSequenceBarrier, stepTwoFunctionHandler);
+            var stepTwoSequenceBarrier = _ringBuffer.NewBarrier(_stepOneEventProcessor.Sequence);
+            _stepTwoEventProcessor = EventProcessorFactory.Create(_ringBuffer, stepTwoSequenceBarrier, stepTwoFunctionHandler);
 
-            var stepThreeSequenceBarrier = _ringBuffer.NewBarrier(_stepTwoBatchProcessor.Sequence);
-            _stepThreeBatchProcessor = BatchEventProcessorFactory.Create(_ringBuffer, stepThreeSequenceBarrier, _stepThreeFunctionHandler);
+            var stepThreeSequenceBarrier = _ringBuffer.NewBarrier(_stepTwoEventProcessor.Sequence);
+            _stepThreeEventProcessor = EventProcessorFactory.Create(_ringBuffer, stepThreeSequenceBarrier, _stepThreeFunctionHandler);
 
             var temp = 0L;
             var operandTwo = _operandTwoInitialValue;
@@ -83,7 +83,7 @@ namespace Disruptor.PerfTests.Sequenced
             }
             _expectedResult = temp;
 
-            _ringBuffer.AddGatingSequences(_stepThreeBatchProcessor.Sequence);
+            _ringBuffer.AddGatingSequences(_stepThreeEventProcessor.Sequence);
         }
 
         public int RequiredProcessorCount => 4;
@@ -91,15 +91,15 @@ namespace Disruptor.PerfTests.Sequenced
         public long Run(ThroughputSessionContext sessionContext)
         {
             var latch = new ManualResetEvent(false);
-            _stepThreeFunctionHandler.Reset(latch, _stepThreeBatchProcessor.Sequence.Value + _iterations);
+            _stepThreeFunctionHandler.Reset(latch, _stepThreeEventProcessor.Sequence.Value + _iterations);
 
-            var processorTask1 = _stepOneBatchProcessor.Start();
-            var processorTask2 = _stepTwoBatchProcessor.Start();
-            var processorTask3 = _stepThreeBatchProcessor.Start();
+            var processorTask1 = _stepOneEventProcessor.Start();
+            var processorTask2 = _stepTwoEventProcessor.Start();
+            var processorTask3 = _stepThreeEventProcessor.Start();
 
-            _stepOneBatchProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
-            _stepTwoBatchProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
-            _stepThreeBatchProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            _stepOneEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            _stepTwoEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            _stepThreeEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();
 
@@ -119,9 +119,9 @@ namespace Disruptor.PerfTests.Sequenced
             latch.WaitOne();
             sessionContext.Stop();
 
-            _stepOneBatchProcessor.Halt();
-            _stepTwoBatchProcessor.Halt();
-            _stepThreeBatchProcessor.Halt();
+            _stepOneEventProcessor.Halt();
+            _stepTwoEventProcessor.Halt();
+            _stepThreeEventProcessor.Halt();
             Task.WaitAll(processorTask1, processorTask2, processorTask3);
 
             PerfTestUtil.FailIfNot(_expectedResult, _stepThreeFunctionHandler.StepThreeCounter);

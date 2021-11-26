@@ -3,10 +3,10 @@
 namespace Disruptor.Processing
 {
     /// <summary>
-    /// Interface for <see cref="BatchEventProcessor{T,TDataProvider,TSequenceBarrier,TEventHandler,TBatchStartAware}"/>.
+    /// An event processor (<see cref="IEventProcessor"/>) for a reference-type ring buffer.
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
-    public interface IBatchEventProcessor<T> : IEventProcessor
+    public interface IEventProcessor<T> : IEventProcessor
         where T : class
     {
         /// <summary>

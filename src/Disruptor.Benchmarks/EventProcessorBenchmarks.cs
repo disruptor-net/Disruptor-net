@@ -5,15 +5,15 @@ using Disruptor.Processing;
 
 namespace Disruptor.Benchmarks
 {
-    public class BatchEventProcessorBenchmarks
+    public class EventProcessorBenchmarks
     {
         private const int _ringBufferSize = 131072;
 
         private readonly RingBuffer<XEvent> _ringBuffer;
-        private IBatchEventProcessor<XEvent> _processor;
-        private IBatchEventProcessor<XEvent> _processorRef;
+        private IEventProcessor<XEvent> _processor;
+        private IEventProcessor<XEvent> _processorRef;
 
-        public BatchEventProcessorBenchmarks()
+        public EventProcessorBenchmarks()
         {
             _ringBuffer = new RingBuffer<XEvent>(() => new XEvent(), new SingleProducerSequencer(_ringBufferSize, new BusySpinWaitStrategy()));
 
@@ -27,8 +27,8 @@ namespace Disruptor.Benchmarks
         [IterationSetup]
         public void Setup()
         {
-            _processor = BatchEventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processor.Halt()));
-            _processorRef = BatchEventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processorRef.Halt()), typeof(BatchEventProcessorRef<,,,,>));
+            _processor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processor.Halt()));
+            _processorRef = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processorRef.Halt()), typeof(BatchEventProcessorRef<,,,,>));
         }
 
         [Benchmark(OperationsPerInvoke = _ringBufferSize)]

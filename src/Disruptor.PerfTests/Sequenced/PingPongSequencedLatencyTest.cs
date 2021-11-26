@@ -22,11 +22,11 @@ namespace Disruptor.PerfTests.Sequenced
 
         private readonly ISequenceBarrier _pongBarrier;
         private readonly Pinger _pinger;
-        private readonly IBatchEventProcessor<PerfEvent> _pingProcessor;
+        private readonly IEventProcessor<PerfEvent> _pingProcessor;
 
         private readonly ISequenceBarrier _pingBarrier;
         private readonly Ponger _ponger;
-        private readonly IBatchEventProcessor<PerfEvent> _pongProcessor;
+        private readonly IEventProcessor<PerfEvent> _pongProcessor;
 
         public PingPongSequencedLatencyTest()
         {
@@ -39,8 +39,8 @@ namespace Disruptor.PerfTests.Sequenced
             _pinger = new Pinger(_pingBuffer, _iterations, _pauseNanos);
             _ponger = new Ponger(_pongBuffer);
 
-            _pingProcessor = BatchEventProcessorFactory.Create(_pongBuffer,_pongBarrier, _pinger);
-            _pongProcessor = BatchEventProcessorFactory.Create(_pingBuffer,_pingBarrier, _ponger);
+            _pingProcessor = EventProcessorFactory.Create(_pongBuffer,_pongBarrier, _pinger);
+            _pongProcessor = EventProcessorFactory.Create(_pingBuffer,_pingBarrier, _ponger);
 
             _pingBuffer.AddGatingSequences(_pongProcessor.Sequence);
             _pongBuffer.AddGatingSequences(_pingProcessor.Sequence);

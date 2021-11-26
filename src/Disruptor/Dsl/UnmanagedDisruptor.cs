@@ -82,7 +82,7 @@ namespace Disruptor.Dsl
 
         /// <summary>
         /// The <see cref="UnmanagedRingBuffer{T}"/> used by this disruptor. This is useful for creating custom
-        /// event processors if the behaviour of <see cref="IValueBatchEventProcessor{T}"/> is not suitable.
+        /// event processors if the behaviour of <see cref="IValueEventProcessor{T}"/> is not suitable.
         /// </summary>
         public UnmanagedRingBuffer<T> RingBuffer => _ringBuffer;
 

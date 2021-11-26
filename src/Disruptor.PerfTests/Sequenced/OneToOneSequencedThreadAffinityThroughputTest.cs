@@ -43,15 +43,15 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly RingBuffer<PerfEvent> _ringBuffer;
         private readonly AdditionEventHandler _eventHandler;
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
-        private readonly IBatchEventProcessor<PerfEvent> _batchEventProcessor;
+        private readonly IEventProcessor<PerfEvent> _eventProcessor;
 
         public OneToOneSequencedThreadAffinityThroughputTest()
         {
             _eventHandler = new AdditionEventHandler();
             _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
-            _batchEventProcessor = BatchEventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
-            _ringBuffer.AddGatingSequences(_batchEventProcessor.Sequence);
+            _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
+            _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);
         }
 
         public int RequiredProcessorCount => 2;
@@ -59,7 +59,7 @@ namespace Disruptor.PerfTests.Sequenced
         [MethodImpl(512)]
         public long Run(ThroughputSessionContext sessionContext)
         {
-            long expectedCount = _batchEventProcessor.Sequence.Value + _iterations;
+            long expectedCount = _eventProcessor.Sequence.Value + _iterations;
 
             _eventHandler.Reset(expectedCount);
 
@@ -69,10 +69,10 @@ namespace Disruptor.PerfTests.Sequenced
 
                 Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
-                _batchEventProcessor.Run();
+                _eventProcessor.Run();
             });
 
-            _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             using var _ = ThreadAffinityUtil.SetThreadAffinity(1);
 
@@ -91,8 +91,8 @@ namespace Disruptor.PerfTests.Sequenced
 
             _eventHandler.WaitForSequence();
             sessionContext.Stop();
-            PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _batchEventProcessor);
-            _batchEventProcessor.Halt();
+            PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _eventProcessor);
+            _eventProcessor.Halt();
             processorTask.Wait(2000);
 
             sessionContext.SetBatchData(_eventHandler.BatchesProcessed, _iterations);

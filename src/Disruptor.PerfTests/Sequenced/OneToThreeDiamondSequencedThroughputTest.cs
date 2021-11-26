@@ -55,9 +55,9 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly long _expectedResult;
 
         private readonly RingBuffer<FizzBuzzEvent> _ringBuffer = RingBuffer<FizzBuzzEvent>.CreateSingleProducer(FizzBuzzEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
-        private readonly IBatchEventProcessor<FizzBuzzEvent> _batchProcessorFizz;
-        private readonly IBatchEventProcessor<FizzBuzzEvent> _batchProcessorBuzz;
-        private readonly IBatchEventProcessor<FizzBuzzEvent> _batchProcessorFizzBuzz;
+        private readonly IEventProcessor<FizzBuzzEvent> _eventProcessorFizz;
+        private readonly IEventProcessor<FizzBuzzEvent> _eventProcessorBuzz;
+        private readonly IEventProcessor<FizzBuzzEvent> _eventProcessorFizzBuzz;
         private readonly FizzBuzzEventHandler _fizzBuzzHandler;
 
         public OneToThreeDiamondSequencedThroughputTest()
@@ -65,15 +65,15 @@ namespace Disruptor.PerfTests.Sequenced
             var sequenceBarrier = _ringBuffer.NewBarrier();
 
             var fizzHandler = new FizzBuzzEventHandler(FizzBuzzStep.Fizz);
-            _batchProcessorFizz = BatchEventProcessorFactory.Create(_ringBuffer, sequenceBarrier, fizzHandler);
+            _eventProcessorFizz = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, fizzHandler);
 
             var buzzHandler = new FizzBuzzEventHandler(FizzBuzzStep.Buzz);
-            _batchProcessorBuzz = BatchEventProcessorFactory.Create(_ringBuffer, sequenceBarrier, buzzHandler);
+            _eventProcessorBuzz = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, buzzHandler);
 
-            var sequenceBarrierFizzBuzz = _ringBuffer.NewBarrier(_batchProcessorFizz.Sequence, _batchProcessorBuzz.Sequence);
+            var sequenceBarrierFizzBuzz = _ringBuffer.NewBarrier(_eventProcessorFizz.Sequence, _eventProcessorBuzz.Sequence);
 
             _fizzBuzzHandler = new FizzBuzzEventHandler(FizzBuzzStep.FizzBuzz);
-            _batchProcessorFizzBuzz = BatchEventProcessorFactory.Create(_ringBuffer, sequenceBarrierFizzBuzz, _fizzBuzzHandler);
+            _eventProcessorFizzBuzz = EventProcessorFactory.Create(_ringBuffer, sequenceBarrierFizzBuzz, _fizzBuzzHandler);
 
             var temp = 0L;
             for (long i = 0; i < _iterations; i++)
@@ -88,7 +88,7 @@ namespace Disruptor.PerfTests.Sequenced
             }
             _expectedResult = temp;
 
-            _ringBuffer.AddGatingSequences(_batchProcessorFizzBuzz.Sequence);
+            _ringBuffer.AddGatingSequences(_eventProcessorFizzBuzz.Sequence);
         }
 
         public int RequiredProcessorCount => 4;
@@ -96,14 +96,14 @@ namespace Disruptor.PerfTests.Sequenced
         public long Run(ThroughputSessionContext sessionContext)
         {
             var latch = new ManualResetEvent(false);
-            _fizzBuzzHandler.Reset(latch, _batchProcessorFizzBuzz.Sequence.Value + _iterations);
+            _fizzBuzzHandler.Reset(latch, _eventProcessorFizzBuzz.Sequence.Value + _iterations);
 
-            var processorTask1 = Task.Run(() => _batchProcessorFizz.Run());
-            var processorTask2 = Task.Run(() => _batchProcessorBuzz.Run());
-            var processorTask3 = Task.Run(() => _batchProcessorFizzBuzz.Run());
-            _batchProcessorFizz.WaitUntilStarted(TimeSpan.FromSeconds(5));
-            _batchProcessorBuzz.WaitUntilStarted(TimeSpan.FromSeconds(5));
-            _batchProcessorFizzBuzz.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            var processorTask1 = Task.Run(() => _eventProcessorFizz.Run());
+            var processorTask2 = Task.Run(() => _eventProcessorBuzz.Run());
+            var processorTask3 = Task.Run(() => _eventProcessorFizzBuzz.Run());
+            _eventProcessorFizz.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            _eventProcessorBuzz.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            _eventProcessorFizzBuzz.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();
 
@@ -119,9 +119,9 @@ namespace Disruptor.PerfTests.Sequenced
             latch.WaitOne();
             sessionContext.Stop();
 
-            _batchProcessorFizz.Halt();
-            _batchProcessorBuzz.Halt();
-            _batchProcessorFizzBuzz.Halt();
+            _eventProcessorFizz.Halt();
+            _eventProcessorBuzz.Halt();
+            _eventProcessorFizzBuzz.Halt();
             Task.WaitAll(processorTask1, processorTask2, processorTask3);
 
             PerfTestUtil.FailIfNot(_expectedResult, _fizzBuzzHandler.FizzBuzzCounter);

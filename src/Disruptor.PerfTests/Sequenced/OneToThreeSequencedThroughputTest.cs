@@ -50,7 +50,7 @@ namespace Disruptor.PerfTests.Sequenced
         private const long _iterations = 1000L * 1000L * 100L;
 
         private readonly RingBuffer<PerfEvent> _ringBuffer;
-        private readonly IBatchEventProcessor<PerfEvent>[] _batchEventProcessors = new IBatchEventProcessor<PerfEvent>[_numEventProcessors];
+        private readonly IEventProcessor<PerfEvent>[] _eventProcessors = new IEventProcessor<PerfEvent>[_numEventProcessors];
         private readonly long[] _results = new long[_numEventProcessors];
         private readonly PerfMutationEventHandler[] _handlers = new PerfMutationEventHandler[_numEventProcessors];
 
@@ -73,9 +73,9 @@ namespace Disruptor.PerfTests.Sequenced
 
             for (var i = 0; i < _numEventProcessors; i++)
             {
-                _batchEventProcessors[i] = BatchEventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handlers[i]);
+                _eventProcessors[i] = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handlers[i]);
             }
-            _ringBuffer.AddGatingSequences(_batchEventProcessors.Select(x => x.Sequence).ToArray());
+            _ringBuffer.AddGatingSequences(_eventProcessors.Select(x => x.Sequence).ToArray());
         }
 
         public int RequiredProcessorCount => 4;
@@ -87,9 +87,9 @@ namespace Disruptor.PerfTests.Sequenced
             var processorTasks = new List<Task>();
             for (var i = 0; i < _numEventProcessors; i++)
             {
-                _handlers[i].Reset(latch, _batchEventProcessors[i].Sequence.Value + _iterations);
-                processorTasks.Add(_batchEventProcessors[i].Start());
-                _batchEventProcessors[i].WaitUntilStarted(TimeSpan.FromSeconds(5));
+                _handlers[i].Reset(latch, _eventProcessors[i].Sequence.Value + _iterations);
+                processorTasks.Add(_eventProcessors[i].Start());
+                _eventProcessors[i].WaitUntilStarted(TimeSpan.FromSeconds(5));
             }
 
             sessionContext.Start();
@@ -108,7 +108,7 @@ namespace Disruptor.PerfTests.Sequenced
 
             for (var i = 0; i < _numEventProcessors; i++)
             {
-                _batchEventProcessors[i].Halt();
+                _eventProcessors[i].Halt();
                 PerfTestUtil.FailIfNot(_results[i], _handlers[i].Value, $"Result {_results[i]} != {_handlers[i].Value}");
             }
             Task.WaitAll(processorTasks.ToArray());

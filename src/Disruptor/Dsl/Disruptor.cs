@@ -288,7 +288,7 @@ namespace Disruptor.Dsl
 
         /// <summary>
         /// The <see cref="RingBuffer{T}"/> used by this disruptor. This is useful for creating custom
-        /// event processors if the behaviour of <see cref="BatchEventProcessor{T}"/> is not suitable.
+        /// event processors if the behaviour of <see cref="EventProcessor{T}"/> is not suitable.
         /// </summary>
         public RingBuffer<T> RingBuffer => _ringBuffer;
 
@@ -352,13 +352,13 @@ namespace Disruptor.Dsl
             {
                 var eventHandler = eventHandlers[i];
 
-                var batchEventProcessor = BatchEventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
+                var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
                 if (_exceptionHandler != null)
-                    batchEventProcessor.SetExceptionHandler(_exceptionHandler);
+                    eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-                _consumerRepository.Add(batchEventProcessor, eventHandler, barrier);
-                processorSequences[i] = batchEventProcessor.Sequence;
+                _consumerRepository.Add(eventProcessor, eventHandler, barrier);
+                processorSequences[i] = eventProcessor.Sequence;
             }
 
             UpdateGatingSequencesForNextInChain(barrierSequences, processorSequences);

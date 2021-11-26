@@ -16,21 +16,21 @@ namespace Disruptor.Tests
             var ringBuffer = RingBuffer<StubEvent>.CreateMultiProducer(() => new StubEvent(-1), 16);
             var sequenceBarrier = ringBuffer.NewBarrier();
             var handler = new TestSequenceReportingEventHandler();
-            var batchEventProcessor = BatchEventProcessorFactory.Create(ringBuffer, sequenceBarrier, handler);
-            ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
+            var eventProcessor = EventProcessorFactory.Create(ringBuffer, sequenceBarrier, handler);
+            ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
-            var task = Task.Run(batchEventProcessor.Run);
+            var task = Task.Run(eventProcessor.Run);
 
-            Assert.AreEqual(-1L, batchEventProcessor.Sequence.Value);
+            Assert.AreEqual(-1L, eventProcessor.Sequence.Value);
             ringBuffer.Publish(ringBuffer.Next());
 
             handler.CallbackSignal.WaitOne();
-            Assert.AreEqual(0L, batchEventProcessor.Sequence.Value);
+            Assert.AreEqual(0L, eventProcessor.Sequence.Value);
 
             handler.OnEndOfBatchSignal.Set();
-            Assert.AreEqual(0L, batchEventProcessor.Sequence.Value);
+            Assert.AreEqual(0L, eventProcessor.Sequence.Value);
 
-            batchEventProcessor.Halt();
+            eventProcessor.Halt();
             Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(10)));
         }
 
@@ -40,21 +40,21 @@ namespace Disruptor.Tests
             var ringBuffer = ValueRingBuffer<StubValueEvent>.CreateMultiProducer(() => new StubValueEvent(-1), 16);
             var sequenceBarrier = ringBuffer.NewBarrier();
             var handler = new TestSequenceReportingEventHandler();
-            var batchEventProcessor = BatchEventProcessorFactory.Create(ringBuffer, sequenceBarrier, handler);
-            ringBuffer.AddGatingSequences(batchEventProcessor.Sequence);
+            var eventProcessor = EventProcessorFactory.Create(ringBuffer, sequenceBarrier, handler);
+            ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
-            var task = Task.Run(batchEventProcessor.Run);
+            var task = Task.Run(eventProcessor.Run);
 
-            Assert.AreEqual(-1L, batchEventProcessor.Sequence.Value);
+            Assert.AreEqual(-1L, eventProcessor.Sequence.Value);
             ringBuffer.Publish(ringBuffer.Next());
 
             handler.CallbackSignal.WaitOne();
-            Assert.AreEqual(0L, batchEventProcessor.Sequence.Value);
+            Assert.AreEqual(0L, eventProcessor.Sequence.Value);
 
             handler.OnEndOfBatchSignal.Set();
-            Assert.AreEqual(0L, batchEventProcessor.Sequence.Value);
+            Assert.AreEqual(0L, eventProcessor.Sequence.Value);
 
-            batchEventProcessor.Halt();
+            eventProcessor.Halt();
             Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(10)));
         }
 

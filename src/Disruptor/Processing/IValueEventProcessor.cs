@@ -3,11 +3,11 @@
 namespace Disruptor.Processing
 {
     /// <summary>
-    /// Interface for <see cref="ValueBatchEventProcessor{T,TDataProvider,TSequenceBarrier,TEventHandler,TBatchStartAware}"/>.
+    /// An event processor (<see cref="IEventProcessor"/>) for a value-type ring buffer.
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
-    public interface IValueBatchEventProcessor<T> : IEventProcessor
-        where T : struct 
+    public interface IValueEventProcessor<T> : IEventProcessor
+        where T : struct
     {
         /// <summary>
         /// Waits before the event processor enters the <see cref="IEventProcessor.IsRunning"/> state.

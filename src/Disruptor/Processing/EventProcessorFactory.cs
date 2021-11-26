@@ -4,25 +4,25 @@ using Disruptor.Util;
 namespace Disruptor.Processing
 {
     /// <summary>
-    /// Factory that creates optimized instance of <see cref="IBatchEventProcessor{T}"/>.
+    /// Factory that creates optimized instance of <see cref="IEventProcessor"/>.
     /// </summary>
-    public static class BatchEventProcessorFactory
+    public static class EventProcessorFactory
     {
         /// <summary>
-        /// Create a new <see cref="IBatchEventProcessor{T}"/> with dedicated generic arguments.
+        /// Create a new <see cref="IEventProcessor{T}"/> with dedicated generic arguments.
         /// </summary>
         /// <typeparam name="T">the type of event used.</typeparam>
         /// <param name="dataProvider">dataProvider to which events are published</param>
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
         /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
         /// <returns></returns>
-        public static IBatchEventProcessor<T> Create<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
+        public static IEventProcessor<T> Create<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
             where T : class
         {
-            return Create(dataProvider, sequenceBarrier, eventHandler, typeof(BatchEventProcessor<,,,,>));
+            return Create(dataProvider, sequenceBarrier, eventHandler, typeof(EventProcessor<,,,,>));
         }
 
-        internal static IBatchEventProcessor<T> Create<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler, Type processorType)
+        internal static IEventProcessor<T> Create<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler, Type processorType)
             where T : class
         {
             var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
@@ -30,25 +30,25 @@ namespace Disruptor.Processing
             var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
             var batchStartAwareProxy = CreateBatchStartAwareProxy(eventHandler);
 
-            var batchEventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), batchStartAwareProxy.GetType());
-            return (IBatchEventProcessor<T>)Activator.CreateInstance(batchEventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy);
+            var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), batchStartAwareProxy.GetType());
+            return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy);
         }
 
         /// <summary>
-        /// Create a new <see cref="IBatchEventProcessor{T}"/> with dedicated generic arguments.
+        /// Create a new <see cref="IEventProcessor{T}"/> with dedicated generic arguments.
         /// </summary>
         /// <typeparam name="T">the type of event used.</typeparam>
         /// <param name="dataProvider">dataProvider to which events are published</param>
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
         /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
         /// <returns></returns>
-        public static IValueBatchEventProcessor<T> Create<T>(IValueDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
+        public static IValueEventProcessor<T> Create<T>(IValueDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
             where T : struct
         {
-            return Create(dataProvider, sequenceBarrier, eventHandler, typeof(ValueBatchEventProcessor<,,,,>));
+            return Create(dataProvider, sequenceBarrier, eventHandler, typeof(ValueEventProcessor<,,,,>));
         }
 
-        internal static IValueBatchEventProcessor<T> Create<T>(IValueDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler, Type processorType)
+        internal static IValueEventProcessor<T> Create<T>(IValueDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler, Type processorType)
             where T : struct
         {
             var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
@@ -56,8 +56,8 @@ namespace Disruptor.Processing
             var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
             var batchStartAwareProxy = CreateBatchStartAwareProxy(eventHandler);
 
-            var batchEventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), batchStartAwareProxy.GetType());
-            return (IValueBatchEventProcessor<T>)Activator.CreateInstance(batchEventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy);
+            var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), batchStartAwareProxy.GetType());
+            return (IValueEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy);
         }
 
         private static IBatchStartAware CreateBatchStartAwareProxy(object eventHandler)

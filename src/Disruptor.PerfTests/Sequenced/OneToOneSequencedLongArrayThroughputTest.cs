@@ -44,15 +44,15 @@ namespace Disruptor.PerfTests.Sequenced
 
         private readonly RingBuffer<long[]> _ringBuffer;
         private readonly LongArrayEventHandler _handler;
-        private readonly IBatchEventProcessor<long[]> _batchEventProcessor;
+        private readonly IEventProcessor<long[]> _eventProcessor;
 
         public OneToOneSequencedLongArrayThroughputTest()
         {
             _ringBuffer = RingBuffer<long[]>.CreateSingleProducer(() => new long[_arraySize], _bufferSize, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
             _handler = new LongArrayEventHandler();
-            _batchEventProcessor = BatchEventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);
-            _ringBuffer.AddGatingSequences(_batchEventProcessor.Sequence);
+            _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);
+            _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,10 +62,10 @@ namespace Disruptor.PerfTests.Sequenced
         public long Run(ThroughputSessionContext sessionContext)
         {
             var signal = new ManualResetEvent(false);
-            var expectedCount = _batchEventProcessor.Sequence.Value + _iterations;
+            var expectedCount = _eventProcessor.Sequence.Value + _iterations;
             _handler.Reset(signal, _iterations);
-            var processorTask = _batchEventProcessor.Start();
-            _batchEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+            var processorTask = _eventProcessor.Start();
+            _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();
 
@@ -84,7 +84,7 @@ namespace Disruptor.PerfTests.Sequenced
             signal.WaitOne();
             sessionContext.Stop();
             WaitForEventProcessorSequence(expectedCount);
-            _batchEventProcessor.Halt();
+            _eventProcessor.Halt();
             processorTask.Wait(2000);
 
             sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations);
@@ -96,7 +96,7 @@ namespace Disruptor.PerfTests.Sequenced
 
         private void WaitForEventProcessorSequence(long expectedCount)
         {
-            while (_batchEventProcessor.Sequence.Value != expectedCount)
+            while (_eventProcessor.Sequence.Value != expectedCount)
             {
                 Thread.Sleep(1);
             }

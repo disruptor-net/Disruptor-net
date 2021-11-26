@@ -4,14 +4,14 @@ using Disruptor.Processing;
 namespace Disruptor
 {
     /// <summary>
-    /// Callback handler for uncaught exceptions in the event processing cycle of the <see cref="IBatchEventProcessor{T}"/>
+    /// Callback handler for uncaught exceptions in the event processing cycle of the <see cref="IEventProcessor{T}"/>
     /// </summary>
     public interface IExceptionHandler<in T>
     {
         /// <summary>
         /// Strategy for handling uncaught exceptions when processing an event.
         /// 
-        /// If the strategy wishes to terminate further processing by the <see cref="IBatchEventProcessor{T}"/>
+        /// If the strategy wishes to terminate further processing by the <see cref="IEventProcessor{T}"/>
         /// then it should throw a <see cref="ApplicationException"/>
         /// </summary>
         /// <param name="ex">exception that propagated from the <see cref="IEventHandler{T}"/>.</param>

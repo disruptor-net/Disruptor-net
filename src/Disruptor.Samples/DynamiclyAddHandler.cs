@@ -14,10 +14,10 @@ namespace Disruptor.Samples
 
             // Construct 2 batch event processors.
             var handler1 = new DynamicHandler();
-            var processor1 = BatchEventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), handler1);
+            var processor1 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), handler1);
 
             var handler2 = new DynamicHandler();
-            var processor2 = BatchEventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(processor1.Sequence), handler2);
+            var processor2 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(processor1.Sequence), handler2);
 
             // Dynamically add both sequences to the ring buffer
             ringBuffer.AddGatingSequences(processor1.Sequence, processor2.Sequence);

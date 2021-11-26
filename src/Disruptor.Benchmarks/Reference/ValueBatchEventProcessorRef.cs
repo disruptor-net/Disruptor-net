@@ -6,7 +6,7 @@ using Disruptor.Util;
 
 namespace Disruptor.Benchmarks.Reference
 {
-   public class ValueBatchEventProcessorRef<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IValueBatchEventProcessor<T>
+   public class ValueBatchEventProcessorRef<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IValueEventProcessor<T>
         where T : struct
 
         where TDataProvider : IValueDataProvider<T>
@@ -38,7 +38,7 @@ namespace Disruptor.Benchmarks.Reference
         /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
         /// the <see cref="IValueEventHandler{T}.OnEvent"/> method returns.
         ///
-        /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
+        /// Consider using <see cref="EventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
         /// </summary>
         /// <param name="dataProvider">dataProvider to which events are published</param>
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>

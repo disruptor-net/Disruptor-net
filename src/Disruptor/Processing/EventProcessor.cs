@@ -14,22 +14,13 @@ namespace Disruptor.Processing
     ///
     /// This class is kept mainly for compatibility reasons.
     ///
-    /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
+    /// Consider using <see cref="EventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
-    public class BatchEventProcessor<T> : BatchEventProcessor<T, IDataProvider<T>, ISequenceBarrier, IEventHandler<T>, BatchEventProcessor<T>.BatchStartAware>
+    public class EventProcessor<T> : EventProcessor<T, IDataProvider<T>, ISequenceBarrier, IEventHandler<T>, EventProcessor<T>.BatchStartAware>
         where T : class
     {
-        /// <summary>
-        /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
-        /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
-        ///
-        /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
-        /// </summary>
-        /// <param name="dataProvider">dataProvider to which events are published</param>
-        /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
-        /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
-        public BatchEventProcessor(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
+        public EventProcessor(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
             : base(dataProvider, sequenceBarrier, eventHandler, new BatchStartAware(eventHandler))
         {
         }
@@ -63,7 +54,7 @@ namespace Disruptor.Processing
     /// <typeparam name="TSequenceBarrier">the type of the <see cref="ISequenceBarrier"/> used.</typeparam>
     /// <typeparam name="TEventHandler">the type of the <see cref="IEventHandler{T}"/> used.</typeparam>
     /// <typeparam name="TBatchStartAware">the type of the <see cref="IBatchStartAware"/> used.</typeparam>
-    public class BatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IBatchEventProcessor<T>
+    public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IEventProcessor<T>
         where T : class
         where TDataProvider : IDataProvider<T>
         where TSequenceBarrier : ISequenceBarrier
@@ -83,17 +74,7 @@ namespace Disruptor.Processing
         private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler();
         private volatile int _runState = ProcessorRunStates.Idle;
 
-        /// <summary>
-        /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
-        /// the <see cref="IEventHandler{T}.OnEvent"/> method returns.
-        ///
-        /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
-        /// </summary>
-        /// <param name="dataProvider">dataProvider to which events are published</param>
-        /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
-        /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
-        /// <param name="batchStartAware"></param>
-        public BatchEventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
+        public EventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
         {
             _dataProvider = dataProvider;
             _sequenceBarrier = sequenceBarrier;
@@ -198,8 +179,8 @@ namespace Disruptor.Processing
                     // The Java version includes the test "if (availableSequence >= nextSequence)" to avoid invoking OnBatchStart on empty batches.
                     // However, this test has a negative impact on performance even for event handlers that are not IBatchStartAware.
                     // This is unfortunate because this test should be removed by the JIT when OnBatchStart is a noop.
-                    // => The test is currently implemented on struct proxies. See BatchEventProcessor<T>.BatchStartAware and StructProxy.
-                    // For some reason this also improves BatchEventProcessor performance for IBatchStartAware event handlers.
+                    // => The test is currently implemented on struct proxies. See EventProcessor<T>.BatchStartAware and StructProxy.
+                    // For some reason this also improves EventProcessor performance for IBatchStartAware event handlers.
 
                     _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
 

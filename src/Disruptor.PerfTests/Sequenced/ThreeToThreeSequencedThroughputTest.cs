@@ -46,7 +46,7 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly LongArrayPublisher[] _valuePublishers = new LongArrayPublisher[_numPublishers];
 
         private readonly LongArrayEventHandler _handler = new LongArrayEventHandler();
-        private readonly MultiBufferBatchEventProcessor<long[]> _batchEventProcessor;
+        private readonly MultiBufferEventProcessor<long[]> _eventProcessor;
 
         public ThreeToThreeSequencedThroughputTest()
         {
@@ -57,11 +57,11 @@ namespace Disruptor.PerfTests.Sequenced
                 _valuePublishers[i] = ValuePublisher;
             }
 
-            _batchEventProcessor = new MultiBufferBatchEventProcessor<long[]>(_buffers, _barriers, _handler);
+            _eventProcessor = new MultiBufferEventProcessor<long[]>(_buffers, _barriers, _handler);
 
             for (var i = 0; i < _numPublishers; i++)
             {
-                _buffers[i].AddGatingSequences(_batchEventProcessor.GetSequences()[i]);
+                _buffers[i].AddGatingSequences(_eventProcessor.GetSequences()[i]);
             }
         }
 
@@ -80,7 +80,7 @@ namespace Disruptor.PerfTests.Sequenced
                 var index = i;
                 futures[i] = Task.Run(() => _valuePublishers[index](_cyclicBarrier, _buffers[index], _iterations / _numPublishers, _arraySize));
             }
-            var processorTask = Task.Run(() => _batchEventProcessor.Run());
+            var processorTask = Task.Run(() => _eventProcessor.Run());
 
             sessionContext.Start();
             _cyclicBarrier.Signal();
@@ -94,7 +94,7 @@ namespace Disruptor.PerfTests.Sequenced
             latch.WaitOne();
 
             sessionContext.Stop();
-            _batchEventProcessor.Halt();
+            _eventProcessor.Halt();
             processorTask.Wait(2000);
 
             sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations * _arraySize);

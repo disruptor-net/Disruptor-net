@@ -39,9 +39,9 @@ namespace Disruptor.PerfTests.Support
             }
         }
 
-        public static void WaitForEventProcessorSequence(long expectedCount, IEventProcessor batchEventProcessor)
+        public static void WaitForEventProcessorSequence(long expectedCount, IEventProcessor eventProcessor)
         {
-            while (batchEventProcessor.Sequence.Value != expectedCount)
+            while (eventProcessor.Sequence.Value != expectedCount)
             {
                 Thread.Sleep(1);
             }

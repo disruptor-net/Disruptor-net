@@ -1,6 +1,6 @@
 namespace Disruptor.Tests.Processing
 {
-    public enum BatchEventProcessorType
+    public enum EventProcessorType
     {
         Legacy,
         Optimized,

@@ -17,7 +17,7 @@ namespace Disruptor.Processing
     /// <typeparam name="TSequenceBarrier">the type of the <see cref="ISequenceBarrier"/> used.</typeparam>
     /// <typeparam name="TEventHandler">the type of the <see cref="IValueEventHandler{T}"/> used.</typeparam>
     /// <typeparam name="TBatchStartAware">the type of the <see cref="IBatchStartAware"/> used.</typeparam>
-    public class ValueBatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IValueBatchEventProcessor<T>
+    public class ValueEventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IValueEventProcessor<T>
         where T : struct
 
         where TDataProvider : IValueDataProvider<T>
@@ -45,17 +45,7 @@ namespace Disruptor.Processing
         private IValueExceptionHandler<T> _exceptionHandler = new ValueFatalExceptionHandler<T>();
         private volatile int _running;
 
-        /// <summary>
-        /// Construct a BatchEventProcessor that will automatically track the progress by updating its sequence when
-        /// the <see cref="IValueEventHandler{T}.OnEvent"/> method returns.
-        ///
-        /// Consider using <see cref="BatchEventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
-        /// </summary>
-        /// <param name="dataProvider">dataProvider to which events are published</param>
-        /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
-        /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
-        /// <param name="batchStartAware"></param>
-        public ValueBatchEventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
+        public ValueEventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
         {
             _dataProvider = dataProvider;
             _sequenceBarrier = sequenceBarrier;

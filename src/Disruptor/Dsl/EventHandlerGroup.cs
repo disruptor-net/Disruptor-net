@@ -122,7 +122,7 @@ namespace Disruptor.Dsl
         /// <summary>
         /// Create a dependency barrier for the processors in this group.
         /// This allows custom event processors to have dependencies on
-        /// <see cref="IBatchEventProcessor{T}"/>s created by the disruptor.
+        /// <see cref="IEventProcessor{T}"/>s created by the disruptor.
         /// </summary>
         /// <returns>a <see cref="ISequenceBarrier"/> including all the processors in this group.</returns>
         public ISequenceBarrier AsSequenceBarrier()
