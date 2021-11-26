@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
-using static Disruptor.Constants;
+using static Disruptor.Util.Constants;
 
 namespace Disruptor
 {

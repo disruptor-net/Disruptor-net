@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using Disruptor.Util;
 using Microsoft.Win32.SafeHandles;
 using static InlineIL.IL.Emit;
 

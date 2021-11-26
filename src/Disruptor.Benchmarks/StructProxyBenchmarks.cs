@@ -1,6 +1,6 @@
 using System;
 using BenchmarkDotNet.Attributes;
-using Disruptor.Internal;
+using Disruptor.Util;
 
 namespace Disruptor.Benchmarks
 {

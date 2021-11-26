@@ -1,5 +1,5 @@
 ﻿using System;
-using Disruptor.Internal;
+using Disruptor.Util;
 
 namespace Disruptor.Processing
 {

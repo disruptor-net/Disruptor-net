@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace Disruptor
+namespace Disruptor.Util
 {
     /// <summary>
     /// Expose non-inlinable methods to throw exceptions.

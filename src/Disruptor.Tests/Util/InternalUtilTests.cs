@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Disruptor.Tests.Support;
+using Disruptor.Util;
 using InlineIL;
 using NUnit.Framework;
 using static InlineIL.IL.Emit;

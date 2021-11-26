@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-namespace Disruptor.Tests.Util
+namespace Disruptor.Tests
 {
     [TestFixture]
     public class DisruptorUtilTests

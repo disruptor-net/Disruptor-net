@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Disruptor.Internal
+namespace Disruptor.Util
 {
     internal static class StructProxy
     {
@@ -48,7 +48,7 @@ namespace Disruptor.Internal
             var field = typeBuilder.DefineField("_target", targetType, FieldAttributes.Private);
 
             GenerateConstructor(targetType, typeBuilder, field);
-            
+
             foreach (var interfaceType in interfaceTypes)
             {
                 GenerateInterfaceImplementation(interfaceType, targetType, typeBuilder, field);

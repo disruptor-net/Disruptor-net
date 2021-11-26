@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using InlineIL;
 using static InlineIL.IL.Emit;
 
-namespace Disruptor
+namespace Disruptor.Util
 {
     internal static class InternalUtil
     {

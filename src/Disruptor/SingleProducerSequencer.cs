@@ -4,7 +4,8 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Disruptor.Dsl;
 using Disruptor.Processing;
-using static Disruptor.Constants;
+using Disruptor.Util;
+using static Disruptor.Util.Constants;
 
 namespace Disruptor
 {

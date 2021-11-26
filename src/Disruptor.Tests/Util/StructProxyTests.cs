@@ -1,7 +1,7 @@
-﻿using Disruptor.Internal;
+﻿using Disruptor.Util;
 using NUnit.Framework;
 
-namespace Disruptor.Tests.Internal
+namespace Disruptor.Tests.Util
 {
     [TestFixture]
     public class StructProxyTests

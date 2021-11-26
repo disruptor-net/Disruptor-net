@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace Disruptor
+namespace Disruptor.Util
 {
     internal static class Constants
     {

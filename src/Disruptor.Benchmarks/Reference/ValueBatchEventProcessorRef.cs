@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Disruptor.Processing;
+using Disruptor.Util;
 
 namespace Disruptor.Benchmarks.Reference
 {

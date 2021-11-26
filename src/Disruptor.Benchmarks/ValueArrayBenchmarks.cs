@@ -3,6 +3,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
+using Disruptor.Util;
 using InlineIL;
 using static InlineIL.IL.Emit;
 
