@@ -44,6 +44,28 @@ namespace Disruptor.Tests.Util
             }
         }
 
+#if NETCOREAPP
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(5)]
+        public void ShouldReadObjectBlockFromArray(int blockSize)
+        {
+            var array = Enumerable.Range(0, 2000).Select(x => new StubEvent(x)).ToArray();
+
+            for (var i = 0; i < array.Length - blockSize + 1; i++)
+            {
+                var block = InternalUtil.ReadBlock<StubEvent>(array, i, blockSize);
+
+                Assert.AreEqual(blockSize, block.Length);
+                for (var dataIndex = 0; dataIndex < blockSize; dataIndex++)
+                {
+                    Assert.AreEqual(new StubEvent(i + dataIndex), block[dataIndex]);
+                }
+
+            }
+        }
+#endif
+
         [Test]
         public void ShouldReadValueFromArray()
         {

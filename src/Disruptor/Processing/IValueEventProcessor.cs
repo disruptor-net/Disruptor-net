@@ -16,7 +16,7 @@ namespace Disruptor.Processing
         void WaitUntilStarted(TimeSpan timeout);
 
         /// <summary>
-        /// Set a new <see cref="IValueExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IEventHandler{T}"/>
+        /// Set a new <see cref="IValueExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IValueEventHandler{T}"/>
         /// </summary>
         /// <param name="exceptionHandler">exceptionHandler to replace the existing exceptionHandler.</param>
         void SetExceptionHandler(IValueExceptionHandler<T> exceptionHandler);

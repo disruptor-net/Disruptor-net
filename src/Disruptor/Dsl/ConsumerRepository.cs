@@ -90,13 +90,7 @@ namespace Disruptor.Dsl
             return eventprocessorInfo.EventProcessor;
         }
 
-        public ISequence GetSequenceFor<T>(IEventHandler<T> eventHandler)
-        {
-            return GetEventProcessorFor(eventHandler).Sequence;
-        }
-
-        public ISequence GetSequenceFor<T>(IValueEventHandler<T> eventHandler)
-            where T : struct
+        public ISequence GetSequenceFor(object eventHandler)
         {
             return GetEventProcessorFor(eventHandler).Sequence;
         }
@@ -109,18 +103,11 @@ namespace Disruptor.Dsl
                 if (_eventProcessorInfoBySequence.TryGetValue(barrierEventProcessor, out consumerInfo))
                 {
                     consumerInfo.MarkAsUsedInBarrier();
-                }                
+                }
             }
         }
 
-        public ISequenceBarrier GetBarrierFor<T>(IEventHandler<T> eventHandler)
-        {
-            EventProcessorInfo eventProcessorInfo;
-            return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventProcessorInfo) ? eventProcessorInfo.Barrier : null;
-        }
-
-        public ISequenceBarrier GetBarrierFor<T>(IValueEventHandler<T> eventHandler)
-            where T : struct
+        public ISequenceBarrier GetBarrierFor(object eventHandler)
         {
             EventProcessorInfo eventProcessorInfo;
             return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventProcessorInfo) ? eventProcessorInfo.Barrier : null;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using InlineIL;
 using static InlineIL.IL.Emit;
 
@@ -69,6 +70,34 @@ namespace Disruptor.Util
 
             return IL.Return<T>();
         }
+
+#if NETCOREAPP
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<T> ReadBlock<T>(object array, int index, int length)
+            where T : class
+        {
+            IL.DeclareLocals(false, typeof(byte).MakeByRefType());
+
+            Ldarg(nameof(array));
+            Stloc_0(); // convert the object pointer to a byref
+            Ldloc_0(); // load the object pointer as a byref
+
+            Ldarg(nameof(index));
+            Sizeof(typeof(object));
+            Mul(); // index x sizeof(object)
+
+            Call(MethodRef.PropertyGet(typeof(InternalUtil), nameof(ArrayDataOffset)));
+            Add(); // index x sizeof(object) +  ArrayDataOffset
+
+            Add(); // array + index x sizeof(object) + ArrayDataOffset
+
+            Ldarg(nameof(length));
+            Call(MethodRef.Method(typeof(MemoryMarshal), nameof(MemoryMarshal.CreateReadOnlySpan), typeof(T).MakeByRefType(), typeof(int)).MakeGenericMethod(typeof(T)));
+            Ret();
+
+            throw IL.Unreachable();
+        }
+#endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T ReadValue<T>(object array, int index)

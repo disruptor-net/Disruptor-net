@@ -83,6 +83,32 @@ namespace Disruptor.Tests.Dsl
             Assert.AreEqual(new List<int> { 101, 102 }, values);
         }
 
+#if NETCOREAPP
+        [Test]
+        public void ShouldPublishAndHandleEventBatch()
+        {
+            var eventCounter = new CountdownEvent(2);
+            var values = new List<int>();
+
+            _disruptor.HandleEventsWith(new TestBatchEventHandler<TestEvent>(e => values.Add(e.Value)))
+                      .Then(new TestBatchEventHandler<TestEvent>(e => eventCounter.Signal()));
+
+            _disruptor.Start();
+
+            using (var scope = _disruptor.PublishEvent())
+            {
+                scope.Event().Value = 101;
+            }
+            using (var scope = _disruptor.PublishEvent())
+            {
+                scope.Event().Value = 102;
+            }
+
+            Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+            Assert.AreEqual(new List<int> { 101, 102 }, values);
+        }
+#endif
+
         [Test]
         public void ShouldPublishAndHandleEvents()
         {
@@ -108,6 +134,34 @@ namespace Disruptor.Tests.Dsl
             Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
             Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
         }
+
+#if NETCOREAPP
+        [Test]
+        public void ShouldPublishAndHandleEventsBatch()
+        {
+            var eventCounter = new CountdownEvent(4);
+            var values = new List<int>();
+
+            _disruptor.HandleEventsWith(new TestBatchEventHandler<TestEvent>(e => values.Add(e.Value)))
+                      .Then(new TestBatchEventHandler<TestEvent>(e => eventCounter.Signal()));
+
+            _disruptor.Start();
+
+            using (var scope = _disruptor.PublishEvents(2))
+            {
+                scope.Event(0).Value = 101;
+                scope.Event(1).Value = 102;
+            }
+            using (var scope = _disruptor.PublishEvents(2))
+            {
+                scope.Event(0).Value = 103;
+                scope.Event(1).Value = 104;
+            }
+
+            Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+            Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
+        }
+#endif
 
         [Test]
         public void ShouldProcessMessagesPublishedBeforeStartIsCalled()
@@ -355,6 +409,25 @@ namespace Disruptor.Tests.Dsl
             Assert.AreSame(testException, actualException);
         }
 
+#if NETCOREAPP
+        [Test]
+        public void ShouldSupportSpecifyingADefaultExceptionHandlerForBatchEventProcessors()
+        {
+            var eventHandled = new AtomicReference<Exception>();
+            var exceptionHandler = new StubExceptionHandler(eventHandled);
+            var testException = new Exception();
+            var handler = new TestBatchEventHandler<TestEvent>(_ => throw testException);
+
+            _disruptor.SetDefaultExceptionHandler(exceptionHandler);
+            _disruptor.HandleEventsWith(handler);
+
+            PublishEvent();
+
+            var actualException = WaitFor(eventHandled);
+            Assert.AreSame(testException, actualException);
+        }
+#endif
+
         [Test]
         public void ShouldApplyDefaultExceptionHandlerToExistingEventProcessors()
         {
@@ -371,6 +444,25 @@ namespace Disruptor.Tests.Dsl
             var actualException = WaitFor(eventHandled);
             Assert.AreSame(testException, actualException);
         }
+
+#if NETCOREAPP
+        [Test]
+        public void ShouldApplyDefaultExceptionHandlerToExistingBatchEventProcessors()
+        {
+            var eventHandled = new AtomicReference<Exception>();
+            var exceptionHandler = new StubExceptionHandler(eventHandled);
+            var testException = new Exception();
+            var handler = new TestBatchEventHandler<TestEvent>(_ => throw testException);
+
+            _disruptor.HandleEventsWith(handler);
+            _disruptor.SetDefaultExceptionHandler(exceptionHandler);
+
+            PublishEvent();
+
+            var actualException = WaitFor(eventHandled);
+            Assert.AreSame(testException, actualException);
+        }
+#endif
 
         [Test]
         public void ShouldBlockProducerUntilAllEventProcessorsHaveAdvanced()

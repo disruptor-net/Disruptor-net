@@ -84,6 +84,23 @@ namespace Disruptor.Dsl
             return CreateEventProcessors(new ISequence[0], handlers);
         }
 
+#if NETCOREAPP
+        /// <summary>
+        /// Set up event handlers to handle events from the ring buffer. These handlers will process events
+        /// as soon as they become available, in parallel.
+        ///
+        /// <code>dw.HandleEventsWith(A).Then(B);</code>
+        ///
+        /// This call is additive, but generally should only be called once when setting up the disruptor instance.
+        /// </summary>
+        /// <param name="handlers">the event handlers that will process events</param>
+        /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
+        public EventHandlerGroup<T> HandleEventsWith(params IBatchEventHandler<T>[] handlers)
+        {
+            return CreateEventProcessors(new ISequence[0], handlers);
+        }
+#endif
+
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The disruptor will
         /// automatically start these processors when <see cref="Start"/> is called.
@@ -179,6 +196,19 @@ namespace Disruptor.Dsl
             return new ExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
         }
 
+#if NETCOREAPP
+        /// <summary>
+        /// Override the default exception handler for a specific handler.
+        /// <code>disruptorWizard.HandleExceptionsIn(eventHandler).With(exceptionHandler);</code>
+        /// </summary>
+        /// <param name="eventHandler">eventHandler the event handler to set a different exception handler for</param>
+        /// <returns>an <see cref="ExceptionHandlerSetting{T}"/> dsl object - intended to be used by chaining the with method call</returns>
+        public ExceptionHandlerSetting<T> HandleExceptionsFor(IBatchEventHandler<T> eventHandler)
+        {
+            return new ExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
+        }
+#endif
+
         /// <summary>
         /// Create a group of event handlers to be used as a dependency.
         /// For example if the handler <code>A</code> must process events before handler <code>B</code>:
@@ -191,6 +221,21 @@ namespace Disruptor.Dsl
         {
             return new EventHandlerGroup<T>(this, _consumerRepository, handlers.Select(h => _consumerRepository.GetSequenceFor(h)));
         }
+
+#if NETCOREAPP
+        /// <summary>
+        /// Create a group of event handlers to be used as a dependency.
+        /// For example if the handler <code>A</code> must process events before handler <code>B</code>:
+        /// <code>dw.After(A).HandleEventsWith(B);</code>
+        /// </summary>
+        /// <param name="handlers">handlers the event handlers, previously set up with <see cref="HandleEventsWith(Disruptor.IEventHandler{T}[])"/>,
+        /// that will form the barrier for subsequent handlers or processors.</param>
+        /// <returns>an <see cref="EventHandlerGroup{T}"/> that can be used to setup a dependency barrier over the specified event handlers.</returns>
+        public EventHandlerGroup<T> After(params IBatchEventHandler<T>[] handlers)
+        {
+            return new EventHandlerGroup<T>(this, _consumerRepository, handlers.Select(h => _consumerRepository.GetSequenceFor(h)));
+        }
+#endif
 
         /// <summary>
         /// Create a group of event processors to be used as a dependency.
@@ -303,8 +348,7 @@ namespace Disruptor.Dsl
         public long BufferSize => _ringBuffer.BufferSize;
 
         /// <summary>
-        /// Get the event for a given sequence in the RingBuffer.
-        /// <see cref="RingBuffer{T}.this"/>
+        /// Get the event for a given sequence in the ring buffer.
         /// </summary>
         /// <param name="sequence">sequence for the event</param>
         /// <returns>event for the sequence</returns>
@@ -365,6 +409,33 @@ namespace Disruptor.Dsl
 
             return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
         }
+
+#if NETCOREAPP
+        internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IBatchEventHandler<T>[] eventHandlers)
+        {
+            CheckNotStarted();
+
+            var processorSequences = new ISequence[eventHandlers.Length];
+            var barrier = _ringBuffer.NewBarrier(barrierSequences);
+
+            for (int i = 0; i < eventHandlers.Length; i++)
+            {
+                var eventHandler = eventHandlers[i];
+
+                var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
+
+                if (_exceptionHandler != null)
+                    eventProcessor.SetExceptionHandler(_exceptionHandler);
+
+                _consumerRepository.Add(eventProcessor, eventHandler, barrier);
+                processorSequences[i] = eventProcessor.Sequence;
+            }
+
+            UpdateGatingSequencesForNextInChain(barrierSequences, processorSequences);
+
+            return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
+        }
+#endif
 
         private void UpdateGatingSequencesForNextInChain(ISequence[] barrierSequences, ISequence[] processorSequences)
         {

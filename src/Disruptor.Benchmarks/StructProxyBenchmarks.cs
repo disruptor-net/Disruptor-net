@@ -48,9 +48,22 @@ namespace Disruptor.Benchmarks
 
         public class Impl : IDataProvider<Event>
         {
-            public readonly Event Data = new Event { Value = 42 };
+            private readonly Event _data;
+            private readonly Event[] _dataArray;
 
-            public Event this[long sequence] => Data;
+            public Impl()
+            {
+                var data = new Event { Value = 42 };
+                _data = data;
+                _dataArray = new[] { data };
+            }
+
+            public Event this[long sequence] => _data;
+
+
+#if NETCOREAPP
+            public ReadOnlySpan<Event> this[long lo, long hi] => InternalUtil.ReadBlock<Event>(_dataArray, 0, 1);
+#endif
         }
     }
 }

@@ -150,7 +150,7 @@ namespace Disruptor.Tests.Processing
             var waitStrategy = new BusySpinWaitStrategy();
             var sequencer = new SingleProducerSequencer(8, waitStrategy);
             var barrier = ProcessingSequenceBarrierFactory.Create(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
-            var dp = new DummyDataProvider<object>();
+            var dp = new ArrayDataProvider<object>(sequencer.BufferSize);
 
             var h1 = new LifeCycleHandler();
             var p1 = CreateEventProcessor(dp, barrier, h1);

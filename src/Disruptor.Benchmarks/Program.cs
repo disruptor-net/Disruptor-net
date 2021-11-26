@@ -29,6 +29,12 @@ namespace Disruptor.Benchmarks
 
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run();
 
+// #if NETCOREAPP
+//             var bench = new EventProcessorBenchmarks();
+//             bench.Setup();
+//             bench.RunBach();
+// #endif
+
             Console.ReadLine();
         }
 

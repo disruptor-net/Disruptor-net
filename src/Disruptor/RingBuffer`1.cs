@@ -11,7 +11,7 @@ namespace Disruptor
     /// an event being exchanged between event producer and <see cref="IEventProcessor"/>s.
     /// </summary>
     /// <typeparam name="T">implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
-    public sealed class RingBuffer<T> : RingBuffer, IEventSequencer<T>
+    public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
         where T : class
     {
         /// <summary>
@@ -144,6 +144,20 @@ namespace Disruptor
                 return InternalUtil.Read<T>(_entries, _bufferPadRef + (int)(sequence & _indexMask));
             }
         }
+
+#if NETCOREAPP
+        public ReadOnlySpan<T> this[long lo, long hi]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                var index1 = (int)(lo & _indexMask);
+                var index2 = (int)(hi & _indexMask);
+                var length = index1 <= index2 ? (1 + index2 - index1) : (_bufferSize - index1);
+                return InternalUtil.ReadBlock<T>(_entries, _bufferPadRef + index1, length);
+            }
+        }
+#endif
 
         /// <summary>
         /// Sets the cursor to a specific sequence and returns the preallocated entry that is stored there.  This

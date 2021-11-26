@@ -6,8 +6,6 @@ namespace Disruptor.Benchmarks
 {
     public class RingBufferDataProviderBenchmarks
     {
-        private const int _batchSize = 10;
-
         private readonly RingBuffer<Event> _ringBuffer;
 
         public RingBufferDataProviderBenchmarks()
@@ -18,22 +16,41 @@ namespace Disruptor.Benchmarks
         public int Index { get; set; } = 75;
 
         [Benchmark]
-        public void SetValue()
+        public void SetValue_1()
         {
             _ringBuffer[Index].Value = 42;
         }
 
-        [Benchmark(OperationsPerInvoke = _batchSize)]
-        public void SetValueBatchConst()
+        [Benchmark]
+        public void SetValue_2()
         {
-            var index = Index;
-            var lo = index;
-            var hi = index + _batchSize;
-            for (var i = lo; i < hi; i++)
+            _ringBuffer[Index].Value = 42;
+            _ringBuffer[Index + 1].Value = 42;
+        }
+
+#if NETCOREAPP
+        [Benchmark]
+        public void SetValueSpan_1()
+        {
+            var span = _ringBuffer[Index, Index];
+
+            foreach (var data in span)
             {
-                _ringBuffer[i].Value = 42;
+                data.Value = 42;
             }
         }
+
+        [Benchmark]
+        public void SetValueSpan_2()
+        {
+            var span = _ringBuffer[Index, Index + 1];
+
+            foreach (var data in span)
+            {
+                data.Value = 42;
+            }
+        }
+#endif
 
         public class Event
         {
