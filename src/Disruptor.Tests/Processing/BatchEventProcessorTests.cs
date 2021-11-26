@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
-namespace Disruptor.Tests
+namespace Disruptor.Tests.Processing
 {
     [TestFixture(BatchEventProcessorType.Legacy)]
     [TestFixture(BatchEventProcessorType.Optimized)]

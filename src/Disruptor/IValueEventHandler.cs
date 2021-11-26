@@ -1,4 +1,6 @@
-﻿namespace Disruptor
+﻿using Disruptor.Processing;
+
+namespace Disruptor
 {
     /// <summary>
     /// Callback interface to be implemented for processing events as they become available in the <see cref="ValueRingBuffer{T}"/>

@@ -1,4 +1,6 @@
-﻿namespace Disruptor
+﻿using Disruptor.Processing;
+
+namespace Disruptor
 {
     /// <summary>
     /// Coordination barrier for tracking the cursor for producers and sequence of

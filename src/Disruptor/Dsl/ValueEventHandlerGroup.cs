@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Disruptor.Processing;
 
 namespace Disruptor.Dsl
 {

@@ -1,4 +1,4 @@
-﻿namespace Disruptor
+﻿namespace Disruptor.Processing
 {
     /// <summary>
     /// An IEventProcessor needs to poll for events from the <see cref="RingBuffer{T}"/>

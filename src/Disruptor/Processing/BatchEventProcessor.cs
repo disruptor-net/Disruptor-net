@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Disruptor
+namespace Disruptor.Processing
 {
     /// <summary>
     /// Convenience class for handling the batching semantics of consuming events from a <see cref="RingBuffer{T}"/>

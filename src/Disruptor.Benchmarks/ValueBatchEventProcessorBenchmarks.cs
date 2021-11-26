@@ -1,6 +1,7 @@
 ﻿using System;
 using BenchmarkDotNet.Attributes;
 using Disruptor.Benchmarks.Reference;
+using Disruptor.Processing;
 
 namespace Disruptor.Benchmarks
 {

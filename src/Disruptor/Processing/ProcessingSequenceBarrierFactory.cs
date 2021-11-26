@@ -1,7 +1,7 @@
 ﻿using System;
 using Disruptor.Internal;
 
-namespace Disruptor
+namespace Disruptor.Processing
 {
     /// <summary>
     /// Factory that creates optimized instance of <see cref="ProcessingSequenceBarrier{TSequencer,TWaitStrategy}"/>.

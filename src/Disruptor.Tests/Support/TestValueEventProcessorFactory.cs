@@ -1,5 +1,6 @@
 ﻿using System;
 using Disruptor.Dsl;
+using Disruptor.Processing;
 
 namespace Disruptor.Tests.Support
 {

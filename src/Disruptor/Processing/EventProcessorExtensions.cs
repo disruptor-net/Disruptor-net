@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Disruptor
+namespace Disruptor.Processing
 {
     public static class EventProcessorExtensions
     {

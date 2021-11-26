@@ -1,4 +1,4 @@
-namespace Disruptor.Tests
+namespace Disruptor.Tests.Processing
 {
     public enum BatchEventProcessorType
     {

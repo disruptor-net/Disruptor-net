@@ -2,7 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Disruptor
+namespace Disruptor.Processing
 {
     /// <summary>
     /// A <see cref="WorkProcessor{T}"/> wraps a single <see cref="IWorkHandler{T}"/>, effectively consuming the sequence and ensuring appropriate barriers.

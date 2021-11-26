@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
+using Disruptor.Processing;
 using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Sequenced

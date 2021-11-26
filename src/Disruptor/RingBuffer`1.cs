@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using Disruptor.Dsl;
+using Disruptor.Processing;
 
 namespace Disruptor
 {

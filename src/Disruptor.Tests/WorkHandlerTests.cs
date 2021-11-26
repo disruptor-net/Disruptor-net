@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
+using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 

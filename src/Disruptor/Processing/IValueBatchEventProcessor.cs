@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Disruptor
+namespace Disruptor.Processing
 {
     /// <summary>
     /// Interface for <see cref="ValueBatchEventProcessor{T,TDataProvider,TSequenceBarrier,TEventHandler,TBatchStartAware}"/>.

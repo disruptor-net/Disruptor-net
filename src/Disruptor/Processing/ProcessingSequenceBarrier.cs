@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Disruptor
+namespace Disruptor.Processing
 {
     /// <summary>
     /// <see cref="ISequenceBarrier"/> handed out for gating <see cref="IEventProcessor"/> on a cursor sequence and optional dependent <see cref="IEventProcessor"/>s,

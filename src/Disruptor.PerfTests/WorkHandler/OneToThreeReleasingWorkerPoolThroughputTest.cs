@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using Disruptor.PerfTests.Support;
+using Disruptor.Processing;
 using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.WorkHandler

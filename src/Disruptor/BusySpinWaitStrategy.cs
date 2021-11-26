@@ -1,4 +1,6 @@
-﻿namespace Disruptor
+﻿using Disruptor.Processing;
+
+namespace Disruptor
 {
     /// <summary>
     /// Busy Spin strategy that uses a busy spin loop for <see cref="IEventProcessor"/>s waiting on a barrier.

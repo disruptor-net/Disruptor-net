@@ -1,4 +1,4 @@
-namespace Disruptor
+namespace Disruptor.Processing
 {
     internal static class ProcessorRunStates
     {

@@ -1,3 +1,5 @@
+using Disruptor.Processing;
+
 namespace Disruptor
 {
     /// <summary>

@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Disruptor.Dsl;
+using Disruptor.Processing;
 using static Disruptor.Constants;
 
 namespace Disruptor

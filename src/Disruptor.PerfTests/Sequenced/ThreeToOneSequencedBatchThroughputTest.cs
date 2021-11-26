@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
+using Disruptor.Processing;
 
 namespace Disruptor.PerfTests.Sequenced
 {

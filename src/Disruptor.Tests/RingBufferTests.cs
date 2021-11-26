@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 using static Disruptor.Tests.RingBufferEqualsConstraint;

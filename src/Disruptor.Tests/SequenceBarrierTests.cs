@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 

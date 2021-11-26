@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Disruptor.Processing;
 
 namespace Disruptor.Dsl
 {

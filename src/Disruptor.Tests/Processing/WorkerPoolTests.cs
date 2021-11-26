@@ -1,9 +1,8 @@
 ﻿using System.Threading;
-using System.Threading.Tasks;
-using Disruptor.Dsl;
+using Disruptor.Processing;
 using NUnit.Framework;
 
-namespace Disruptor.Tests
+namespace Disruptor.Tests.Processing
 {
     [TestFixture]
     public class WorkerPoolTests

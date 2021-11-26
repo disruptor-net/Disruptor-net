@@ -1,4 +1,6 @@
-﻿namespace Disruptor.Dsl
+﻿using Disruptor.Processing;
+
+namespace Disruptor.Dsl
 {
     /// <summary>
     /// A factory interface to make it possible to include custom event processors in a chain:

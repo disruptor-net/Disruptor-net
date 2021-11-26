@@ -1,4 +1,6 @@
-﻿namespace Disruptor
+﻿using Disruptor.Processing;
+
+namespace Disruptor
 {
     /// <summary>
     /// Strategy employed for making <see cref="IEventProcessor"/>s wait on a <see cref="RingBuffer{T}"/>.

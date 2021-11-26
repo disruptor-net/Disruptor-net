@@ -1,4 +1,5 @@
 using System.Threading;
+using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 

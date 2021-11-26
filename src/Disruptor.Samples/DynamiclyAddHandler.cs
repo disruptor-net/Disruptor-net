@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
+using Disruptor.Processing;
 
 namespace Disruptor.Samples
 {

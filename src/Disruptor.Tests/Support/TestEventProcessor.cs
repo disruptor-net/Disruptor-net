@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using Disruptor.Processing;
 
 namespace Disruptor.Tests.Support
 {

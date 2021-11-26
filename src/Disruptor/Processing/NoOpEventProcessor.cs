@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace Disruptor
+namespace Disruptor.Processing
 {
     /// <summary>
     /// No operation version of a <see cref="IEventProcessor"/> that simply tracks a <see cref="Disruptor.Sequence"/>.
