@@ -1,9 +1,16 @@
+using Disruptor.Processing;
+
 namespace Disruptor
 {
     /// <summary>
-    /// Experimental poll-based interface for the Disruptor.
+    /// Experimental poll-based interface for the Disruptor. Unlike a <see cref="IEventProcessor{T}"/>,
+    /// an event poller allows the user to control the flow of execution. This makes it ideal
+    /// for interoperability with existing threads whose lifecycle is not controlled by the
+    /// disruptor DSL.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <remarks>
+    /// Consider using <see cref="RingBuffer{T}.NewPoller"/> to get an instance of this type.
+    /// </remarks>
     public class EventPoller<T>
     {
         private readonly IDataProvider<T> _dataProvider;
@@ -19,6 +26,19 @@ namespace Disruptor
             _gatingSequence = gatingSequence;
         }
 
+        /// <summary>
+        /// <para>
+        /// Polls for events using the given handler.
+        /// </para>
+        /// <para>
+        /// This poller will continue to feed events to the given handler until known available
+        /// events are consumed or <see cref="EventPoller.Handler{T}"/> returns false.
+        /// </para>
+        /// <para>
+        /// Note that it is possible for more events to become available while the current events
+        /// are being processed. A further call to this method will process such events.
+        /// </para>
+        /// </summary>
         public EventPoller.PollState Poll(EventPoller.Handler<T> eventHandler)
         {
             var currentSequence = _sequence.Value;
@@ -57,6 +77,9 @@ namespace Disruptor
             return EventPoller.PollState.Idle;
         }
 
+        /// <summary>
+        /// Gets the sequence being used by this event poller
+        /// </summary>
         public ISequence Sequence => _sequence;
     }
 }

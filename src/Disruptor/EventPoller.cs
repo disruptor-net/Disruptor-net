@@ -2,15 +2,33 @@ namespace Disruptor
 {
     public static class EventPoller
     {
+        /// <summary>
+        /// Indicates the result of a call to <see cref="EventPoller{T}.Poll"/> or <see cref="ValueEventPoller{T}.Poll"/>
+        /// </summary>
         public enum PollState
         {
+            /// <summary>
+            /// The poller processed one or more events
+            /// </summary>
             Processing,
+            /// <summary>
+            /// The poller is waiting for gated sequences to advance before events become available
+            /// </summary>
             Gating,
+            /// <summary>
+            /// No events need to be processed
+            /// </summary>
             Idle
         }
 
+        /// <summary>
+        /// A callback used to process events
+        /// </summary>
         public delegate bool Handler<T>(T data, long sequence, bool endOfBatch);
 
+        /// <summary>
+        /// A callback used to process value events
+        /// </summary>
         public delegate bool ValueHandler<T>(ref T data, long sequence, bool endOfBatch)
             where T : struct;
 
