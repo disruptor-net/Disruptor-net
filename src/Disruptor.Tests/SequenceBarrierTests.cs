@@ -87,14 +87,14 @@ namespace Disruptor.Tests
                                 {
                                     sequenceBarrier.WaitFor(expectedNumberMessages - 1);
                                 }
-                                catch (AlertException)
+                                catch (OperationCanceledException)
                                 {
                                     alerted = true;
                                 }
                             });
 
             signal.Wait(TimeSpan.FromSeconds(3));
-            sequenceBarrier.Alert();
+            sequenceBarrier.CancelProcessing();
             t.Wait();
 
             Assert.That(alerted, Is.True, "Thread was not interrupted");
@@ -131,13 +131,13 @@ namespace Disruptor.Tests
         public void ShouldSetAndClearAlertStatus()
         {
             var sequenceBarrier = _ringBuffer.NewBarrier();
-            Assert.IsFalse(sequenceBarrier.IsAlerted);
+            Assert.IsFalse(sequenceBarrier.CancellationToken.IsCancellationRequested);
 
-            sequenceBarrier.Alert();
-            Assert.IsTrue(sequenceBarrier.IsAlerted);
+            sequenceBarrier.CancelProcessing();
+            Assert.IsTrue(sequenceBarrier.CancellationToken.IsCancellationRequested);
 
-            sequenceBarrier.ClearAlert();
-            Assert.IsFalse(sequenceBarrier.IsAlerted);
+            sequenceBarrier.ResetProcessing();
+            Assert.IsFalse(sequenceBarrier.CancellationToken.IsCancellationRequested);
         }
 
         private void FillRingBuffer(long expectedNumberEvents)

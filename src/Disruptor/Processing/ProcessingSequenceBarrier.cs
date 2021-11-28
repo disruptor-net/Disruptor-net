@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Disruptor.Processing
 {
@@ -19,7 +20,7 @@ namespace Disruptor.Processing
 
         private readonly ISequence _dependentSequence;
         private readonly Sequence _cursorSequence;
-        private volatile bool _alerted;
+        private volatile CancellationTokenSource _cancellationTokenSource;
 
         public ProcessingSequenceBarrier(TSequencer sequencer, TWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
         {
@@ -27,14 +28,16 @@ namespace Disruptor.Processing
             _waitStrategy = waitStrategy;
             _cursorSequence = cursorSequence;
             _dependentSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, dependentSequences);
+            _cancellationTokenSource = new CancellationTokenSource();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long WaitFor(long sequence)
         {
-            CheckAlert();
+            var cancellationToken = _cancellationTokenSource.Token;
+            cancellationToken.ThrowIfCancellationRequested();
 
-            var availableSequence = _waitStrategy.WaitFor(sequence, _cursorSequence, _dependentSequence, this);
+            var availableSequence = _waitStrategy.WaitFor(sequence, _cursorSequence, _dependentSequence, cancellationToken);
 
             if (availableSequence < sequence)
                 return availableSequence;
@@ -44,27 +47,24 @@ namespace Disruptor.Processing
 
         public long Cursor => _dependentSequence.Value;
 
-        public bool IsAlerted => _alerted;
-
-        public void Alert()
+        public CancellationToken CancellationToken
         {
-            _alerted = true;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _cancellationTokenSource.Token;
+        }
+
+        public void ResetProcessing()
+        {
+            // Not disposing the previous value should be fine because the CancellationTokenSource instance
+            // has no finalizer and no unmanaged resources to release.
+
+            _cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        public void CancelProcessing()
+        {
+            _cancellationTokenSource.Cancel();
             _waitStrategy.SignalAllWhenBlocking();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ClearAlert()
-        {
-            _alerted = false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CheckAlert()
-        {
-            if(_alerted)
-            {
-                AlertException.Throw();
-            }
         }
     }
 }

@@ -36,7 +36,7 @@ namespace Disruptor.PerfTests.Support
 
             foreach (var barrier in _barriers)
             {
-                barrier.ClearAlert();
+                barrier.ResetProcessing();
             }
 
             var barrierLength = _barriers.Length;
@@ -64,7 +64,7 @@ namespace Disruptor.PerfTests.Support
 
                     Thread.Yield();
                 }
-                catch (AlertException)
+                catch (OperationCanceledException) when (_barriers[0].CancellationToken.IsCancellationRequested)
                 {
                     if (_isRunning == 0)
                         break;
@@ -95,7 +95,7 @@ namespace Disruptor.PerfTests.Support
         public void Halt()
         {
             _isRunning = 0;
-            _barriers[0].Alert();
+            _barriers[0].CancelProcessing();
         }
 
         public bool IsRunning => _isRunning == 1;

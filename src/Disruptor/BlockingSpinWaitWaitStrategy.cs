@@ -15,7 +15,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IWaitStrategy.WaitFor"/>
         /// </summary>
-        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
+        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             if (cursor.Value < sequence)
             {
@@ -23,7 +23,7 @@ namespace Disruptor
                 {
                     while (cursor.Value < sequence)
                     {
-                        barrier.CheckAlert();
+                        cancellationToken.ThrowIfCancellationRequested();
                         Monitor.Wait(_gate);
                     }
                 }
@@ -33,7 +33,7 @@ namespace Disruptor
             long availableSequence;
             while ((availableSequence = dependentSequence.Value) < sequence)
             {
-                barrier.CheckAlert();
+                cancellationToken.ThrowIfCancellationRequested();
                 spinWait.SpinOnce();
             }
 

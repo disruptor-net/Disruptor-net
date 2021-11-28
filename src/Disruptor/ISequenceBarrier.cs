@@ -1,4 +1,6 @@
-﻿using Disruptor.Processing;
+﻿using System;
+using System.Threading;
+using Disruptor.Processing;
 
 namespace Disruptor
 {
@@ -13,7 +15,7 @@ namespace Disruptor
         /// </summary>
         /// <param name="sequence">sequence to wait for</param>
         /// <returns>the sequence up to which is available</returns>
-        /// <exception cref="AlertException">if a status change has occurred for the Disruptor</exception>
+        /// <exception cref="OperationCanceledException">if a status change has occurred for the Disruptor</exception>
         /// <exception cref="TimeoutException">if a timeout occurs while waiting for the supplied sequence.</exception>
         long WaitFor(long sequence);
 
@@ -24,26 +26,18 @@ namespace Disruptor
         long Cursor { get; }
 
         /// <summary>
-        /// The current alert status for the barrier.
-        /// Returns true if in alert otherwise false.
+        /// The cancellation token used to stop the processing.
         /// </summary>
-        bool IsAlerted { get; }
+        public CancellationToken CancellationToken { get; }
 
         /// <summary>
-        ///  Alert the <see cref="IEventProcessor"/> of a status change and stay in this status until cleared.
+        /// Resets the <see cref="CancellationToken"/>.
         /// </summary>
-        void Alert();
+        void ResetProcessing();
 
         /// <summary>
-        /// Clear the current alert status.
+        /// Cancels the <see cref="CancellationToken"/>.
         /// </summary>
-        void ClearAlert();
-
-        /// <summary>
-        /// Check if an alert has been raised and throw an <see cref="AlertException"/> if it has.
-        /// </summary>
-        /// <exception cref="AlertException">if alert has been raised.</exception>
-        void CheckAlert();
+        void CancelProcessing();
     }
 }
-

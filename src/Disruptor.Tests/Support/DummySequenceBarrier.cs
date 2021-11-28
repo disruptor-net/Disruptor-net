@@ -1,4 +1,6 @@
-﻿namespace Disruptor.Tests.Support
+﻿using System.Threading;
+
+namespace Disruptor.Tests.Support
 {
     public class DummySequenceBarrier : ISequenceBarrier
     {
@@ -8,17 +10,14 @@
         }
 
         public long Cursor => 0;
-        public bool IsAlerted => false;
 
-        public void Alert()
+        public CancellationToken CancellationToken => default;
+
+        public void ResetProcessing()
         {
         }
 
-        public void ClearAlert()
-        {
-        }
-
-        public void CheckAlert()
+        public void CancelProcessing()
         {
         }
     }

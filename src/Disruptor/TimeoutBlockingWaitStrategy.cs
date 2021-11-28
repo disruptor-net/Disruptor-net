@@ -16,7 +16,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IWaitStrategy.WaitFor"/>
         /// </summary>
-        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
+        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             var timeSpan = _timeout;
             if (cursor.Value < sequence)
@@ -25,7 +25,7 @@ namespace Disruptor
                 {
                     while (cursor.Value < sequence)
                     {
-                        barrier.CheckAlert();
+                        cancellationToken.ThrowIfCancellationRequested();
                         if (!Monitor.Wait(_gate, timeSpan))
                         {
                             throw TimeoutException.Instance;
@@ -38,7 +38,7 @@ namespace Disruptor
             long availableSequence;
             while ((availableSequence = dependentSequence.Value) < sequence)
             {
-                barrier.CheckAlert();
+                cancellationToken.ThrowIfCancellationRequested();
                 aggressiveSpinWait.SpinOnce();
             }
 

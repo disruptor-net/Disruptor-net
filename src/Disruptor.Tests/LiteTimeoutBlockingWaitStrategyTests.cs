@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
@@ -11,8 +12,6 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldTimeoutWaitFor()
         {
-            var sequenceBarrier = new DummySequenceBarrier();
-
             var theTimeout = TimeSpan.FromMilliseconds(500);
             var waitStrategy = new LiteTimeoutBlockingWaitStrategy(theTimeout);
             var cursor = new Sequence(5);
@@ -20,7 +19,7 @@ namespace Disruptor.Tests
 
             var stopwatch = Stopwatch.StartNew();
 
-            Assert.Throws<TimeoutException>(() => waitStrategy.WaitFor(6, cursor, dependent, sequenceBarrier));
+            Assert.Throws<TimeoutException>(() => waitStrategy.WaitFor(6, cursor, dependent, default));
 
             stopwatch.Stop();
 

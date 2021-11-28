@@ -57,7 +57,7 @@ namespace Disruptor.Processing
         public void Halt()
         {
             _runState = ProcessorRunStates.Halted;
-            _sequenceBarrier.Alert();
+            _sequenceBarrier.CancelProcessing();
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace Disruptor.Processing
                 throw new InvalidOperationException("WorkProcessor is halted and cannot be restarted");
             }
 
-            _sequenceBarrier.ClearAlert();
+            _sequenceBarrier.ResetProcessing();
 
             NotifyStart();
 
@@ -112,8 +112,8 @@ namespace Disruptor.Processing
                     {
                         if (_runState != ProcessorRunStates.Running)
                         {
-                            _sequenceBarrier.Alert();
-                            _sequenceBarrier.CheckAlert();
+                            _sequenceBarrier.CancelProcessing();
+                            _sequenceBarrier.CancellationToken.ThrowIfCancellationRequested();
                         }
                         processedSequence = false;
                         do
@@ -139,7 +139,7 @@ namespace Disruptor.Processing
                 {
                     NotifyTimeout(_sequence.Value);
                 }
-                catch (AlertException)
+                catch (OperationCanceledException) when (_sequenceBarrier.CancellationToken.IsCancellationRequested)
                 {
                     if (_runState != ProcessorRunStates.Running)
                     {

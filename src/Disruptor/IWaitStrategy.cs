@@ -1,4 +1,5 @@
-﻿using Disruptor.Processing;
+﻿using System.Threading;
+using Disruptor.Processing;
 
 namespace Disruptor
 {
@@ -17,10 +18,10 @@ namespace Disruptor
         /// <param name="sequence">sequence to be waited on.</param>
         /// <param name="cursor">Ring buffer cursor on which to wait.</param>
         /// <param name="dependentSequence">on which to wait.</param>
-        /// <param name="barrier">barrier the <see cref="IEventProcessor"/> is waiting on.</param>
+        /// <param name="cancellationToken">processing cancellation token</param>
         /// <returns>the sequence that is available which may be greater than the requested sequence.</returns>
         /// <exception cref="TimeoutException">if a timeout occurs before waiting completes (not used by some strategies)</exception>
-        long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier);
+        long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken);
 
         /// <summary>
         /// Signal those <see cref="IEventProcessor"/> waiting that the cursor has advanced.

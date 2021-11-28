@@ -248,21 +248,16 @@ namespace Disruptor.Tests.Processing
 
             public long Cursor => _target.Cursor;
 
-            public bool IsAlerted => _target.IsAlerted;
+            public CancellationToken CancellationToken => _target.CancellationToken;
 
-            public void Alert()
+            public void ResetProcessing()
             {
-                _target.Alert();
+                _target.ResetProcessing();
             }
 
-            public void ClearAlert()
+            public void CancelProcessing()
             {
-                _target.ClearAlert();
-            }
-
-            public void CheckAlert()
-            {
-                _target.CheckAlert();
+                _target.CancelProcessing();
             }
         }
 

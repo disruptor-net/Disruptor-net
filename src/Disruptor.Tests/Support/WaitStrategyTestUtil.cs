@@ -11,7 +11,7 @@ namespace Disruptor.Tests.Support
             Task.Factory.StartNew(sequenceUpdater.Run);
             sequenceUpdater.WaitForStartup();
             var cursor = new Sequence(0);
-            var sequence = waitStrategy.WaitFor(0, cursor, sequenceUpdater.Sequence, new DummySequenceBarrier());
+            var sequence = waitStrategy.WaitFor(0, cursor, sequenceUpdater.Sequence, default);
 
             Assert.That(sequence, Is.EqualTo(0L));
         }

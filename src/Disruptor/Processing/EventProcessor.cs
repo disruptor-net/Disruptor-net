@@ -62,12 +62,12 @@ namespace Disruptor.Processing
 
         /// <summary>
         /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
-        /// It will call <see cref="ISequenceBarrier.Alert"/> to notify the thread to check status.
+        /// It will call <see cref="ISequenceBarrier.CancelProcessing"/> to notify the thread to check status.
         /// </summary>
         public void Halt()
         {
             _runState = ProcessorRunStates.Halted;
-            _sequenceBarrier.Alert();
+            _sequenceBarrier.CancelProcessing();
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace Disruptor.Processing
 
             if (previousRunning == ProcessorRunStates.Idle)
             {
-                _sequenceBarrier.ClearAlert();
+                _sequenceBarrier.ResetProcessing();
 
                 NotifyStart();
                 try
@@ -165,7 +165,7 @@ namespace Disruptor.Processing
                 {
                     NotifyTimeout(_sequence.Value);
                 }
-                catch (AlertException)
+                catch (OperationCanceledException) when (_sequenceBarrier.CancellationToken.IsCancellationRequested)
                 {
                     if (_runState != ProcessorRunStates.Running)
                     {

@@ -7,7 +7,7 @@ namespace Disruptor
 {
     /// <summary>
     /// <para>Phased wait strategy for waiting <see cref="IEventProcessor"/>s on a barrier.</para>
-    /// 
+    ///
     /// <para>This strategy can be used when throughput and low-latency are not as important as CPU resource.
     /// Spins, then yields, then waits using the configured fallback WaitStrategy.</para>
     /// </summary>
@@ -68,7 +68,7 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IWaitStrategy.WaitFor"/>
         /// </summary>
-        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
+        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             long startTime = 0;
             int counter = _spinTries;
@@ -90,7 +90,7 @@ namespace Disruptor
                         var timeDelta = GetSystemTimeTicks() - startTime;
                         if (timeDelta > _yieldTimeoutTicks)
                         {
-                            return _fallbackStrategy.WaitFor(sequence, cursor, dependentSequence, barrier);
+                            return _fallbackStrategy.WaitFor(sequence, cursor, dependentSequence, cancellationToken);
                         }
 
                         if (timeDelta > _spinTimeoutTicks)

@@ -15,14 +15,14 @@ namespace Disruptor
         /// <summary>
         /// <see cref="IWaitStrategy.WaitFor"/>
         /// </summary>
-        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, ISequenceBarrier barrier)
+        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             long availableSequence;
 
             var spinWait = new SpinWait();
             while ((availableSequence = dependentSequence.Value) < sequence)
             {
-                barrier.CheckAlert();
+                cancellationToken.ThrowIfCancellationRequested();
                 spinWait.SpinOnce();
             }
 
