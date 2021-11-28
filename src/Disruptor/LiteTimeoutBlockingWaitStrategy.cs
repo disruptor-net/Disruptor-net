@@ -13,17 +13,11 @@ namespace Disruptor
         private volatile int _signalNeeded;
         private readonly int _timeoutInMilliseconds;
 
-        /// <summary>
-        /// Creates a <see cref="LiteTimeoutBlockingWaitStrategy"/> with the specified timeout.
-        /// </summary>
         public LiteTimeoutBlockingWaitStrategy(TimeSpan timeout)
         {
             _timeoutInMilliseconds = (int)timeout.TotalMilliseconds;
         }
 
-        /// <summary>
-        /// <see cref="IWaitStrategy.WaitFor"/>.
-        /// </summary>
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             var milliseconds = _timeoutInMilliseconds;
@@ -57,9 +51,6 @@ namespace Disruptor
             return availableSequence;
         }
 
-        /// <summary>
-        /// <see cref="IWaitStrategy.SignalAllWhenBlocking"/>.
-        /// </summary>
         public void SignalAllWhenBlocking()
         {
             if (Interlocked.Exchange(ref _signalNeeded, 0) == 1)

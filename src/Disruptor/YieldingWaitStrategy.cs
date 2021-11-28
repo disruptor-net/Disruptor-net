@@ -1,14 +1,14 @@
 ﻿using System.Threading;
-using Disruptor.Processing;
 
 namespace Disruptor
 {
     /// <summary>
-    /// Yielding strategy that uses a Thread.Yield() for <see cref="IEventProcessor"/>s waiting on a barrier
+    /// Yielding strategy that uses <c>Thread.Yield()</c> for event processors waiting on a barrier
     /// after an initially spinning.
-    ///
-    /// This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.
     /// </summary>
+    /// <remarks>
+    /// This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.
+    /// </remarks>
     public sealed class YieldingWaitStrategy : INonBlockingWaitStrategy
     {
         private const int _spinTries = 100;
@@ -26,9 +26,6 @@ namespace Disruptor
             return availableSequence;
         }
 
-        /// <summary>
-        /// Signal those <see cref="IEventProcessor"/> waiting that the cursor has advanced.
-        /// </summary>
         public void SignalAllWhenBlocking()
         {
         }

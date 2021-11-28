@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Disruptor.Processing;
 
 namespace Disruptor
 {
     /// <summary>
-    /// <para>Phased wait strategy for waiting <see cref="IEventProcessor"/>s on a barrier.</para>
-    ///
-    /// <para>This strategy can be used when throughput and low-latency are not as important as CPU resource.
-    /// Spins, then yields, then waits using the configured fallback WaitStrategy.</para>
+    /// Phased wait strategy for waiting event processors on a barrier.
+    /// Spins, then yields, then waits using the configured fallback <see cref="IWaitStrategy"/>.
     /// </summary>
+    /// <remarks>
+    /// This strategy can be used when throughput and low-latency are not as important as CPU resource.
+    /// </remarks>
     public class PhasedBackoffWaitStrategy : IWaitStrategy
     {
         [DllImport("Kernel32.dll", CallingConvention = CallingConvention.Winapi)]
@@ -65,9 +65,6 @@ namespace Disruptor
             return new PhasedBackoffWaitStrategy(spinTimeout, yieldTimeout, new SleepingWaitStrategy(0));
         }
 
-        /// <summary>
-        /// <see cref="IWaitStrategy.WaitFor"/>
-        /// </summary>
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             long startTime = 0;
@@ -104,9 +101,6 @@ namespace Disruptor
             while (true);
         }
 
-        /// <summary>
-        /// <see cref="IWaitStrategy.SignalAllWhenBlocking"/>
-        /// </summary>
         public void SignalAllWhenBlocking()
         {
             _fallbackStrategy.SignalAllWhenBlocking();

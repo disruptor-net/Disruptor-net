@@ -1,20 +1,20 @@
 ﻿using System.Threading;
-using Disruptor.Processing;
 
 namespace Disruptor
 {
     /// <summary>
-    /// Blocking strategy that uses a lock and condition variable for <see cref="IEventProcessor"/>s waiting on a barrier.
-    ///
-    /// This strategy should be used when performance and low-latency are not as important as CPU resource.
+    /// Blocking strategy that uses <c>Monitor.Wait</c> for event processors waiting on a barrier.
     /// </summary>
+    /// <remarks>
+    /// This strategy can be used when throughput and low-latency are not as important as CPU resource.
+    /// This strategy busy spins when waiting for the dependent sequence, which can generate CPU spikes.
+    ///
+    /// Consider using <see cref="BlockingSpinWaitWaitStrategy"/> to avoid CPU spikes.
+    /// </remarks>
     public sealed class BlockingWaitStrategy : IWaitStrategy
     {
         private readonly object _gate = new object();
 
-        /// <summary>
-        /// <see cref="IWaitStrategy.WaitFor"/>
-        /// </summary>
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             if (cursor.Value < sequence)
@@ -40,9 +40,6 @@ namespace Disruptor
             return availableSequence;
         }
 
-        /// <summary>
-        /// <see cref="IWaitStrategy.SignalAllWhenBlocking"/>
-        /// </summary>
         public void SignalAllWhenBlocking()
         {
             lock (_gate)

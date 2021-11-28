@@ -1,8 +1,18 @@
 ﻿using System;
 using System.Threading;
+using Disruptor.Processing;
 
 namespace Disruptor
 {
+    /// <summary>
+    /// Blocking strategy that uses a lock and condition variable for <see cref="IEventProcessor"/> waiting on a barrier.
+    /// However it will periodically wake up if it has been idle for specified period by throwing a <see cref="TimeoutException"/>
+    /// To make use of this, the event handler class should implement the <see cref="ITimeoutHandler"/>, which the event processor
+    /// will call if the timeout occurs.
+    /// </summary>
+    /// <remarks>
+    /// This strategy can be used when throughput and low-latency are not as important as CPU resource.
+    /// </remarks>
     public class TimeoutBlockingWaitStrategy : IWaitStrategy
     {
         private readonly object _gate = new object();
@@ -13,9 +23,6 @@ namespace Disruptor
             _timeout = timeout;
         }
 
-        /// <summary>
-        /// <see cref="IWaitStrategy.WaitFor"/>
-        /// </summary>
         public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             var timeSpan = _timeout;
@@ -45,9 +52,6 @@ namespace Disruptor
             return availableSequence;
         }
 
-        /// <summary>
-        /// <see cref="IWaitStrategy.SignalAllWhenBlocking"/>
-        /// </summary>
         public void SignalAllWhenBlocking()
         {
             lock (_gate)
