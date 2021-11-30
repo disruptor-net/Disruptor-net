@@ -25,13 +25,6 @@ namespace Disruptor.Processing
         where TEventHandler : IValueEventHandler<T>
         where TBatchStartAware : IBatchStartAware
     {
-        private static class RunningStates
-        {
-            public const int Idle = 0;
-            public const int Halted = Idle + 1;
-            public const int Running = Halted + 1;
-        }
-
         // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
         private TDataProvider _dataProvider;
         private TSequenceBarrier _sequenceBarrier;
@@ -69,14 +62,14 @@ namespace Disruptor.Processing
         /// </summary>
         public void Halt()
         {
-            _running = RunningStates.Halted;
+            _running = ProcessorRunStates.Halted;
             _sequenceBarrier.Alert();
         }
 
         /// <summary>
         /// <see cref="IEventProcessor.IsRunning"/>
         /// </summary>
-        public bool IsRunning => _running != RunningStates.Idle;
+        public bool IsRunning => _running != ProcessorRunStates.Idle;
 
         /// <summary>
         /// Set a new <see cref="IValueExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IValueEventHandler{T}"/>
@@ -103,22 +96,22 @@ namespace Disruptor.Processing
         public void Run()
         {
 #pragma warning disable 420
-            var previousRunning = Interlocked.CompareExchange(ref _running, RunningStates.Running, RunningStates.Idle);
+            var previousRunning = Interlocked.CompareExchange(ref _running, ProcessorRunStates.Running, ProcessorRunStates.Idle);
 #pragma warning restore 420
 
-            if (previousRunning == RunningStates.Running)
+            if (previousRunning == ProcessorRunStates.Running)
             {
                 throw new InvalidOperationException("Thread is already running");
             }
 
-            if (previousRunning == RunningStates.Idle)
+            if (previousRunning == ProcessorRunStates.Idle)
             {
                 _sequenceBarrier.ClearAlert();
 
                 NotifyStart();
                 try
                 {
-                    if (_running == RunningStates.Running)
+                    if (_running == ProcessorRunStates.Running)
                     {
                         ProcessEvents();
                     }
@@ -126,7 +119,7 @@ namespace Disruptor.Processing
                 finally
                 {
                     NotifyShutdown();
-                    _running = RunningStates.Idle;
+                    _running = ProcessorRunStates.Idle;
                 }
             }
             else
@@ -163,7 +156,7 @@ namespace Disruptor.Processing
                 }
                 catch (AlertException)
                 {
-                    if (_running != RunningStates.Running)
+                    if (_running != ProcessorRunStates.Running)
                     {
                         break;
                     }
