@@ -13,7 +13,7 @@ namespace Disruptor
     {
         private const int _spinTries = 100;
 
-        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+        public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             long availableSequence;
             var counter = _spinTries;

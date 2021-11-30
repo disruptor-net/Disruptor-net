@@ -6,9 +6,8 @@ namespace Disruptor
 {
     /// <summary>
     /// Blocking strategy that uses a lock and condition variable for <see cref="IEventProcessor"/> waiting on a barrier.
-    /// However it will periodically wake up if it has been idle for specified period by throwing a <see cref="TimeoutException"/>
-    /// To make use of this, the event handler class should implement the <see cref="ITimeoutHandler"/>, which the event processor
-    /// will call if the timeout occurs.
+    /// However it will periodically wake up if it has been idle for specified period by returning <see cref="SequenceWaitResult.Timeout"/>.
+    /// To make use of this, the event handler class should implement the <see cref="ITimeoutHandler"/>.
     /// </summary>
     /// <remarks>
     /// This strategy can be used when throughput and low-latency are not as important as CPU resource.
@@ -23,7 +22,7 @@ namespace Disruptor
             _timeout = timeout;
         }
 
-        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+        public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             var timeSpan = _timeout;
             if (cursor.Value < sequence)
@@ -35,7 +34,7 @@ namespace Disruptor
                         cancellationToken.ThrowIfCancellationRequested();
                         if (!Monitor.Wait(_gate, timeSpan))
                         {
-                            throw TimeoutException.Instance;
+                            return SequenceWaitResult.Timeout;
                         }
                     }
                 }

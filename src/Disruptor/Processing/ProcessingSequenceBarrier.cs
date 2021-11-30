@@ -32,17 +32,17 @@ namespace Disruptor.Processing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public long WaitFor(long sequence)
+        public SequenceWaitResult WaitFor(long sequence)
         {
             var cancellationToken = _cancellationTokenSource.Token;
             cancellationToken.ThrowIfCancellationRequested();
 
-            var availableSequence = _waitStrategy.WaitFor(sequence, _cursorSequence, _dependentSequence, cancellationToken);
+            var result = _waitStrategy.WaitFor(sequence, _cursorSequence, _dependentSequence, cancellationToken);
 
-            if (availableSequence < sequence)
-                return availableSequence;
+            if (result.UnsafeAvailableSequence < sequence)
+                return result;
 
-            return _sequencer.GetHighestPublishedSequence(sequence, availableSequence);
+            return _sequencer.GetHighestPublishedSequence(sequence, result.UnsafeAvailableSequence);
         }
 
         public long Cursor => _dependentSequence.Value;

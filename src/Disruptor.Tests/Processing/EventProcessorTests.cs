@@ -239,11 +239,11 @@ namespace Disruptor.Tests.Processing
                 _target = target;
             }
 
-            public long WaitFor(long sequence)
+            public SequenceWaitResult WaitFor(long sequence)
             {
-                var result = _suppress ? sequence - 1 : _target.WaitFor(sequence);
+                var waitResult = _suppress ? new SequenceWaitResult(sequence - 1) : _target.WaitFor(sequence);
                 _suppress = !_suppress;
-                return result;
+                return waitResult;
             }
 
             public long Cursor => _target.Cursor;

@@ -115,6 +115,7 @@ namespace Disruptor.Processing
                             _sequenceBarrier.CancelProcessing();
                             _sequenceBarrier.ThrowIfCancellationRequested();
                         }
+
                         processedSequence = false;
                         do
                         {
@@ -132,12 +133,15 @@ namespace Disruptor.Processing
                     }
                     else
                     {
-                        cachedAvailableSequence = _sequenceBarrier.WaitFor(nextSequence);
+                        var waitResult = _sequenceBarrier.WaitFor(nextSequence);
+                        if (waitResult.IsTimeout)
+                        {
+                            NotifyTimeout(_sequence.Value);
+                            continue;
+                        }
+
+                        cachedAvailableSequence = waitResult.UnsafeAvailableSequence;
                     }
-                }
-                catch (TimeoutException)
-                {
-                    NotifyTimeout(_sequence.Value);
                 }
                 catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
                 {

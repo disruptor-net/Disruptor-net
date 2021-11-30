@@ -12,19 +12,19 @@ namespace Disruptor.PerfTests.Raw
     /// +----+    +-----+
     /// | P1 |--->| EP1 |
     /// +----+    +-----+
-    /// 
+    ///
     /// Queue Based:
     /// ============
-    /// 
+    ///
     ///        put take
     /// +----+    +====+    +-----+
     /// | P1 |---\| Q1 |/---| EP1 |
     /// +----+    +====+    +-----+
-    /// 
+    ///
     /// P1  - Publisher 1
     /// Q1  - Queue 1
     /// EP1 - EventProcessor 1
-    /// 
+    ///
     /// Disruptor:
     /// ==========
     ///              track to prevent wrap
@@ -126,7 +126,7 @@ namespace Disruptor.PerfTests.Raw
                     long processed;
                     do
                     {
-                        processed = _barrier.WaitFor(Sequence.Value + 1);
+                        processed = _barrier.WaitFor(Sequence.Value + 1).UnsafeAvailableSequence;
                         Sequence.SetValue(processed);
                     }
                     while (processed < expected);

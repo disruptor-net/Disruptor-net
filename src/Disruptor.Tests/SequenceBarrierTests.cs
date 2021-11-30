@@ -32,7 +32,7 @@ namespace Disruptor.Tests
 
             var sequenceBarrier = _ringBuffer.NewBarrier(sequence1, sequence2, sequence3);
 
-            var completedWorkSequence = sequenceBarrier.WaitFor(expectedWorkSequence);
+            var completedWorkSequence = sequenceBarrier.WaitFor(expectedWorkSequence).UnsafeAvailableSequence;
             Assert.IsTrue(completedWorkSequence >= expectedWorkSequence);
         }
 
@@ -63,7 +63,7 @@ namespace Disruptor.Tests
                     });
 
             const long expectedWorkSequence = expectedNumberMessages;
-            var completedWorkSequence = dependencyBarrier.WaitFor(expectedNumberMessages);
+            var completedWorkSequence = dependencyBarrier.WaitFor(expectedNumberMessages).UnsafeAvailableSequence;
             Assert.IsTrue(completedWorkSequence >= expectedWorkSequence);
         }
 
@@ -123,7 +123,7 @@ namespace Disruptor.Tests
                                   }).Wait();
 
             const long expectedWorkSequence = expectedNumberMessages - 1;
-            var completedWorkSequence = eventProcessorBarrier.WaitFor(expectedWorkSequence);
+            var completedWorkSequence = eventProcessorBarrier.WaitFor(expectedWorkSequence).UnsafeAvailableSequence;
             Assert.IsTrue(completedWorkSequence >= expectedWorkSequence);
         }
 

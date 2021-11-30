@@ -6,7 +6,7 @@ namespace Disruptor.Tests.Support
     {
         public int SignalAllWhenBlockingCalls { get; private set; }
 
-        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+        public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             return 0;
         }

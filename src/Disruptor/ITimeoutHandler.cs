@@ -4,15 +4,13 @@
     /// Implement this interface in your event handler to be notified when the wait strategy timeouts.
     /// </summary>
     /// <remarks>
-    /// This is only effective in the current wait strategy is a timeout strategy that throws <see cref="TimeoutException"/>
-    /// (e.g.: <see cref="TimeoutBlockingWaitStrategy"/>).
+    /// This is only effective if the current wait strategy can return timeouts (e.g.: <see cref="TimeoutBlockingWaitStrategy"/>).
     /// </remarks>
     public interface ITimeoutHandler
     {
         /// <summary>
-        /// Invoked when the wait strategy throws <see cref="TimeoutException"/>.
+        /// Invoked when the wait strategy timeouts.
         /// </summary>
-        /// <param name="sequence"></param>
         void OnTimeout(long sequence);
     }
 }

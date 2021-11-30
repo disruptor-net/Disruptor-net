@@ -23,7 +23,7 @@ namespace Disruptor
             _retries = retries;
         }
 
-        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+        public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             long availableSequence;
             int counter = _retries;

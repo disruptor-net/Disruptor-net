@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Disruptor.Tests
 {
@@ -15,6 +16,8 @@ namespace Disruptor.Tests
             _sleepTime = (int)sleepTime;
             _waitStrategy = waitStrategy;
         }
+
+        public Task Start() => Task.Run(() => Run());
 
         public void Run()
         {

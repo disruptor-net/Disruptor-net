@@ -140,7 +140,14 @@ namespace Disruptor.Benchmarks.Reference
             {
                 try
                 {
-                    var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
+                    var waitResult = _sequenceBarrier.WaitFor(nextSequence);
+                    if (waitResult.IsTimeout)
+                    {
+                        NotifyTimeout(_sequence.Value);
+                        continue;
+                    }
+
+                    var availableSequence = waitResult.UnsafeAvailableSequence;
 
                     // WaitFor can return a value lower than nextSequence, for example when using a MultiProducerSequencer.
                     // The Java version includes the test "if (availableSequence >= nextSequence)" to avoid invoking OnBatchStart on empty batches.
@@ -159,10 +166,6 @@ namespace Disruptor.Benchmarks.Reference
                     }
 
                     _sequence.SetValue(availableSequence);
-                }
-                catch (TimeoutException)
-                {
-                    NotifyTimeout(_sequence.Value);
                 }
                 catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
                 {

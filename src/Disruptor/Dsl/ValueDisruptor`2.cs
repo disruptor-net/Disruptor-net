@@ -208,7 +208,7 @@ namespace Disruptor.Dsl
             {
                 if (timeout.Ticks >= 0 && DateTime.UtcNow > timeoutAt)
                 {
-                    throw TimeoutException.Instance;
+                    throw new TimeoutException();
                 }
                 // Busy spin
             }

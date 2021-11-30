@@ -47,7 +47,11 @@ namespace Disruptor.PerfTests.Support
                 {
                     for (var i = 0; i < barrierLength; i++)
                     {
-                        var available = _barriers[i].WaitFor(-1);
+                        var waitResult = _barriers[i].WaitFor(-1);
+                        if (waitResult.IsTimeout)
+                            continue;
+
+                        var available = waitResult.UnsafeAvailableSequence;
                         var sequence = _sequences[i];
 
                         var nextSequence = sequence.Value + 1;
@@ -68,10 +72,6 @@ namespace Disruptor.PerfTests.Support
                 {
                     if (_isRunning == 0)
                         break;
-                }
-                catch (TimeoutException e)
-                {
-                    Console.WriteLine(e);
                 }
                 catch (Exception e)
                 {

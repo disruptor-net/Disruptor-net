@@ -18,7 +18,7 @@ namespace Disruptor
             _timeoutInMilliseconds = (int)timeout.TotalMilliseconds;
         }
 
-        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+        public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             var milliseconds = _timeoutInMilliseconds;
 
@@ -35,7 +35,7 @@ namespace Disruptor
 
                         if (!Monitor.Wait(_lock, milliseconds))
                         {
-                            throw TimeoutException.Instance;
+                            return SequenceWaitResult.Timeout;
                         }
                     }
                 }

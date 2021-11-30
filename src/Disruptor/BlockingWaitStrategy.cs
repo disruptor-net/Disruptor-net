@@ -15,7 +15,7 @@ namespace Disruptor
     {
         private readonly object _gate = new object();
 
-        public long WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+        public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             if (cursor.Value < sequence)
             {

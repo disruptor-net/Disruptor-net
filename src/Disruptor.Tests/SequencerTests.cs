@@ -218,13 +218,13 @@ namespace Disruptor.Tests
                 _sequencer.Publish(l);
             }
 
-            Assert.That(barrier.WaitFor(-1), Is.EqualTo(mid - 1));
+            Assert.That(barrier.WaitFor(-1), Is.EqualTo(new SequenceWaitResult(mid - 1)));
 
             for (var l = mid; l <= next; l++)
             {
                 _sequencer.Publish(l);
             }
-            Assert.That(barrier.WaitFor(-1), Is.EqualTo(next));
+            Assert.That(barrier.WaitFor(-1), Is.EqualTo(new SequenceWaitResult(next)));
         }
 
         [Test]

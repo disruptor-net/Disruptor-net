@@ -4,7 +4,7 @@ namespace Disruptor.Tests.Support
 {
     public class DummySequenceBarrier : ISequenceBarrier
     {
-        public long WaitFor(long sequence)
+        public SequenceWaitResult WaitFor(long sequence)
         {
             return 0;
         }

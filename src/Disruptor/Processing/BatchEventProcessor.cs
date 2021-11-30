@@ -139,8 +139,14 @@ namespace Disruptor.Processing
             {
                 try
                 {
-                    var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
+                    var waitResult = _sequenceBarrier.WaitFor(nextSequence);
+                    if (waitResult.IsTimeout)
+                    {
+                        NotifyTimeout(_sequence.Value);
+                        continue;
+                    }
 
+                    var availableSequence = waitResult.UnsafeAvailableSequence;
                     if (availableSequence >= nextSequence)
                     {
                         var span = _dataProvider[nextSequence, availableSequence];
@@ -149,10 +155,6 @@ namespace Disruptor.Processing
                     }
 
                     _sequence.SetValue(nextSequence - 1);
-                }
-                catch (TimeoutException)
-                {
-                    NotifyTimeout(_sequence.Value);
                 }
                 catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
                 {

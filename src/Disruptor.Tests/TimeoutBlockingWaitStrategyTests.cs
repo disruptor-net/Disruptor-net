@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
@@ -18,9 +17,11 @@ namespace Disruptor.Tests
 
             var stopwatch = Stopwatch.StartNew();
 
-            Assert.Throws<TimeoutException>(() => waitStrategy.WaitFor(6, cursor, dependent, default));
+            var waitResult = waitStrategy.WaitFor(6, cursor, dependent, default);
 
             stopwatch.Stop();
+
+            Assert.AreEqual(SequenceWaitResult.Timeout, waitResult);
 
             // Required to make the test pass on azure pipelines.
             var tolerance = TimeSpan.FromMilliseconds(25);

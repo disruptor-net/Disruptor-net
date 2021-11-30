@@ -142,7 +142,14 @@ namespace Disruptor.Processing
             {
                 try
                 {
-                    var availableSequence = _sequenceBarrier.WaitFor(nextSequence);
+                    var waitResult = _sequenceBarrier.WaitFor(nextSequence);
+                    if (waitResult.IsTimeout)
+                    {
+                        NotifyTimeout(_sequence.Value);
+                        continue;
+                    }
+
+                    var availableSequence = waitResult.UnsafeAvailableSequence;
 
                     _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
 
@@ -154,10 +161,6 @@ namespace Disruptor.Processing
                     }
 
                     _sequence.SetValue(availableSequence);
-                }
-                catch (TimeoutException)
-                {
-                    NotifyTimeout(_sequence.Value);
                 }
                 catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
                 {
