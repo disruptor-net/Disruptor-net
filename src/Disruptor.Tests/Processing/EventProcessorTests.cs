@@ -8,18 +8,11 @@ using NUnit.Framework;
 
 namespace Disruptor.Tests.Processing
 {
-    [TestFixture(EventProcessorType.Legacy)]
-    [TestFixture(EventProcessorType.Optimized)]
+    [TestFixture]
     public class EventProcessorTests
     {
-        private readonly EventProcessorType _targetType;
         private RingBuffer<StubEvent> _ringBuffer;
         private ISequenceBarrier _sequenceBarrier;
-
-        public EventProcessorTests(EventProcessorType targetType)
-        {
-            _targetType = targetType;
-        }
 
         [SetUp]
         public void Setup()
@@ -28,20 +21,10 @@ namespace Disruptor.Tests.Processing
             _sequenceBarrier = _ringBuffer.NewBarrier();
         }
 
-        private IEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
+        private static IEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
             where T : class
         {
-            switch (_targetType)
-            {
-                case EventProcessorType.Legacy:
-                    return new EventProcessor<T>(dataProvider, sequenceBarrier, eventHandler);
-
-                case EventProcessorType.Optimized:
-                    return EventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
-
-                default:
-                    throw new NotSupportedException();
-            }
+            return EventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
         }
 
         [Test]

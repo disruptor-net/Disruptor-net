@@ -11,43 +11,6 @@ namespace Disruptor.Processing
     ///
     /// If the <see cref="IEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
     /// is started and just before the thread is shutdown.
-    ///
-    /// This class is kept mainly for compatibility reasons.
-    ///
-    /// Consider using <see cref="EventProcessorFactory"/> to create your <see cref="IEventProcessor"/>.
-    /// </summary>
-    /// <typeparam name="T">the type of event used.</typeparam>
-    public class EventProcessor<T> : EventProcessor<T, IDataProvider<T>, ISequenceBarrier, IEventHandler<T>, EventProcessor<T>.BatchStartAware>
-        where T : class
-    {
-        public EventProcessor(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
-            : base(dataProvider, sequenceBarrier, eventHandler, new BatchStartAware(eventHandler))
-        {
-        }
-
-        public struct BatchStartAware : IBatchStartAware
-        {
-            private readonly IBatchStartAware _batchStartAware;
-
-            public BatchStartAware(object eventHandler)
-            {
-                _batchStartAware = eventHandler as IBatchStartAware;
-            }
-
-            public void OnBatchStart(long batchSize)
-            {
-                if (_batchStartAware != null && batchSize != 0)
-                    _batchStartAware.OnBatchStart(batchSize);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Convenience class for handling the batching semantics of consuming events from a <see cref="RingBuffer{T}"/>
-    /// and delegating the available events to an <see cref="IEventHandler{T}"/>.
-    ///
-    /// If the <see cref="IEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
-    /// is started and just before the thread is shutdown.
     /// </summary>
     /// <typeparam name="T">the type of event used.</typeparam>
     /// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>

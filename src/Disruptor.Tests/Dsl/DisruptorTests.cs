@@ -291,10 +291,7 @@ namespace Disruptor.Tests.Dsl
         {
             var rb = _disruptor.RingBuffer;
             var b1 = EventProcessorFactory.Create(rb, rb.NewBarrier(), new SleepingEventHandler());
-            var b2 = new TestEventProcessorFactory<TestEvent>((ringBuffer, barrierSequences) =>
-            {
-                return new EventProcessor<TestEvent>(ringBuffer, ringBuffer.NewBarrier(barrierSequences), new SleepingEventHandler());
-            });
+            var b2 = new TestEventProcessorFactory<TestEvent>((ringBuffer, barrierSequences) => EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(barrierSequences), new SleepingEventHandler()));
 
             _disruptor.HandleEventsWith(b1).Then(b2);
 

@@ -332,8 +332,7 @@ namespace Disruptor.Dsl
         }
 
         /// <summary>
-        /// The <see cref="RingBuffer{T}"/> used by this disruptor. This is useful for creating custom
-        /// event processors if the behaviour of <see cref="EventProcessor{T}"/> is not suitable.
+        /// The <see cref="RingBuffer{T}"/> used by this disruptor.
         /// </summary>
         public RingBuffer<T> RingBuffer => _ringBuffer;
 
