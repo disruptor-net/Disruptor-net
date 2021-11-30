@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using BenchmarkDotNet.Attributes;
 using Disruptor.Benchmarks.Util;
 using Disruptor.Util;
@@ -22,7 +23,7 @@ namespace Disruptor.Benchmarks
         }
 
         [Benchmark(Baseline = true)]
-        public Event ReadOne()
+        public Event ReadOneArray()
         {
             return _array[NextSequence()];
         }
@@ -32,6 +33,15 @@ namespace Disruptor.Benchmarks
         {
             return InternalUtil.Read<Event>(_array, NextSequence());
         }
+
+#if NETCOREAPP
+        [Benchmark]
+        public ReadOnlySpan<Event> ReadSpanIL()
+        {
+            var sequence = NextSequence();
+            return InternalUtil.ReadBlock<Event>(_array, sequence, sequence);
+        }
+#endif
 
         private int NextSequence() => _index++ & _mask;
 

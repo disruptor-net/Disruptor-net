@@ -18,14 +18,14 @@ namespace Disruptor.Benchmarks
         [Benchmark]
         public void SetValue_1()
         {
-            _ringBuffer[Index].Value = 42;
+            UseEvent(_ringBuffer[Index]);
         }
 
         [Benchmark]
         public void SetValue_2()
         {
-            _ringBuffer[Index].Value = 42;
-            _ringBuffer[Index + 1].Value = 42;
+            UseEvent(_ringBuffer[Index]);
+            UseEvent(_ringBuffer[Index + 1]);
         }
 
 #if NETCOREAPP
@@ -36,7 +36,7 @@ namespace Disruptor.Benchmarks
 
             foreach (var data in span)
             {
-                data.Value = 42;
+                UseEvent(data);
             }
         }
 
@@ -47,7 +47,7 @@ namespace Disruptor.Benchmarks
 
             foreach (var data in span)
             {
-                data.Value = 42;
+                UseEvent(data);
             }
         }
 #endif
@@ -55,6 +55,12 @@ namespace Disruptor.Benchmarks
         public class Event
         {
             public long Value { get; set; }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public void UseEvent(Event evt)
+        {
+            evt.Value = 42;
         }
     }
 }
