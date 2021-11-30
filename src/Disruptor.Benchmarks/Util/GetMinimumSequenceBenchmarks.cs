@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 
-namespace Disruptor.Benchmarks
+namespace Disruptor.Benchmarks.Util
 {
     [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
     public class GetMinimumSequenceBenchmarks

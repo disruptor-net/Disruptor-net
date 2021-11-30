@@ -1,35 +1,39 @@
 ﻿using System.Linq;
-using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
+using Disruptor.Benchmarks.Util;
 using Disruptor.Util;
 
 namespace Disruptor.Benchmarks
 {
+    [DisassemblyDiagnoser, ThroughputColumn]
     public class ObjectArrayBenchmarks
     {
         private readonly Event[] _array;
+        private readonly int _mask;
+        private int _index;
 
         public ObjectArrayBenchmarks()
         {
-            _array = Enumerable.Range(0, 1024)
+            _array = Enumerable.Range(0, 64)
                                .Select(i => new Event { Value = i })
                                .ToArray();
+
+            _mask = _array.Length - 1;
         }
 
-        public int Index = 371;
-
         [Benchmark(Baseline = true)]
-        public int ReadOne()
+        public Event ReadOne()
         {
-            return _array[Index].Value;
+            return _array[NextSequence()];
         }
 
         [Benchmark]
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public int ReadOneIL()
+        public Event ReadOneIL()
         {
-            return InternalUtil.Read<Event>(_array, Index).Value;
+            return InternalUtil.Read<Event>(_array, NextSequence());
         }
+
+        private int NextSequence() => _index++ & _mask;
 
         public class Event
         {
