@@ -8,6 +8,15 @@ namespace Disruptor
     /// <summary>
     /// Callback interface to be implemented for processing events as they become available in the <see cref="RingBuffer{T}"/>
     /// </summary>
+    /// <remarks>
+    /// This interface is an alternative to <see cref="IEventHandler{T}"/>. It is very slightly slower than <see cref="IEventHandler{T}"/>
+    /// for batches of size one, but faster for larger batches.
+    ///
+    /// Consider using this type if you need to process events in batches.
+    ///
+    /// Please note that the batches can be very large, the worst case being the size of your ring buffer. It might be appropriate to process
+    /// the batch in bounded-size chunks in some use cases (e.g.: database persistence).
+    /// </remarks>
     /// <typeparam name="T">Type of events for sharing during exchange or parallel coordination of an event.</typeparam>
     public interface IBatchEventHandler<T>
     {

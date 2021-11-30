@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Disruptor.Dsl;
 using Disruptor.Util;
 
 namespace Disruptor.Processing
@@ -12,6 +13,10 @@ namespace Disruptor.Processing
     /// If the <see cref="IEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
     /// is started and just before the thread is shutdown.
     /// </summary>
+    /// <remarks>
+    /// You should probably not use this type directly but instead implement <see cref="IEventHandler{T}"/> and register your handler
+    /// using <see cref="Disruptor{T}.HandleEventsWith(IEventHandler{T}[])"/>.
+    /// </remarks>
     /// <typeparam name="T">the type of event used.</typeparam>
     /// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
     /// <typeparam name="TSequenceBarrier">the type of the <see cref="ISequenceBarrier"/> used.</typeparam>
