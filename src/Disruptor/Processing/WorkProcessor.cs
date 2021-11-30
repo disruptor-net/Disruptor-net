@@ -113,7 +113,7 @@ namespace Disruptor.Processing
                         if (_runState != ProcessorRunStates.Running)
                         {
                             _sequenceBarrier.CancelProcessing();
-                            _sequenceBarrier.CancellationToken.ThrowIfCancellationRequested();
+                            _sequenceBarrier.ThrowIfCancellationRequested();
                         }
                         processedSequence = false;
                         do
@@ -139,7 +139,7 @@ namespace Disruptor.Processing
                 {
                     NotifyTimeout(_sequence.Value);
                 }
-                catch (OperationCanceledException) when (_sequenceBarrier.CancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
                 {
                     if (_runState != ProcessorRunStates.Running)
                     {

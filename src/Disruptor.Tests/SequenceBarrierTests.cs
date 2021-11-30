@@ -132,12 +132,15 @@ namespace Disruptor.Tests
         {
             var sequenceBarrier = _ringBuffer.NewBarrier();
             Assert.IsFalse(sequenceBarrier.CancellationToken.IsCancellationRequested);
+            Assert.IsFalse(sequenceBarrier.IsCancellationRequested());
 
             sequenceBarrier.CancelProcessing();
             Assert.IsTrue(sequenceBarrier.CancellationToken.IsCancellationRequested);
+            Assert.IsTrue(sequenceBarrier.IsCancellationRequested());
 
             sequenceBarrier.ResetProcessing();
             Assert.IsFalse(sequenceBarrier.CancellationToken.IsCancellationRequested);
+            Assert.IsFalse(sequenceBarrier.IsCancellationRequested());
         }
 
         private void FillRingBuffer(long expectedNumberEvents)

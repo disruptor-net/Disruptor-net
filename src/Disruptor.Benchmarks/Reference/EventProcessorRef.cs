@@ -164,7 +164,7 @@ namespace Disruptor.Benchmarks.Reference
                 {
                     NotifyTimeout(_sequence.Value);
                 }
-                catch (OperationCanceledException) when (_sequenceBarrier.CancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
                 {
                     if (_runState != ProcessorRunStates.Running)
                     {

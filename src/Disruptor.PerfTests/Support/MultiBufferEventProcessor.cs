@@ -64,7 +64,7 @@ namespace Disruptor.PerfTests.Support
 
                     Thread.Yield();
                 }
-                catch (OperationCanceledException) when (_barriers[0].CancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException) when (_barriers[0].IsCancellationRequested())
                 {
                     if (_isRunning == 0)
                         break;

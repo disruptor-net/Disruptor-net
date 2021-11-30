@@ -159,7 +159,7 @@ namespace Disruptor.Processing
                 {
                     NotifyTimeout(_sequence.Value);
                 }
-                catch (OperationCanceledException) when (_sequenceBarrier.CancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
                 {
                     if (_running != ProcessorRunStates.Running)
                     {
