@@ -51,7 +51,7 @@ namespace Disruptor
 
             _bufferSize = bufferSize;
             _waitStrategy = waitStrategy;
-            _isBlockingWaitStrategy = !(waitStrategy is INonBlockingWaitStrategy);
+            _isBlockingWaitStrategy = waitStrategy.IsBlockingStrategy;
 #if NETCOREAPP
             _availableBuffer = GC.AllocateArray<int>(bufferSize, pinned: true);
             _availableBufferPointer = (int*)Unsafe.AsPointer(ref _availableBuffer[0]);

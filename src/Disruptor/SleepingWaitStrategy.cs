@@ -13,7 +13,7 @@ namespace Disruptor
     /// on the producing thread as it will not need signal any conditional variables
     /// to wake up the event handling thread.
     /// </remarks>
-    public sealed class SleepingWaitStrategy : INonBlockingWaitStrategy
+    public sealed class SleepingWaitStrategy : IWaitStrategy
     {
         private const int _defaultRetries = 200;
         private readonly int _retries;
@@ -22,6 +22,8 @@ namespace Disruptor
         {
             _retries = retries;
         }
+
+        public bool IsBlockingStrategy => false;
 
         public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {

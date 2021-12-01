@@ -9,9 +9,11 @@ namespace Disruptor
     /// <remarks>
     /// This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.
     /// </remarks>
-    public sealed class YieldingWaitStrategy : INonBlockingWaitStrategy
+    public sealed class YieldingWaitStrategy : IWaitStrategy
     {
         private const int _spinTries = 100;
+
+        public bool IsBlockingStrategy => false;
 
         public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {

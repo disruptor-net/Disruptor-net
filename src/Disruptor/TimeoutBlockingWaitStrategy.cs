@@ -22,6 +22,8 @@ namespace Disruptor
             _timeout = timeout;
         }
 
+        public bool IsBlockingStrategy => true;
+
         public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             var timeSpan = _timeout;

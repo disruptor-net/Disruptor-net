@@ -18,6 +18,8 @@ namespace Disruptor
             _timeoutInMilliseconds = (int)timeout.TotalMilliseconds;
         }
 
+        public bool IsBlockingStrategy => true;
+
         public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             var milliseconds = _timeoutInMilliseconds;

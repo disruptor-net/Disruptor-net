@@ -9,8 +9,10 @@ namespace Disruptor
     /// This strategy is a good compromise between performance and CPU resource.
     /// Latency spikes can occur after quiet periods.
     /// </remarks>
-    public sealed class SpinWaitWaitStrategy : INonBlockingWaitStrategy
+    public sealed class SpinWaitWaitStrategy : IWaitStrategy
     {
+        public bool IsBlockingStrategy => false;
+
         public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
         {
             long availableSequence;

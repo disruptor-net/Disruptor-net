@@ -172,7 +172,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldNotNotifyNonBlockingWaitStrategyOnPublish()
         {
-            var waitStrategy = new DummyNonBlockingWaitStrategy();
+            var waitStrategy = new DummyWaitStrategy(isBlockingStrategy: false);
             var sequencer = NewProducer(_producerType, _bufferSize, waitStrategy);
 
             sequencer.Publish(sequencer.Next());
@@ -195,7 +195,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldNotNotifyNonBlockingWaitStrategyOnPublishBatch()
         {
-            var waitStrategy = new DummyNonBlockingWaitStrategy();
+            var waitStrategy = new DummyWaitStrategy(isBlockingStrategy: false);
             var sequencer = NewProducer(_producerType, _bufferSize, waitStrategy);
 
             var next = _sequencer.Next(4);

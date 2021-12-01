@@ -43,6 +43,8 @@ namespace Disruptor
             _fallbackStrategy = fallbackStrategy;
         }
 
+        public bool IsBlockingStrategy => _fallbackStrategy.IsBlockingStrategy;
+
         /// <summary>
         /// Construct <see cref="PhasedBackoffWaitStrategy"/> with fallback to <see cref="BlockingWaitStrategy"/>
         /// </summary>

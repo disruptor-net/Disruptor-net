@@ -46,7 +46,7 @@ namespace Disruptor.Benchmarks.Reference
 
             _bufferSize = bufferSize;
             _waitStrategy = waitStrategy;
-            _isBlockingWaitStrategy = !(waitStrategy is INonBlockingWaitStrategy);
+            _isBlockingWaitStrategy = waitStrategy.IsBlockingStrategy;
             _availableBuffer = new int[bufferSize];
             _indexMask = bufferSize - 1;
             _indexShift = DisruptorUtil.Log2(bufferSize);
