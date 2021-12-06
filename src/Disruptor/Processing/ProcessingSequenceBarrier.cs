@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Disruptor.Util;
 
 namespace Disruptor.Processing
 {
@@ -9,7 +10,7 @@ namespace Disruptor.Processing
     /// </summary>
     /// <typeparam name="TSequencer">the type of the <see cref="ISequencer"/> used.</typeparam>
     /// <typeparam name="TWaitStrategy">the type of the <see cref="IWaitStrategy"/> used.</typeparam>
-    internal sealed class ProcessingSequenceBarrier<TSequencer, TWaitStrategy> : ISequenceBarrier
+    internal struct ProcessingSequenceBarrier<TSequencer, TWaitStrategy> : ISequenceBarrier
         where TWaitStrategy : IWaitStrategy
         where TSequencer : ISequencer
     {
@@ -31,7 +32,7 @@ namespace Disruptor.Processing
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
         public SequenceWaitResult WaitFor(long sequence)
         {
             var cancellationToken = _cancellationTokenSource.Token;
