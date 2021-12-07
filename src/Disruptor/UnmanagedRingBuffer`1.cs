@@ -42,19 +42,27 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Get the event for a given sequence in the RingBuffer.
-        ///
-        /// This call has 2 uses.  Firstly use this call when publishing to a ring buffer.
-        /// After calling <see cref="RingBuffer.Next()"/> use this call to get hold of the
-        /// preallocated event to fill with data before calling <see cref="RingBuffer.Publish(long)"/>.
-        ///
-        /// Secondly use this call when consuming data from the ring buffer.  After calling
-        /// <see cref="ISequenceBarrier.WaitFor"/> call this method with any value greater than
-        /// that your current consumer sequence and less than or equal to the value returned from
-        /// the <see cref="ISequenceBarrier.WaitFor"/> method.
+        /// Gets the event for a given sequence in the ring buffer.
         /// </summary>
         /// <param name="sequence">sequence for the event</param>
-        /// <returns>the event for the given sequence</returns>
+        /// <remarks>
+        /// This method should be used for publishing events to the ring buffer:
+        /// <code>
+        /// long sequence = ringBuffer.Next();
+        /// try
+        /// {
+        ///     ref var eventToPublish = ref ringBuffer[sequence];
+        ///     // Configure the event
+        /// }
+        /// finally
+        /// {
+        ///     ringBuffer.Publish(sequence);
+        /// }
+        /// </code>
+        ///
+        /// This method can also be used for event processing but in most cases the processing is performed
+        /// in the provided <see cref="IEventProcessor"/> types or in the event pollers.
+        /// </remarks>
         public ref T this[long sequence]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
