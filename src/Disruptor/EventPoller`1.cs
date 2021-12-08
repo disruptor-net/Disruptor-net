@@ -77,6 +77,53 @@ namespace Disruptor
             return EventPoller.PollState.Idle;
         }
 
+#if NETCOREAPP
+        /// <summary>
+        /// <para>
+        /// Polls for events using the given handler.
+        /// </para>
+        /// <para>
+        /// This poller will continue to feed events to the given handler until known available
+        /// events are consumed or <see cref="EventPoller.BatchHandler{T}"/> returns false.
+        /// </para>
+        /// <para>
+        /// Note that it is possible for more events to become available while the current events
+        /// are being processed. A further call to this method will process such events.
+        /// </para>
+        /// </summary>
+        public EventPoller.PollState Poll(EventPoller.BatchHandler<T> eventHandler)
+        {
+            var currentSequence = _sequence.Value;
+            var nextSequence = currentSequence + 1;
+            var availableSequence = _sequencer.GetHighestPublishedSequence(nextSequence, _gatingSequence.Value);
+
+            if (nextSequence <= availableSequence)
+            {
+                var processedSequence = currentSequence;
+
+                try
+                {
+                    var span = _dataProvider[nextSequence, availableSequence];
+                    eventHandler(span, nextSequence);
+                    processedSequence = nextSequence + span.Length - 1;
+                }
+                finally
+                {
+                    _sequence.SetValue(processedSequence);
+                }
+
+                return EventPoller.PollState.Processing;
+            }
+
+            if (_sequencer.Cursor >= nextSequence)
+            {
+                return EventPoller.PollState.Gating;
+            }
+
+            return EventPoller.PollState.Idle;
+        }
+#endif
+
         /// <summary>
         /// Gets the sequence being used by this event poller
         /// </summary>

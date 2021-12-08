@@ -5,7 +5,6 @@ namespace Disruptor.Samples.PullWithBatchedPoller
     public class BatchedPoller<T> where T : class
     {
         private readonly EventPoller<DataEvent> _poller;
-        private readonly int _maxBatchSize;
         private readonly BatchedData _polledData;
 
         public BatchedPoller(RingBuffer<DataEvent> ringBuffer, int batchSize)
@@ -13,12 +12,7 @@ namespace Disruptor.Samples.PullWithBatchedPoller
             _poller = ringBuffer.NewPoller();
             ringBuffer.AddGatingSequences(_poller.Sequence);
 
-            if (batchSize < 1)
-            {
-                batchSize = 20;
-            }
-            _maxBatchSize = batchSize;
-            _polledData = new BatchedData(_maxBatchSize);
+            _polledData = new BatchedData(batchSize);
         }
 
         public T Poll()
@@ -32,13 +26,13 @@ namespace Disruptor.Samples.PullWithBatchedPoller
             return _polledData.GetMsgCount() > 0 ? _polledData.PollMessage() : null;
         }
 
-        private EventPoller.PollState LoadNextValues(EventPoller<DataEvent> poller, BatchedData batch)
+        private static void LoadNextValues(EventPoller<DataEvent> poller, BatchedData batch)
         {
-            return poller.Poll((ev, sequence, endOfBatch) =>
-                               {
-                                   var item = ev.CopyOfData();
-                                   return item != null && batch.AddDataItem(item);
-                               });
+            poller.Poll((ev, sequence, endOfBatch) =>
+            {
+                var item = ev.CopyOfData();
+                return item != null && batch.AddDataItem(item);
+            });
         }
 
         public class DataEvent
@@ -64,7 +58,6 @@ namespace Disruptor.Samples.PullWithBatchedPoller
 
         public class BatchedData
         {
-
             private int _msgHighBound;
             private readonly int _capacity;
             private readonly T[] _data;
@@ -91,7 +84,7 @@ namespace Disruptor.Samples.PullWithBatchedPoller
             {
                 if (_msgHighBound >= _capacity)
                 {
-                    throw new ArgumentOutOfRangeException("Attempting to add item to full batch");
+                    throw new InvalidOperationException("Attempting to add item to full batch");
                 }
 
                 _data[_msgHighBound++] = item;
@@ -100,7 +93,7 @@ namespace Disruptor.Samples.PullWithBatchedPoller
 
             public T PollMessage()
             {
-                T rtVal = default(T);
+                var rtVal = default(T);
                 if (_cursor < _msgHighBound)
                 {
                     rtVal = _data[_cursor++];
@@ -109,6 +102,7 @@ namespace Disruptor.Samples.PullWithBatchedPoller
                 {
                     ClearCount();
                 }
+
                 return rtVal;
             }
         }

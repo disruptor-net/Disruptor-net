@@ -1,9 +1,11 @@
+using System;
+
 namespace Disruptor
 {
     public static class EventPoller
     {
         /// <summary>
-        /// Indicates the result of a call to <see cref="EventPoller{T}.Poll"/> or <see cref="ValueEventPoller{T}.Poll"/>
+        /// Indicates the polling result result for  <see cref="EventPoller{T}"/> or <see cref="ValueEventPoller{T}"/>
         /// </summary>
         public enum PollState
         {
@@ -18,13 +20,20 @@ namespace Disruptor
             /// <summary>
             /// No events need to be processed
             /// </summary>
-            Idle
+            Idle,
         }
 
         /// <summary>
         /// A callback used to process events
         /// </summary>
         public delegate bool Handler<T>(T data, long sequence, bool endOfBatch);
+
+#if NETCOREAPP
+        /// <summary>
+        /// A callback used to process events
+        /// </summary>
+        public delegate void BatchHandler<T>(ReadOnlySpan<T> batch, long sequence);
+#endif
 
         /// <summary>
         /// A callback used to process value events
