@@ -61,7 +61,7 @@ namespace Disruptor
             _indexMask = bufferSize - 1;
             _indexShift = DisruptorUtil.Log2(bufferSize);
 
-            InitialiseAvailableBuffer();
+            _availableBuffer.AsSpan().Fill(-1);
         }
 
         /// <summary>
@@ -220,20 +220,6 @@ namespace Disruptor
             var consumed = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
             var produced = _cursor.Value;
             return BufferSize - (produced - consumed);
-        }
-
-        private void InitialiseAvailableBuffer()
-        {
-#if NETCOREAPP
-            _availableBuffer.AsSpan().Fill(-1);
-#else
-            for (int i = _availableBuffer.Length - 1; i != 0; i--)
-            {
-                SetAvailableBufferValue(i, -1);
-            }
-
-            SetAvailableBufferValue(0, -1);
-#endif
         }
 
         /// <summary>
