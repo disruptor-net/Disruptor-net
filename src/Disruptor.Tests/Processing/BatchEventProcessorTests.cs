@@ -86,24 +86,20 @@ namespace Disruptor.Tests.Processing
             var h1 = new LifeCycleHandler();
             var p1 = EventProcessorFactory.Create(dp, barrier, h1);
 
-            var t1 = new Thread(p1.Run);
+            var t1 = Task.Run(p1.Run);
             p1.Halt();
-            t1.Start();
 
-            Assert.IsTrue(h1.WaitStart(TimeSpan.FromSeconds(2)));
-            Assert.IsTrue(h1.WaitShutdown(TimeSpan.FromSeconds(2)));
+            AssertIsStartedAndShutdown(h1, t1);;
 
             for (int i = 0; i < 1000; i++)
             {
                 var h2 = new LifeCycleHandler();
                 var p2 = EventProcessorFactory.Create(dp, barrier, h2);
-                var t2 = new Thread(p2.Run);
 
-                t2.Start();
+                var t2 = Task.Run(p2.Run);
                 p2.Halt();
 
-                Assert.IsTrue(h2.WaitStart(TimeSpan.FromSeconds(2)));
-                Assert.IsTrue(h2.WaitShutdown(TimeSpan.FromSeconds(2)));
+                AssertIsStartedAndShutdown(h2, t2);
             }
 
             for (int i = 0; i < 1000; i++)
@@ -111,13 +107,37 @@ namespace Disruptor.Tests.Processing
                 var h2 = new LifeCycleHandler();
                 var p2 = EventProcessorFactory.Create(dp, barrier, h2);
 
-                var t2 = new Thread(p2.Run);
-                t2.Start();
+                var t2 = Task.Run(p2.Run);
+
                 Thread.Yield();
                 p2.Halt();
 
-                Assert.IsTrue(h2.WaitStart(TimeSpan.FromSeconds(2)));
-                Assert.IsTrue(h2.WaitShutdown(TimeSpan.FromSeconds(2)));
+                AssertIsStartedAndShutdown(h2, t2);
+            }
+
+            for (int i = 0; i < 1000; i++)
+            {
+                var h2 = new LifeCycleHandler();
+                var p2 = EventProcessorFactory.Create(dp, barrier, h2);
+
+                var t2 = Task.Run(() =>
+                {
+                    Thread.Yield();
+                    p2.Run();
+                });
+
+                p2.Halt();
+
+                AssertIsStartedAndShutdown(h2, t2);
+            }
+
+            static void AssertIsStartedAndShutdown(LifeCycleHandler handler, Task task)
+            {
+                var waitTimeout = TimeSpan.FromSeconds(5); // High timeout to
+
+                Assert.IsTrue(handler.WaitStart(waitTimeout));
+                Assert.IsTrue(handler.WaitShutdown(waitTimeout));
+                Assert.IsTrue(task.Wait(waitTimeout));
             }
         }
 
