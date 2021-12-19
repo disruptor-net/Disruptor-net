@@ -1,7 +1,7 @@
 using System;
 using Disruptor.Processing;
 
-#if NETCOREAPP
+#if BATCH_HANDLER
 
 namespace Disruptor
 {

@@ -83,7 +83,7 @@ namespace Disruptor.Tests.Dsl
             Assert.AreEqual(new List<int> { 101, 102 }, values);
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         [Test]
         public void ShouldPublishAndHandleEventBatch()
         {
@@ -135,7 +135,7 @@ namespace Disruptor.Tests.Dsl
             Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         [Test]
         public void ShouldPublishAndHandleEventsBatch()
         {
@@ -406,7 +406,7 @@ namespace Disruptor.Tests.Dsl
             Assert.AreSame(testException, actualException);
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         [Test]
         public void ShouldSupportSpecifyingADefaultExceptionHandlerForBatchEventProcessors()
         {
@@ -442,7 +442,7 @@ namespace Disruptor.Tests.Dsl
             Assert.AreSame(testException, actualException);
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         [Test]
         public void ShouldApplyDefaultExceptionHandlerToExistingBatchEventProcessors()
         {

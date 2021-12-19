@@ -1,6 +1,6 @@
 using System;
 
-#if NETCOREAPP
+#if BATCH_HANDLER
 
 namespace Disruptor.Tests.Support
 {

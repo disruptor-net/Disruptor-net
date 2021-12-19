@@ -61,7 +61,7 @@ namespace Disruptor.Benchmarks
             public Event this[long sequence] => _data;
 
 
-#if NETCOREAPP
+#if BATCH_HANDLER
             public ReadOnlySpan<Event> this[long lo, long hi] => InternalUtil.ReadBlock<Event>(_dataArray, 0, 1);
 #endif
         }

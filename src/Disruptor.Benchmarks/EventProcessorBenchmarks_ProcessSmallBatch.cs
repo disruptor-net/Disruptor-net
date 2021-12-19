@@ -13,7 +13,7 @@ namespace Disruptor.Benchmarks
         private const int _ringBufferSize = 32;
 
         private readonly PartialEventProcessor<XEvent, RingBuffer<XEvent>, XEventHandler, EventProcessorFactory.NoopBatchStartAware> _processor;
-#if NETCOREAPP
+#if BATCH_HANDLER
         private readonly PartialBatchEventProcessor<XEvent, RingBuffer<XEvent>, XBatchEventHandler> _batchProcessor;
 #endif
 
@@ -28,7 +28,7 @@ namespace Disruptor.Benchmarks
             }
 
             _processor = new PartialEventProcessor<XEvent, RingBuffer<XEvent>, XEventHandler, EventProcessorFactory.NoopBatchStartAware>(ringBuffer, new XEventHandler(), new EventProcessorFactory.NoopBatchStartAware());
-#if NETCOREAPP
+#if BATCH_HANDLER
             _batchProcessor = new PartialBatchEventProcessor<XEvent, RingBuffer<XEvent>, XBatchEventHandler>(ringBuffer, new XBatchEventHandler());
 #endif
         }
@@ -42,7 +42,7 @@ namespace Disruptor.Benchmarks
             _processor.Process(BatchSize, 1);
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         [Benchmark]
         public void ProcessBatch()
         {
@@ -103,7 +103,7 @@ namespace Disruptor.Benchmarks
             }
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         /// <summary>
         /// Partial copy of <see cref="BatchEventProcessor{T, TDataProvider, TSequenceBarrier, TEventHandler}"/>
         /// </summary>

@@ -71,7 +71,7 @@ namespace Disruptor.Util
             return IL.Return<T>();
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ReadOnlySpan<T> ReadBlock<T>(object array, int index, int length)
             where T : class

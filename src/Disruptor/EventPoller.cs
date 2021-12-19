@@ -28,7 +28,7 @@ namespace Disruptor
         /// </summary>
         public delegate bool Handler<T>(T data, long sequence, bool endOfBatch);
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         /// <summary>
         /// A callback used to process events
         /// </summary>

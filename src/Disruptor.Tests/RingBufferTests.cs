@@ -363,7 +363,7 @@ namespace Disruptor.Tests
             Assert.That(evt.Value, Is.EqualTo(expectedIndex));
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         [TestCase(0)]
         [TestCase(1)]
         [TestCase(31)]

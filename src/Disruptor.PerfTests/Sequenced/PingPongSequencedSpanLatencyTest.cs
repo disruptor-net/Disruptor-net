@@ -6,7 +6,7 @@ using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 using HdrHistogram;
 
-#if NETCOREAPP
+#if BATCH_HANDLER
 
 namespace Disruptor.PerfTests.Sequenced
 {

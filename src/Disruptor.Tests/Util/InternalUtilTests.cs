@@ -44,7 +44,7 @@ namespace Disruptor.Tests.Util
             }
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         [TestCase(1)]
         [TestCase(2)]
         [TestCase(5)]

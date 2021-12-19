@@ -1,0 +1,7 @@
+<Project>
+
+  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
+    <DefineConstants>BATCH_HANDLER</DefineConstants>
+  </PropertyGroup>
+
+</Project>

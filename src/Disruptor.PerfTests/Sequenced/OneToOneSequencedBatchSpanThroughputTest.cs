@@ -6,7 +6,7 @@ using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 
-#if NETCOREAPP
+#if BATCH_HANDLER
 
 namespace Disruptor.PerfTests.Sequenced
 {

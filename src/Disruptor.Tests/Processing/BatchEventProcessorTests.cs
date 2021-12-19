@@ -5,7 +5,7 @@ using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
-#if NETCOREAPP
+#if BATCH_HANDLER
 
 namespace Disruptor.Tests.Processing
 {

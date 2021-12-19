@@ -77,7 +77,7 @@ namespace Disruptor
             return EventPoller.PollState.Idle;
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         /// <summary>
         /// <para>
         /// Polls for events using the given handler.

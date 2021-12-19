@@ -4,7 +4,7 @@ using System.Threading;
 using Disruptor.Dsl;
 using Disruptor.Util;
 
-#if NETCOREAPP
+#if BATCH_HANDLER
 
 namespace Disruptor.Processing
 {

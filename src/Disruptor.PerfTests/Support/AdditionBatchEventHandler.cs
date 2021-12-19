@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using Disruptor.Tests.Support;
 
-#if NETCOREAPP
+#if BATCH_HANDLER
 
 namespace Disruptor.PerfTests.Support
 {

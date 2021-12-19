@@ -153,7 +153,7 @@ namespace Disruptor
             }
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         /// <summary>
         /// Gets a span of events for the given sequences in the RingBuffer.
         /// </summary>

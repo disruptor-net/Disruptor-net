@@ -84,7 +84,7 @@ namespace Disruptor.Dsl
             return CreateEventProcessors(new ISequence[0], handlers);
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         /// <summary>
         /// Set up event handlers to handle events from the ring buffer. These handlers will process events
         /// as soon as they become available, in parallel.
@@ -196,7 +196,7 @@ namespace Disruptor.Dsl
             return new ExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         /// <summary>
         /// Override the default exception handler for a specific handler.
         /// <code>disruptorWizard.HandleExceptionsIn(eventHandler).With(exceptionHandler);</code>
@@ -222,7 +222,7 @@ namespace Disruptor.Dsl
             return new EventHandlerGroup<T>(this, _consumerRepository, handlers.Select(h => _consumerRepository.GetSequenceFor(h)));
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         /// <summary>
         /// Create a group of event handlers to be used as a dependency.
         /// For example if the handler <code>A</code> must process events before handler <code>B</code>:
@@ -409,7 +409,7 @@ namespace Disruptor.Dsl
             return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IBatchEventHandler<T>[] eventHandlers)
         {
             CheckNotStarted();

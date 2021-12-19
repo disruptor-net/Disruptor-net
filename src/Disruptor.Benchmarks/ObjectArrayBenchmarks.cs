@@ -34,7 +34,7 @@ namespace Disruptor.Benchmarks
             return InternalUtil.Read<Event>(_array, NextSequence());
         }
 
-#if NETCOREAPP
+#if BATCH_HANDLER
         [Benchmark]
         public ReadOnlySpan<Event> ReadSpanIL()
         {
