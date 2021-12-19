@@ -1,6 +1,6 @@
 <Project>
 
-  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
+  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp' Or $(TargetFramework) == 'netstandard2.1'">
     <DefineConstants>BATCH_HANDLER</DefineConstants>
   </PropertyGroup>
 
