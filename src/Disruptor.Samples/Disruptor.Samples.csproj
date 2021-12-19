@@ -4,10 +4,15 @@
     <TargetFramework>net5.0</TargetFramework>
     <OutputType>exe</OutputType>
     <StartupObject>Disruptor.Samples.Wiki.GettingStarted.SampleProgram</StartupObject>
+    <LangVersion>Latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Wiki\Async" />
   </ItemGroup>
 
 </Project>
