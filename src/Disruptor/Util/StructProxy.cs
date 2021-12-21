@@ -11,16 +11,17 @@ namespace Disruptor.Util
         private static readonly ModuleBuilder _moduleBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(nameof(StructProxy) + ".DynamicAssembly"), AssemblyBuilderAccess.Run)
                                                                               .DefineDynamicModule(nameof(StructProxy));
 
-        private static readonly Dictionary<Type, Type> _proxyTypes = new Dictionary<Type, Type>();
+        private static readonly Dictionary<Type, Type?> _proxyTypes = new Dictionary<Type, Type?>();
 
         public static TInterface CreateProxyInstance<TInterface>(TInterface target)
+            where TInterface : class
         {
             var targetType = target.GetType();
 
             if (targetType.IsValueType)
                 return target;
 
-            Type proxyType;
+            Type? proxyType;
             lock (_proxyTypes)
             {
                 if (!_proxyTypes.TryGetValue(targetType, out proxyType))
@@ -33,10 +34,10 @@ namespace Disruptor.Util
             if (!typeof(TInterface).IsAssignableFrom(proxyType))
                 return target;
 
-            return (TInterface)Activator.CreateInstance(proxyType, target);
+            return (TInterface)Activator.CreateInstance(proxyType, target)!;
         }
 
-        private static Type GenerateStructProxyType(Type targetType)
+        private static Type? GenerateStructProxyType(Type targetType)
         {
             var interfaceTypes = targetType.GetInterfaces().Where(x => x.IsVisible).ToList();
 

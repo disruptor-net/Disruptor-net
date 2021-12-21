@@ -26,7 +26,7 @@ namespace Disruptor.Dsl
         public void With(IExceptionHandler<T> exceptionHandler)
         {
             ((IEventProcessor<T>)_consumerRepository.GetEventProcessorFor(_eventHandler)).SetExceptionHandler(exceptionHandler);
-            _consumerRepository.GetBarrierFor(_eventHandler).CancelProcessing();
+            _consumerRepository.GetBarrierFor(_eventHandler)?.CancelProcessing();
         }
     }
 }

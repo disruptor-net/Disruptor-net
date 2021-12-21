@@ -17,7 +17,7 @@ namespace Disruptor.Processing
             var waitStrategyProxy = StructProxy.CreateProxyInstance(waitStrategy);
 
             var sequencerBarrierType = typeof(ProcessingSequenceBarrier<,>).MakeGenericType(sequencerProxy.GetType(), waitStrategyProxy.GetType());
-            return (ISequenceBarrier)Activator.CreateInstance(sequencerBarrierType, sequencerProxy, waitStrategyProxy, cursorSequence, dependentSequences);
+            return (ISequenceBarrier)Activator.CreateInstance(sequencerBarrierType, sequencerProxy, waitStrategyProxy, cursorSequence, dependentSequences)!;
         }
     }
 }

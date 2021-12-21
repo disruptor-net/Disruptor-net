@@ -6,7 +6,7 @@ namespace Disruptor.Dsl
     {
         ISequence[] Sequences { get; }
 
-        ISequenceBarrier Barrier { get; }
+        ISequenceBarrier? Barrier { get; }
 
         bool IsEndOfChain { get; }
 

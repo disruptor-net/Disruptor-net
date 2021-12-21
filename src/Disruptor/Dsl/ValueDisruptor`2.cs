@@ -221,7 +221,7 @@ namespace Disruptor.Dsl
         /// </summary>
         /// <param name="handler">the handler to get the barrier for</param>
         /// <returns>the SequenceBarrier used by the given handler</returns>
-        public ISequenceBarrier GetBarrierFor(IValueEventHandler<T> handler) => _consumerRepository.GetBarrierFor(handler);
+        public ISequenceBarrier? GetBarrierFor(IValueEventHandler<T> handler) => _consumerRepository.GetBarrierFor(handler);
 
         /// <summary>
         /// Gets the sequence value for the specified event handlers.

@@ -22,8 +22,8 @@ namespace Disruptor
 
         public SequencerDispatcher(ISequencer sequencer)
         {
-            _singleProducerSequencer = default;
-            _multiProducerSequencer = default;
+            _singleProducerSequencer = default!;
+            _multiProducerSequencer = default!;
             _type = sequencer switch
             {
                 SingleProducerSequencer _ => SequencerType.SingleProducer,

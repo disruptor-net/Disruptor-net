@@ -371,10 +371,10 @@ namespace Disruptor
         /// </summary>
         public readonly struct NullableUnpublishedEventScope : IDisposable
         {
-            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly ValueRingBuffer<T>? _ringBuffer;
             private readonly long _sequence;
 
-            public NullableUnpublishedEventScope(ValueRingBuffer<T> ringBuffer, long sequence)
+            public NullableUnpublishedEventScope(ValueRingBuffer<T>? ringBuffer, long sequence)
             {
                 _ringBuffer = ringBuffer;
                 _sequence = sequence;
@@ -394,7 +394,7 @@ namespace Disruptor
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool TryGetEvent(out EventRef eventRef)
             {
-                eventRef = new EventRef(_ringBuffer, _sequence);
+                eventRef = new EventRef(_ringBuffer!, _sequence);
                 return _ringBuffer != null;
             }
 
@@ -438,11 +438,11 @@ namespace Disruptor
         /// </summary>
         public readonly struct NullableUnpublishedEventBatchScope : IDisposable
         {
-            private readonly ValueRingBuffer<T> _ringBuffer;
+            private readonly ValueRingBuffer<T>? _ringBuffer;
             private readonly long _startSequence;
             private readonly long _endSequence;
 
-            public NullableUnpublishedEventBatchScope(ValueRingBuffer<T> ringBuffer, long startSequence, long endSequence)
+            public NullableUnpublishedEventBatchScope(ValueRingBuffer<T>? ringBuffer, long startSequence, long endSequence)
             {
                 _ringBuffer = ringBuffer;
                 _startSequence = startSequence;
@@ -463,7 +463,7 @@ namespace Disruptor
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool TryGetEvents(out EventBatchRef eventRef)
             {
-                eventRef = new EventBatchRef(_ringBuffer, _startSequence, _endSequence);
+                eventRef = new EventBatchRef(_ringBuffer!, _startSequence, _endSequence);
                 return _ringBuffer != null;
             }
 

@@ -31,7 +31,7 @@ namespace Disruptor.Processing
             var batchStartAwareProxy = CreateBatchStartAwareProxy(eventHandler);
 
             var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), batchStartAwareProxy.GetType());
-            return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy);
+            return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy)!;
         }
 
 #if BATCH_HANDLER
@@ -60,7 +60,7 @@ namespace Disruptor.Processing
                 throw new ArgumentException($"{nameof(IBatchStartAware)} is not supported on IBatchEventHandler");
 
             var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType());
-            return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy);
+            return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy)!;
         }
 #endif
 
@@ -87,7 +87,7 @@ namespace Disruptor.Processing
             var batchStartAwareProxy = CreateBatchStartAwareProxy(eventHandler);
 
             var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), batchStartAwareProxy.GetType());
-            return (IValueEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy);
+            return (IValueEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy)!;
         }
 
         private static IBatchStartAware CreateBatchStartAwareProxy(object eventHandler)

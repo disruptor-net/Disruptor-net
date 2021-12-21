@@ -8,6 +8,7 @@
     <NoWarn>1701;1702;1591</NoWarn>
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

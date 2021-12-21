@@ -14,10 +14,10 @@ namespace Disruptor
         /// <param name="ex">exception that propagated from the <see cref="IEventHandler{T}"/>.</param>
         /// <param name="sequence">sequence of the event which cause the exception.</param>
         /// <param name="evt">event being processed when the exception occurred.</param>
-        public void HandleEventException(Exception ex, long sequence, object evt)
+        public void HandleEventException(Exception ex, long sequence, object? evt)
         {
             var message = $"Exception processing sequence {sequence} for event {evt}: {ex}";
-            
+
             Console.WriteLine(message);
 
             throw new ApplicationException(message, ex);

@@ -22,7 +22,7 @@ namespace Disruptor.Processing
         private readonly IExceptionHandler<T> _exceptionHandler;
         private readonly Sequence _workSequence;
         private readonly IEventReleaser _eventReleaser;
-        private readonly ITimeoutHandler _timeoutHandler;
+        private readonly ITimeoutHandler? _timeoutHandler;
 
         /// <summary>
         /// Construct a <see cref="WorkProcessor{T}"/>.
@@ -97,7 +97,7 @@ namespace Disruptor.Processing
             var processedSequence = true;
             var cachedAvailableSequence = long.MinValue;
             var nextSequence = _sequence.Value;
-            T eventRef = null;
+            T? eventRef = null;
             while (true)
             {
                 try

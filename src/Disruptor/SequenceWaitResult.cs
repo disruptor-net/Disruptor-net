@@ -43,7 +43,7 @@ namespace Disruptor
             return UnsafeAvailableSequence == other.UnsafeAvailableSequence;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is SequenceWaitResult other && Equals(other);
         }

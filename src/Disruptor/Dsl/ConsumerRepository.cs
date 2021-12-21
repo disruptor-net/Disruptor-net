@@ -81,8 +81,8 @@ namespace Disruptor.Dsl
         public IEventProcessor GetEventProcessorFor(object eventHandler)
         {
             EventProcessorInfo eventprocessorInfo;
-            var found = _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventprocessorInfo);
-            if(!found || eventprocessorInfo == null)
+            var found = _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventprocessorInfo!);
+            if(!found)
             {
                 throw new ArgumentException("The event handler " + eventHandler + " is not processing events.");
             }
@@ -100,17 +100,17 @@ namespace Disruptor.Dsl
             foreach (var barrierEventProcessor in barrierEventProcessors)
             {
                 IConsumerInfo consumerInfo;
-                if (_eventProcessorInfoBySequence.TryGetValue(barrierEventProcessor, out consumerInfo))
+                if (_eventProcessorInfoBySequence.TryGetValue(barrierEventProcessor, out consumerInfo!))
                 {
                     consumerInfo.MarkAsUsedInBarrier();
                 }
             }
         }
 
-        public ISequenceBarrier GetBarrierFor(object eventHandler)
+        public ISequenceBarrier? GetBarrierFor(object eventHandler)
         {
             EventProcessorInfo eventProcessorInfo;
-            return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventProcessorInfo) ? eventProcessorInfo.Barrier : null;
+            return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventProcessorInfo!) ? eventProcessorInfo.Barrier : null;
         }
 
         public IEnumerator<IConsumerInfo> GetEnumerator() => _consumerInfos.GetEnumerator();
@@ -122,7 +122,7 @@ namespace Disruptor.Dsl
 
         private class IdentityComparer<TKey> : IEqualityComparer<TKey>
         {
-            public bool Equals(TKey x, TKey y)
+            public bool Equals(TKey? x, TKey? y)
             {
                 return ReferenceEquals(x, y);
             }
