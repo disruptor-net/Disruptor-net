@@ -16,3 +16,5 @@ using NUnit.Framework;
 [assembly: Guid("21b0652b-dfd7-4b75-866b-e23cdcae8e28")]
 
 [assembly: FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
+[assembly: Parallelizable(ParallelScope.Fixtures)]
+[assembly: LevelOfParallelism(2)]
