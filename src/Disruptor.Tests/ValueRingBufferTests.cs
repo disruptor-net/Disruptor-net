@@ -7,7 +7,12 @@ namespace Disruptor.Tests
 {
     public class ValueRingBufferTests : ValueRingBufferFixture<StubValueEvent>
     {
-        protected override IValueRingBuffer<StubValueEvent> CreateRingBuffer(int size, ProducerType producerType)
+        public ValueRingBufferTests()
+            : base(x => CreateRingBuffer(x.size, x.producerType))
+        {
+        }
+
+        private static IValueRingBuffer<StubValueEvent> CreateRingBuffer(int size, ProducerType producerType)
         {
             return new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), SequencerFactory.Create(producerType, size));
         }

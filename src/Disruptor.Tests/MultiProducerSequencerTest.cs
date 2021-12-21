@@ -5,10 +5,9 @@ namespace Disruptor.Tests
     [TestFixture]
     public class MultiProducerSequencerTest
     {
-        private MultiProducerSequencer _publisher;
+        private readonly MultiProducerSequencer _publisher;
 
-        [SetUp]
-        public void SetUp()
+        public MultiProducerSequencerTest()
         {
             _publisher = new MultiProducerSequencer(1024);
         }

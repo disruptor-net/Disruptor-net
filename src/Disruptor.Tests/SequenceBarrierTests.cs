@@ -10,10 +10,9 @@ namespace Disruptor.Tests
     [TestFixture]
     public class SequenceBarrierTests
     {
-        private RingBuffer<StubEvent> _ringBuffer;
+        private readonly RingBuffer<StubEvent> _ringBuffer;
 
-        [SetUp]
-        public void SetUp()
+        public SequenceBarrierTests()
         {
             _ringBuffer = RingBuffer<StubEvent>.CreateMultiProducer(() => new StubEvent(-1), 64);
             _ringBuffer.AddGatingSequences(new NoOpEventProcessor<StubEvent>(_ringBuffer).Sequence);

@@ -12,11 +12,10 @@ namespace Disruptor.Tests.Processing
     [TestFixture]
     public class BatchEventProcessorTests
     {
-        private RingBuffer<StubEvent> _ringBuffer;
-        private ISequenceBarrier _sequenceBarrier;
+        private readonly RingBuffer<StubEvent> _ringBuffer;
+        private readonly ISequenceBarrier _sequenceBarrier;
 
-        [SetUp]
-        public void Setup()
+        public BatchEventProcessorTests()
         {
             _ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), 16);
             _sequenceBarrier = _ringBuffer.NewBarrier();

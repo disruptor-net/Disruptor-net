@@ -6,12 +6,11 @@ namespace Disruptor.Tests
     [TestFixture]
     public class AggregateEventHandlerTests
     {
-        private DummyEventHandler<int[]> _eh1;
-        private DummyEventHandler<int[]> _eh2;
-        private DummyEventHandler<int[]> _eh3;
+        private readonly DummyEventHandler<int[]> _eh1;
+        private readonly DummyEventHandler<int[]> _eh2;
+        private readonly DummyEventHandler<int[]> _eh3;
 
-        [SetUp]
-        public void SetUp()
+        public AggregateEventHandlerTests()
         {
             _eh1 = new DummyEventHandler<int[]>();
             _eh2 = new DummyEventHandler<int[]>();

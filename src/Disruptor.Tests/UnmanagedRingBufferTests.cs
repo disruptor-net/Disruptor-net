@@ -8,31 +8,33 @@ using NUnit.Framework;
 
 namespace Disruptor.Tests
 {
-    public class UnmanagedRingBufferTests : ValueRingBufferFixture<StubUnmanagedEvent>
+    public class UnmanagedRingBufferTests : ValueRingBufferFixture<StubUnmanagedEvent>, IDisposable
     {
-        private List<UnmanagedRingBufferMemory> _memoryList;
+        private readonly List<UnmanagedRingBufferMemory> _memoryList;
 
-        public override void SetUp()
+        public UnmanagedRingBufferTests()
+            : this(new List<UnmanagedRingBufferMemory>())
         {
-            _memoryList = new List<UnmanagedRingBufferMemory>();
-
-            base.SetUp();
         }
 
-        public override void Teardown()
+        private UnmanagedRingBufferTests(List<UnmanagedRingBufferMemory> memoryList)
+            : base(x => CreateRingBuffer(x.size, x.producerType, memoryList))
         {
-            base.Teardown();
+            _memoryList = memoryList;
+        }
 
+        public void Dispose()
+        {
             foreach (var memory in _memoryList)
             {
                 memory.Dispose();
             }
         }
 
-        protected override IValueRingBuffer<StubUnmanagedEvent> CreateRingBuffer(int size, ProducerType producerType)
+        private static IValueRingBuffer<StubUnmanagedEvent> CreateRingBuffer(int size, ProducerType producerType, List<UnmanagedRingBufferMemory> memoryList)
         {
             var memory = UnmanagedRingBufferMemory.Allocate(size, () => new StubUnmanagedEvent(-1));
-            _memoryList.Add(memory);
+            memoryList.Add(memory);
 
             return new UnmanagedRingBuffer<StubUnmanagedEvent>(memory, producerType, new BlockingWaitStrategy());
         }

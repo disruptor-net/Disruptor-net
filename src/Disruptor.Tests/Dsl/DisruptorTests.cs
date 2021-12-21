@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.Processing;
 using Disruptor.Tests.Dsl.Stubs;
@@ -14,17 +12,16 @@ using NUnit.Framework;
 namespace Disruptor.Tests.Dsl
 {
     [TestFixture]
-    public class DisruptorTests
+    public class DisruptorTests : IDisposable
     {
         private const int _timeoutInSeconds = 2;
-        private Disruptor<TestEvent> _disruptor;
-        private StubTaskScheduler _taskScheduler;
-        private List<DelayedEventHandler> _delayedEventHandlers;
-        private List<TestWorkHandler> _testWorkHandlers;
+        private readonly Disruptor<TestEvent> _disruptor;
+        private readonly StubTaskScheduler _taskScheduler;
+        private readonly List<DelayedEventHandler> _delayedEventHandlers;
+        private readonly List<TestWorkHandler> _testWorkHandlers;
         private RingBuffer<TestEvent> _ringBuffer;
 
-        [SetUp]
-        public void SetUp()
+        public DisruptorTests()
         {
             _ringBuffer = null;
             _delayedEventHandlers = new List<DelayedEventHandler>();
@@ -33,8 +30,7 @@ namespace Disruptor.Tests.Dsl
             _disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 4, _taskScheduler);
         }
 
-        [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             foreach (var delayedEventHandler in _delayedEventHandlers)
             {

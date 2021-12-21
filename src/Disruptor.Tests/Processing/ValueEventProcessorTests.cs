@@ -11,11 +11,10 @@ namespace Disruptor.Tests.Processing
     [TestFixture]
     public class ValueEventProcessorTests
     {
-        private ValueRingBuffer<StubValueEvent> _ringBuffer;
-        private ISequenceBarrier _sequenceBarrier;
+        private readonly ValueRingBuffer<StubValueEvent> _ringBuffer;
+        private readonly ISequenceBarrier _sequenceBarrier;
 
-        [SetUp]
-        public void Setup()
+        public ValueEventProcessorTests()
         {
             _ringBuffer = new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), 16);
             _sequenceBarrier = _ringBuffer.NewBarrier();

@@ -9,22 +9,20 @@ using NUnit.Framework;
 namespace Disruptor.Tests.Dsl
 {
     [TestFixture]
-    public class UnmanagedDisruptorTests
+    public class UnmanagedDisruptorTests : IDisposable
     {
-        private UnmanagedDisruptor<TestValueEvent> _disruptor;
-        private StubTaskScheduler _taskScheduler;
-        private UnmanagedRingBufferMemory _memory;
+        private readonly UnmanagedDisruptor<TestValueEvent> _disruptor;
+        private readonly StubTaskScheduler _taskScheduler;
+        private readonly UnmanagedRingBufferMemory _memory;
 
-        [SetUp]
-        public void SetUp()
+        public UnmanagedDisruptorTests()
         {
             _taskScheduler = new StubTaskScheduler();
             _memory = UnmanagedRingBufferMemory.Allocate(4, TestValueEvent.Size);
             _disruptor = new UnmanagedDisruptor<TestValueEvent>(_memory.PointerToFirstEvent, _memory.EventSize, _memory.EventCount, _taskScheduler);
         }
 
-        [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             _disruptor.Halt();
             _taskScheduler.JoinAllThreads();

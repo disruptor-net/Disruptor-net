@@ -10,19 +10,15 @@ namespace Disruptor.Tests
     {
         private readonly ManualResetEvent _startSignal = new ManualResetEvent(false);
         private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
-
         private readonly RingBuffer<StubEvent> _ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), 16);
+        private readonly LifecycleAwareEventHandler _eventHandler;
+        private readonly IEventProcessor<StubEvent> _eventProcessor;
 
-        private ISequenceBarrier _sequenceBarrier;
-        private LifecycleAwareEventHandler _eventHandler;
-        private IEventProcessor<StubEvent> _eventProcessor;
-
-        [SetUp]
-        public void SetUp()
+        public LifecycleAwareTests()
         {
-            _sequenceBarrier = _ringBuffer.NewBarrier();
+            var sequenceBarrier = _ringBuffer.NewBarrier();
             _eventHandler = new LifecycleAwareEventHandler(_startSignal, _shutdownSignal);
-            _eventProcessor = EventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, _eventHandler);
+            _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
         }
 
         [Test]

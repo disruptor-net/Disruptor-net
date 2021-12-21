@@ -15,23 +15,22 @@ namespace Disruptor.Tests
     public abstract class ValueRingBufferFixture<T>
         where T : struct, IStubEvent
     {
-        private IValueRingBuffer<T> _ringBuffer;
-        private ISequenceBarrier _sequenceBarrier;
+        private readonly Func<(int size, ProducerType producerType), IValueRingBuffer<T>> _ringBufferFactory;
+        private readonly IValueRingBuffer<T> _ringBuffer;
+        private readonly ISequenceBarrier _sequenceBarrier;
 
-        [SetUp]
-        public virtual void SetUp()
+        protected ValueRingBufferFixture(Func<(int size, ProducerType producerType), IValueRingBuffer<T>> ringBufferFactory)
         {
-            _ringBuffer = CreateRingBuffer(32, ProducerType.Multi);
+            _ringBufferFactory = ringBufferFactory;
+            _ringBuffer = ringBufferFactory.Invoke((32, ProducerType.Multi));
             _sequenceBarrier = _ringBuffer.NewBarrier();
             _ringBuffer.AddGatingSequences(new NoOpEventProcessor<T>(_ringBuffer).Sequence);
         }
 
-        [TearDown]
-        public virtual void Teardown()
+        private IValueRingBuffer<T> CreateRingBuffer(int size, ProducerType producerType)
         {
+            return _ringBufferFactory.Invoke((size, producerType));
         }
-
-        protected abstract IValueRingBuffer<T> CreateRingBuffer(int size, ProducerType producerType);
 
         [Test]
         public void ShouldClaimAndGet()

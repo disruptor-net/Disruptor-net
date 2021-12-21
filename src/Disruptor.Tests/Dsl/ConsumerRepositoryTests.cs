@@ -10,16 +10,15 @@ namespace Disruptor.Tests.Dsl
     [TestFixture]
     public class ConsumerRepositoryTests
     {
-        private ConsumerRepository _consumerRepository;
-        private IEventProcessor _eventProcessor1;
-        private IEventProcessor _eventProcessor2;
-        private DummyEventHandler<TestEvent> _handler1;
-        private DummyEventHandler<TestEvent> _handler2;
-        private ISequenceBarrier _barrier1;
-        private ISequenceBarrier _barrier2;
+        private readonly ConsumerRepository _consumerRepository;
+        private readonly IEventProcessor _eventProcessor1;
+        private readonly IEventProcessor _eventProcessor2;
+        private readonly DummyEventHandler<TestEvent> _handler1;
+        private readonly DummyEventHandler<TestEvent> _handler2;
+        private readonly ISequenceBarrier _barrier1;
+        private readonly ISequenceBarrier _barrier2;
 
-        [SetUp]
-        public void SetUp()
+        public ConsumerRepositoryTests()
         {
             _consumerRepository = new ConsumerRepository();
             _eventProcessor1 = new DummyEventProcessor();

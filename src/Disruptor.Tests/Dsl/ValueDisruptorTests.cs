@@ -12,16 +12,15 @@ using NUnit.Framework;
 namespace Disruptor.Tests.Dsl
 {
     [TestFixture]
-    public class ValueDisruptorTests
+    public class ValueDisruptorTests : IDisposable
     {
         private const int _timeoutInSeconds = 2;
-        private ValueDisruptor<TestValueEvent> _disruptor;
-        private StubTaskScheduler _taskScheduler;
-        private List<DelayedEventHandler> _delayedEventHandlers;
+        private readonly ValueDisruptor<TestValueEvent> _disruptor;
+        private readonly StubTaskScheduler _taskScheduler;
+        private readonly List<DelayedEventHandler> _delayedEventHandlers;
         private ValueRingBuffer<TestValueEvent> _ringBuffer;
 
-        [SetUp]
-        public void SetUp()
+        public ValueDisruptorTests()
         {
             _ringBuffer = null;
             _delayedEventHandlers = new List<DelayedEventHandler>();
@@ -29,8 +28,7 @@ namespace Disruptor.Tests.Dsl
             _disruptor = new ValueDisruptor<TestValueEvent>(() => new TestValueEvent(), 4, _taskScheduler);
         }
 
-        [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             foreach (var delayedEventHandler in _delayedEventHandlers)
             {

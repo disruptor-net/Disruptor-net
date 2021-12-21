@@ -6,15 +6,13 @@ namespace Disruptor.Tests
     [TestFixture]
     public class ValueRingBufferWithAssertingStubTest
     {
-        private ValueRingBuffer<StubValueEvent> _ringBuffer;
-        private ISequencer _sequencer;
+        private readonly ValueRingBuffer<StubValueEvent> _ringBuffer;
 
-        [SetUp]
-        public void SetUp()
+        public ValueRingBufferWithAssertingStubTest()
         {
-            _sequencer = new RingBufferWithAssertingStubTest.AssertingSequencer(16);
+            var sequencer = new RingBufferWithAssertingStubTest.AssertingSequencer(16);
 
-            _ringBuffer = new ValueRingBuffer<StubValueEvent>(StubValueEvent.EventFactory, _sequencer);
+            _ringBuffer = new ValueRingBuffer<StubValueEvent>(StubValueEvent.EventFactory, sequencer);
         }
 
         [Test]

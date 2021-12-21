@@ -7,18 +7,22 @@ using Disruptor.Tests.Support;
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class ShutdownOnFatalExceptionTest
+    public class ShutdownOnFatalExceptionTest : IDisposable
     {
         private readonly Random _random = new Random();
         private readonly FailingEventHandler _failingEventHandler = new FailingEventHandler();
-        private Disruptor<byte[]> _disruptor;
+        private readonly Disruptor<byte[]> _disruptor;
 
-        [SetUp]
-        public void SetUp()
+        public ShutdownOnFatalExceptionTest()
         {
             _disruptor = new Disruptor<byte[]>(() => new byte[256], 1024, TaskScheduler.Current, ProducerType.Single, new BlockingWaitStrategy());
             _disruptor.HandleEventsWith(_failingEventHandler);
             _disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler());
+        }
+
+        public void Dispose()
+        {
+            _disruptor.Shutdown();
         }
 
         [Test]
@@ -41,13 +45,6 @@ namespace Disruptor.Tests
 
             Assert.IsTrue(task.Wait(1000));
         }
-
-        [TearDown]
-        public void Teardown()
-        {
-            _disruptor.Shutdown();
-        }
-
 
         private class FailingEventHandler : IEventHandler<byte[]>
         {

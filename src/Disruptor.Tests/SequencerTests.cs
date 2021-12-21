@@ -19,6 +19,8 @@ namespace Disruptor.Tests
         public SequencerTests(ProducerType producerType)
         {
             _producerType = producerType;
+            _gatingSequence = new Sequence();
+            _sequencer = NewProducer(_producerType, _bufferSize, new BlockingWaitStrategy());
         }
 
         private ISequencer NewProducer(ProducerType producerType, int bufferSize, IWaitStrategy waitStrategy)
@@ -32,13 +34,6 @@ namespace Disruptor.Tests
                 default:
                     throw new ArgumentOutOfRangeException(nameof(producerType), producerType, null);
             }
-        }
-
-        [SetUp]
-        public void SetUp()
-        {
-            _gatingSequence = new Sequence();
-            _sequencer = NewProducer(_producerType, _bufferSize, new BlockingWaitStrategy());
         }
 
         [Test]
