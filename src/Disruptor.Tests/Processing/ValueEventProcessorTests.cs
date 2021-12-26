@@ -32,7 +32,7 @@ namespace Disruptor.Tests.Processing
             var eventHandler = new TestValueEventHandler<StubValueEvent>(x => throw new NullReferenceException());
             var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
-            Assert.Throws<ArgumentNullException>(() => eventProcessor.SetExceptionHandler(null));
+            Assert.Throws<ArgumentNullException>(() => eventProcessor.SetExceptionHandler(null!));
         }
 
         [Test]

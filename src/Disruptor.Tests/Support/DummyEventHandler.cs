@@ -4,7 +4,7 @@
     {
         public int StartCalls { get; private set; }
         public int ShutdownCalls { get; private set; }
-        public T LastEvent { get; private set; }
+        public T? LastEvent { get; private set; }
         public long LastSequence { get; private set; }
 
         public void OnStart() => StartCalls++;

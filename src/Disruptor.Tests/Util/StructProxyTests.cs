@@ -32,9 +32,8 @@ namespace Disruptor.Tests.Util
         public void ShouldNotFailForInternalType()
         {
             var foo = new InternalFoo();
-            IFoo fooProxy = null;
+            var fooProxy = StructProxy.CreateProxyInstance<IFoo>(foo);
 
-            Assert.DoesNotThrow(() => fooProxy = StructProxy.CreateProxyInstance<IFoo>(foo));
             Assert.DoesNotThrow(() => fooProxy.Value = 1);
             Assert.DoesNotThrow(() => fooProxy.Compute(1, 2));
 
@@ -46,9 +45,8 @@ namespace Disruptor.Tests.Util
         public void ShouldNotFailForExplicitImplementation()
         {
             var foo = new ExplicitImplementation();
-            IFoo fooProxy = null;
+            var fooProxy = StructProxy.CreateProxyInstance<IFoo>(foo);
 
-            Assert.DoesNotThrow(() => fooProxy = StructProxy.CreateProxyInstance<IFoo>(foo));
             Assert.DoesNotThrow(() => fooProxy.Value = 1);
             Assert.DoesNotThrow(() => fooProxy.Compute(1, 2));
 
@@ -60,9 +58,7 @@ namespace Disruptor.Tests.Util
         public void ShouldNotFailForPublicTypeWithInternalGenericArgument()
         {
             var bar = new Bar<InternalBarArg>();
-            IBar<InternalBarArg> barProxy = null;
-
-            Assert.DoesNotThrow(() => barProxy = StructProxy.CreateProxyInstance<IBar<InternalBarArg>>(bar));
+            var barProxy = StructProxy.CreateProxyInstance<IBar<InternalBarArg>>(bar);
 
             Assert.IsNotNull(barProxy);
             Assert.AreEqual(barProxy, bar);

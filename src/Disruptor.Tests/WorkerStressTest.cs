@@ -141,7 +141,7 @@ namespace Disruptor.Tests
             public long Sequence;
             public long A;
             public long B;
-            public string S;
+            public string? S;
         }
     }
 }

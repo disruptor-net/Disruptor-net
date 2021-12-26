@@ -12,7 +12,7 @@ namespace Disruptor.Tests.Dsl.Stubs
         {
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return true;
         }

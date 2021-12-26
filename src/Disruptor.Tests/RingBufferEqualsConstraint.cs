@@ -4,9 +4,9 @@ namespace Disruptor.Tests
 {
     public class RingBufferEqualsConstraint : Constraint
     {
-        private readonly object[] _values;
+        private readonly object?[] _values;
 
-        public RingBufferEqualsConstraint(params object[] values)
+        public RingBufferEqualsConstraint(params object?[] values)
         {
             _values = values;
         }
@@ -24,7 +24,7 @@ namespace Disruptor.Tests
             return new ConstraintResult(this, actual, valid);
         }
 
-        public static RingBufferEqualsConstraint IsRingBufferWithEvents(params object[] values)
+        public static RingBufferEqualsConstraint IsRingBufferWithEvents(params object?[] values)
         {
             return new RingBufferEqualsConstraint(values);
         }

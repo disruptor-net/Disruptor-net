@@ -1,4 +1,5 @@
-﻿using Disruptor.Tests.Support;
+﻿using System;
+using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
@@ -126,7 +127,7 @@ namespace Disruptor.Tests
 
             public ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
             {
-                return null;
+                throw new NotSupportedException();
             }
 
             public long GetMinimumSequence()
@@ -141,13 +142,13 @@ namespace Disruptor.Tests
 
             public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
             {
-                return null;
+                throw new NotSupportedException();
             }
 
             public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params ISequence[] gatingSequences)
                 where T : struct
             {
-                return null;
+                throw new NotSupportedException();
             }
         }
     }

@@ -28,7 +28,7 @@ namespace Disruptor.Tests.Support
             return other.Value == Value && other.DoubleValue == DoubleValue;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is StubUnmanagedEvent other && Equals(other);
         }

@@ -84,10 +84,10 @@ namespace Disruptor.Tests
 
             public void OnEvent(TestEvent @event, long sequence, bool endOfBatch)
             {
-                if (@event.Sequence != sequence 
+                if (@event.Sequence != sequence
                     || @event.A != sequence + 13
-                    || @event.B != sequence - 7 
-                    //|| !("wibble-" + sequence).Equals(@event.S.ToString())
+                    || @event.B != sequence - 7
+                    //|| !("wibble-" + sequence).Equals(@event.S)
                     )
                 {
                     FailureCount++;
@@ -151,7 +151,7 @@ namespace Disruptor.Tests
             public long Sequence;
             public long A;
             public long B;
-            public string S;
+            //public string? S;
         }
     }
 }

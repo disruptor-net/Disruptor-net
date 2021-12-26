@@ -11,8 +11,6 @@ namespace Disruptor.Tests.Support
 
         public int Value { get; set; }
 
-        public string TestString { get; set; }
-
         public static readonly Func<StubEvent> EventFactory = () => new StubEvent(-1);
 
         public override int GetHashCode()
@@ -20,19 +18,19 @@ namespace Disruptor.Tests.Support
             return Value;
         }
 
-        public bool Equals(StubEvent other)
+        public bool Equals(StubEvent? other)
         {
             return other != null && other.Value == Value;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return Equals(obj as StubEvent);
         }
 
         public override string ToString()
         {
-            return $"Value: {Value}, TestString: {TestString}";
+            return $"Value: {Value}";
         }
 
         public void Copy(StubEvent evt)

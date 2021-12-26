@@ -12,7 +12,7 @@ namespace Disruptor.Tests.Support
 
         public int Value { get; set; }
 
-        public string TestString { get; set; }
+        public string? TestString { get; set; }
 
         public static readonly Func<StubValueEvent> EventFactory = () => new StubValueEvent(-1);
 
@@ -26,7 +26,7 @@ namespace Disruptor.Tests.Support
             return other.Value == Value && other.TestString == TestString;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is StubValueEvent other && Equals(other);
         }

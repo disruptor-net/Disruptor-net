@@ -60,7 +60,7 @@ namespace Disruptor.Tests
 
         private class TestSequenceReportingEventHandler : IEventHandler<StubEvent>, IValueEventHandler<StubValueEvent>, IEventProcessorSequenceAware
         {
-            private ISequence _sequenceCallback;
+            private ISequence? _sequenceCallback;
 
             public ManualResetEvent CallbackSignal { get; } = new ManualResetEvent(false);
             public ManualResetEvent OnEndOfBatchSignal { get; } = new ManualResetEvent(false);
@@ -82,7 +82,7 @@ namespace Disruptor.Tests
 
             private void OnEvent(long sequence, bool endOfBatch)
             {
-                _sequenceCallback.SetValue(sequence);
+                _sequenceCallback!.SetValue(sequence);
                 CallbackSignal.Set();
 
                 if (endOfBatch)

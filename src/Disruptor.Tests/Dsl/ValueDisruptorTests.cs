@@ -18,11 +18,9 @@ namespace Disruptor.Tests.Dsl
         private readonly ValueDisruptor<TestValueEvent> _disruptor;
         private readonly StubTaskScheduler _taskScheduler;
         private readonly List<DelayedEventHandler> _delayedEventHandlers;
-        private ValueRingBuffer<TestValueEvent> _ringBuffer;
 
         public ValueDisruptorTests()
         {
-            _ringBuffer = null;
             _delayedEventHandlers = new List<DelayedEventHandler>();
             _taskScheduler = new StubTaskScheduler();
             _disruptor = new ValueDisruptor<TestValueEvent>(() => new TestValueEvent(), 4, _taskScheduler);
@@ -478,8 +476,8 @@ namespace Disruptor.Tests.Dsl
             {
                 Thread.Sleep(100);
             }
-            Assert.That(remainingCapacity[0], Is.EqualTo(_ringBuffer.BufferSize - 1L));
-            Assert.That(_disruptor.RingBuffer.GetRemainingCapacity(), Is.EqualTo(_ringBuffer.BufferSize - 0L));
+            Assert.That(remainingCapacity[0], Is.EqualTo(_disruptor.RingBuffer.BufferSize - 1L));
+            Assert.That(_disruptor.RingBuffer.GetRemainingCapacity(), Is.EqualTo(_disruptor.RingBuffer.BufferSize - 0L));
         }
 
         [Test]
@@ -553,9 +551,9 @@ namespace Disruptor.Tests.Dsl
 
         private void PublishEvent()
         {
-            if (_ringBuffer == null)
+            if (!_disruptor.HasStarted)
             {
-                _ringBuffer = _disruptor.Start();
+                _disruptor.Start();
 
                 foreach (var eventHandler in _delayedEventHandlers)
                 {
@@ -568,12 +566,13 @@ namespace Disruptor.Tests.Dsl
 
         private static Exception WaitFor(AtomicReference<Exception> reference)
         {
-            while (reference.Read() == null)
+            while (true)
             {
+                if (reference.Read() is { } exception)
+                    return exception;
+
                 Thread.Yield();
             }
-
-            return reference.Read();
         }
 
         private DelayedEventHandler CreateDelayedEventHandler()

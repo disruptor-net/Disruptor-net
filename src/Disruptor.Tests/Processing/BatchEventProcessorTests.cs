@@ -27,7 +27,7 @@ namespace Disruptor.Tests.Processing
             var eventHandler = new TestBatchEventHandler<StubEvent>(x => throw new NullReferenceException());
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, eventHandler);
 
-            Assert.Throws<ArgumentNullException>(() => eventProcessor.SetExceptionHandler(null));
+            Assert.Throws<ArgumentNullException>(() => eventProcessor.SetExceptionHandler(null!));
         }
 
         [Test]

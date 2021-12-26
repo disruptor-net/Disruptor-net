@@ -176,7 +176,7 @@ namespace Disruptor.Tests.Util
             }
 
             [FieldOffset(0)]
-            public string TestString;
+            public string? TestString;
 
             [FieldOffset(11)]
             public int Value;
