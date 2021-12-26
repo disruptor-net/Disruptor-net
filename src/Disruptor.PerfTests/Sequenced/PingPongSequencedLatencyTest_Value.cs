@@ -2,15 +2,14 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 using HdrHistogram;
 
-#if BATCH_HANDLER
-
 namespace Disruptor.PerfTests.Sequenced
 {
-    public class PingPongSequencedSpanLatencyTest : ILatencyTest
+    public class PingPongSequencedLatencyTest_Value : ILatencyTest
     {
         private const int _bufferSize = 1024;
         private const long _iterations = 100 * 1000 * 30;
@@ -18,21 +17,21 @@ namespace Disruptor.PerfTests.Sequenced
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-        private readonly RingBuffer<PerfEvent> _pingBuffer;
-        private readonly RingBuffer<PerfEvent> _pongBuffer;
+        private readonly ValueRingBuffer<PerfValueEvent> _pingBuffer;
+        private readonly ValueRingBuffer<PerfValueEvent> _pongBuffer;
 
         private readonly ISequenceBarrier _pongBarrier;
         private readonly Pinger _pinger;
-        private readonly IEventProcessor<PerfEvent> _pingProcessor;
+        private readonly IValueEventProcessor<PerfValueEvent> _pingProcessor;
 
         private readonly ISequenceBarrier _pingBarrier;
         private readonly Ponger _ponger;
-        private readonly IEventProcessor<PerfEvent> _pongProcessor;
+        private readonly IValueEventProcessor<PerfValueEvent> _pongProcessor;
 
-        public PingPongSequencedSpanLatencyTest()
+        public PingPongSequencedLatencyTest_Value()
         {
-            _pingBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
-            _pongBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+            _pingBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+            _pongBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
 
             _pingBarrier = _pingBuffer.NewBarrier();
             _pongBarrier = _pongBuffer.NewBarrier();
@@ -75,9 +74,9 @@ namespace Disruptor.PerfTests.Sequenced
             Task.WaitAll(processorTask1, processorTask2);
         }
 
-        private class Pinger : IBatchEventHandler<PerfEvent>, ILifecycleAware
+        private class Pinger : IValueEventHandler<PerfValueEvent>, ILifecycleAware
         {
-            private readonly RingBuffer<PerfEvent> _buffer;
+            private readonly ValueRingBuffer<PerfValueEvent> _buffer;
             private readonly long _maxEvents;
             private readonly long _pauseTimeNs;
             private readonly long _pauseTimeTicks;
@@ -87,7 +86,7 @@ namespace Disruptor.PerfTests.Sequenced
             private CountdownEvent _globalSignal;
             private ManualResetEvent _signal;
 
-            public Pinger(RingBuffer<PerfEvent> buffer, long maxEvents, long pauseTimeNs)
+            public Pinger(ValueRingBuffer<PerfValueEvent> buffer, long maxEvents, long pauseTimeNs)
             {
                 _buffer = buffer;
                 _maxEvents = maxEvents;
@@ -95,27 +94,24 @@ namespace Disruptor.PerfTests.Sequenced
                 _pauseTimeTicks = LatencyTestSession.ConvertNanoToStopwatchTicks(pauseTimeNs);
             }
 
-            public void OnBatch(ReadOnlySpan<PerfEvent> batch, long sequence)
+            public void OnEvent(ref PerfValueEvent data, long sequence, bool endOfBatch)
             {
-                foreach (var data in batch)
+                var t1 = Stopwatch.GetTimestamp();
+
+                _histogram.RecordValueWithExpectedInterval(LatencyTestSession.ConvertStopwatchTicksToNano(t1 - _t0), _pauseTimeNs);
+
+                if (data.Value < _maxEvents)
                 {
-                    var t1 = Stopwatch.GetTimestamp();
-
-                    _histogram.RecordValueWithExpectedInterval(LatencyTestSession.ConvertStopwatchTicksToNano(t1 - _t0), _pauseTimeNs);
-
-                    if (data.Value < _maxEvents)
+                    while (_pauseTimeTicks > (Stopwatch.GetTimestamp() - t1))
                     {
-                        while (_pauseTimeTicks > (Stopwatch.GetTimestamp() - t1))
-                        {
-                            Thread.Yield();
-                        }
+                        Thread.Yield();
+                    }
 
-                        Send();
-                    }
-                    else
-                    {
-                        _signal.Set();
-                    }
+                    Send();
+                }
+                else
+                {
+                    _signal.Set();
                 }
             }
 
@@ -153,24 +149,21 @@ namespace Disruptor.PerfTests.Sequenced
             }
         }
 
-        private class Ponger : IBatchEventHandler<PerfEvent>, ILifecycleAware
+        private class Ponger : IValueEventHandler<PerfValueEvent>, ILifecycleAware
         {
-            private readonly RingBuffer<PerfEvent> _buffer;
+            private readonly ValueRingBuffer<PerfValueEvent> _buffer;
             private CountdownEvent _globalSignal;
 
-            public Ponger(RingBuffer<PerfEvent> buffer)
+            public Ponger(ValueRingBuffer<PerfValueEvent> buffer)
             {
                 _buffer = buffer;
             }
 
-            public void OnBatch(ReadOnlySpan<PerfEvent> batch, long sequence)
+            public void OnEvent(ref PerfValueEvent data, long sequence, bool endOfBatch)
             {
-                foreach (var data in batch)
-                {
-                    var next = _buffer.Next();
-                    _buffer[next].Value = data.Value;
-                    _buffer.Publish(next);
-                }
+                var next = _buffer.Next();
+                _buffer[next].Value = data.Value;
+                _buffer.Publish(next);
             }
 
             public void OnStart()
@@ -190,5 +183,3 @@ namespace Disruptor.PerfTests.Sequenced
         }
     }
 }
-
-#endif

@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 namespace Disruptor.PerfTests.Raw
 {
     /// <summary>
-    /// UniCast a series of items between 1 publisher and 1 event processor.
+    /// Unicast a series of items between 1 publisher and 1 event processor.
+    /// Use batch publication (<see cref="RingBuffer.Next(int)"/>.
+    ///
     /// +----+    +-----+
     /// | P1 |--->| EP1 |
     /// +----+    +-----+
@@ -41,7 +43,7 @@ namespace Disruptor.PerfTests.Raw
     /// SB  - SequenceBarrier
     /// EP1 - EventProcessor 1
     /// </summary>
-    public class OneToOneRawBatchThroughputTest : IThroughputTest
+    public class OneToOneRawThroughputTest_BatchPublisher : IThroughputTest
     {
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 200L;
@@ -49,7 +51,7 @@ namespace Disruptor.PerfTests.Raw
         private readonly SingleProducerSequencer _sequencer = new SingleProducerSequencer(_bufferSize, new YieldingWaitStrategy());
         private readonly MyRunnable _myRunnable;
 
-        public OneToOneRawBatchThroughputTest()
+        public OneToOneRawThroughputTest_BatchPublisher()
         {
             _myRunnable = new MyRunnable(_sequencer);
             _sequencer.AddGatingSequences(_myRunnable.Sequence);

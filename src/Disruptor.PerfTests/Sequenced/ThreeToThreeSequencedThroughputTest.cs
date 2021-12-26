@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
 using LongArrayPublisher = System.Action<System.Threading.CountdownEvent, Disruptor.RingBuffer<long[]>, long, long>;
@@ -9,6 +7,7 @@ namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
     /// Sequence a series of events from multiple publishers going to one event processor.
+    ///
     /// Disruptor:
     /// ==========
     ///             track to prevent wrap

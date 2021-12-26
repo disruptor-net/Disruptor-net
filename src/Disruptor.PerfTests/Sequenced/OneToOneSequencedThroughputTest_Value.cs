@@ -1,16 +1,12 @@
 using System;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
-using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
-using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
-    /// UniCast a series of items between 1 publisher and 1 event processor.
+    /// Unicast a series of items between 1 publisher and 1 event processor.
+    /// Use <see cref="ValueRingBuffer{T}"/>.
     ///
     /// +----+    +-----+
     /// | P1 |--->| EP1 |
@@ -35,20 +31,20 @@ namespace Disruptor.PerfTests.Sequenced
     /// SB  - SequenceBarrier
     /// EP1 - EventProcessor 1
     /// </summary>
-    public class OneToOneSequencedThreadAffinityThroughputTest : IThroughputTest
+    public class OneToOneSequencedThroughputTest_Value : IThroughputTest
     {
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 100L;
 
-        private readonly RingBuffer<PerfEvent> _ringBuffer;
+        private readonly ValueRingBuffer<PerfValueEvent> _ringBuffer;
         private readonly AdditionEventHandler _eventHandler;
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
-        private readonly IEventProcessor<PerfEvent> _eventProcessor;
+        private readonly IValueEventProcessor<PerfValueEvent> _eventProcessor;
 
-        public OneToOneSequencedThreadAffinityThroughputTest()
+        public OneToOneSequencedThroughputTest_Value()
         {
             _eventHandler = new AdditionEventHandler();
-            _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+            _ringBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
             _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
             _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);
@@ -56,27 +52,13 @@ namespace Disruptor.PerfTests.Sequenced
 
         public int RequiredProcessorCount => 2;
 
-        [MethodImpl(512)]
         public long Run(ThroughputSessionContext sessionContext)
         {
             long expectedCount = _eventProcessor.Sequence.Value + _iterations;
 
             _eventHandler.Reset(expectedCount);
-
-            var processorTask = PerfTestUtil.StartLongRunning(() =>
-            {
-                using var _ = ThreadAffinityUtil.SetThreadAffinity(0);
-
-                Thread.CurrentThread.Priority = ThreadPriority.Highest;
-
-                _eventProcessor.Run();
-            });
-
+            var processorTask = _eventProcessor.Start();
             _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
-
-            using var _ = ThreadAffinityUtil.SetThreadAffinity(1);
-
-            Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
             sessionContext.Start();
 
@@ -84,9 +66,9 @@ namespace Disruptor.PerfTests.Sequenced
 
             for (long i = 0; i < _iterations; i++)
             {
-                var s = ringBuffer.Next();
-                ringBuffer[s].Value = i;
-                ringBuffer.Publish(s);
+                var sequence = ringBuffer.Next();
+                ringBuffer[sequence].Value = i;
+                ringBuffer.Publish(sequence);
             }
 
             _eventHandler.WaitForSequence();

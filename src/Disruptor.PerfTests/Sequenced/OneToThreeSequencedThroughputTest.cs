@@ -11,7 +11,8 @@ using Disruptor.Processing;
 namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
-    /// MultiCast a series of items between 1 publisher and 3 event processors.
+    /// Multicast a series of items between 1 publisher and 3 event processors.
+    ///
     ///           +-----+
     ///    +----->| EP1 |
     ///    |      +-----+

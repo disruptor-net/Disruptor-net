@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
@@ -9,6 +8,8 @@ namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
     /// Sequence a series of events from multiple publishers going to one event processor.
+    /// Use batch publication (<see cref="RingBuffer.Next(int)"/>.
+    ///
     /// +----+
     /// | P1 |------+
     /// +----+      |
@@ -44,7 +45,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// SB  - SequenceBarrier
     /// EP1 - EventProcessor 1
     /// </summary>
-    public class ThreeToOneSequencedBatchThroughputTest : IThroughputTest
+    public class ThreeToOneSequencedThroughputTest_BatchPublication : IThroughputTest
     {
         private const int _numPublishers = 3;
         private const int _bufferSize = 1024 * 64;
@@ -56,7 +57,7 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly IEventProcessor<PerfEvent> _eventProcessor;
         private readonly ValueBatchPublisher[] _valuePublishers = new ValueBatchPublisher[_numPublishers];
 
-        public ThreeToOneSequencedBatchThroughputTest()
+        public ThreeToOneSequencedThroughputTest_BatchPublication()
         {
             var sequenceBarrier = _ringBuffer.NewBarrier();
             for (var i = 0; i < _numPublishers; i++)

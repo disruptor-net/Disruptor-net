@@ -5,22 +5,22 @@ using Disruptor.PerfTests.Support;
 namespace Disruptor.PerfTests.External
 {
     /// <summary>
-    /// UniCast a series of items between 1 publisher and 1 event processor.
-    /// 
+    /// Unicast a series of items between 1 publisher and 1 event processor.
+    ///
     /// +----+    +-----+
     /// | P1 |--->| EP1 |
     /// +----+    +-----+
-    /// 
+    ///
     /// Queue Based:
     /// ============
     ///        put      take
     /// +----+    +====+    +-----+
     /// | P1 |--->| Q1 |/---| EP1 |
     /// +----+    +====+    +-----+
-    /// 
+    ///
     /// P1  - Publisher 1
     /// Q1  - Queue 1
-    /// EP1 - EventeProcessor 1
+    /// EP1 - EventProcessor 1
     /// </summary>
     public class OneToOneQueueThroughputTest : IThroughputTest, IExternalTest
     {

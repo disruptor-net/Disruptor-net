@@ -8,7 +8,8 @@ using Disruptor.PerfTests.Support;
 namespace Disruptor.PerfTests.Raw
 {
     /// <summary>
-    /// UniCast a series of items between 1 publisher and 1 event processor.
+    /// Unicast a series of items between 1 publisher and 1 event processor.
+    ///
     /// +----+    +-----+
     /// | P1 |--->| EP1 |
     /// +----+    +-----+

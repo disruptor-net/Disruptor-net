@@ -1,23 +1,17 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
-using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
-
-#if BATCH_HANDLER
 
 namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
-    /// UniCast a series of items between 1 publisher and 1 event processor
+    /// Unicast a series of items between 1 publisher and 1 event processor.
     ///
     /// <code>
     /// +----+    +-----+
     /// | P1 |--->| EP1 |
     /// +----+    +-----+
-    ///
     /// Disruptor:
     /// ==========
     ///              track to prevent wrap
@@ -31,31 +25,29 @@ namespace Disruptor.PerfTests.Sequenced
     ///                        |        |
     ///                        +--------+
     ///                          waitFor
-    ///
     /// P1  - Publisher 1
     /// RB  - RingBuffer
     /// SB  - SequenceBarrier
     /// EP1 - EventProcessor 1
     /// </code>
     /// </summary>
-    public class OneToOneSequencedBatchSpanThroughputTest : IThroughputTest
+    public class OneToOneSequencedThroughputTest_LongArray : IThroughputTest
     {
-        private const int _batchSize = 10;
-        private const int _bufferSize = 1024 * 64;
-        private const long _iterations = 1000L * 1000L * 100L;
-        private static readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations) * _batchSize;
+        private const int _bufferSize = 1024 * 1;
+        private const long _iterations = 1000L * 1000L * 1L;
+        private const int _arraySize = 2 * 1024;
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-        private readonly RingBuffer<PerfEvent> _ringBuffer;
-        private readonly AdditionBatchEventHandler _handler;
-        private readonly IEventProcessor<PerfEvent> _eventProcessor;
+        private readonly RingBuffer<long[]> _ringBuffer;
+        private readonly LongArrayEventHandler _handler;
+        private readonly IEventProcessor<long[]> _eventProcessor;
 
-        public OneToOneSequencedBatchSpanThroughputTest()
+        public OneToOneSequencedThroughputTest_LongArray()
         {
-            _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+            _ringBuffer = RingBuffer<long[]>.CreateSingleProducer(() => new long[_arraySize], _bufferSize, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
-            _handler = new AdditionBatchEventHandler();
+            _handler = new LongArrayEventHandler();
             _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);
             _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);
         }
@@ -66,8 +58,9 @@ namespace Disruptor.PerfTests.Sequenced
 
         public long Run(ThroughputSessionContext sessionContext)
         {
-            var expectedCount = _eventProcessor.Sequence.Value + _iterations * _batchSize;
-            _handler.Reset(expectedCount);
+            var signal = new ManualResetEvent(false);
+            var expectedCount = _eventProcessor.Sequence.Value + _iterations;
+            _handler.Reset(signal, _iterations);
             var processorTask = _eventProcessor.Start();
             _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
@@ -76,28 +69,34 @@ namespace Disruptor.PerfTests.Sequenced
             var ringBuffer = _ringBuffer;
             for (var i = 0; i < _iterations; i++)
             {
-                var hi = ringBuffer.Next(_batchSize);
-                var lo = hi - (_batchSize - 1);
-                for (var l = lo; l <= hi; l++)
+                var next = ringBuffer.Next();
+                var @event = ringBuffer[next];
+                for (var j = 0; j < @event.Length; j++)
                 {
-                    ringBuffer[l].Value = (i);
+                    @event[j] = i;
                 }
-                ringBuffer.Publish(lo, hi);
+                ringBuffer.Publish(next);
             }
 
-            _handler.WaitForSequence();
+            signal.WaitOne();
             sessionContext.Stop();
-            PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _eventProcessor);
+            WaitForEventProcessorSequence(expectedCount);
             _eventProcessor.Halt();
             processorTask.Wait(2000);
 
-            sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations * _batchSize);
+            sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations);
 
-            PerfTestUtil.FailIfNot(_expectedResult, _handler.Value, $"Handler should have processed {_expectedResult} events, but was: {_handler.Value}");
+            PerfTestUtil.FailIf(0, _handler.Value, "Handler has not processed any event");
 
-            return _batchSize * _iterations;
+            return _iterations * _arraySize;
+        }
+
+        private void WaitForEventProcessorSequence(long expectedCount)
+        {
+            while (_eventProcessor.Sequence.Value != expectedCount)
+            {
+                Thread.Sleep(1);
+            }
         }
     }
 }
-
-#endif

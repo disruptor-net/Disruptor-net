@@ -9,6 +9,7 @@ namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
     /// Sequence a series of events from multiple publishers going to one event processor.
+    ///
     /// +----+
     /// | P1 |------+
     /// +----+      |

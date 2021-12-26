@@ -7,6 +7,7 @@ namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
     /// Unicast a series of items between 1 publisher and 1 event processor.
+    /// Use <see cref="MultiProducerSequencer"/>.
     ///
     /// +----+    +-----+
     /// | P1 |--->| EP1 |
@@ -31,7 +32,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// SB  - SequenceBarrier
     /// EP1 - EventProcessor 1
     /// </summary>
-    public class OneToOneSequencedThroughputTest : IThroughputTest
+    public class OneToOneSequencedThroughputTest_Multi : IThroughputTest
     {
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 100L;
@@ -41,10 +42,10 @@ namespace Disruptor.PerfTests.Sequenced
         private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
         private readonly IEventProcessor<PerfEvent> _eventProcessor;
 
-        public OneToOneSequencedThroughputTest()
+        public OneToOneSequencedThroughputTest_Multi()
         {
             _eventHandler = new AdditionEventHandler();
-            _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+            _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
             _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
             _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);

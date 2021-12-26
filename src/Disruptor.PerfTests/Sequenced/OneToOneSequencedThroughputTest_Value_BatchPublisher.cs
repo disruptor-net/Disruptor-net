@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 
 namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
-    /// UniCast a series of items between 1 publisher and 1 event processor
+    /// Unicast a series of items between 1 publisher and 1 event processor.
+    /// Use <see cref="ValueRingBuffer{T}"/>.
+    /// Use batch publication (<see cref="RingBuffer.Next(int)"/>.
     ///
     /// <code>
     /// +----+    +-----+
@@ -36,7 +34,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// EP1 - EventProcessor 1
     /// </code>
     /// </summary>
-    public class OneToOneSequencedBatchThroughputTest : IThroughputTest
+    public class OneToOneSequencedThroughputTest_Value_BatchPublisher : IThroughputTest
     {
         private const int _batchSize = 10;
         private const int _bufferSize = 1024 * 64;
@@ -45,13 +43,13 @@ namespace Disruptor.PerfTests.Sequenced
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-        private readonly RingBuffer<PerfEvent> _ringBuffer;
+        private readonly ValueRingBuffer<PerfValueEvent> _ringBuffer;
         private readonly AdditionEventHandler _handler;
-        private readonly IEventProcessor<PerfEvent> _eventProcessor;
+        private readonly IValueEventProcessor<PerfValueEvent> _eventProcessor;
 
-        public OneToOneSequencedBatchThroughputTest()
+        public OneToOneSequencedThroughputTest_Value_BatchPublisher()
         {
-            _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+            _ringBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
             _handler = new AdditionEventHandler();
             _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);

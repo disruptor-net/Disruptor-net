@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 
 namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
-    /// UniCast a series of items between 1 publisher and 1 event processor
+    /// Unicast a series of items between 1 publisher and 1 event processor
+    /// Use batch publication (<see cref="RingBuffer.Next(int)"/>.
     ///
     /// <code>
     /// +----+    +-----+
@@ -36,7 +33,7 @@ namespace Disruptor.PerfTests.Sequenced
     /// EP1 - EventProcessor 1
     /// </code>
     /// </summary>
-    public class OneToOneSequencedBatchUnmanagedThroughputTest : IThroughputTest
+    public class OneToOneSequencedThroughputTest_BatchPublisher : IThroughputTest
     {
         private const int _batchSize = 10;
         private const int _bufferSize = 1024 * 64;
@@ -45,15 +42,13 @@ namespace Disruptor.PerfTests.Sequenced
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-        private readonly UnmanagedRingBuffer<PerfValueEvent> _ringBuffer;
+        private readonly RingBuffer<PerfEvent> _ringBuffer;
         private readonly AdditionEventHandler _handler;
-        private readonly IValueEventProcessor<PerfValueEvent> _eventProcessor;
-        private readonly UnmanagedRingBufferMemory _memory;
+        private readonly IEventProcessor<PerfEvent> _eventProcessor;
 
-        public OneToOneSequencedBatchUnmanagedThroughputTest()
+        public OneToOneSequencedThroughputTest_BatchPublisher()
         {
-            _memory = UnmanagedRingBufferMemory.Allocate(_bufferSize, PerfValueEvent.Size);
-            _ringBuffer = new UnmanagedRingBuffer<PerfValueEvent>(_memory, ProducerType.Single,new YieldingWaitStrategy());
+            _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
             var sequenceBarrier = _ringBuffer.NewBarrier();
             _handler = new AdditionEventHandler();
             _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);
@@ -80,7 +75,7 @@ namespace Disruptor.PerfTests.Sequenced
                 var lo = hi - (_batchSize - 1);
                 for (var l = lo; l <= hi; l++)
                 {
-                    ringBuffer[l].Value = i;
+                    ringBuffer[l].Value = (i);
                 }
                 ringBuffer.Publish(lo, hi);
             }
