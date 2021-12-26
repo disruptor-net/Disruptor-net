@@ -54,7 +54,7 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
-        public void ShouldPublishAndHandleEvent()
+        public void ShouldPublishAndHandleEvent_EventHandler()
         {
             var eventCounter = new CountdownEvent(2);
             var values = new List<int>();
@@ -79,7 +79,7 @@ namespace Disruptor.Tests.Dsl
 
 #if BATCH_HANDLER
         [Test]
-        public void ShouldPublishAndHandleEventBatch()
+        public void ShouldPublishAndHandleEvent_BatchEventHandler()
         {
             var eventCounter = new CountdownEvent(2);
             var values = new List<int>();
@@ -104,7 +104,7 @@ namespace Disruptor.Tests.Dsl
 #endif
 
         [Test]
-        public void ShouldPublishAndHandleEvents()
+        public void ShouldPublishAndHandleEvents_EventHandler()
         {
             var eventCounter = new CountdownEvent(4);
             var values = new List<int>();
@@ -131,7 +131,7 @@ namespace Disruptor.Tests.Dsl
 
 #if BATCH_HANDLER
         [Test]
-        public void ShouldPublishAndHandleEventsBatch()
+        public void ShouldPublishAndHandleEvents_BatchEventHandler()
         {
             var eventCounter = new CountdownEvent(4);
             var values = new List<int>();
@@ -248,8 +248,7 @@ namespace Disruptor.Tests.Dsl
             var eventHandler1 = new SleepingEventHandler();
             var eventHandler2 = new SleepingEventHandler();
 
-            var eventHandlerGroup =
-                _disruptor.HandleEventsWith(eventHandler1, eventHandler2);
+            var eventHandlerGroup = _disruptor.HandleEventsWith(eventHandler1, eventHandler2);
             _disruptor.Start();
 
             Assert.IsNotNull(eventHandlerGroup);
@@ -384,7 +383,7 @@ namespace Disruptor.Tests.Dsl
         }
 
         [Test]
-        public void ShouldSupportSpecifyingADefaultExceptionHandlerForEventProcessors()
+        public void ShouldSupportSpecifyingADefaultExceptionHandlerForEventProcessors_EventHandler()
         {
             var eventHandled = new AtomicReference<Exception>();
             var exceptionHandler = new StubExceptionHandler(eventHandled);
@@ -402,7 +401,7 @@ namespace Disruptor.Tests.Dsl
 
 #if BATCH_HANDLER
         [Test]
-        public void ShouldSupportSpecifyingADefaultExceptionHandlerForBatchEventProcessors()
+        public void ShouldSupportSpecifyingADefaultExceptionHandlerForEventProcessors_BatchEventHandler()
         {
             var eventHandled = new AtomicReference<Exception>();
             var exceptionHandler = new StubExceptionHandler(eventHandled);
@@ -420,7 +419,7 @@ namespace Disruptor.Tests.Dsl
 #endif
 
         [Test]
-        public void ShouldApplyDefaultExceptionHandlerToExistingEventProcessors()
+        public void ShouldApplyDefaultExceptionHandlerToExistingEventProcessors_EventHandler()
         {
             var eventHandled = new AtomicReference<Exception>();
             var exceptionHandler = new StubExceptionHandler(eventHandled);
@@ -438,7 +437,7 @@ namespace Disruptor.Tests.Dsl
 
 #if BATCH_HANDLER
         [Test]
-        public void ShouldApplyDefaultExceptionHandlerToExistingBatchEventProcessors()
+        public void ShouldApplyDefaultExceptionHandlerToExistingEventProcessors_BatchEventHandler()
         {
             var eventHandled = new AtomicReference<Exception>();
             var exceptionHandler = new StubExceptionHandler(eventHandled);
@@ -842,7 +841,7 @@ namespace Disruptor.Tests.Dsl
             {
                 if (reference.Read() is { } exception)
                     return exception;
-                
+
                 Thread.Yield();
             }
         }
