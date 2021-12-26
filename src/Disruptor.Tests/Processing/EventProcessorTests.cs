@@ -206,20 +206,21 @@ namespace Disruptor.Tests.Processing
         [TestCase(typeof(BatchAwareEventHandlerInternal))]
         public void ShouldNotPassZeroSizeToBatchStartAware(Type eventHandlerType)
         {
-            var latch = new CountdownEvent(3);
-
-            var eventHandler = (BatchAwareEventHandler)Activator.CreateInstance(eventHandlerType, (Action<StubEvent>)(x => latch.Signal()))!;
+            var eventHandler = (BatchAwareEventHandler)Activator.CreateInstance(eventHandlerType)!;
 
             var eventProcessor = CreateEventProcessor(_ringBuffer, new DelegatingSequenceBarrier(_sequenceBarrier), eventHandler);
 
             _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
             var task = Task.Run(() => eventProcessor.Run());
-            latch.Wait(TimeSpan.FromSeconds(2));
 
-            _ringBuffer.Publish(_ringBuffer.Next());
-            _ringBuffer.Publish(_ringBuffer.Next());
-            _ringBuffer.Publish(_ringBuffer.Next());
+            for (var i = 0; i < 3; i++)
+            {
+                var sequence = _ringBuffer.Next();
+                Thread.Sleep(100);
+
+                _ringBuffer.Publish(sequence);
+            }
 
             eventProcessor.Halt();
             task.Wait();
@@ -262,12 +263,11 @@ namespace Disruptor.Tests.Processing
 
         // ReSharper disable once MemberCanBePrivate.Global
         // Public to enable dynamic code generation
-        public class BatchAwareEventHandler : TestEventHandler<StubEvent>, IBatchStartAware
+        public class BatchAwareEventHandler : IEventHandler<StubEvent>, IBatchStartAware
         {
             public Dictionary<long, int> BatchSizeToCount { get; } = new Dictionary<long, int>();
 
-            public BatchAwareEventHandler(Action<StubEvent> onEventAction)
-                : base(onEventAction)
+            public void OnEvent(StubEvent data, long sequence, bool endOfBatch)
             {
             }
 
@@ -279,10 +279,6 @@ namespace Disruptor.Tests.Processing
 
         internal class BatchAwareEventHandlerInternal : BatchAwareEventHandler
         {
-            public BatchAwareEventHandlerInternal(Action<StubEvent> onEventAction)
-                : base(onEventAction)
-            {
-            }
         }
     }
 }
