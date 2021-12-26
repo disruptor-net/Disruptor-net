@@ -12,13 +12,13 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldHandleLotsOfThreads()
         {
-            var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 1 << 16, TaskScheduler.Current, ProducerType.Multi, new SleepingWaitStrategy());
+            var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, new SleepingWaitStrategy());
             var ringBuffer = disruptor.RingBuffer;
             disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler());
 
             var threads = Math.Max(1, Environment.ProcessorCount / 2);
 
-            const int iterations = 20000000;
+            const int iterations = 20_000_000;
             var publisherCount = threads;
             var handlerCount = threads;
 
@@ -38,9 +38,12 @@ namespace Disruptor.Tests
             }
 
             end.Wait();
+
+            var spinWait = new AggressiveSpinWait();
+
             while (ringBuffer.Cursor < (iterations - 1))
             {
-                Thread.Sleep(0); // LockSupport.parkNanos(1);
+                spinWait.SpinOnce();
             }
 
             disruptor.Shutdown();
@@ -53,6 +56,7 @@ namespace Disruptor.Tests
             foreach (var handler in handlers)
             {
                 Assert.That(handler.MessagesSeen, Is.Not.EqualTo(0));
+                Assert.That(handler.FailureCount, Is.EqualTo(0));
             }
         }
 
@@ -79,10 +83,16 @@ namespace Disruptor.Tests
 
         private class TestWorkHandler : IWorkHandler<TestEvent>
         {
+            public int FailureCount;
             public int MessagesSeen;
 
             public void OnEvent(TestEvent @event)
             {
+                if (@event.A != @event.Sequence + 13 || @event.B != @event.Sequence - 7)
+                {
+                    FailureCount++;
+                }
+
                 MessagesSeen++;
             }
         }
@@ -119,7 +129,6 @@ namespace Disruptor.Tests
                         testEvent.Sequence = next;
                         testEvent.A = next + 13;
                         testEvent.B = next - 7;
-                        testEvent.S = "wibble-";
                         _ringBuffer.Publish(next);
                     }
                 }
@@ -141,7 +150,9 @@ namespace Disruptor.Tests
             public long Sequence;
             public long A;
             public long B;
-            public string? S;
+
+            // The string member was removed because it was not really useful for the test
+            // but the allocations made the test too slow.
         }
     }
 }
