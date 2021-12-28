@@ -97,9 +97,9 @@ namespace Disruptor.PerfTests.Sequenced
             var latch = new ManualResetEvent(false);
             _fizzBuzzHandler.Reset(latch, _eventProcessorFizzBuzz.Sequence.Value + _iterations);
 
-            var processorTask1 = Task.Run(() => _eventProcessorFizz.Run());
-            var processorTask2 = Task.Run(() => _eventProcessorBuzz.Run());
-            var processorTask3 = Task.Run(() => _eventProcessorFizzBuzz.Run());
+            var processorTask1 = _eventProcessorFizz.StartLongRunning();
+            var processorTask2 = _eventProcessorBuzz.StartLongRunning();
+            var processorTask3 = _eventProcessorFizzBuzz.StartLongRunning();
             _eventProcessorFizz.WaitUntilStarted(TimeSpan.FromSeconds(5));
             _eventProcessorBuzz.WaitUntilStarted(TimeSpan.FromSeconds(5));
             _eventProcessorFizzBuzz.WaitUntilStarted(TimeSpan.FromSeconds(5));

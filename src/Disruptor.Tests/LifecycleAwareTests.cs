@@ -24,7 +24,7 @@ namespace Disruptor.Tests
         [Test]
         public void ShouldNotifyOfBatchProcessorLifecycle()
         {
-            new Thread(_eventProcessor.Run).Start();
+            _eventProcessor.Start();
 
             _startSignal.WaitOne();
             _eventProcessor.Halt();

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
+using Disruptor.Util;
 
 namespace Disruptor.Processing
 {
@@ -19,6 +21,14 @@ namespace Disruptor.Processing
         public NoOpEventProcessor(ICursored sequencer)
         {
             _sequence = new SequencerFollowingSequence(sequencer);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="IEventProcessor.Start"/>.
+        /// </summary>
+        public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+        {
+            return Task.Factory.StartNew(Run, CancellationToken.None, taskCreationOptions, taskScheduler);
         }
 
         /// <summary>

@@ -1,4 +1,6 @@
-﻿namespace Disruptor.Processing
+﻿using System.Threading.Tasks;
+
+namespace Disruptor.Processing
 {
     /// <summary>
     /// An event processor needs to be an implementation of a runnable that will poll for events from the ring buffer
@@ -23,9 +25,9 @@
         void Halt();
 
         /// <summary>
-        /// Starts this instance
+        /// Starts this processor.
         /// </summary>
-        void Run();
+        Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions);
 
         /// <summary>
         /// Gets if the processor is running

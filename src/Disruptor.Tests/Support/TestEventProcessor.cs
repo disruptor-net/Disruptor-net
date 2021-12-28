@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Processing;
+using Disruptor.Util;
 
 namespace Disruptor.Tests.Support
 {
@@ -15,11 +17,17 @@ namespace Disruptor.Tests.Support
         }
 
         public ISequence Sequence { get; } = new Sequence();
+
         public bool IsRunning => _running != 0;
 
         public void Halt()
         {
             _running = 0;
+        }
+
+        public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+        {
+            return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
         }
 
         public void Run()

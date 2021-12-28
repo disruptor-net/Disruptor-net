@@ -30,7 +30,7 @@ namespace Disruptor.Dsl
 
         public void Start(TaskScheduler taskScheduler)
         {
-            EventProcessor.Start(taskScheduler);
+            EventProcessor.StartLongRunning(taskScheduler);
         }
 
         public void Halt()

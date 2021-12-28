@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Util;
 
 namespace Disruptor.Processing
@@ -74,8 +75,13 @@ namespace Disruptor.Processing
         public bool IsRunning => _runState == ProcessorRunStates.Running;
 
         /// <summary>
-        /// <see cref="IEventProcessor.Run"/>.
+        /// <inheritdoc cref="IEventProcessor.Start"/>.
         /// </summary>
+        public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+        {
+            return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
+        }
+
         [MethodImpl(Constants.AggressiveOptimization)]
         public void Run()
         {

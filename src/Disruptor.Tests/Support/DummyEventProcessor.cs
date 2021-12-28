@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Processing;
+using Disruptor.Util;
 
 namespace Disruptor.Tests.Support
 {
@@ -23,6 +25,11 @@ namespace Disruptor.Tests.Support
         public void Halt()
         {
             Thread.VolatileWrite(ref _running, 1);
+        }
+
+        public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+        {
+            return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
         }
 
         public bool IsRunning => Thread.VolatileRead(ref _running) == 1;

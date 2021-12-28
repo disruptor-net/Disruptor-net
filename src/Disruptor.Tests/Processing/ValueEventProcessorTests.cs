@@ -48,7 +48,7 @@ namespace Disruptor.Tests.Processing
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
 
-            var task = Task.Run(() => eventProcessor.Run());
+            var task = eventProcessor.Start();
 
             Assert.IsTrue(eventSignal.Wait(TimeSpan.FromSeconds(2)));
 
@@ -68,7 +68,7 @@ namespace Disruptor.Tests.Processing
 
             eventProcessor.SetExceptionHandler(exceptionHandler);
 
-            var task = Task.Run(() => eventProcessor.Run());
+            var task = eventProcessor.Start();
 
             _ringBuffer.Publish(_ringBuffer.Next());
 
@@ -91,7 +91,7 @@ namespace Disruptor.Tests.Processing
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
 
-            var task = Task.Run(() => eventProcessor.Run());
+            var task = eventProcessor.Start();
             Assert.IsTrue(signal.Wait(TimeSpan.FromSeconds(2)));
 
             eventProcessor.Halt();
@@ -137,9 +137,8 @@ namespace Disruptor.Tests.Processing
             var h1 = new LifeCycleHandler();
             var p1 = CreateEventProcessor(dp, barrier, h1);
 
-            var t1 = new Thread(p1.Run);
             p1.Halt();
-            t1.Start();
+            p1.Start();
 
             Assert.IsTrue(h1.WaitStart(TimeSpan.FromSeconds(2)));
             Assert.IsTrue(h1.WaitShutdown(TimeSpan.FromSeconds(2)));
@@ -148,9 +147,8 @@ namespace Disruptor.Tests.Processing
             {
                 var h2 = new LifeCycleHandler();
                 var p2 = CreateEventProcessor(dp, barrier, h2);
-                var t2 = new Thread(p2.Run);
+                p2.Start();
 
-                t2.Start();
                 p2.Halt();
 
                 Assert.IsTrue(h2.WaitStart(TimeSpan.FromSeconds(2)));
@@ -162,8 +160,7 @@ namespace Disruptor.Tests.Processing
                 var h2 = new LifeCycleHandler();
                 var p2 = CreateEventProcessor(dp, barrier, h2);
 
-                var t2 = new Thread(p2.Run);
-                t2.Start();
+                p2.Start();
                 Thread.Yield();
                 p2.Halt();
 

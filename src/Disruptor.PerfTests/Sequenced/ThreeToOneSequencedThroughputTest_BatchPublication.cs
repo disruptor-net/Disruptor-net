@@ -83,7 +83,7 @@ namespace Disruptor.PerfTests.Sequenced
                 var index = i;
                 futures[i] = Task.Run(() => _valuePublishers[index].Run());
             }
-            var processorTask = Task.Run(() => _eventProcessor.Run());
+            var processorTask = _eventProcessor.StartLongRunning();
             _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
             sessionContext.Start();

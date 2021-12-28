@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Processing;
 
 namespace Disruptor.PerfTests.Support
@@ -27,6 +28,11 @@ namespace Disruptor.PerfTests.Support
             {
                 _sequences[i] = new Sequence();
             }
+        }
+
+        public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+        {
+            return Task.Factory.StartNew(Run, CancellationToken.None, taskCreationOptions, taskScheduler);
         }
 
         public void Run()

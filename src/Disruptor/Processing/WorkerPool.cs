@@ -132,7 +132,7 @@ namespace Disruptor.Processing
             foreach (var workProcessor in _workProcessors)
             {
                 workProcessor.Sequence.SetValue(cursor);
-                workProcessor.Start(taskScheduler);
+                workProcessor.StartLongRunning(taskScheduler);
             }
 
             return _ringBuffer;

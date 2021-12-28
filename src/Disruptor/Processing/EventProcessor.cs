@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.Util;
 
@@ -91,6 +92,14 @@ namespace Disruptor.Processing
         public void WaitUntilStarted(TimeSpan timeout)
         {
             _started.Wait(timeout);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="IEventProcessor.Start"/>.
+        /// </summary>
+        public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+        {
+            return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
         }
 
         /// <summary>

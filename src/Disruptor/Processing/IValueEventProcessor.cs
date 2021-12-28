@@ -10,6 +10,11 @@ namespace Disruptor.Processing
         where T : struct
     {
         /// <summary>
+        /// Synchronously runs the processor.
+        /// </summary>
+        void Run();
+
+        /// <summary>
         /// Waits before the event processor enters the <see cref="IEventProcessor.IsRunning"/> state.
         /// </summary>
         /// <param name="timeout">maximum wait duration</param>

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Processing;
 using Disruptor.Tests.Support;
+using Disruptor.Util;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
@@ -161,6 +162,11 @@ namespace Disruptor.Tests
             public StubEventProcessor(long sequence)
             {
                 _sequence.SetValue(sequence);
+            }
+
+            public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+            {
+                return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
             }
 
             public void Run()
