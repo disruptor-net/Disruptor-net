@@ -1,6 +1,6 @@
 using System;
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
 
 namespace Disruptor.Tests.Support
 {

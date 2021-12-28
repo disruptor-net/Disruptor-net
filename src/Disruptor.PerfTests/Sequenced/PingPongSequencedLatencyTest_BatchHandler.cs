@@ -6,7 +6,7 @@ using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 using HdrHistogram;
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
 
 namespace Disruptor.PerfTests.Sequenced
 {

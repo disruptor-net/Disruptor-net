@@ -28,7 +28,7 @@ namespace Disruptor
         /// </summary>
         public delegate bool Handler<T>(T data, long sequence, bool endOfBatch);
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         /// <summary>
         /// A callback used to process events
         /// </summary>

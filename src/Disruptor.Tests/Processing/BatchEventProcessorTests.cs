@@ -5,7 +5,7 @@ using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
 
 namespace Disruptor.Tests.Processing
 {

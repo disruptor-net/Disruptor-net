@@ -34,7 +34,7 @@ namespace Disruptor.Processing
             return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy)!;
         }
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         /// <summary>
         /// Create a new <see cref="IEventProcessor{T}"/> with dedicated generic arguments.
         /// </summary>

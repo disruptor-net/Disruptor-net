@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
 
 namespace Disruptor.PerfTests.Sequenced
 {

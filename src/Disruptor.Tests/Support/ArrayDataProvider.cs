@@ -17,7 +17,7 @@ namespace Disruptor.Tests.Support
 
         T IDataProvider<T>.this[long sequence] => Data[sequence % Data.Length];
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         public ReadOnlySpan<T> this[long lo, long hi]
         {
             get

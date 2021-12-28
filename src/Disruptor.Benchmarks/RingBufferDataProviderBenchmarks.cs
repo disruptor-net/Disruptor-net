@@ -28,7 +28,7 @@ namespace Disruptor.Benchmarks
             UseEvent(_ringBuffer[Index + 1]);
         }
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         [Benchmark]
         public void SetValueSpan_1()
         {

@@ -77,7 +77,7 @@ namespace Disruptor
             return EventPoller.PollState.Idle;
         }
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         /// <summary>
         /// <para>
         /// Polls for events using the given handler.

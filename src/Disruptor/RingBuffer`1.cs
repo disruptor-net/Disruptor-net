@@ -153,7 +153,7 @@ namespace Disruptor
             }
         }
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         /// <summary>
         /// Gets a span of events for the given sequences in the RingBuffer.
         /// </summary>

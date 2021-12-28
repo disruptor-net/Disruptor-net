@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using Disruptor.Tests.Support;
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
 
 namespace Disruptor.PerfTests.Support
 {

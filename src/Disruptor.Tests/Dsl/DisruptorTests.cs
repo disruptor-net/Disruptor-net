@@ -77,7 +77,7 @@ namespace Disruptor.Tests.Dsl
             Assert.AreEqual(new List<int> { 101, 102 }, values);
         }
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         [Test]
         public void ShouldPublishAndHandleEvent_BatchEventHandler()
         {
@@ -129,7 +129,7 @@ namespace Disruptor.Tests.Dsl
             Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
         }
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         [Test]
         public void ShouldPublishAndHandleEvents_BatchEventHandler()
         {
@@ -399,7 +399,7 @@ namespace Disruptor.Tests.Dsl
             Assert.AreSame(testException, actualException);
         }
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         [Test]
         public void ShouldSupportSpecifyingADefaultExceptionHandlerForEventProcessors_BatchEventHandler()
         {
@@ -435,7 +435,7 @@ namespace Disruptor.Tests.Dsl
             Assert.AreSame(testException, actualException);
         }
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         [Test]
         public void ShouldApplyDefaultExceptionHandlerToExistingEventProcessors_BatchEventHandler()
         {

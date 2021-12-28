@@ -57,7 +57,7 @@ namespace Disruptor.Dsl
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
         public EventHandlerGroup<T> Then(params IEventHandler<T>[] handlers) => HandleEventsWith(handlers);
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         /// <summary>
         /// Set up batch handlers to consume events from the ring buffer. These handlers will only process events
         /// after every <see cref="IEventProcessor"/> in this group has processed the event.
@@ -105,7 +105,7 @@ namespace Disruptor.Dsl
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to set up a event processor barrier over the created event processors.</returns>
         public EventHandlerGroup<T> HandleEventsWith(params IEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_sequences, handlers);
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         /// <summary>
         /// Set up batch handlers to handle events from the ring buffer. These handlers will only process events
         /// after every <see cref="IEventProcessor"/> in this group has processed the event.

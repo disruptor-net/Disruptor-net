@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.Util;
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
 
 namespace Disruptor.Processing
 {

@@ -44,7 +44,7 @@ namespace Disruptor.Tests.Util
             }
         }
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         [TestCase(1)]
         [TestCase(2)]
         [TestCase(5)]

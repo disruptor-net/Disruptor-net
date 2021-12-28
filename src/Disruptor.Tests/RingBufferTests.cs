@@ -362,7 +362,7 @@ namespace Disruptor.Tests
             Assert.That(evt.Value, Is.EqualTo(expectedIndex));
         }
 
-#if BATCH_HANDLER
+#if DISRUPTOR_V5
         [TestCase(0)]
         [TestCase(1)]
         [TestCase(31)]
