@@ -68,6 +68,17 @@ namespace Disruptor.Dsl
         /// <param name="handlers"></param>
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
         public EventHandlerGroup<T> Then(params IBatchEventHandler<T>[] handlers) => HandleEventsWith(handlers);
+
+        /// <summary>
+        /// Set up batch handlers to consume events from the ring buffer. These handlers will only process events
+        /// after every <see cref="IEventProcessor"/> in this group has processed the event.
+        ///
+        /// This method is generally used as part of a chain. For example if the handler <code>A</code> must
+        /// process events before handler<code>B</code>: <code>dw.HandleEventsWith(A).Then(B);</code>
+        /// </summary>
+        /// <param name="handlers"></param>
+        /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
+        public EventHandlerGroup<T> Then(params IAsyncBatchEventHandler<T>[] handlers) => HandleEventsWith(handlers);
 #endif
 
         /// <summary>
@@ -116,6 +127,17 @@ namespace Disruptor.Dsl
         /// <param name="handlers">the batch handlers that will process events.</param>
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to set up a event processor barrier over the created event processors.</returns>
         public EventHandlerGroup<T> HandleEventsWith(params IBatchEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_sequences, handlers);
+
+        /// <summary>
+        /// Set up batch handlers to handle events from the ring buffer. These handlers will only process events
+        /// after every <see cref="IEventProcessor"/> in this group has processed the event.
+        ///
+        /// This method is generally used as part of a chain. For example if <code>A</code> must
+        /// process events before<code> B</code>:  <code>dw.After(A).HandleEventsWith(B);</code>
+        /// </summary>
+        /// <param name="handlers">the batch handlers that will process events.</param>
+        /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to set up a event processor barrier over the created event processors.</returns>
+        public EventHandlerGroup<T> HandleEventsWith(params IAsyncBatchEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_sequences, handlers);
 #endif
 
         /// <summary>

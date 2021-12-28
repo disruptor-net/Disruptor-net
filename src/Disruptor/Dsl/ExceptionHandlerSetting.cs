@@ -25,7 +25,15 @@ namespace Disruptor.Dsl
         /// <param name="exceptionHandler">exceptionHandler the exception handler to use.</param>
         public void With(IExceptionHandler<T> exceptionHandler)
         {
+#if DISRUPTOR_V5
+            var eventProcessor = _consumerRepository.GetEventProcessorFor(_eventHandler);
+            if (eventProcessor is IAsyncEventProcessor<T> asyncEventProcessor)
+                asyncEventProcessor.SetExceptionHandler(exceptionHandler);
+            else
+                ((IEventProcessor<T>)eventProcessor).SetExceptionHandler(exceptionHandler);
+#else
             ((IEventProcessor<T>)_consumerRepository.GetEventProcessorFor(_eventHandler)).SetExceptionHandler(exceptionHandler);
+#endif
             _consumerRepository.GetBarrierFor(_eventHandler)?.CancelProcessing();
         }
     }

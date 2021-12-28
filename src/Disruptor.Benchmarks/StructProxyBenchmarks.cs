@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using Disruptor.Util;
 
@@ -61,8 +62,17 @@ namespace Disruptor.Benchmarks
             public Event this[long sequence] => _data;
 
 #if DISRUPTOR_V5
+            public ReadOnlySpan<Event> this[long lo, long hi]
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get { return InternalUtil.ReadBlock<Event>(_dataArray, 0, 1); }
+            }
 
-            public ReadOnlySpan<Event> this[long lo, long hi] => InternalUtil.ReadBlock<Event>(_dataArray, 0, 1);
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public EventBatch<Event> GetBatch(long lo, long hi)
+            {
+                return new EventBatch<Event>(_dataArray, 0, 1, lo);
+            }
 #endif
         }
     }

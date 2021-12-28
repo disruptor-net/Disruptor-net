@@ -15,10 +15,10 @@ namespace Disruptor.Tests
 
             bool Handler(ref decimal e, long s, bool b) => false;
 
-            var provider = new ArrayDataProvider<decimal>(new decimal[16]);
+            var provider = new ArrayValueDataProvider<decimal>(new decimal[16]);
             provider.Data[0] = 42m;
 
-            var poller = sequencer.NewPoller(provider.AsValueDataProvider(), gatingSequence);
+            var poller = sequencer.NewPoller(provider, gatingSequence);
 
             Assert.That(poller.Poll(Handler), Is.EqualTo(EventPoller.PollState.Idle));
 

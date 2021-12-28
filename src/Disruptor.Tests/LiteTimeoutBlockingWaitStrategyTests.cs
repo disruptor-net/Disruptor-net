@@ -7,8 +7,13 @@ using NUnit.Framework;
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class LiteTimeoutBlockingWaitStrategyTests
+    public class LiteTimeoutBlockingWaitStrategyTests : WaitStrategyFixture<LiteTimeoutBlockingWaitStrategy>
     {
+        public LiteTimeoutBlockingWaitStrategyTests()
+            : base(new LiteTimeoutBlockingWaitStrategy(TimeSpan.FromSeconds(30)))
+        {
+        }
+
         [Test]
         public void ShouldTimeoutWaitFor()
         {

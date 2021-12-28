@@ -13,41 +13,122 @@ namespace Disruptor.Benchmarks
             _ringBuffer = new RingBuffer<Event>(() => new Event(), new SingleProducerSequencer(4096, new BusySpinWaitStrategy()));
         }
 
-        public int Index { get; set; } = 75;
+        public long Sequence { get; set; } = 75;
 
-        [Benchmark]
+        [Benchmark(OperationsPerInvoke = 20)]
         public void SetValue_1()
         {
-            UseEvent(_ringBuffer[Index]);
-        }
-
-        [Benchmark]
-        public void SetValue_2()
-        {
-            UseEvent(_ringBuffer[Index]);
-            UseEvent(_ringBuffer[Index + 1]);
-        }
-
-#if DISRUPTOR_V5
-        [Benchmark]
-        public void SetValueSpan_1()
-        {
-            var span = _ringBuffer[Index, Index];
-
-            foreach (var data in span)
+            for (var i = 0; i < 20; i++)
             {
-                UseEvent(data);
+                UseEvent(_ringBuffer[Sequence]);
             }
         }
 
-        [Benchmark]
+        [Benchmark(OperationsPerInvoke = 20)]
+        public void SetValue_2()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                UseEvent(_ringBuffer[Sequence]);
+                UseEvent(_ringBuffer[Sequence + 1]);
+            }
+        }
+
+        [Benchmark(OperationsPerInvoke = 20)]
+        public void SetValue_5()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                UseEvent(_ringBuffer[Sequence]);
+                UseEvent(_ringBuffer[Sequence + 1]);
+                UseEvent(_ringBuffer[Sequence + 2]);
+                UseEvent(_ringBuffer[Sequence + 3]);
+                UseEvent(_ringBuffer[Sequence + 4]);
+            }
+        }
+
+#if DISRUPTOR_V5
+        [Benchmark(OperationsPerInvoke = 20)]
+        public void SetValueSpan_1()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                var span = _ringBuffer[Sequence, Sequence];
+
+                foreach (var data in span)
+                {
+                    UseEvent(data);
+                }
+            }
+        }
+
+        [Benchmark(OperationsPerInvoke = 20)]
         public void SetValueSpan_2()
         {
-            var span = _ringBuffer[Index, Index + 1];
-
-            foreach (var data in span)
+            for (var i = 0; i < 20; i++)
             {
-                UseEvent(data);
+                var span = _ringBuffer[Sequence, Sequence + 1];
+
+                foreach (var data in span)
+                {
+                    UseEvent(data);
+                }
+            }
+        }
+
+        [Benchmark(OperationsPerInvoke = 20)]
+        public void SetValueSpan_5()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                var span = _ringBuffer[Sequence, Sequence + 4];
+
+                foreach (var data in span)
+                {
+                    UseEvent(data);
+                }
+            }
+        }
+
+        [Benchmark(OperationsPerInvoke = 20)]
+        public void SetValueBatch_1()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                var batch = _ringBuffer.GetBatch(Sequence, Sequence);
+
+                foreach (var data in batch)
+                {
+                    UseEvent(data);
+                }
+            }
+        }
+
+        [Benchmark(OperationsPerInvoke = 20)]
+        public void SetValueBatch_2()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                var batch = _ringBuffer.GetBatch(Sequence, Sequence + 1);
+
+                foreach (var data in batch)
+                {
+                    UseEvent(data);
+                }
+            }
+        }
+
+        [Benchmark(OperationsPerInvoke = 20)]
+        public void SetValueBatch_5()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                var batch = _ringBuffer.GetBatch(Sequence, Sequence + 4);
+
+                foreach (var data in batch)
+                {
+                    UseEvent(data);
+                }
             }
         }
 #endif

@@ -6,6 +6,7 @@ namespace Disruptor
     /// Exposes the ring buffer events.
     /// </summary>
     public interface IDataProvider<T>
+        where T : class
     {
         /// <summary>
         /// Gets the event for a given sequence in the ring buffer.
@@ -17,6 +18,8 @@ namespace Disruptor
         /// Gets a span of events for the given sequences in the RingBuffer.
         /// </summary>
         ReadOnlySpan<T> this[long lo, long hi] { get; }
+
+        EventBatch<T> GetBatch(long lo, long hi);
 #endif
     }
 }

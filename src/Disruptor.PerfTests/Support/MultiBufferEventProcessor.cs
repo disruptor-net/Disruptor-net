@@ -6,6 +6,7 @@ using Disruptor.Processing;
 namespace Disruptor.PerfTests.Support
 {
     public class MultiBufferEventProcessor<T> : IEventProcessor
+        where T : class
     {
         private volatile int _isRunning;
         private readonly IDataProvider<T>[] _providers;

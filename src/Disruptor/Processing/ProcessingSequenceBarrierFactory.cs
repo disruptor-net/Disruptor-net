@@ -14,10 +14,24 @@ namespace Disruptor.Processing
         public static ISequenceBarrier Create(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
         {
             var sequencerProxy = StructProxy.CreateProxyInstance(sequencer);
-            var waitStrategyProxy = StructProxy.CreateProxyInstance(waitStrategy);
 
-            var sequencerBarrierType = typeof(ProcessingSequenceBarrier<,>).MakeGenericType(sequencerProxy.GetType(), waitStrategyProxy.GetType());
-            return (ISequenceBarrier)Activator.CreateInstance(sequencerBarrierType, sequencerProxy, waitStrategyProxy, cursorSequence, dependentSequences)!;
+#if DISRUPTOR_V5
+
+            if (waitStrategy is IAsyncWaitStrategy asyncWaitStrategy)
+            {
+                var waitStrategyProxy = StructProxy.CreateProxyInstance(asyncWaitStrategy);
+
+                var sequencerBarrierType = typeof(AsyncProcessingSequenceBarrier<,>).MakeGenericType(sequencerProxy.GetType(), waitStrategyProxy.GetType());
+                return (ISequenceBarrier)Activator.CreateInstance(sequencerBarrierType, sequencerProxy, waitStrategyProxy, cursorSequence, dependentSequences)!;
+            }
+            else
+#endif
+            {
+                var waitStrategyProxy = StructProxy.CreateProxyInstance(waitStrategy);
+
+                var sequencerBarrierType = typeof(ProcessingSequenceBarrier<,>).MakeGenericType(sequencerProxy.GetType(), waitStrategyProxy.GetType());
+                return (ISequenceBarrier)Activator.CreateInstance(sequencerBarrierType, sequencerProxy, waitStrategyProxy, cursorSequence, dependentSequences)!;
+            }
         }
     }
 }

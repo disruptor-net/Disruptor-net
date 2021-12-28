@@ -63,7 +63,8 @@ namespace Disruptor
         /// Creates an event poller for this sequence that will use the supplied data provider and
         /// gating sequences.
         /// </summary>
-        EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences);
+        EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
+            where T : class;
 
         /// <summary>
         /// Creates an event poller for this sequence that will use the supplied data provider and

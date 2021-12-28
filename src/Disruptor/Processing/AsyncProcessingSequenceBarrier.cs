@@ -1,19 +1,19 @@
-using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Util;
 
+#if DISRUPTOR_V5
+
 namespace Disruptor.Processing
 {
     /// <summary>
-    /// <see cref="ISequenceBarrier"/> handed out for gating <see cref="IEventProcessor"/> on a cursor sequence and optional dependent <see cref="IEventProcessor"/>s,
-    ///  using the given WaitStrategy.
+    /// Coordination barrier for asynchronous event processors. <see cref="ProcessingSequenceBarrier{TSequencer,TWaitStrategy}"/>
     /// </summary>
     /// <typeparam name="TSequencer">the type of the <see cref="ISequencer"/> used.</typeparam>
-    /// <typeparam name="TWaitStrategy">the type of the <see cref="IWaitStrategy"/> used.</typeparam>
-    internal struct ProcessingSequenceBarrier<TSequencer, TWaitStrategy> : ISequenceBarrier
-        where TWaitStrategy : IWaitStrategy
+    /// <typeparam name="TWaitStrategy">the type of the <see cref="IAsyncWaitStrategy"/> used.</typeparam>
+    internal struct AsyncProcessingSequenceBarrier<TSequencer, TWaitStrategy> : IAsyncSequenceBarrier
+        where TWaitStrategy : IAsyncWaitStrategy
         where TSequencer : ISequencer
     {
         // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
@@ -25,7 +25,7 @@ namespace Disruptor.Processing
         private readonly Sequence _cursorSequence;
         private volatile CancellationTokenSource _cancellationTokenSource;
 
-        public ProcessingSequenceBarrier(TSequencer sequencer, TWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
+        public AsyncProcessingSequenceBarrier(TSequencer sequencer, TWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
@@ -41,6 +41,19 @@ namespace Disruptor.Processing
             cancellationToken.ThrowIfCancellationRequested();
 
             var result = _waitStrategy.WaitFor(sequence, _cursorSequence, _dependentSequence, cancellationToken);
+
+            if (result.UnsafeAvailableSequence < sequence)
+                return result;
+
+            return _sequencer.GetHighestPublishedSequence(sequence, result.UnsafeAvailableSequence);
+        }
+
+        public async ValueTask<SequenceWaitResult> WaitForAsync(long sequence)
+        {
+            var cancellationToken = _cancellationTokenSource.Token;
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var result = await _waitStrategy.WaitForAsync(sequence, _cursorSequence, _dependentSequence, cancellationToken);
 
             if (result.UnsafeAvailableSequence < sequence)
                 return result;
@@ -71,3 +84,5 @@ namespace Disruptor.Processing
         }
     }
 }
+
+#endif

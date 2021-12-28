@@ -12,6 +12,7 @@ namespace Disruptor
     /// Consider using <see cref="RingBuffer{T}.NewPoller"/> to get an instance of this type.
     /// </remarks>
     public class EventPoller<T>
+        where T : class
     {
         private readonly IDataProvider<T> _dataProvider;
         private readonly ISequencer _sequencer;

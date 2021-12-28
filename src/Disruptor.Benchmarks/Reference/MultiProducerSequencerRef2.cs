@@ -339,6 +339,7 @@ namespace Disruptor.Benchmarks.Reference
         /// <see cref="ISequencer.NewPoller{T}(IDataProvider{T}, ISequence[])"/>.
         /// </summary>
         public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
+            where T : class
         {
             return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
         }

@@ -25,7 +25,11 @@ namespace Disruptor.Tests.Dsl
             _delayedEventHandlers = new List<DelayedEventHandler>();
             _testWorkHandlers = new List<TestWorkHandler>();
             _taskScheduler = new StubTaskScheduler();
+#if DISRUPTOR_V5
+            _disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 4, _taskScheduler, ProducerType.Multi, new AsyncWaitStrategy(new BlockingWaitStrategy()));
+#else
             _disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 4, _taskScheduler);
+#endif
         }
 
         public void Dispose()
@@ -101,6 +105,30 @@ namespace Disruptor.Tests.Dsl
             Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
             Assert.AreEqual(new List<int> { 101, 102 }, values);
         }
+
+        [Test]
+        public void ShouldPublishAndHandleEvent_AsyncBatchEventHandler()
+        {
+            var eventCounter = new CountdownEvent(2);
+            var values = new List<int>();
+
+            _disruptor.HandleEventsWith(new TestBatchEventHandler<TestEvent>(e => values.Add(e.Value)))
+                      .Then(new TestBatchEventHandler<TestEvent>(e => eventCounter.Signal()));
+
+            _disruptor.Start();
+
+            using (var scope = _disruptor.PublishEvent())
+            {
+                scope.Event().Value = 101;
+            }
+            using (var scope = _disruptor.PublishEvent())
+            {
+                scope.Event().Value = 102;
+            }
+
+            Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+            Assert.AreEqual(new List<int> { 101, 102 }, values);
+        }
 #endif
 
         [Test]
@@ -138,6 +166,32 @@ namespace Disruptor.Tests.Dsl
 
             _disruptor.HandleEventsWith(new TestBatchEventHandler<TestEvent>(e => values.Add(e.Value)))
                       .Then(new TestBatchEventHandler<TestEvent>(e => eventCounter.Signal()));
+
+            _disruptor.Start();
+
+            using (var scope = _disruptor.PublishEvents(2))
+            {
+                scope.Event(0).Value = 101;
+                scope.Event(1).Value = 102;
+            }
+            using (var scope = _disruptor.PublishEvents(2))
+            {
+                scope.Event(0).Value = 103;
+                scope.Event(1).Value = 104;
+            }
+
+            Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+            Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
+        }
+
+        [Test]
+        public void ShouldPublishAndHandleEvents_AsyncBatchEventHandler()
+        {
+            var eventCounter = new CountdownEvent(4);
+            var values = new List<int>();
+
+            _disruptor.HandleEventsWith(new TestAsyncBatchEventHandler<TestEvent>(e => values.Add(e.Value)))
+                      .Then(new TestAsyncBatchEventHandler<TestEvent>(e => eventCounter.Signal()));
 
             _disruptor.Start();
 
@@ -416,6 +470,23 @@ namespace Disruptor.Tests.Dsl
             var actualException = WaitFor(eventHandled);
             Assert.AreSame(testException, actualException);
         }
+
+        [Test]
+        public void ShouldSupportSpecifyingADefaultExceptionHandlerForEventProcessors_AsyncBatchEventHandler()
+        {
+            var eventHandled = new AtomicReference<Exception>();
+            var exceptionHandler = new StubExceptionHandler(eventHandled);
+            var testException = new Exception();
+            var handler = new TestAsyncBatchEventHandler<TestEvent>(_ => throw testException);
+
+            _disruptor.SetDefaultExceptionHandler(exceptionHandler);
+            _disruptor.HandleEventsWith(handler);
+
+            PublishEvent();
+
+            var actualException = WaitFor(eventHandled);
+            Assert.AreSame(testException, actualException);
+        }
 #endif
 
         [Test]
@@ -443,6 +514,23 @@ namespace Disruptor.Tests.Dsl
             var exceptionHandler = new StubExceptionHandler(eventHandled);
             var testException = new Exception();
             var handler = new TestBatchEventHandler<TestEvent>(_ => throw testException);
+
+            _disruptor.HandleEventsWith(handler);
+            _disruptor.SetDefaultExceptionHandler(exceptionHandler);
+
+            PublishEvent();
+
+            var actualException = WaitFor(eventHandled);
+            Assert.AreSame(testException, actualException);
+        }
+
+        [Test]
+        public void ShouldApplyDefaultExceptionHandlerToExistingEventProcessors_AsyncBatchEventHandler()
+        {
+            var eventHandled = new AtomicReference<Exception>();
+            var exceptionHandler = new StubExceptionHandler(eventHandled);
+            var testException = new Exception();
+            var handler = new TestAsyncBatchEventHandler<TestEvent>(_ => throw testException);
 
             _disruptor.HandleEventsWith(handler);
             _disruptor.SetDefaultExceptionHandler(exceptionHandler);
@@ -499,6 +587,40 @@ namespace Disruptor.Tests.Dsl
 
             WaitFor(reference);
         }
+
+#if DISRUPTOR_V5
+        [Test]
+        public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor_BatchHandler()
+        {
+            var testException = new Exception();
+            var eventHandler = new TestBatchEventHandler<TestEvent>(_ => throw testException);
+            _disruptor.HandleEventsWith(eventHandler);
+
+            var reference = new AtomicReference<Exception>();
+            var exceptionHandler = new StubExceptionHandler(reference);
+            _disruptor.HandleExceptionsFor(eventHandler).With(exceptionHandler);
+
+            PublishEvent();
+
+            WaitFor(reference);
+        }
+
+        [Test]
+        public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor_AsyncBatchHandler()
+        {
+            var testException = new Exception();
+            var eventHandler = new TestAsyncBatchEventHandler<TestEvent>(_ => throw testException);
+            _disruptor.HandleEventsWith(eventHandler);
+
+            var reference = new AtomicReference<Exception>();
+            var exceptionHandler = new StubExceptionHandler(reference);
+            _disruptor.HandleExceptionsFor(eventHandler).With(exceptionHandler);
+
+            PublishEvent();
+
+            WaitFor(reference);
+        }
+#endif
 
         [Test]
         public void ShouldThrowExceptionWhenAddingEventProcessorsAfterTheProducerBarrierHasBeenCreated()

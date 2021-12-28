@@ -1,15 +1,13 @@
-﻿using Disruptor.Tests.Support;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class SleepingWaitStrategyTests
+    public class SleepingWaitStrategyTests : WaitStrategyFixture<SleepingWaitStrategy>
     {
-        [Test]
-        public void ShouldWaitForValue()
+        public SleepingWaitStrategyTests()
+            : base(new SleepingWaitStrategy())
         {
-            WaitStrategyTestUtil.AssertWaitForWithDelayOf(50, new SleepingWaitStrategy());
         }
     }
 }

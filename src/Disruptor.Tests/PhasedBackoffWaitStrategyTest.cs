@@ -1,38 +1,34 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Tests.Support;
+using JetBrains.Annotations;
 using NUnit.Framework;
 
 namespace Disruptor.Tests
 {
     [TestFixture]
-    public class PhasedBackoffWaitStrategyTest
+    public abstract class PhasedBackoffWaitStrategyTest : WaitStrategyFixture<PhasedBackoffWaitStrategy>
     {
-        [Test]
-        public void ShouldHandleImmediateSequenceChange()
+        protected PhasedBackoffWaitStrategyTest(PhasedBackoffWaitStrategy waitStrategy)
+            : base(waitStrategy)
         {
-            WaitStrategyTestUtil.AssertWaitForWithDelayOf(0, PhasedBackoffWaitStrategy.WithLock(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1)));
-            WaitStrategyTestUtil.AssertWaitForWithDelayOf(0, PhasedBackoffWaitStrategy.WithSleep(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1)));
         }
 
-        [Test]
-        public void ShouldHandleSequenceChangeWithOneMillisecondDelay()
+        public class WithLock : PhasedBackoffWaitStrategyTest
         {
-            WaitStrategyTestUtil.AssertWaitForWithDelayOf(1, PhasedBackoffWaitStrategy.WithLock(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1)));
-            WaitStrategyTestUtil.AssertWaitForWithDelayOf(1, PhasedBackoffWaitStrategy.WithSleep(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1)));
+            public WithLock()
+                : base(PhasedBackoffWaitStrategy.WithLock(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1)))
+            {
+            }
         }
 
-        [Test]
-        public void ShouldHandleSequenceChangeWithTwoMillisecondDelay()
+        public class WithSleep : PhasedBackoffWaitStrategyTest
         {
-            WaitStrategyTestUtil.AssertWaitForWithDelayOf(2, PhasedBackoffWaitStrategy.WithLock(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1)));
-            WaitStrategyTestUtil.AssertWaitForWithDelayOf(2, PhasedBackoffWaitStrategy.WithSleep(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1)));
-        }
-
-        [Test]
-        public void ShouldHandleSequenceChangeWithTenMillisecondDelay()
-        {
-            WaitStrategyTestUtil.AssertWaitForWithDelayOf(10, PhasedBackoffWaitStrategy.WithLock(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1)));
-            WaitStrategyTestUtil.AssertWaitForWithDelayOf(10, PhasedBackoffWaitStrategy.WithSleep(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1)));
+            public WithSleep()
+                : base(PhasedBackoffWaitStrategy.WithSleep(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1)))
+            {
+            }
         }
     }
 }

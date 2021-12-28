@@ -42,6 +42,7 @@ namespace Disruptor
             where T : struct;
 
         public static EventPoller<T> Create<T>(IDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
+            where T : class
         {
             var gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
 

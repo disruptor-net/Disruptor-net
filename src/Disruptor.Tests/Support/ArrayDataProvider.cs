@@ -2,7 +2,8 @@ using System;
 
 namespace Disruptor.Tests.Support
 {
-    public class ArrayDataProvider<T> : IDataProvider<T>, IValueDataProvider<T>
+    public class ArrayDataProvider<T> : IDataProvider<T>
+        where T : class
     {
         public T[] Data { get; }
 
@@ -15,7 +16,7 @@ namespace Disruptor.Tests.Support
             Data = data;
         }
 
-        T IDataProvider<T>.this[long sequence] => Data[sequence % Data.Length];
+        public T this[long sequence] => Data[sequence % Data.Length];
 
 #if DISRUPTOR_V5
         public ReadOnlySpan<T> this[long lo, long hi]
@@ -31,11 +32,17 @@ namespace Disruptor.Tests.Support
                 return new ReadOnlySpan<T>(Data, index1, Data.Length - index1);
             }
         }
+
+        public EventBatch<T> GetBatch(long lo, long hi)
+        {
+            var index1 = (int)(lo % Data.Length);
+            var index2 = (int)(hi % Data.Length);
+
+            if (index1 <= index2)
+                return new EventBatch<T>(Data, index1, index2 - index1 + 1, lo);
+
+            return new EventBatch<T>(Data, index1, Data.Length - index1, lo);
+        }
 #endif
-
-        ref T IValueDataProvider<T>.this[long sequence] => ref Data[sequence % Data.Length];
-
-        public IDataProvider<T> AsDataProvider() => this;
-        public IValueDataProvider<T> AsValueDataProvider() => this;
     }
 }

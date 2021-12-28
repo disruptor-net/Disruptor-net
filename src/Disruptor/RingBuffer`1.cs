@@ -178,6 +178,16 @@ namespace Disruptor
                 return InternalUtil.ReadBlock<T>(_entries, _bufferPadRef + index1, length);
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EventBatch<T> GetBatch(long lo, long hi)
+        {
+            var loIndex = (int)(lo & _indexMask);
+            var hiIndex = (int)(hi & _indexMask);
+            var endIndex = loIndex <= hiIndex ? hiIndex : _bufferSize - 1;
+
+            return new EventBatch<T>(_entries, _bufferPadRef + loIndex, _bufferPadRef + endIndex, lo);
+        }
 #endif
 
         /// <summary>

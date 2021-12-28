@@ -141,6 +141,7 @@ namespace Disruptor.Tests
             }
 
             public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
+                where T : class
             {
                 throw new NotSupportedException();
             }

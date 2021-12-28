@@ -25,11 +25,11 @@ namespace Disruptor
         /// about message becoming available should remember to handle this case. The <see cref="IEventProcessor"/> explicitly
         /// handles this case and will signal a timeout if required.
         /// </summary>
-        /// <param name="sequence">sequence to be waited on.</param>
-        /// <param name="cursor">Ring buffer cursor on which to wait.</param>
-        /// <param name="dependentSequence">on which to wait.</param>
+        /// <param name="sequence">sequence to be waited on</param>
+        /// <param name="cursor">main sequence from the ring buffer</param>
+        /// <param name="dependentSequence">sequence on which to wait</param>
         /// <param name="cancellationToken">processing cancellation token</param>
-        /// <returns>the wait result</returns>
+        /// <returns>either the sequence that is available (which may be greater than the requested sequence), or a timeout</returns>
         SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken);
 
         /// <summary>

@@ -62,6 +62,28 @@ namespace Disruptor.Processing
             var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType());
             return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy)!;
         }
+
+        /// <summary>
+        /// Create a new <see cref="IEventProcessor{T}"/> with dedicated generic arguments.
+        /// </summary>
+        /// <typeparam name="T">the type of event used.</typeparam>
+        /// <param name="dataProvider">dataProvider to which events are published</param>
+        /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
+        /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
+        /// <returns></returns>
+        public static IAsyncEventProcessor<T> Create<T>(IDataProvider<T> dataProvider, IAsyncSequenceBarrier sequenceBarrier, IAsyncBatchEventHandler<T> eventHandler)
+            where T : class
+        {
+            var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
+            var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrier);
+            var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
+
+            if (eventHandler is IBatchStartAware)
+                throw new ArgumentException($"{nameof(IBatchStartAware)} is not supported on IAsyncBatchEventHandler");
+
+            var eventProcessorType = typeof(AsyncBatchEventProcessor<,,,>).MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType());
+            return (IAsyncEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy)!;
+        }
 #endif
 
         /// <summary>
