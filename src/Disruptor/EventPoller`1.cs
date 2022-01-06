@@ -104,9 +104,9 @@ namespace Disruptor
 
                 try
                 {
-                    var span = _dataProvider[nextSequence, availableSequence];
-                    eventHandler(span, nextSequence);
-                    processedSequence = nextSequence + span.Length - 1;
+                    var batch = _dataProvider.GetBatch(nextSequence, availableSequence);
+                    eventHandler(batch, nextSequence);
+                    processedSequence = nextSequence + batch.Length - 1;
                 }
                 finally
                 {

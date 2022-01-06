@@ -32,7 +32,8 @@ namespace Disruptor
         /// <summary>
         /// A callback used to process events
         /// </summary>
-        public delegate void BatchHandler<T>(ReadOnlySpan<T> batch, long sequence);
+        public delegate void BatchHandler<T>(EventBatch<T> batch, long sequence)
+            where T : class;
 #endif
 
         /// <summary>

@@ -127,9 +127,9 @@ namespace Disruptor.Benchmarks
             {
                 if (availableSequence >= nextSequence)
                 {
-                    var span = _dataProvider[nextSequence, availableSequence];
-                    _eventHandler.OnBatch(span, nextSequence);
-                    nextSequence += span.Length;
+                    var batch = _dataProvider.GetBatch(nextSequence, availableSequence);
+                    _eventHandler.OnBatch(batch, nextSequence);
+                    nextSequence += batch.Length;
                 }
 
                 _sequence.SetValue(nextSequence - 1);
@@ -141,7 +141,7 @@ namespace Disruptor.Benchmarks
             public long Sum { get; set; }
 
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public void OnBatch(ReadOnlySpan<XEvent> batch, long sequence)
+            public void OnBatch(EventBatch<XEvent> batch, long sequence)
             {
                 foreach (var data in batch)
                 {

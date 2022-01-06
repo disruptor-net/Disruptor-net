@@ -157,7 +157,7 @@ namespace Disruptor.Processing
                     {
                         var batch = _dataProvider.GetBatch(nextSequence, availableSequence);
 
-                        await _eventHandler.OnBatch(batch);
+                        await _eventHandler.OnBatch(batch, nextSequence);
                         nextSequence += batch.Length;
                     }
 

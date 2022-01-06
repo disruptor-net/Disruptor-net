@@ -39,7 +39,7 @@ namespace Disruptor.Tests
             var gatingSequence = new Sequence();
             var sequencer = new SingleProducerSequencer(16, new BusySpinWaitStrategy());
 
-            void Handler(ReadOnlySpan<object> span, long s)
+            void Handler(EventBatch<object> batch, long s)
             {
             }
 
@@ -101,7 +101,7 @@ namespace Disruptor.Tests
 
             byte[] Factory() => new byte[1];
 
-            void Handler(ReadOnlySpan<byte[]> span, long sequence) => batches.Add(span.ToArray());
+            void Handler(EventBatch<byte[]> batch, long sequence) => batches.Add(batch.ToArray());
 
             var ringBuffer = RingBuffer<byte[]>.CreateMultiProducer(Factory, 4, new SleepingWaitStrategy());
 

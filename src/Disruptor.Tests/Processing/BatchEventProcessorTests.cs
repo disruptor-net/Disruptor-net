@@ -145,7 +145,7 @@ namespace Disruptor.Tests.Processing
             private readonly ManualResetEvent _startedSignal = new ManualResetEvent(false);
             private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
 
-            public void OnBatch(ReadOnlySpan<object> batch, long sequence)
+            public void OnBatch(EventBatch<object> batch, long sequence)
             {
             }
 

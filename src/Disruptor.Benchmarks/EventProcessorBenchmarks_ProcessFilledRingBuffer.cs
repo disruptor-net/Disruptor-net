@@ -101,7 +101,7 @@ namespace Disruptor.Benchmarks
             public long Sum { get; set; }
 
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public void OnBatch(ReadOnlySpan<XEvent> batch, long sequence)
+            public void OnBatch(EventBatch<XEvent> batch, long sequence)
             {
                 foreach (var data in batch)
                 {

@@ -73,7 +73,7 @@ namespace Disruptor.Util
 
 #if DISRUPTOR_V5
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ReadOnlySpan<T> ReadBlock<T>(object array, int index, int length)
+        public static ReadOnlySpan<T> ReadSpan<T>(object array, int index, int length)
             where T : class
         {
             IL.DeclareLocals(false, typeof(byte).MakeByRefType());

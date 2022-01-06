@@ -54,7 +54,7 @@ namespace Disruptor.Tests.Util
 
             for (var i = 0; i < array.Length - blockSize + 1; i++)
             {
-                var block = InternalUtil.ReadBlock<StubEvent>(array, i, blockSize);
+                var block = InternalUtil.ReadSpan<StubEvent>(array, i, blockSize);
 
                 Assert.AreEqual(blockSize, block.Length);
                 for (var dataIndex = 0; dataIndex < blockSize; dataIndex++)

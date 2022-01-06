@@ -158,9 +158,9 @@ namespace Disruptor.Processing
                     var availableSequence = waitResult.UnsafeAvailableSequence;
                     if (availableSequence >= nextSequence)
                     {
-                        var span = _dataProvider[nextSequence, availableSequence];
-                        _eventHandler.OnBatch(span, nextSequence);
-                        nextSequence += span.Length;
+                        var batch = _dataProvider.GetBatch(nextSequence, availableSequence);
+                        _eventHandler.OnBatch(batch, nextSequence);
+                        nextSequence += batch.Length;
                     }
 
                     _sequence.SetValue(nextSequence - 1);

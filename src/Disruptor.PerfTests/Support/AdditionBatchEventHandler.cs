@@ -29,16 +29,16 @@ namespace Disruptor.PerfTests.Support
             _batchesProcessed.Value = 0;
         }
 
-        public void OnBatch(ReadOnlySpan<PerfEvent> batch, long sequence)
+        public void OnBatch(EventBatch<PerfEvent> batch, long sequence)
         {
             _batchesProcessed.Value++;
 
-            foreach (var data in batch)
+            foreach (var data in batch.AsSpan())
             {
                 _value.Value = _value.Value + data.Value;
             }
 
-            if(_latchSequence == sequence + batch.Length - 1)
+            if(sequence + batch.Length - 1 == _latchSequence)
             {
                 _latch.Set();
             }

@@ -131,6 +131,48 @@ namespace Disruptor.Benchmarks
                 }
             }
         }
+
+        [Benchmark(OperationsPerInvoke = 20)]
+        public void SetValueBatchAsSpan_1()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                var batch = _ringBuffer.GetBatch(Sequence, Sequence);
+
+                foreach (var data in batch.AsSpan())
+                {
+                    UseEvent(data);
+                }
+            }
+        }
+
+        [Benchmark(OperationsPerInvoke = 20)]
+        public void SetValueBatchAsSpan_2()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                var batch = _ringBuffer.GetBatch(Sequence, Sequence + 1);
+
+                foreach (var data in batch.AsSpan())
+                {
+                    UseEvent(data);
+                }
+            }
+        }
+
+        [Benchmark(OperationsPerInvoke = 20)]
+        public void SetValueBatchAsSpan_5()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                var batch = _ringBuffer.GetBatch(Sequence, Sequence + 4);
+
+                foreach (var data in batch.AsSpan())
+                {
+                    UseEvent(data);
+                }
+            }
+        }
 #endif
 
         public class Event

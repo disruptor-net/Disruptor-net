@@ -30,7 +30,7 @@ namespace Disruptor.PerfTests.Support
             _batchesProcessed.Value = 0;
         }
 
-        public ValueTask OnBatch(EventBatch<PerfEvent> batch)
+        public ValueTask OnBatch(EventBatch<PerfEvent> batch, long sequence)
         {
             _batchesProcessed.Value++;
 
@@ -39,7 +39,7 @@ namespace Disruptor.PerfTests.Support
                 _value.Value += data.Value;
             }
 
-            if(_latchSequence == batch.EndSequence)
+            if(sequence + batch.Length - 1 == _latchSequence)
             {
                 _latch.Set();
             }

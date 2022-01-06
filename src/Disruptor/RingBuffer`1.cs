@@ -154,20 +154,7 @@ namespace Disruptor
         }
 
 #if DISRUPTOR_V5
-        /// <summary>
-        /// Gets a span of events for the given sequences in the RingBuffer.
-        /// </summary>
-        /// <remarks>
-        /// Because the ring buffer is a circular data structure, it is possible that the [lo, hi] sequence interval
-        /// does not reference a contiguous portion of the underlying array. In this case the returned span will contain
-        /// the largest possible contiguous array segment that starts from <paramref name="lo"/>.
-        ///
-        /// Please never assume that the returned span contains all the events.
-        /// Always check the returned span length.
-        /// </remarks>
-        /// <param name="lo">the lowest sequence number</param>
-        /// <param name="hi">the highest sequence number</param>
-        public ReadOnlySpan<T> this[long lo, long hi]
+        internal ReadOnlySpan<T> this[long lo, long hi]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -175,18 +162,19 @@ namespace Disruptor
                 var index1 = (int)(lo & _indexMask);
                 var index2 = (int)(hi & _indexMask);
                 var length = index1 <= index2 ? (1 + index2 - index1) : (_bufferSize - index1);
-                return InternalUtil.ReadBlock<T>(_entries, _bufferPadRef + index1, length);
+
+                return InternalUtil.ReadSpan<T>(_entries, _bufferPadRef + index1, length);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EventBatch<T> GetBatch(long lo, long hi)
         {
-            var loIndex = (int)(lo & _indexMask);
-            var hiIndex = (int)(hi & _indexMask);
-            var endIndex = loIndex <= hiIndex ? hiIndex : _bufferSize - 1;
+            var index1 = (int)(lo & _indexMask);
+            var index2 = (int)(hi & _indexMask);
+            var length = index1 <= index2 ? (1 + index2 - index1) : (_bufferSize - index1);
 
-            return new EventBatch<T>(_entries, _bufferPadRef + loIndex, _bufferPadRef + endIndex, lo);
+            return new EventBatch<T>(_entries, _bufferPadRef + index1, length);
         }
 #endif
 

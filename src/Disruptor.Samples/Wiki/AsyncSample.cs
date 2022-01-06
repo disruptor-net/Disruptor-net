@@ -183,7 +183,7 @@ namespace Disruptor.Samples.Wiki
                 _persister = persister;
             }
 
-            public void OnBatch(ReadOnlySpan<SampleEvent> batch, long sequence)
+            public void OnBatch(EventBatch<SampleEvent> batch, long sequence)
             {
                 var task = _persister.SaveAsync(batch.ToArray());
                 // Do something with the task depending on you design option

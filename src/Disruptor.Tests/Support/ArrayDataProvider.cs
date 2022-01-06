@@ -39,9 +39,9 @@ namespace Disruptor.Tests.Support
             var index2 = (int)(hi % Data.Length);
 
             if (index1 <= index2)
-                return new EventBatch<T>(Data, index1, index2 - index1 + 1, lo);
+                return new EventBatch<T>(Data, index1, index2 - index1 + 1);
 
-            return new EventBatch<T>(Data, index1, Data.Length - index1, lo);
+            return new EventBatch<T>(Data, index1, Data.Length - index1);
         }
 #endif
     }

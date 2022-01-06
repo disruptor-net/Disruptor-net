@@ -5,6 +5,7 @@ using System;
 namespace Disruptor.Tests.Support
 {
     public class TestBatchEventHandler<T> : IBatchEventHandler<T>
+        where T : class
     {
         private readonly Action<T> _onEventAction;
 
@@ -13,7 +14,7 @@ namespace Disruptor.Tests.Support
             _onEventAction = onEventAction;
         }
 
-        public void OnBatch(ReadOnlySpan<T> batch, long sequence)
+        public void OnBatch(EventBatch<T> batch, long sequence)
         {
             foreach (var data in batch)
             {

@@ -95,7 +95,7 @@ namespace Disruptor.PerfTests.Sequenced
                 _pauseTimeTicks = LatencyTestSession.ConvertNanoToStopwatchTicks(pauseTimeNs);
             }
 
-            public void OnBatch(ReadOnlySpan<PerfEvent> batch, long sequence)
+            public void OnBatch(EventBatch<PerfEvent> batch, long sequence)
             {
                 foreach (var data in batch)
                 {
@@ -163,7 +163,7 @@ namespace Disruptor.PerfTests.Sequenced
                 _buffer = buffer;
             }
 
-            public void OnBatch(ReadOnlySpan<PerfEvent> batch, long sequence)
+            public void OnBatch(EventBatch<PerfEvent> batch, long sequence)
             {
                 foreach (var data in batch)
                 {

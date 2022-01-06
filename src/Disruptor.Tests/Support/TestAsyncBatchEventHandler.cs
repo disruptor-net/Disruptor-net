@@ -17,7 +17,7 @@ namespace Disruptor.Tests.Support
             _yield = yield;
         }
 
-        public async ValueTask OnBatch(EventBatch<T> batch)
+        public async ValueTask OnBatch(EventBatch<T> batch, long sequence)
         {
             foreach (var data in batch)
             {

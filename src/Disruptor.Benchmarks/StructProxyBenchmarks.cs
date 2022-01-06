@@ -65,13 +65,13 @@ namespace Disruptor.Benchmarks
             public ReadOnlySpan<Event> this[long lo, long hi]
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get { return InternalUtil.ReadBlock<Event>(_dataArray, 0, 1); }
+                get { return InternalUtil.ReadSpan<Event>(_dataArray, 0, 1); }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public EventBatch<Event> GetBatch(long lo, long hi)
             {
-                return new EventBatch<Event>(_dataArray, 0, 1, lo);
+                return new EventBatch<Event>(_dataArray, 0, 1);
             }
 #endif
         }

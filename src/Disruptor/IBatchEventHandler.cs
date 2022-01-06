@@ -19,6 +19,7 @@ namespace Disruptor
     /// </remarks>
     /// <typeparam name="T">Type of events for sharing during exchange or parallel coordination of an event.</typeparam>
     public interface IBatchEventHandler<T>
+        where T : class
     {
         /// <summary>
         /// Called when a publisher has committed an event to the <see cref="RingBuffer{T}"/>. The <see cref="IEventProcessor{T}"/> will
@@ -27,8 +28,8 @@ namespace Disruptor
         /// to do slower operations like I/O as they can group together the data from multiple events into a single operation.
         /// </summary>
         /// <param name="batch">Batch of events committed to the <see cref="RingBuffer{T}"/></param>
-        /// <param name="sequence">Sequence number of the first event of the batch</param>
-        void OnBatch(ReadOnlySpan<T> batch, long sequence);
+        /// <param name="sequence"></param>
+        void OnBatch(EventBatch<T> batch, long sequence);
     }
 }
 

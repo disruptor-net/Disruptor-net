@@ -39,7 +39,7 @@ namespace Disruptor.Benchmarks
         public ReadOnlySpan<Event> ReadSpanIL()
         {
             var sequence = NextSequence();
-            return InternalUtil.ReadBlock<Event>(_array, sequence, sequence);
+            return InternalUtil.ReadSpan<Event>(_array, sequence, sequence);
         }
 #endif
 
