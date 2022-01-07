@@ -3,6 +3,7 @@
 namespace Disruptor.Tests.Support
 {
     public class TestExceptionHandler<T> : IExceptionHandler<T>
+        where T : class
     {
         private readonly Action<T?> _action;
 
@@ -15,6 +16,16 @@ namespace Disruptor.Tests.Support
         {
             _action.Invoke(evt);
         }
+
+#if DISRUPTOR_V5
+        public void HandleEventException(Exception ex, long sequence, EventBatch<T> batch)
+        {
+            foreach (var evt in batch)
+            {
+                _action.Invoke(evt);
+            }
+        }
+#endif
 
         public void HandleOnStartException(Exception ex)
         {

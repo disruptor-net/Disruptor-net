@@ -428,7 +428,7 @@ namespace Disruptor.Tests.Dsl
 
             _disruptor.HandleExceptionsWith(exceptionHandler);
             _disruptor.HandleEventsWith(handler);
-            _disruptor.HandleExceptionsWith(new FatalExceptionHandler());
+            _disruptor.HandleExceptionsWith(new FatalExceptionHandler<TestEvent>());
 
             PublishEvent();
 

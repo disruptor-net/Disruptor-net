@@ -2,13 +2,18 @@
 
 namespace Disruptor.Dsl
 {
-    public class ExceptionHandlerWrapper<T> : IExceptionHandler<T> where T : class
+    public class ExceptionHandlerWrapper<T> : IExceptionHandler<T>
+        where T : class
     {
-        private IExceptionHandler<T> _handler = new FatalExceptionHandler();
+        private IExceptionHandler<T> _handler = new FatalExceptionHandler<T>();
 
         public void SwitchTo(IExceptionHandler<T> exceptionHandler) => _handler = exceptionHandler;
 
         public void HandleEventException(Exception ex, long sequence, T? evt) => _handler.HandleEventException(ex, sequence, evt);
+
+#if DISRUPTOR_V5
+        public void HandleEventException(Exception ex, long sequence, EventBatch<T> batch) => _handler.HandleEventException(ex, sequence, batch);
+#endif
 
         public void HandleOnStartException(Exception ex) => _handler.HandleOnStartException(ex);
 

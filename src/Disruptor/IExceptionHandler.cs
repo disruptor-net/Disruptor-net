@@ -6,7 +6,8 @@ namespace Disruptor
     /// <summary>
     /// Callback handler for uncaught exceptions in the event processing cycle of the <see cref="IEventProcessor{T}"/>
     /// </summary>
-    public interface IExceptionHandler<in T>
+    public interface IExceptionHandler<T>
+        where T : class
     {
         /// <summary>
         /// Strategy for handling uncaught exceptions when processing an event.
@@ -18,6 +19,19 @@ namespace Disruptor
         /// <param name="sequence">sequence of the event which cause the exception.</param>
         /// <param name="evt">event being processed when the exception occurred. This can be null</param>
         void HandleEventException(Exception ex, long sequence, T? evt);
+
+#if DISRUPTOR_V5
+        /// <summary>
+        /// Strategy for handling uncaught exceptions when processing an event.
+        ///
+        /// If the strategy wishes to terminate further processing by the <see cref="IEventProcessor{T}"/>
+        /// then it should throw a <see cref="ApplicationException"/>
+        /// </summary>
+        /// <param name="ex">exception that propagated from the <see cref="IEventHandler{T}"/>.</param>
+        /// <param name="sequence">sequence of the event which cause the exception.</param>
+        /// <param name="batch">batch being processed when the exception occurred.</param>
+        void HandleEventException(Exception ex, long sequence, EventBatch<T> batch);
+#endif
 
         /// <summary>
         /// Callback to notify of an exception during <see cref="ILifecycleAware.OnStart"/>

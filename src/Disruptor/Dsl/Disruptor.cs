@@ -184,7 +184,7 @@ namespace Disruptor.Dsl
         /// </summary>
         /// <param name="exceptionHandler">the exception handler to use for any future <see cref="IEventProcessor"/>.</param>
         [Obsolete("This method only applies to future event handlers. Use setDefaultExceptionHandler instead which applies to existing and new event handlers.")]
-        public void HandleExceptionsWith(IExceptionHandler<object> exceptionHandler)
+        public void HandleExceptionsWith(IExceptionHandler<T> exceptionHandler)
         {
             _exceptionHandler = exceptionHandler;
         }

@@ -36,15 +36,35 @@ namespace Disruptor
 
         public EventBatch(T[] array, int beginIndex, int length)
         {
+            if ((uint)beginIndex > (uint)array.Length || (uint)length > (uint)(array.Length - beginIndex))
+                ThrowHelper.ThrowArgumentOutOfRangeException();
+
             _array = array;
             _beginIndex = beginIndex;
             _length = length;
         }
 
+        /// <summary>
+        /// Number of events in the batch.
+        /// </summary>
         public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _length;
+        }
+
+        /// <summary>
+        /// Gets an event for a given index in the batch.
+        /// </summary>
+        public T this[int index]
+        {
+            get
+            {
+                if ((uint)index >= (uint)_length)
+                    ThrowHelper.ThrowArgumentOutOfRangeException();
+
+                return InternalUtil.Read<T>(_array, _beginIndex + index);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,6 +81,9 @@ namespace Disruptor
             }
         }
 
+        /// <summary>
+        /// Copies the content of the batch into a new array.
+        /// </summary>
         public T[] ToArray() => AsSpan().ToArray();
 
         public struct Enumerator

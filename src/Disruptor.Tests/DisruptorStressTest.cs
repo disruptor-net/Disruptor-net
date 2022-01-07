@@ -14,7 +14,7 @@ namespace Disruptor.Tests
         {
             var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, new BusySpinWaitStrategy());
             var ringBuffer = disruptor.RingBuffer;
-            disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler());
+            disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler<TestEvent>());
 
             var threads = Math.Max(1, Environment.ProcessorCount / 2);
 

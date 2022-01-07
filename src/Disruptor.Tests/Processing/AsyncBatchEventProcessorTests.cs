@@ -10,21 +10,21 @@ using NUnit.Framework;
 namespace Disruptor.Tests.Processing
 {
     [TestFixture]
-    public class BatchEventProcessorTests
+    public class AsyncBatchEventProcessorTests
     {
         private readonly RingBuffer<StubEvent> _ringBuffer;
-        private readonly ISequenceBarrier _sequenceBarrier;
+        private readonly IAsyncSequenceBarrier _sequenceBarrier;
 
-        public BatchEventProcessorTests()
+        public AsyncBatchEventProcessorTests()
         {
-            _ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), 16);
-            _sequenceBarrier = _ringBuffer.NewBarrier();
+            _ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new MultiProducerSequencer(16, new AsyncWaitStrategy()));
+            _sequenceBarrier = (IAsyncSequenceBarrier)_ringBuffer.NewBarrier();
         }
 
         [Test]
         public void ShouldThrowExceptionOnSettingNullExceptionHandler()
         {
-            var eventHandler = new TestBatchEventHandler<StubEvent>(x => throw new NullReferenceException());
+            var eventHandler = new TestAsyncBatchEventHandler<StubEvent>(x => throw new NullReferenceException());
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, eventHandler);
 
             Assert.Throws<ArgumentNullException>(() => eventProcessor.SetExceptionHandler(null!));
@@ -34,7 +34,7 @@ namespace Disruptor.Tests.Processing
         public void ShouldCallMethodsInLifecycleOrderForBatch()
         {
             var eventSignal = new CountdownEvent(3);
-            var eventHandler = new TestBatchEventHandler<StubEvent>(x => eventSignal.Signal());
+            var eventHandler = new TestAsyncBatchEventHandler<StubEvent>(x => eventSignal.Signal());
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, eventHandler);
 
             _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
@@ -43,7 +43,7 @@ namespace Disruptor.Tests.Processing
             _ringBuffer.Publish(_ringBuffer.Next());
             _ringBuffer.Publish(_ringBuffer.Next());
 
-            var task = Task.Run(() => eventProcessor.Run());
+            var task = eventProcessor.Start();
 
             Assert.IsTrue(eventSignal.Wait(TimeSpan.FromSeconds(2)));
 
@@ -57,13 +57,13 @@ namespace Disruptor.Tests.Processing
         {
             var exceptionSignal = new CountdownEvent(1);
             var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
-            var eventHandler = new TestBatchEventHandler<StubEvent>(x => throw new NullReferenceException());
+            var eventHandler = new TestAsyncBatchEventHandler<StubEvent>(x => throw new NullReferenceException());
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, eventHandler);
             _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
             eventProcessor.SetExceptionHandler(exceptionHandler);
 
-            var task = Task.Run(() => eventProcessor.Run());
+            var task = eventProcessor.Start();
 
             _ringBuffer.Publish(_ringBuffer.Next());
 
@@ -77,9 +77,9 @@ namespace Disruptor.Tests.Processing
         [Test]
         public void ShouldAlwaysHalt()
         {
-            var waitStrategy = new BusySpinWaitStrategy();
+            var waitStrategy = new AsyncWaitStrategy();
             var sequencer = new SingleProducerSequencer(8, waitStrategy);
-            var barrier = ProcessingSequenceBarrierFactory.Create(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
+            var barrier = (IAsyncSequenceBarrier)ProcessingSequenceBarrierFactory.Create(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
             var dp = new ArrayDataProvider<object>(sequencer.BufferSize);
 
             var h1 = new LifeCycleHandler();
@@ -94,7 +94,7 @@ namespace Disruptor.Tests.Processing
             for (int i = 0; i < 1000; i++)
             {
                 var h2 = new LifeCycleHandler();
-                var p2 = EventProcessorFactory.Create(dp, barrier, h2);
+                var p2 =  EventProcessorFactory.Create(dp, barrier, h2);
                 p2.Start();
 
                 p2.Halt();
@@ -106,7 +106,7 @@ namespace Disruptor.Tests.Processing
             for (int i = 0; i < 1000; i++)
             {
                 var h2 = new LifeCycleHandler();
-                var p2 = EventProcessorFactory.Create(dp, barrier, h2);
+                var p2 =  EventProcessorFactory.Create(dp, barrier, h2);
 
                 p2.Start();
                 Thread.Yield();
@@ -117,13 +117,14 @@ namespace Disruptor.Tests.Processing
             }
         }
 
-        private class LifeCycleHandler : IBatchEventHandler<object>, ILifecycleAware
+        private class LifeCycleHandler : IAsyncBatchEventHandler<object>, ILifecycleAware
         {
             private readonly ManualResetEvent _startedSignal = new ManualResetEvent(false);
             private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
 
-            public void OnBatch(EventBatch<object> batch, long sequence)
+            public async ValueTask OnBatch(EventBatch<object> batch, long sequence)
             {
+                await Task.Yield();
             }
 
             public void OnStart()

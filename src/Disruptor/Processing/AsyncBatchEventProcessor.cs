@@ -39,7 +39,7 @@ namespace Disruptor.Processing
         private readonly Sequence _sequence = new Sequence();
         private readonly ITimeoutHandler? _timeoutHandler;
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim();
-        private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler();
+        private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
         private volatile int _runState = ProcessorRunStates.Idle;
 
         public AsyncBatchEventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler)
@@ -140,6 +140,7 @@ namespace Disruptor.Processing
         private async Task ProcessEvents()
         {
             var nextSequence = _sequence.Value + 1L;
+            var availableSequence = _sequence.Value;
 
             while (true)
             {
@@ -152,11 +153,10 @@ namespace Disruptor.Processing
                         continue;
                     }
 
-                    var availableSequence = waitResult.UnsafeAvailableSequence;
+                    availableSequence = waitResult.UnsafeAvailableSequence;
                     if (availableSequence >= nextSequence)
                     {
                         var batch = _dataProvider.GetBatch(nextSequence, availableSequence);
-
                         await _eventHandler.OnBatch(batch, nextSequence);
                         nextSequence += batch.Length;
                     }
@@ -172,10 +172,13 @@ namespace Disruptor.Processing
                 }
                 catch (Exception ex)
                 {
-                    var evt = _dataProvider[nextSequence];
-                    _exceptionHandler.HandleEventException(ex, nextSequence, evt);
-                    _sequence.SetValue(nextSequence);
-                    nextSequence++;
+                    if (availableSequence >= nextSequence)
+                    {
+                        var batch = _dataProvider.GetBatch(nextSequence, availableSequence);
+                        _exceptionHandler.HandleEventException(ex, nextSequence, batch);
+                        nextSequence += batch.Length;
+                        _sequence.SetValue(nextSequence - 1);
+                    }
                 }
             }
         }

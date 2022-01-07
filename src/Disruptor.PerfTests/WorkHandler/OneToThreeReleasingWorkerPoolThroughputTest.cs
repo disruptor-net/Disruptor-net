@@ -30,7 +30,7 @@ namespace Disruptor.PerfTests.WorkHandler
 
             _workerPool = new WorkerPool<PerfEvent>(_ringBuffer,
                                                     _ringBuffer.NewBarrier(),
-                                                    new FatalExceptionHandler(),
+                                                    new FatalExceptionHandler<PerfEvent>(),
                                                     _handlers);
 
             _ringBuffer.AddGatingSequences(_workerPool.GetWorkerSequences());

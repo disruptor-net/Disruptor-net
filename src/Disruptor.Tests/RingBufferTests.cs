@@ -405,6 +405,49 @@ namespace Disruptor.Tests
                 Assert.That(span[index].Value, Is.EqualTo(expectedStartIndex + index));
             }
         }
+
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(31)]
+        [TestCase(32)]
+        [TestCase(int.MaxValue)]
+        [TestCase(int.MaxValue +1L)]
+        public void ShouldGetEventBatchFromSequence_1(long sequence)
+        {
+            var index = 0;
+            var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(index++), 32);
+
+            var span = ringBuffer[sequence, sequence];
+
+            Assert.That(span.Length, Is.EqualTo(1));
+
+            var expectedIndex = sequence % 32;
+            Assert.That(span[0].Value, Is.EqualTo(expectedIndex));
+        }
+
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(31)]
+        [TestCase(32)]
+        [TestCase(int.MaxValue)]
+        [TestCase(int.MaxValue +1L)]
+        public void ShouldGetEventBatchFromSequence_2(long sequence)
+        {
+            var init = 0;
+            var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(init++), 32);
+
+            var span = ringBuffer[sequence, sequence + 31];
+
+            var expectedStartIndex = sequence % 32;
+            var expectedEndIndex = 31;
+
+            Assert.That(span.Length, Is.EqualTo(1 + expectedEndIndex - expectedStartIndex));
+
+            for (var index = 0; index < span.Length; index++)
+            {
+                Assert.That(span[index].Value, Is.EqualTo(expectedStartIndex + index));
+            }
+        }
 #endif
 
         private static void AssertHandleResetAndNotWrap(RingBuffer<StubEvent> rb)

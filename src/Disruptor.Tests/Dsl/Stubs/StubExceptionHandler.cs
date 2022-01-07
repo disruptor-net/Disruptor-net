@@ -3,7 +3,7 @@ using Disruptor.Tests.Support;
 
 namespace Disruptor.Tests.Dsl.Stubs
 {
-    public class StubExceptionHandler : IExceptionHandler<object>, IValueExceptionHandler<TestValueEvent>
+    public class StubExceptionHandler : IExceptionHandler<TestEvent>, IValueExceptionHandler<TestValueEvent>
     {
         private readonly AtomicReference<Exception> _exceptionHandled;
 
@@ -12,10 +12,17 @@ namespace Disruptor.Tests.Dsl.Stubs
             _exceptionHandled = exceptionHandled;
         }
 
-        public void HandleEventException(Exception ex, long sequence, object? evt)
+        public void HandleEventException(Exception ex, long sequence, TestEvent? evt)
         {
             _exceptionHandled.Write(ex);
         }
+
+#if DISRUPTOR_V5
+        public void HandleEventException(Exception ex, long sequence, EventBatch<TestEvent> batch)
+        {
+            _exceptionHandled.Write(ex);
+        }
+#endif
 
         public void HandleEventException(Exception ex, long sequence, ref TestValueEvent evt)
         {

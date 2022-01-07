@@ -13,16 +13,12 @@ namespace Disruptor.Tests
             var causeException = new Exception();
             var evt = new StubEvent(0);
 
-            var exceptionHandler = new FatalExceptionHandler();
+            var exceptionHandler = new FatalExceptionHandler<StubEvent>();
 
-            try
-            {
-                exceptionHandler.HandleEventException(causeException, 0L, evt);
-            }
-            catch (Exception ex)
-            {
-                Assert.AreEqual(causeException, ex.InnerException);
-            }
+            var exception = Assert.Throws<ApplicationException>(() => exceptionHandler.HandleEventException(causeException, 0L, evt));
+
+            Assert.IsNotNull(exception);
+            Assert.AreEqual(causeException, exception!.InnerException);
         }
     }
 }

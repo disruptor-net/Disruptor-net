@@ -13,7 +13,7 @@ namespace Disruptor.Tests
             var exception = new Exception();
             var stubEvent = new StubEvent(0);
 
-            var exceptionHandler = new IgnoreExceptionHandler();
+            var exceptionHandler = new IgnoreExceptionHandler<StubEvent>();
             exceptionHandler.HandleEventException(exception, 0L, stubEvent);
         }
     }

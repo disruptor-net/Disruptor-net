@@ -8,7 +8,7 @@ namespace Disruptor.PerfTests.WorkHandler
 {
     /// <summary>
     /// Sequence a series of events from multiple publishers going to multiple work processors.
-    /// 
+    ///
     /// +----+                  +-----+
     /// | P1 |---+          +-->| WP1 |
     /// +----+   |  +-----+ |   +-----+
@@ -16,7 +16,7 @@ namespace Disruptor.PerfTests.WorkHandler
     /// +----+   |  +-----+ |   +-----+
     /// | P2 |---+          +-->| WP2 |
     /// +----+                  +-----+
-    /// 
+    ///
     /// P1  - Publisher 1
     /// P2  - Publisher 2
     /// RB  - RingBuffer
@@ -42,8 +42,8 @@ namespace Disruptor.PerfTests.WorkHandler
             _handlers[0] = new ValueAdditionWorkHandler();
             _handlers[1] = new ValueAdditionWorkHandler();
 
-            _workProcessors[0] = new WorkProcessor<PerfEvent>(_ringBuffer, sequenceBarrier, _handlers[0], new IgnoreExceptionHandler(), _workSequence);
-            _workProcessors[1] = new WorkProcessor<PerfEvent>(_ringBuffer, sequenceBarrier, _handlers[1], new IgnoreExceptionHandler(), _workSequence);
+            _workProcessors[0] = new WorkProcessor<PerfEvent>(_ringBuffer, sequenceBarrier, _handlers[0], new IgnoreExceptionHandler<PerfEvent>(), _workSequence);
+            _workProcessors[1] = new WorkProcessor<PerfEvent>(_ringBuffer, sequenceBarrier, _handlers[1], new IgnoreExceptionHandler<PerfEvent>(), _workSequence);
 
             for (var i = 0; i < _numPublishers; i++)
             {

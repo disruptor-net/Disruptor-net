@@ -6,15 +6,10 @@ namespace Disruptor
     /// Convenience implementation of an exception handler that using standard Console.Writeline to log
     /// the exception re-throw it wrapped in a <see cref="ApplicationException"/>
     /// </summary>
-    public sealed class FatalExceptionHandler : IExceptionHandler<object>
+    public sealed class FatalExceptionHandler<T> : IExceptionHandler<T>
+        where T : class
     {
-        /// <summary>
-        /// Strategy for handling uncaught exceptions when processing an event.
-        /// </summary>
-        /// <param name="ex">exception that propagated from the <see cref="IEventHandler{T}"/>.</param>
-        /// <param name="sequence">sequence of the event which cause the exception.</param>
-        /// <param name="evt">event being processed when the exception occurred.</param>
-        public void HandleEventException(Exception ex, long sequence, object? evt)
+        public void HandleEventException(Exception ex, long sequence, T? evt)
         {
             var message = $"Exception processing sequence {sequence} for event {evt}: {ex}";
 
@@ -23,10 +18,17 @@ namespace Disruptor
             throw new ApplicationException(message, ex);
         }
 
-        /// <summary>
-        /// Callback to notify of an exception during <see cref="ILifecycleAware.OnStart"/>
-        /// </summary>
-        /// <param name="ex">ex throw during the starting process.</param>
+#if DISRUPTOR_V5
+        public void HandleEventException(Exception ex, long sequence, EventBatch<T> batch)
+        {
+            var message = $"Exception processing sequence {sequence} for batch of {batch.Length} events, first event {batch[0]}: {ex}";
+
+            Console.WriteLine(message);
+
+            throw new ApplicationException(message, ex);
+        }
+#endif
+
         public void HandleOnStartException(Exception ex)
         {
             var message = $"Exception during OnStart(): {ex}";
@@ -36,10 +38,6 @@ namespace Disruptor
             throw new ApplicationException(message, ex);
         }
 
-        /// <summary>
-        /// Callback to notify of an exception during <see cref="ILifecycleAware.OnShutdown"/>
-        /// </summary>
-        /// <param name="ex">ex throw during the shutdown process.</param>
         public void HandleOnShutdownException(Exception ex)
         {
             var message = $"Exception during OnShutdown(): {ex}";

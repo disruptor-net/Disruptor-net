@@ -12,6 +12,11 @@ namespace Disruptor
         private readonly object _gate = new object();
         private readonly IWaitStrategy _waitStrategy;
 
+        public AsyncWaitStrategy()
+            : this(new BlockingSpinWaitWaitStrategy())
+        {
+        }
+
         public AsyncWaitStrategy(IWaitStrategy waitStrategy)
         {
             _waitStrategy = waitStrategy;

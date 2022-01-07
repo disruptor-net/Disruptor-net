@@ -11,7 +11,7 @@ namespace Disruptor.Tests.Processing
         public void ShouldProcessEachMessageByOnlyOneWorker()
         {
             var pool = new WorkerPool<AtomicLong>(() => new AtomicLong(),
-                                                        new FatalExceptionHandler(),
+                                                        new FatalExceptionHandler<AtomicLong>(),
                                                         new AtomicLongWorkHandler(),
                                                         new AtomicLongWorkHandler());
 
@@ -32,7 +32,7 @@ namespace Disruptor.Tests.Processing
         public void ShouldProcessOnlyOnceItHasBeenPublished()
         {
             var pool = new WorkerPool<AtomicLong>(() => new AtomicLong(),
-                                                        new FatalExceptionHandler(),
+                                                        new FatalExceptionHandler<AtomicLong>(),
                                                         new AtomicLongWorkHandler(),
                                                         new AtomicLongWorkHandler());
 

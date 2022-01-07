@@ -17,7 +17,7 @@ namespace Disruptor.Tests
         {
             _disruptor = new Disruptor<byte[]>(() => new byte[256], 1024, TaskScheduler.Current, ProducerType.Single, new BlockingWaitStrategy());
             _disruptor.HandleEventsWith(_failingEventHandler);
-            _disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler());
+            _disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler<byte[]>());
         }
 
         public void Dispose()

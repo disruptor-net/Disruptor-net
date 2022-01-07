@@ -8,10 +8,14 @@ namespace Disruptor.Util
     /// </summary>
     internal static class ThrowHelper
     {
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize()
         {
             throw new ArgumentException("n must be > 0 and <= bufferSize");
+        }
+
+        public static void ThrowArgumentOutOfRangeException()
+        {
+            throw new ArgumentOutOfRangeException();
         }
     }
 }

@@ -25,10 +25,10 @@ namespace Disruptor.Tests
             var ringBuffer = disruptor.Start();
 
             var handler1 = new DynamicHandler(1, countdownEvent);
-            var processor1 = new WorkProcessor<StubEvent>(ringBuffer, ringBuffer.NewBarrier(), handler1, new FatalExceptionHandler(), workSequence);
+            var processor1 = new WorkProcessor<StubEvent>(ringBuffer, ringBuffer.NewBarrier(), handler1, new FatalExceptionHandler<StubEvent>(), workSequence);
 
             var handler2 = new DynamicHandler(2, countdownEvent);
-            var processor2 = new WorkProcessor<StubEvent>(ringBuffer, ringBuffer.NewBarrier(), handler2, new FatalExceptionHandler(), workSequence);
+            var processor2 = new WorkProcessor<StubEvent>(ringBuffer, ringBuffer.NewBarrier(), handler2, new FatalExceptionHandler<StubEvent>(), workSequence);
 
             ringBuffer.AddGatingSequences(processor1.Sequence);
             Task.Run(() => processor1.Run());
@@ -70,10 +70,10 @@ namespace Disruptor.Tests
             var ringBuffer = disruptor.Start();
 
             var handler1 = new DynamicHandler(1, countdownEvent);
-            var processor1 = new WorkProcessor<StubEvent>(ringBuffer, ringBuffer.NewBarrier(), handler1, new FatalExceptionHandler(), workSequence);
+            var processor1 = new WorkProcessor<StubEvent>(ringBuffer, ringBuffer.NewBarrier(), handler1, new FatalExceptionHandler<StubEvent>(), workSequence);
 
             var handler2 = new DynamicHandler(2, countdownEvent);
-            var processor2 = new WorkProcessor<StubEvent>(ringBuffer, ringBuffer.NewBarrier(), handler2, new FatalExceptionHandler(), workSequence);
+            var processor2 = new WorkProcessor<StubEvent>(ringBuffer, ringBuffer.NewBarrier(), handler2, new FatalExceptionHandler<StubEvent>(), workSequence);
 
             ringBuffer.AddGatingSequences(processor1.Sequence);
             Task.Run(() => processor1.Run());
