@@ -44,9 +44,9 @@ namespace Disruptor.Tests.Processing
 
             _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
-            _ringBuffer.Publish(_ringBuffer.Next());
-            _ringBuffer.Publish(_ringBuffer.Next());
-            _ringBuffer.Publish(_ringBuffer.Next());
+            _ringBuffer.PublishStubEvent(0);
+            _ringBuffer.PublishStubEvent(0);
+            _ringBuffer.PublishStubEvent(0);
 
             var task = eventProcessor.Start();
 
@@ -70,13 +70,46 @@ namespace Disruptor.Tests.Processing
 
             var task = eventProcessor.Start();
 
-            _ringBuffer.Publish(_ringBuffer.Next());
+            _ringBuffer.PublishStubEvent(0);
 
             Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
 
             eventProcessor.Halt();
 
             Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        }
+
+        [Test]
+        public void ShouldCallExceptionHandlerOnMultipleUncaughtException()
+        {
+            var processingSignal = new CountdownEvent(5);
+            var exceptionHandler = new TestExceptionHandler<StubEvent>(x => processingSignal.Signal());
+            var eventHandler = new TestEventHandler<StubEvent>(x =>
+            {
+                if (x.Value == 1)
+                    throw new Exception();
+
+                processingSignal.Signal();
+            });
+            var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+            _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+
+            eventProcessor.SetExceptionHandler(exceptionHandler);
+
+            var task = eventProcessor.Start();
+
+            _ringBuffer.PublishStubEvent(0);
+            _ringBuffer.PublishStubEvent(1);
+            _ringBuffer.PublishStubEvent(0);
+            _ringBuffer.PublishStubEvent(1);
+            _ringBuffer.PublishStubEvent(0);
+
+            Assert.IsTrue(processingSignal.Wait(TimeSpan.FromSeconds(2)));
+
+            eventProcessor.Halt();
+
+            Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+            Assert.That(exceptionHandler.EventExceptions, Has.Exactly(2).Items);
         }
 
         [Test]
@@ -87,9 +120,9 @@ namespace Disruptor.Tests.Processing
 
             var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, new LoopbackEventHandler(_ringBuffer, batchSizes, signal));
 
-            _ringBuffer.Publish(_ringBuffer.Next());
-            _ringBuffer.Publish(_ringBuffer.Next());
-            _ringBuffer.Publish(_ringBuffer.Next());
+            _ringBuffer.PublishStubEvent(0);
+            _ringBuffer.PublishStubEvent(0);
+            _ringBuffer.PublishStubEvent(0);
 
             var task = eventProcessor.Start();
             Assert.IsTrue(signal.Wait(TimeSpan.FromSeconds(2)));
@@ -119,7 +152,7 @@ namespace Disruptor.Tests.Processing
             {
                 if (!endOfBatch)
                 {
-                    _ringBuffer.Publish(_ringBuffer.Next());
+                    _ringBuffer.PublishStubEvent(0);
                 }
 
                 _signal.Signal();
