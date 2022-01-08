@@ -39,7 +39,7 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Callback to notify of an exception during <see cref="ILifecycleAware.OnStart"/>
+        /// Callback to notify of an exception during <see cref="IValueEventHandler{T}.OnStart"/>
         /// </summary>
         /// <param name="ex">ex throw during the starting process.</param>
         public void HandleOnStartException(Exception ex)
@@ -52,7 +52,7 @@ namespace Disruptor
         }
 
         /// <summary>
-        /// Callback to notify of an exception during <see cref="ILifecycleAware.OnShutdown"/>
+        /// Callback to notify of an exception during <see cref="IValueEventHandler{T}.OnShutdown"/>
         /// </summary>
         /// <param name="ex">ex throw during the shutdown process.</param>
         public void HandleOnShutdownException(Exception ex)

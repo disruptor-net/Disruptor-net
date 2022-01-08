@@ -40,7 +40,7 @@ namespace Disruptor.Samples
         {
         }
 
-        public class DynamicHandler : IEventHandler<DynamicEvent>, ILifecycleAware
+        public class DynamicHandler : IEventHandler<DynamicEvent>
         {
             private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
 

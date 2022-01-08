@@ -201,7 +201,7 @@ namespace Disruptor.Tests.Processing
             }
         }
 
-        private class LifeCycleHandler : IValueEventHandler<long>, ILifecycleAware
+        private class LifeCycleHandler : IValueEventHandler<long>
         {
             private readonly ManualResetEvent _startedSignal = new ManualResetEvent(false);
             private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);

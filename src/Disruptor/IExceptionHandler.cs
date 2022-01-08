@@ -39,13 +39,13 @@ namespace Disruptor
         void HandleEventException(Exception ex, long sequence, EventBatch<T> batch);
 
         /// <summary>
-        /// Callback to notify of an exception during <see cref="ILifecycleAware.OnStart"/>
+        /// Callback to notify of an exception during <see cref="IEventHandler{T}.OnStart"/>
         /// </summary>
         /// <param name="ex">ex throw during the starting process.</param>
         void HandleOnStartException(Exception ex);
 
         /// <summary>
-        /// Callback to notify of an exception during <see cref="ILifecycleAware.OnShutdown"/>
+        /// Callback to notify of an exception during <see cref="IEventHandler{T}.OnShutdown"/>
         /// </summary>
         /// <param name="ex">ex throw during the shutdown process.</param>
         void HandleOnShutdownException(Exception ex);

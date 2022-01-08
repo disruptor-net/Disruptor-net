@@ -4,7 +4,7 @@ namespace Disruptor
     /// An aggregate collection of <see cref="IEventHandler{T}"/> that get called in sequence for each event.
     /// </summary>
     /// <typeparam name="T">event implementation storing the data for sharing during exchange or parallel coordination of an event</typeparam>
-    public class AggregateEventHandler<T> : IEventHandler<T>, ILifecycleAware
+    public class AggregateEventHandler<T> : IEventHandler<T>
     {
         private readonly IEventHandler<T>[] _eventHandlers;
 
@@ -39,7 +39,7 @@ namespace Disruptor
         {
             foreach (var eventHandler in _eventHandlers)
             {
-                (eventHandler as ILifecycleAware)?.OnStart();
+                eventHandler.OnStart();
             }
         }
 
@@ -50,7 +50,7 @@ namespace Disruptor
         {
             foreach (var eventHandler in _eventHandlers)
             {
-                (eventHandler as ILifecycleAware)?.OnShutdown();
+                eventHandler.OnShutdown();
             }
         }
     }

@@ -215,17 +215,13 @@ namespace Disruptor.Benchmarks.Reference
         /// </summary>
         private void NotifyStart()
         {
-            var lifecycleAware = _eventHandler as ILifecycleAware;
-            if (lifecycleAware != null)
+            try
             {
-                try
-                {
-                    lifecycleAware.OnStart();
-                }
-                catch (Exception e)
-                {
-                    _exceptionHandler.HandleOnStartException(e);
-                }
+                _eventHandler.OnStart();
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler.HandleOnStartException(e);
             }
 
             _started.Set();
@@ -236,17 +232,13 @@ namespace Disruptor.Benchmarks.Reference
         /// </summary>
         private void NotifyShutdown()
         {
-            var lifecycleAware = _eventHandler as ILifecycleAware;
-            if (lifecycleAware != null)
+            try
             {
-                try
-                {
-                    lifecycleAware.OnShutdown();
-                }
-                catch (Exception e)
-                {
-                    _exceptionHandler.HandleOnShutdownException(e);
-                }
+                _eventHandler.OnShutdown();
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler.HandleOnShutdownException(e);
             }
 
             _started.Reset();

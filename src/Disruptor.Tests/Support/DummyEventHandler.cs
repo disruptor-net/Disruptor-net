@@ -1,6 +1,6 @@
 ﻿namespace Disruptor.Tests.Support
 {
-    public class DummyEventHandler<T> : IEventHandler<T>, ILifecycleAware
+    public class DummyEventHandler<T> : IEventHandler<T>
     {
         public int StartCalls { get; private set; }
         public int ShutdownCalls { get; private set; }

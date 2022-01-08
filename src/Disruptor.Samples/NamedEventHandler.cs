@@ -2,7 +2,7 @@
 
 namespace Disruptor.Samples
 {
-    public class NamedEventHandler<T> : IEventHandler<T>, ILifecycleAware
+    public class NamedEventHandler<T> : IEventHandler<T>
     {
         private readonly string _name;
         private string _oldName;

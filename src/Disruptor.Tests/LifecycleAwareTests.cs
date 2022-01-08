@@ -35,7 +35,7 @@ namespace Disruptor.Tests
             Assert.AreEqual(_eventHandler.ShutdownCounter, 1);
         }
 
-        private sealed class LifecycleAwareEventHandler : IEventHandler<StubEvent>, ILifecycleAware
+        private sealed class LifecycleAwareEventHandler : IEventHandler<StubEvent>
         {
             private readonly ManualResetEvent _startSignal;
             private readonly ManualResetEvent _shutdownSignal;

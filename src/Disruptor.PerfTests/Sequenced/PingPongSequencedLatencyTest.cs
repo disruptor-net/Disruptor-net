@@ -74,7 +74,7 @@ namespace Disruptor.PerfTests.Sequenced
             Task.WaitAll(processorTask1, processorTask2);
         }
 
-        private class Pinger : IEventHandler<PerfEvent>, ILifecycleAware
+        private class Pinger : IEventHandler<PerfEvent>
         {
             private readonly RingBuffer<PerfEvent> _buffer;
             private readonly long _maxEvents;
@@ -149,7 +149,7 @@ namespace Disruptor.PerfTests.Sequenced
             }
         }
 
-        private class Ponger : IEventHandler<PerfEvent>, ILifecycleAware
+        private class Ponger : IEventHandler<PerfEvent>
         {
             private readonly RingBuffer<PerfEvent> _buffer;
             private CountdownEvent _globalSignal;

@@ -139,7 +139,7 @@ namespace Disruptor.Tests
             }
         }
 
-        private class DynamicHandler : IWorkHandler<StubEvent>, ILifecycleAware
+        private class DynamicHandler : IWorkHandler<StubEvent>
         {
             private readonly CountdownEvent _shutdownLatch = new CountdownEvent(1);
             private readonly CountdownEvent _startLatch = new CountdownEvent(1);

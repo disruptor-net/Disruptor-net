@@ -4,7 +4,7 @@ using Disruptor.Tests.Support;
 
 namespace Disruptor.Tests.Dsl.Stubs
 {
-    public class DelayedEventHandler : IEventHandler<TestEvent>, IValueEventHandler<TestValueEvent>, ILifecycleAware
+    public class DelayedEventHandler : IEventHandler<TestEvent>, IValueEventHandler<TestValueEvent>
     {
         private int _readyToProcessEvent;
         private volatile bool _stopped;

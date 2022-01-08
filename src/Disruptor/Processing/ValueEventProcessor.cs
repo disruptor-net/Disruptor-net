@@ -10,9 +10,6 @@ namespace Disruptor.Processing
     /// <summary>
     /// Convenience class for handling the batching semantics of consuming events from a <see cref="ValueRingBuffer{T}"/>
     /// and delegating the available events to an <see cref="IValueEventHandler{T}"/>.
-    ///
-    /// If the <see cref="IValueEventHandler{T}"/> also implements <see cref="ILifecycleAware"/> it will be notified just after the thread
-    /// is started and just before the thread is shutdown.
     /// </summary>
     /// <remarks>
     /// You should probably not use this type directly but instead implement <see cref="IValueEventHandler{T}"/> and register your handler
@@ -212,17 +209,13 @@ namespace Disruptor.Processing
         /// </summary>
         private void NotifyStart()
         {
-            var lifecycleAware = _eventHandler as ILifecycleAware;
-            if (lifecycleAware != null)
+            try
             {
-                try
-                {
-                    lifecycleAware.OnStart();
-                }
-                catch (Exception e)
-                {
-                    _exceptionHandler.HandleOnStartException(e);
-                }
+                _eventHandler.OnStart();
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler.HandleOnStartException(e);
             }
 
             _started.Set();
@@ -233,17 +226,13 @@ namespace Disruptor.Processing
         /// </summary>
         private void NotifyShutdown()
         {
-            var lifecycleAware = _eventHandler as ILifecycleAware;
-            if (lifecycleAware != null)
+            try
             {
-                try
-                {
-                    lifecycleAware.OnShutdown();
-                }
-                catch (Exception e)
-                {
-                    _exceptionHandler.HandleOnShutdownException(e);
-                }
+                _eventHandler.OnShutdown();
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler.HandleOnShutdownException(e);
             }
 
             _started.Reset();

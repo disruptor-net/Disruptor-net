@@ -205,7 +205,7 @@ namespace Disruptor.Tests.Processing
             }
         }
 
-        private class LifeCycleHandler : IAsyncBatchEventHandler<object>, ILifecycleAware
+        private class LifeCycleHandler : IAsyncBatchEventHandler<object>
         {
             private readonly ManualResetEvent _startedSignal = new ManualResetEvent(false);
             private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);

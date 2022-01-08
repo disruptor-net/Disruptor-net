@@ -183,33 +183,25 @@ namespace Disruptor.Processing
 
         private void NotifyStart()
         {
-            var lifecycleAware = _workHandler as ILifecycleAware;
-            if (lifecycleAware != null)
+            try
             {
-                try
-                {
-                    lifecycleAware.OnStart();
-                }
-                catch (Exception ex)
-                {
-                    _exceptionHandler.HandleOnStartException(ex);
-                }
+                _workHandler.OnStart();
+            }
+            catch (Exception ex)
+            {
+                _exceptionHandler.HandleOnStartException(ex);
             }
         }
 
         private void NotifyShutdown()
         {
-            var lifecycleAware = _workHandler as ILifecycleAware;
-            if (lifecycleAware != null)
+            try
             {
-                try
-                {
-                    lifecycleAware.OnShutdown();
-                }
-                catch (Exception ex)
-                {
-                    _exceptionHandler.HandleOnShutdownException(ex);
-                }
+                _workHandler.OnShutdown();
+            }
+            catch (Exception ex)
+            {
+                _exceptionHandler.HandleOnShutdownException(ex);
             }
         }
 

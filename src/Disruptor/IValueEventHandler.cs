@@ -22,5 +22,22 @@ namespace Disruptor
         /// <param name="sequence">Sequence number committed to the <see cref="ValueRingBuffer{T}"/></param>
         /// <param name="endOfBatch">flag to indicate if this is the last event in a batch from the <see cref="ValueRingBuffer{T}"/></param>
         void OnEvent(ref T data, long sequence, bool endOfBatch);
+
+        ///<summary>
+        /// Called once on thread start before first event is available.
+        ///</summary>
+        void OnStart()
+        {
+        }
+
+        /// <summary>
+        /// Called once just before the thread is shutdown.
+        ///
+        /// Sequence event processing will already have stopped before this method is called. No events will
+        /// be processed after this message.
+        /// </summary>
+        void OnShutdown()
+        {
+        }
     }
 }
