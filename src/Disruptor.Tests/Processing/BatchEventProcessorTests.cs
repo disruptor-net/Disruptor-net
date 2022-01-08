@@ -49,7 +49,7 @@ namespace Disruptor.Tests.Processing
             _ringBuffer.PublishStubEvent(0);
             _ringBuffer.PublishStubEvent(0);
 
-            var task = Task.Run(() => eventProcessor.Run());
+            var task = eventProcessor.Start();
 
             Assert.IsTrue(eventSignal.Wait(TimeSpan.FromSeconds(2)));
 
@@ -69,7 +69,7 @@ namespace Disruptor.Tests.Processing
 
             eventProcessor.SetExceptionHandler(exceptionHandler);
 
-            var task = Task.Run(() => eventProcessor.Run());
+            var task = eventProcessor.Start();
 
             _ringBuffer.PublishStubEvent(0);
 

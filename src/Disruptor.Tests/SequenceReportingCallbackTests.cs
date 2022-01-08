@@ -19,7 +19,7 @@ namespace Disruptor.Tests
             var eventProcessor = EventProcessorFactory.Create(ringBuffer, sequenceBarrier, handler);
             ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
-            var task = Task.Run(eventProcessor.Run);
+            var task = eventProcessor.Start();
 
             Assert.AreEqual(-1L, eventProcessor.Sequence.Value);
             ringBuffer.Publish(ringBuffer.Next());
@@ -43,7 +43,7 @@ namespace Disruptor.Tests
             var eventProcessor = EventProcessorFactory.Create(ringBuffer, sequenceBarrier, handler);
             ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
-            var task = Task.Run(eventProcessor.Run);
+            var task = eventProcessor.Start();
 
             Assert.AreEqual(-1L, eventProcessor.Sequence.Value);
             ringBuffer.Publish(ringBuffer.Next());
