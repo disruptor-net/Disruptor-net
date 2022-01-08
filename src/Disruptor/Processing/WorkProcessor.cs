@@ -103,7 +103,7 @@ namespace Disruptor.Processing
             var processedSequence = true;
             var cachedAvailableSequence = long.MinValue;
             var nextSequence = _sequence.Value;
-            T? eventRef = null;
+
             while (true)
             {
                 try
@@ -133,8 +133,8 @@ namespace Disruptor.Processing
 
                     if (cachedAvailableSequence >= nextSequence)
                     {
-                        eventRef = _ringBuffer[nextSequence];
-                        _workHandler.OnEvent(eventRef);
+                        var evt = _ringBuffer[nextSequence];
+                        _workHandler.OnEvent(evt);
                         processedSequence = true;
                     }
                     else
@@ -158,7 +158,8 @@ namespace Disruptor.Processing
                 }
                 catch (Exception ex)
                 {
-                    _exceptionHandler.HandleEventException(ex, nextSequence, eventRef);
+                    var evt = _ringBuffer[nextSequence];
+                    _exceptionHandler.HandleEventException(ex, nextSequence, evt);
                     processedSequence = true;
                 }
             }
@@ -176,7 +177,7 @@ namespace Disruptor.Processing
             }
             catch (Exception ex)
             {
-                _exceptionHandler.HandleEventException(ex, availableSequence, null);
+                _exceptionHandler.HandleOnTimeoutException(ex, availableSequence);
             }
         }
 

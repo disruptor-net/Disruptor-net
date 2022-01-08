@@ -5,16 +5,21 @@ using System.Threading.Tasks;
 
 namespace Disruptor.Tests.Support
 {
-    public class TestAsyncBatchEventHandler<T> : IAsyncBatchEventHandler<T>
+    public class TestAsyncBatchEventHandler<T> : IAsyncBatchEventHandler<T>, ITimeoutHandler
         where T : class
     {
         private readonly Action<T> _onEventAction;
-        private readonly bool _yield;
+        private readonly Action _onTimeoutAction;
 
-        public TestAsyncBatchEventHandler(Action<T> onEventAction, bool yield = false)
+        public TestAsyncBatchEventHandler(Action<T> onEventAction)
+            : this(onEventAction, () => { })
+        {
+        }
+
+        public TestAsyncBatchEventHandler(Action<T> onEventAction, Action onTimeoutAction)
         {
             _onEventAction = onEventAction;
-            _yield = yield;
+            _onTimeoutAction = onTimeoutAction;
         }
 
         public async ValueTask OnBatch(EventBatch<T> batch, long sequence)
@@ -24,8 +29,12 @@ namespace Disruptor.Tests.Support
                 _onEventAction.Invoke(data);
             }
 
-            if (_yield)
-                await Task.Yield();
+            await Task.Yield();
+        }
+
+        public void OnTimeout(long sequence)
+        {
+            _onTimeoutAction.Invoke();
         }
     }
 }

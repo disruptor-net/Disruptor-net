@@ -9,9 +9,18 @@ namespace Disruptor
     public sealed class FatalExceptionHandler<T> : IExceptionHandler<T>
         where T : class
     {
-        public void HandleEventException(Exception ex, long sequence, T? evt)
+        public void HandleEventException(Exception ex, long sequence, T evt)
         {
             var message = $"Exception processing sequence {sequence} for event {evt}: {ex}";
+
+            Console.WriteLine(message);
+
+            throw new ApplicationException(message, ex);
+        }
+
+        public void HandleOnTimeoutException(Exception ex, long sequence)
+        {
+            var message = $"Exception processing timeout for sequence {sequence}: {ex}";
 
             Console.WriteLine(message);
 

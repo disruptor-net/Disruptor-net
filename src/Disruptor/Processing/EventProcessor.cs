@@ -208,7 +208,7 @@ namespace Disruptor.Processing
             }
             catch (Exception ex)
             {
-                _exceptionHandler.HandleEventException(ex, availableSequence, null);
+                _exceptionHandler.HandleOnTimeoutException(ex, availableSequence);
             }
         }
 

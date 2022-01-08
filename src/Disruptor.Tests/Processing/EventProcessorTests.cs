@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
@@ -58,6 +57,35 @@ namespace Disruptor.Tests.Processing
         }
 
         [Test]
+        public void ShouldCallExceptionHandlerOnTimeoutException()
+        {
+            var waitStrategy = new TimeoutBlockingWaitStrategy(TimeSpan.FromMilliseconds(1));
+            var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new SingleProducerSequencer(16, waitStrategy));
+            var sequenceBarrier = ringBuffer.NewBarrier();
+
+            var exceptionSignal = new CountdownEvent(1);
+            var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
+            var eventHandler = new TestEventHandler<StubEvent>(x => { }, () => throw new NullReferenceException());
+            var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
+            ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+
+            eventProcessor.SetExceptionHandler(exceptionHandler);
+
+            var task = eventProcessor.Start();
+
+            Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
+            Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
+            Assert.AreEqual(1, exceptionHandler.TimeoutExceptionCount);
+#if DISRUPTOR_V5
+            Assert.AreEqual(0, exceptionHandler.BatchExceptionCount);
+#endif
+
+            eventProcessor.Halt();
+
+            Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        }
+
+        [Test]
         public void ShouldCallExceptionHandlerOnUncaughtException()
         {
             var exceptionSignal = new CountdownEvent(1);
@@ -73,6 +101,11 @@ namespace Disruptor.Tests.Processing
             _ringBuffer.PublishStubEvent(0);
 
             Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
+            Assert.AreEqual(1, exceptionHandler.EventExceptionCount);
+            Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
+#if DISRUPTOR_V5
+            Assert.AreEqual(0, exceptionHandler.BatchExceptionCount);
+#endif
 
             eventProcessor.Halt();
 
@@ -105,11 +138,15 @@ namespace Disruptor.Tests.Processing
             _ringBuffer.PublishStubEvent(0);
 
             Assert.IsTrue(processingSignal.Wait(TimeSpan.FromSeconds(2)));
+            Assert.AreEqual(2, exceptionHandler.EventExceptionCount);
+            Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
+#if DISRUPTOR_V5
+            Assert.AreEqual(0, exceptionHandler.BatchExceptionCount);
+#endif
 
             eventProcessor.Halt();
 
             Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
-            Assert.That(exceptionHandler.EventExceptions, Has.Exactly(2).Items);
         }
 
         [Test]

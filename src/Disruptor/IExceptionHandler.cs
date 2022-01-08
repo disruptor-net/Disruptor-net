@@ -17,8 +17,15 @@ namespace Disruptor
         /// </summary>
         /// <param name="ex">exception that propagated from the <see cref="IEventHandler{T}"/>.</param>
         /// <param name="sequence">sequence of the event which cause the exception.</param>
-        /// <param name="evt">event being processed when the exception occurred. This can be null</param>
-        void HandleEventException(Exception ex, long sequence, T? evt);
+        /// <param name="evt">event being processed when the exception occurred.</param>
+        void HandleEventException(Exception ex, long sequence, T evt);
+
+        /// <summary>
+        /// Callback to notify of an exception during <see cref="ITimeoutHandler.OnTimeout"/>
+        /// </summary>
+        /// <param name="ex">ex throw during the starting process.</param>
+        /// <param name="sequence">sequence of the event which cause the exception.</param>
+        void HandleOnTimeoutException(Exception ex, long sequence);
 
 #if DISRUPTOR_V5
         /// <summary>

@@ -12,7 +12,7 @@ namespace Disruptor.Tests.Dsl.Stubs
             _exceptionHandled = exceptionHandled;
         }
 
-        public void HandleEventException(Exception ex, long sequence, TestEvent? evt)
+        public void HandleEventException(Exception ex, long sequence, TestEvent evt)
         {
             _exceptionHandled.Write(ex);
         }
