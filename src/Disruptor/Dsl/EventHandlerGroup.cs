@@ -57,7 +57,6 @@ namespace Disruptor.Dsl
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
         public EventHandlerGroup<T> Then(params IEventHandler<T>[] handlers) => HandleEventsWith(handlers);
 
-#if DISRUPTOR_V5
         /// <summary>
         /// Set up batch handlers to consume events from the ring buffer. These handlers will only process events
         /// after every <see cref="IEventProcessor"/> in this group has processed the event.
@@ -79,7 +78,6 @@ namespace Disruptor.Dsl
         /// <param name="handlers"></param>
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
         public EventHandlerGroup<T> Then(params IAsyncBatchEventHandler<T>[] handlers) => HandleEventsWith(handlers);
-#endif
 
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The Disruptor will
@@ -116,7 +114,6 @@ namespace Disruptor.Dsl
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to set up a event processor barrier over the created event processors.</returns>
         public EventHandlerGroup<T> HandleEventsWith(params IEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_sequences, handlers);
 
-#if DISRUPTOR_V5
         /// <summary>
         /// Set up batch handlers to handle events from the ring buffer. These handlers will only process events
         /// after every <see cref="IEventProcessor"/> in this group has processed the event.
@@ -138,7 +135,6 @@ namespace Disruptor.Dsl
         /// <param name="handlers">the batch handlers that will process events.</param>
         /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to set up a event processor barrier over the created event processors.</returns>
         public EventHandlerGroup<T> HandleEventsWith(params IAsyncBatchEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_sequences, handlers);
-#endif
 
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The Disruptor will

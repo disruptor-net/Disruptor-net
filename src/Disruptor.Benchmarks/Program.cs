@@ -29,11 +29,9 @@ namespace Disruptor.Benchmarks
 
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run();
 
-// #if DISRUPTOR_V5
 //             var bench = new EventProcessorBenchmarks();
 //             bench.Setup();
 //             bench.RunBach();
-// #endif
 
             Console.ReadLine();
         }

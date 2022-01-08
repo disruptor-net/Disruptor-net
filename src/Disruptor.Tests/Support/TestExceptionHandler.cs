@@ -30,7 +30,6 @@ namespace Disruptor.Tests.Support
             _action.Invoke(null);
         }
 
-#if DISRUPTOR_V5
         public int BatchExceptionCount { get; private set; }
 
         public void HandleEventException(Exception ex, long sequence, EventBatch<T> batch)
@@ -42,7 +41,6 @@ namespace Disruptor.Tests.Support
                 _action.Invoke(evt);
             }
         }
-#endif
 
         public void HandleOnStartException(Exception ex)
         {

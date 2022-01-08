@@ -197,7 +197,7 @@ namespace Disruptor.HeapWalker
                     Console.WriteLine("No object found");
                     return;
                 }
-                
+
                 Console.WriteLine($"Generations: {string.Join(", ", Generations.OrderBy(_ => _))}");
 
                 Addresses.Sort();
@@ -205,7 +205,7 @@ namespace Disruptor.HeapWalker
                 PrintOffsets(heap, Addresses);
             }
         }
-      
+
         public class Options
         {
             public int ProcessId { get; set; }

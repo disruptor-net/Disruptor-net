@@ -153,7 +153,6 @@ namespace Disruptor
             }
         }
 
-#if DISRUPTOR_V5
         internal ReadOnlySpan<T> this[long lo, long hi]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -176,7 +175,6 @@ namespace Disruptor
 
             return new EventBatch<T>(_entries, _bufferPadRef + index1, length);
         }
-#endif
 
         /// <summary>
         /// Sets the cursor to a specific sequence and returns the preallocated entry that is stored there.  This

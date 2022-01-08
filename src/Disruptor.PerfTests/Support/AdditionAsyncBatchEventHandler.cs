@@ -3,8 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Tests.Support;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor.PerfTests.Support
 {
     public class AdditionAsyncBatchEventHandler : IAsyncBatchEventHandler<PerfEvent>
@@ -48,5 +46,3 @@ namespace Disruptor.PerfTests.Support
         }
     }
 }
-
-#endif

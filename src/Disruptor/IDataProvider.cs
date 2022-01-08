@@ -11,7 +11,6 @@
         /// </summary>
         T this[long sequence] { get; }
 
-#if DISRUPTOR_V5
         /// <summary>
         /// Gets a batch of events for the given sequences in the RingBuffer.
         /// </summary>
@@ -26,6 +25,5 @@
         /// <param name="lo">the lowest sequence number</param>
         /// <param name="hi">the highest sequence number</param>
         EventBatch<T> GetBatch(long lo, long hi);
-#endif
     }
 }

@@ -1,8 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor
 {
     /// <summary>
@@ -21,5 +19,3 @@ namespace Disruptor
         ValueTask<SequenceWaitResult> WaitForAsync(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken);
     }
 }
-
-#endif

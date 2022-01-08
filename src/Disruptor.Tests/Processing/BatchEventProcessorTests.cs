@@ -5,8 +5,6 @@ using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor.Tests.Processing
 {
     [TestFixture]
@@ -238,5 +236,3 @@ namespace Disruptor.Tests.Processing
         }
     }
 }
-
-#endif

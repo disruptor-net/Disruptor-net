@@ -78,7 +78,6 @@ namespace Disruptor
             return EventPoller.PollState.Idle;
         }
 
-#if DISRUPTOR_V5
         /// <summary>
         /// <para>
         /// Polls for events using the given handler.
@@ -123,7 +122,6 @@ namespace Disruptor
 
             return EventPoller.PollState.Idle;
         }
-#endif
 
         /// <summary>
         /// Gets the sequence being used by this event poller

@@ -84,7 +84,6 @@ namespace Disruptor.Dsl
             return CreateEventProcessors(new ISequence[0], handlers);
         }
 
-#if DISRUPTOR_V5
         /// <summary>
         /// Set up event handlers to handle events from the ring buffer. These handlers will process events
         /// as soon as they become available, in parallel.
@@ -114,7 +113,6 @@ namespace Disruptor.Dsl
         {
             return CreateEventProcessors(new ISequence[0], handlers);
         }
-#endif
 
         /// <summary>
         /// Set up custom event processors to handle events from the ring buffer. The disruptor will
@@ -211,7 +209,6 @@ namespace Disruptor.Dsl
             return new ExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
         }
 
-#if DISRUPTOR_V5
         /// <summary>
         /// Override the default exception handler for a specific handler.
         /// <code>disruptorWizard.HandleExceptionsIn(eventHandler).With(exceptionHandler);</code>
@@ -233,7 +230,6 @@ namespace Disruptor.Dsl
         {
             return new ExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
         }
-#endif
 
         /// <summary>
         /// Create a group of event handlers to be used as a dependency.
@@ -248,7 +244,6 @@ namespace Disruptor.Dsl
             return new EventHandlerGroup<T>(this, _consumerRepository, handlers.Select(h => _consumerRepository.GetSequenceFor(h)));
         }
 
-#if DISRUPTOR_V5
         /// <summary>
         /// Create a group of event handlers to be used as a dependency.
         /// For example if the handler <code>A</code> must process events before handler <code>B</code>:
@@ -274,7 +269,6 @@ namespace Disruptor.Dsl
         {
             return new EventHandlerGroup<T>(this, _consumerRepository, handlers.Select(h => _consumerRepository.GetSequenceFor(h)));
         }
-#endif
 
         /// <summary>
         /// Create a group of event processors to be used as a dependency.
@@ -448,7 +442,6 @@ namespace Disruptor.Dsl
             return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
         }
 
-#if DISRUPTOR_V5
         internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IBatchEventHandler<T>[] eventHandlers)
         {
             CheckNotStarted();
@@ -500,7 +493,6 @@ namespace Disruptor.Dsl
 
             return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
         }
-#endif
 
         private void UpdateGatingSequencesForNextInChain(ISequence[] barrierSequences, ISequence[] processorSequences)
         {

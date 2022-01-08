@@ -25,11 +25,7 @@ namespace Disruptor.Tests.Dsl
             _delayedEventHandlers = new List<DelayedEventHandler>();
             _testWorkHandlers = new List<TestWorkHandler>();
             _taskScheduler = new StubTaskScheduler();
-#if DISRUPTOR_V5
             _disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 4, _taskScheduler, ProducerType.Multi, new AsyncWaitStrategy(new BlockingWaitStrategy()));
-#else
-            _disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 4, _taskScheduler);
-#endif
         }
 
         public void Dispose()
@@ -81,7 +77,6 @@ namespace Disruptor.Tests.Dsl
             Assert.AreEqual(new List<int> { 101, 102 }, values);
         }
 
-#if DISRUPTOR_V5
         [Test]
         public void ShouldPublishAndHandleEvent_BatchEventHandler()
         {
@@ -129,7 +124,6 @@ namespace Disruptor.Tests.Dsl
             Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
             Assert.AreEqual(new List<int> { 101, 102 }, values);
         }
-#endif
 
         [Test]
         public void ShouldPublishAndHandleEvents_EventHandler()
@@ -157,7 +151,6 @@ namespace Disruptor.Tests.Dsl
             Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
         }
 
-#if DISRUPTOR_V5
         [Test]
         public void ShouldPublishAndHandleEvents_BatchEventHandler()
         {
@@ -209,7 +202,6 @@ namespace Disruptor.Tests.Dsl
             Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
             Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
         }
-#endif
 
         [Test]
         public void ShouldProcessMessagesPublishedBeforeStartIsCalled()
@@ -453,7 +445,6 @@ namespace Disruptor.Tests.Dsl
             Assert.AreSame(testException, actualException);
         }
 
-#if DISRUPTOR_V5
         [Test]
         public void ShouldSupportSpecifyingADefaultExceptionHandlerForEventProcessors_BatchEventHandler()
         {
@@ -487,7 +478,6 @@ namespace Disruptor.Tests.Dsl
             var actualException = WaitFor(eventHandled);
             Assert.AreSame(testException, actualException);
         }
-#endif
 
         [Test]
         public void ShouldApplyDefaultExceptionHandlerToExistingEventProcessors_EventHandler()
@@ -506,7 +496,6 @@ namespace Disruptor.Tests.Dsl
             Assert.AreSame(testException, actualException);
         }
 
-#if DISRUPTOR_V5
         [Test]
         public void ShouldApplyDefaultExceptionHandlerToExistingEventProcessors_BatchEventHandler()
         {
@@ -540,7 +529,6 @@ namespace Disruptor.Tests.Dsl
             var actualException = WaitFor(eventHandled);
             Assert.AreSame(testException, actualException);
         }
-#endif
 
         [Test]
         public void ShouldBlockProducerUntilAllEventProcessorsHaveAdvanced()
@@ -588,7 +576,6 @@ namespace Disruptor.Tests.Dsl
             WaitFor(reference);
         }
 
-#if DISRUPTOR_V5
         [Test]
         public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor_BatchHandler()
         {
@@ -620,7 +607,6 @@ namespace Disruptor.Tests.Dsl
 
             WaitFor(reference);
         }
-#endif
 
         [Test]
         public void ShouldThrowExceptionWhenAddingEventProcessorsAfterTheProducerBarrierHasBeenCreated()

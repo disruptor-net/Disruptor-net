@@ -1,7 +1,5 @@
 using System;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor.Tests.Support
 {
     public class TestBatchEventHandler<T> : IBatchEventHandler<T>, ITimeoutHandler
@@ -35,5 +33,3 @@ namespace Disruptor.Tests.Support
         }
     }
 }
-
-#endif

@@ -44,7 +44,6 @@ namespace Disruptor.Tests.Util
             }
         }
 
-#if DISRUPTOR_V5
         [TestCase(1)]
         [TestCase(2)]
         [TestCase(5)]
@@ -64,7 +63,6 @@ namespace Disruptor.Tests.Util
 
             }
         }
-#endif
 
         [Test]
         public void ShouldReadValueFromArray()

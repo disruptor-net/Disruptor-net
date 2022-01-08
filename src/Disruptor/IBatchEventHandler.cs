@@ -1,8 +1,6 @@
 using System;
 using Disruptor.Processing;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor
 {
     /// <summary>
@@ -32,5 +30,3 @@ namespace Disruptor
         void OnBatch(EventBatch<T> batch, long sequence);
     }
 }
-
-#endif

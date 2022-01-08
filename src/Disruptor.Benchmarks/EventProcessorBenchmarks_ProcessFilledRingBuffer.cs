@@ -17,9 +17,7 @@ namespace Disruptor.Benchmarks
         private readonly RingBuffer<XEvent> _ringBuffer;
         private IEventProcessor<XEvent> _processor;
         private IEventProcessor<XEvent> _processorRef;
-#if DISRUPTOR_V5
         private IEventProcessor<XEvent> _batchProcessor;
-#endif
 
         public EventProcessorBenchmarks_ProcessFilledRingBuffer()
         {
@@ -37,9 +35,7 @@ namespace Disruptor.Benchmarks
         {
             _processor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processor.Halt()));
             _processorRef = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processorRef.Halt()), typeof(EventProcessorRef<,,,,>));
-#if DISRUPTOR_V5
             _batchProcessor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XBatchEventHandler(() => _batchProcessor.Halt()));
-#endif
         }
 
         [Benchmark(OperationsPerInvoke = _ringBufferSize)]
@@ -54,13 +50,11 @@ namespace Disruptor.Benchmarks
             _processorRef.Run();
         }
 
-#if DISRUPTOR_V5
         [Benchmark(OperationsPerInvoke = _ringBufferSize)]
         public void RunBach()
         {
             _batchProcessor.Run();
         }
-#endif
 
         public class XEvent
         {
@@ -88,7 +82,6 @@ namespace Disruptor.Benchmarks
             }
         }
 
-#if DISRUPTOR_V5
         public class XBatchEventHandler : IBatchEventHandler<XEvent>
         {
             private readonly Action _shutdown;
@@ -112,6 +105,5 @@ namespace Disruptor.Benchmarks
                     _shutdown.Invoke();
             }
         }
-#endif
     }
 }

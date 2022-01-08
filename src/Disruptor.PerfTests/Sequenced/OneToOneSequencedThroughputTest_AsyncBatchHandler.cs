@@ -3,8 +3,6 @@ using System.Runtime.CompilerServices;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor.PerfTests.Sequenced
 {
     /// <summary>
@@ -93,6 +91,4 @@ namespace Disruptor.PerfTests.Sequenced
         }
     }
 }
-
-#endif
 

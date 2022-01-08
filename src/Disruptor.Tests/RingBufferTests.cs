@@ -362,7 +362,6 @@ namespace Disruptor.Tests
             Assert.That(evt.Value, Is.EqualTo(expectedIndex));
         }
 
-#if DISRUPTOR_V5
         [TestCase(0)]
         [TestCase(1)]
         [TestCase(31)]
@@ -448,7 +447,6 @@ namespace Disruptor.Tests
                 Assert.That(span[index].Value, Is.EqualTo(expectedStartIndex + index));
             }
         }
-#endif
 
         private static void AssertHandleResetAndNotWrap(RingBuffer<StubEvent> rb)
         {

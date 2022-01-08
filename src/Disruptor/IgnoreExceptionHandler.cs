@@ -22,14 +22,12 @@ namespace Disruptor
             Console.WriteLine(message);
         }
 
-#if DISRUPTOR_V5
         public void HandleEventException(Exception ex, long sequence, EventBatch<T> batch)
         {
             var message = $"Exception processing sequence {sequence} for batch of {batch.Length} events, first event {batch[0]}: {ex}";
 
             Console.WriteLine(message);
         }
-#endif
 
         public void HandleOnStartException(Exception ex)
         {

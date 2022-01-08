@@ -2,8 +2,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor.Tests
 {
     public class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStrategy>
@@ -94,5 +92,3 @@ namespace Disruptor.Tests
         }
     }
 }
-
-#endif

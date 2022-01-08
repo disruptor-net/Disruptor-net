@@ -71,7 +71,6 @@ namespace Disruptor.Util
             return IL.Return<T>();
         }
 
-#if DISRUPTOR_V5
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ReadOnlySpan<T> ReadSpan<T>(object array, int index, int length)
             where T : class
@@ -97,7 +96,6 @@ namespace Disruptor.Util
 
             throw IL.Unreachable();
         }
-#endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T ReadValue<T>(object array, int index)

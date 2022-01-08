@@ -13,9 +13,7 @@ namespace Disruptor.Dsl
 
         public void HandleOnTimeoutException(Exception ex, long sequence) => _handler.HandleOnTimeoutException(ex, sequence);
 
-#if DISRUPTOR_V5
         public void HandleEventException(Exception ex, long sequence, EventBatch<T> batch) => _handler.HandleEventException(ex, sequence, batch);
-#endif
 
         public void HandleOnStartException(Exception ex) => _handler.HandleOnStartException(ex);
 

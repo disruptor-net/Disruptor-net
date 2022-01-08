@@ -17,12 +17,10 @@ namespace Disruptor.Tests.Dsl.Stubs
             _exceptionHandled.Write(ex);
         }
 
-#if DISRUPTOR_V5
         public void HandleEventException(Exception ex, long sequence, EventBatch<TestEvent> batch)
         {
             _exceptionHandled.Write(ex);
         }
-#endif
 
         public void HandleEventException(Exception ex, long sequence, ref TestValueEvent evt)
         {

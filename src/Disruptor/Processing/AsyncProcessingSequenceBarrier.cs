@@ -3,8 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Util;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor.Processing
 {
     /// <summary>
@@ -84,5 +82,3 @@ namespace Disruptor.Processing
         }
     }
 }
-
-#endif

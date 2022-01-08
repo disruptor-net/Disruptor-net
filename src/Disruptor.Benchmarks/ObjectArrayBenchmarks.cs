@@ -34,14 +34,12 @@ namespace Disruptor.Benchmarks
             return InternalUtil.Read<Event>(_array, NextSequence());
         }
 
-#if DISRUPTOR_V5
         [Benchmark]
         public ReadOnlySpan<Event> ReadSpanIL()
         {
             var sequence = NextSequence();
             return InternalUtil.ReadSpan<Event>(_array, sequence, sequence);
         }
-#endif
 
         private int NextSequence() => _index++ & _mask;
 

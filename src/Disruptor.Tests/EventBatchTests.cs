@@ -2,8 +2,6 @@ using System.Linq;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor.Tests
 {
     [TestFixture]
@@ -38,5 +36,3 @@ namespace Disruptor.Tests
         }
     }
 }
-
-#endif

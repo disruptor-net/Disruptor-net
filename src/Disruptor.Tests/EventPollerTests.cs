@@ -32,7 +32,6 @@ namespace Disruptor.Tests
             Assert.That(poller.Poll(Handler), Is.EqualTo(EventPoller.PollState.Processing));
         }
 
-#if DISRUPTOR_V5
         [Test]
         public void ShouldPollForEvents_Batch()
         {
@@ -58,7 +57,6 @@ namespace Disruptor.Tests
 
             Assert.That(poller.Poll(Handler), Is.EqualTo(EventPoller.PollState.Processing));
         }
-#endif
 
         [Test]
         public void ShouldSuccessfullyPollWhenBufferIsFull()
@@ -93,7 +91,6 @@ namespace Disruptor.Tests
             Assert.That(events.Count, Is.EqualTo(4));
         }
 
-#if DISRUPTOR_V5
         [Test]
         public void ShouldSuccessfullyPollWhenBufferIsFull_Batch()
         {
@@ -123,6 +120,5 @@ namespace Disruptor.Tests
             Assert.That(batches.Count, Is.EqualTo(1));
             Assert.That(batches[0].Length, Is.EqualTo(4));
         }
-#endif
     }
 }

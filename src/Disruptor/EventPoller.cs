@@ -28,13 +28,11 @@ namespace Disruptor
         /// </summary>
         public delegate bool Handler<T>(T data, long sequence, bool endOfBatch);
 
-#if DISRUPTOR_V5
         /// <summary>
         /// A callback used to process events
         /// </summary>
         public delegate void BatchHandler<T>(EventBatch<T> batch, long sequence)
             where T : class;
-#endif
 
         /// <summary>
         /// A callback used to process value events

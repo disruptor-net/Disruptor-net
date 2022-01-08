@@ -1,7 +1,2 @@
 <Project>
-
-  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp' Or $(TargetFramework) == 'netstandard2.1'">
-    <DefineConstants>DISRUPTOR_V5</DefineConstants>
-  </PropertyGroup>
-
 </Project>

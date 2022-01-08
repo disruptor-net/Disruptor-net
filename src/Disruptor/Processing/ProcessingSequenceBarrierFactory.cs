@@ -15,8 +15,6 @@ namespace Disruptor.Processing
         {
             var sequencerProxy = StructProxy.CreateProxyInstance(sequencer);
 
-#if DISRUPTOR_V5
-
             if (waitStrategy is IAsyncWaitStrategy asyncWaitStrategy)
             {
                 var waitStrategyProxy = StructProxy.CreateProxyInstance(asyncWaitStrategy);
@@ -25,7 +23,6 @@ namespace Disruptor.Processing
                 return (ISequenceBarrier)Activator.CreateInstance(sequencerBarrierType, sequencerProxy, waitStrategyProxy, cursorSequence, dependentSequences)!;
             }
             else
-#endif
             {
                 var waitStrategyProxy = StructProxy.CreateProxyInstance(waitStrategy);
 

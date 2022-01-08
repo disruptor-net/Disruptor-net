@@ -1,8 +1,6 @@
 using System;
 using System.Threading.Tasks;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor.Tests.Support
 {
     public class TestAsyncBatchEventHandler<T> : IAsyncBatchEventHandler<T>, ITimeoutHandler
@@ -38,5 +36,3 @@ namespace Disruptor.Tests.Support
         }
     }
 }
-
-#endif

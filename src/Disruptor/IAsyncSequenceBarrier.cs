@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 
 namespace Disruptor
 {
-#if DISRUPTOR_V5
     /// <summary>
     /// Coordination barrier for asynchronous event processors. <see cref="ISequenceBarrier"/>
     /// </summary>
@@ -17,5 +16,4 @@ namespace Disruptor
         /// <exception cref="OperationCanceledException">if a status change has occurred for the Disruptor</exception>
         ValueTask<SequenceWaitResult> WaitForAsync(long sequence);
     }
-#endif
 }

@@ -34,7 +34,6 @@ namespace Disruptor.Processing
             return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy)!;
         }
 
-#if DISRUPTOR_V5
         /// <summary>
         /// Create a new <see cref="IEventProcessor{T}"/> with dedicated generic arguments.
         /// </summary>
@@ -84,7 +83,6 @@ namespace Disruptor.Processing
             var eventProcessorType = typeof(AsyncBatchEventProcessor<,,,>).MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType());
             return (IAsyncEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy)!;
         }
-#endif
 
         /// <summary>
         /// Create a new <see cref="IEventProcessor{T}"/> with dedicated generic arguments.

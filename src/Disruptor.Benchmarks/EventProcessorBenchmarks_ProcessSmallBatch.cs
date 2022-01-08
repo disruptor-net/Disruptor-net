@@ -13,9 +13,7 @@ namespace Disruptor.Benchmarks
         private const int _ringBufferSize = 32;
 
         private readonly PartialEventProcessor<XEvent, RingBuffer<XEvent>, XEventHandler, EventProcessorFactory.NoopBatchStartAware> _processor;
-#if DISRUPTOR_V5
         private readonly PartialBatchEventProcessor<XEvent, RingBuffer<XEvent>, XBatchEventHandler> _batchProcessor;
-#endif
 
         public EventProcessorBenchmarks_ProcessSmallBatch()
         {
@@ -28,9 +26,7 @@ namespace Disruptor.Benchmarks
             }
 
             _processor = new PartialEventProcessor<XEvent, RingBuffer<XEvent>, XEventHandler, EventProcessorFactory.NoopBatchStartAware>(ringBuffer, new XEventHandler(), new EventProcessorFactory.NoopBatchStartAware());
-#if DISRUPTOR_V5
             _batchProcessor = new PartialBatchEventProcessor<XEvent, RingBuffer<XEvent>, XBatchEventHandler>(ringBuffer, new XBatchEventHandler());
-#endif
         }
 
         [Params(1, 2, 5, 10)]
@@ -42,13 +38,11 @@ namespace Disruptor.Benchmarks
             _processor.Process(BatchSize, 1);
         }
 
-#if DISRUPTOR_V5
         [Benchmark]
         public void ProcessBatch()
         {
             _batchProcessor.Process(BatchSize, 1);
         }
-#endif
 
         public class XEvent
         {
@@ -103,7 +97,6 @@ namespace Disruptor.Benchmarks
             }
         }
 
-#if DISRUPTOR_V5
         /// <summary>
         /// Partial copy of <see cref="BatchEventProcessor{T, TDataProvider, TSequenceBarrier, TEventHandler}"/>
         /// </summary>
@@ -149,6 +142,5 @@ namespace Disruptor.Benchmarks
                 }
             }
         }
-#endif
     }
 }

@@ -18,7 +18,6 @@ namespace Disruptor.Tests.Support
 
         public T this[long sequence] => Data[sequence % Data.Length];
 
-#if DISRUPTOR_V5
         public ReadOnlySpan<T> this[long lo, long hi]
         {
             get
@@ -43,6 +42,5 @@ namespace Disruptor.Tests.Support
 
             return new EventBatch<T>(Data, index1, Data.Length - index1);
         }
-#endif
     }
 }

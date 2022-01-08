@@ -27,7 +27,6 @@ namespace Disruptor
         /// <param name="sequence">sequence of the event which cause the exception.</param>
         void HandleOnTimeoutException(Exception ex, long sequence);
 
-#if DISRUPTOR_V5
         /// <summary>
         /// Strategy for handling uncaught exceptions when processing an event.
         ///
@@ -38,7 +37,6 @@ namespace Disruptor
         /// <param name="sequence">sequence of the event which cause the exception.</param>
         /// <param name="batch">batch being processed when the exception occurred.</param>
         void HandleEventException(Exception ex, long sequence, EventBatch<T> batch);
-#endif
 
         /// <summary>
         /// Callback to notify of an exception during <see cref="ILifecycleAware.OnStart"/>

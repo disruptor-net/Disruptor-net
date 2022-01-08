@@ -6,8 +6,6 @@ using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 using HdrHistogram;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor.PerfTests.Sequenced
 {
     public class PingPongSequencedLatencyTest_BatchHandler : ILatencyTest
@@ -190,5 +188,3 @@ namespace Disruptor.PerfTests.Sequenced
         }
     }
 }
-
-#endif

@@ -1,8 +1,6 @@
 using System;
 using System.Threading.Tasks;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor.Processing
 {
     /// <summary>
@@ -30,5 +28,3 @@ namespace Disruptor.Processing
         void SetExceptionHandler(IExceptionHandler<T> exceptionHandler);
     }
 }
-
-#endif

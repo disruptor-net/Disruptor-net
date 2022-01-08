@@ -76,9 +76,7 @@ namespace Disruptor.Tests.Processing
             Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
             Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
             Assert.AreEqual(1, exceptionHandler.TimeoutExceptionCount);
-#if DISRUPTOR_V5
             Assert.AreEqual(0, exceptionHandler.BatchExceptionCount);
-#endif
 
             eventProcessor.Halt();
 
@@ -103,9 +101,7 @@ namespace Disruptor.Tests.Processing
             Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
             Assert.AreEqual(1, exceptionHandler.EventExceptionCount);
             Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
-#if DISRUPTOR_V5
             Assert.AreEqual(0, exceptionHandler.BatchExceptionCount);
-#endif
 
             eventProcessor.Halt();
 
@@ -140,9 +136,7 @@ namespace Disruptor.Tests.Processing
             Assert.IsTrue(processingSignal.Wait(TimeSpan.FromSeconds(2)));
             Assert.AreEqual(2, exceptionHandler.EventExceptionCount);
             Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
-#if DISRUPTOR_V5
             Assert.AreEqual(0, exceptionHandler.BatchExceptionCount);
-#endif
 
             eventProcessor.Halt();
 

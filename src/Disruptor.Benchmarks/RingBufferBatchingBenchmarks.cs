@@ -33,7 +33,6 @@ namespace Disruptor.Benchmarks
             }
         }
 
-#if DISRUPTOR_V5
         [Benchmark(OperationsPerInvoke = 20)]
         public void SetValueSpan()
         {
@@ -87,7 +86,6 @@ namespace Disruptor.Benchmarks
                 evt.Value = 42;
             }
         }
-#endif
 
         public class Event
         {

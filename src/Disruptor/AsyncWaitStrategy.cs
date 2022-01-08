@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-#if DISRUPTOR_V5
-
 namespace Disruptor
 {
     public class AsyncWaitStrategy : IAsyncWaitStrategy
@@ -84,5 +82,3 @@ namespace Disruptor
         }
     }
 }
-
-#endif

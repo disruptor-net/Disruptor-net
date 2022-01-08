@@ -27,7 +27,6 @@ namespace Disruptor
             throw new ApplicationException(message, ex);
         }
 
-#if DISRUPTOR_V5
         public void HandleEventException(Exception ex, long sequence, EventBatch<T> batch)
         {
             var message = $"Exception processing sequence {sequence} for batch of {batch.Length} events, first event {batch[0]}: {ex}";
@@ -36,7 +35,6 @@ namespace Disruptor
 
             throw new ApplicationException(message, ex);
         }
-#endif
 
         public void HandleOnStartException(Exception ex)
         {

@@ -61,7 +61,6 @@ namespace Disruptor.Benchmarks
 
             public Event this[long sequence] => _data;
 
-#if DISRUPTOR_V5
             public ReadOnlySpan<Event> this[long lo, long hi]
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -73,7 +72,6 @@ namespace Disruptor.Benchmarks
             {
                 return new EventBatch<Event>(_dataArray, 0, 1);
             }
-#endif
         }
     }
 }

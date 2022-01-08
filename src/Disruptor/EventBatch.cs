@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Disruptor.Util;
 
-#if DISRUPTOR_V5
-
 // It would be much cleaner to include the batch sequence in the struct, as it would enable
 // to add BeginSequence and EndSequence properties, and also a EventAndSequences() enumerator.
 // Yet, adding a long to this struct negatively impacts the benchmarks or performance tests.
@@ -121,5 +119,3 @@ namespace Disruptor
         }
     }
 }
-
-#endif
