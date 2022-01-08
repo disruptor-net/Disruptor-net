@@ -2,7 +2,7 @@
 
 namespace Disruptor.Tests.Support
 {
-    public class TestEventHandler<T> : IEventHandler<T>, ITimeoutHandler
+    public class TestEventHandler<T> : IEventHandler<T>
     {
         private readonly Action<T> _onEventAction;
         private readonly Action _onTimeoutAction;

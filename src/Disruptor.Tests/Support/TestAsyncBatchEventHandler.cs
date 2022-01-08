@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Disruptor.Tests.Support
 {
-    public class TestAsyncBatchEventHandler<T> : IAsyncBatchEventHandler<T>, ITimeoutHandler
+    public class TestAsyncBatchEventHandler<T> : IAsyncBatchEventHandler<T>
         where T : class
     {
         private readonly Action<T> _onEventAction;

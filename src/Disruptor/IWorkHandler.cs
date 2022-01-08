@@ -29,5 +29,15 @@ namespace Disruptor
         void OnShutdown()
         {
         }
+
+        /// <summary>
+        /// Invoked when the wait strategy timeouts.
+        /// </summary>
+        /// <remarks>
+        /// This only happens if the current wait strategy can return timeouts (e.g.: <see cref="TimeoutBlockingWaitStrategy"/>).
+        /// </remarks>
+        void OnTimeout(long sequence)
+        {
+        }
     }
 }

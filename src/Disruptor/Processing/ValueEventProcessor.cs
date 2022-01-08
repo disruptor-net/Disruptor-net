@@ -36,7 +36,6 @@ namespace Disruptor.Processing
         // ReSharper restore FieldCanBeMadeReadOnly.Local
 
         private readonly Sequence _sequence = new Sequence();
-        private readonly ITimeoutHandler? _timeoutHandler;
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim();
         private IValueExceptionHandler<T> _exceptionHandler = new ValueFatalExceptionHandler<T>();
         private volatile int _running;
@@ -50,8 +49,6 @@ namespace Disruptor.Processing
 
             if (eventHandler is IEventProcessorSequenceAware sequenceAware)
                 sequenceAware.SetSequenceCallback(_sequence);
-
-            _timeoutHandler = eventHandler as ITimeoutHandler;
         }
 
         /// <summary>
@@ -196,7 +193,7 @@ namespace Disruptor.Processing
         {
             try
             {
-                _timeoutHandler?.OnTimeout(availableSequence);
+                _eventHandler.OnTimeout(availableSequence);
             }
             catch (Exception ex)
             {

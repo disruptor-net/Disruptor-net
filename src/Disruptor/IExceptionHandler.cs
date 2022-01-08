@@ -21,7 +21,7 @@ namespace Disruptor
         void HandleEventException(Exception ex, long sequence, T evt);
 
         /// <summary>
-        /// Callback to notify of an exception during <see cref="ITimeoutHandler.OnTimeout"/>
+        /// Callback to notify of an exception during <see cref="IEventHandler{T}.OnTimeout"/>
         /// </summary>
         /// <param name="ex">ex throw during the starting process.</param>
         /// <param name="sequence">sequence of the event which cause the exception.</param>

@@ -23,7 +23,6 @@ namespace Disruptor.Processing
         private readonly IExceptionHandler<T> _exceptionHandler;
         private readonly Sequence _workSequence;
         private readonly IEventReleaser _eventReleaser;
-        private readonly ITimeoutHandler? _timeoutHandler;
 
         /// <summary>
         /// Construct a <see cref="WorkProcessor{T}"/>.
@@ -44,7 +43,6 @@ namespace Disruptor.Processing
             _eventReleaser = new EventReleaser(this);
 
             (_workHandler as IEventReleaseAware)?.SetEventReleaser(_eventReleaser);
-            _timeoutHandler = _workHandler as ITimeoutHandler;
         }
 
         /// <summary>
@@ -173,7 +171,7 @@ namespace Disruptor.Processing
         {
             try
             {
-                _timeoutHandler?.OnTimeout(availableSequence);
+                _workHandler.OnTimeout(availableSequence);
             }
             catch (Exception ex)
             {

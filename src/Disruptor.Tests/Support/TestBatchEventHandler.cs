@@ -2,7 +2,7 @@ using System;
 
 namespace Disruptor.Tests.Support
 {
-    public class TestBatchEventHandler<T> : IBatchEventHandler<T>, ITimeoutHandler
+    public class TestBatchEventHandler<T> : IBatchEventHandler<T>
         where T : class
     {
         private readonly Action<T> _onEventAction;
