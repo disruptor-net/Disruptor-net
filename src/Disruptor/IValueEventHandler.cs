@@ -1,4 +1,5 @@
-﻿using Disruptor.Processing;
+﻿using Disruptor.Dsl;
+using Disruptor.Processing;
 
 namespace Disruptor
 {
@@ -6,7 +7,10 @@ namespace Disruptor
     /// Callback interface to be implemented for processing events as they become available in the <see cref="ValueRingBuffer{T}"/>
     /// </summary>
     /// <typeparam name="T">Type of events for sharing during exchange or parallel coordination of an event.</typeparam>
-    /// <remarks>See <see cref="IValueEventProcessor{T}.SetExceptionHandler"/> if you want to handle exceptions propagated out of the handler.</remarks>
+    /// <remarks>
+    /// See <see cref="Dsl.ValueDisruptor{T,TRingBuffer}.SetDefaultExceptionHandler"/> or <see cref="ValueDisruptor{T,TRingBuffer}.HandleExceptionsFor"/>
+    /// if you want to handle exceptions propagated out of the handler.
+    /// </remarks>
     public interface IValueEventHandler<T>
         where T : struct
     {
