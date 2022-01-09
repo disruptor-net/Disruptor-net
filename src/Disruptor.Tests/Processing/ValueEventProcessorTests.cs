@@ -132,7 +132,7 @@ namespace Disruptor.Tests.Processing
             Assert.That(batchSizes, Is.EqualTo(new List<long> { 3, 2, 1 }));
         }
 
-        private class LoopbackEventHandler : IValueEventHandler<StubValueEvent>, IBatchStartAware
+        private class LoopbackEventHandler : IValueEventHandler<StubValueEvent>
         {
             private readonly List<long> _batchSizes;
             private readonly ValueRingBuffer<StubValueEvent> _ringBuffer;
@@ -229,6 +229,85 @@ namespace Disruptor.Tests.Processing
             {
                 return _shutdownSignal.WaitOne(timeSpan);
             }
+        }
+
+        [TestCase(typeof(BatchAwareEventHandler))]
+        [TestCase(typeof(BatchAwareEventHandlerInternal))]
+        public void ShouldNotPassZeroSizeToBatchStartAware(Type eventHandlerType)
+        {
+            var eventHandler = (BatchAwareEventHandler)Activator.CreateInstance(eventHandlerType)!;
+
+            var eventProcessor = CreateEventProcessor(_ringBuffer, new DelegatingSequenceBarrier(_sequenceBarrier), eventHandler);
+
+            _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+
+            var task = eventProcessor.Start();
+
+            for (var i = 0; i < 3; i++)
+            {
+                var sequence = _ringBuffer.Next();
+                Thread.Sleep(100);
+
+                _ringBuffer.Publish(sequence);
+            }
+
+            eventProcessor.Halt();
+            task.Wait();
+
+            Assert.That(eventHandler.BatchSizeToCount.Count, Is.Not.EqualTo(0));
+            Assert.That(eventHandler.BatchSizeToCount.Keys, Has.No.Member(0));
+        }
+
+        private class DelegatingSequenceBarrier : ISequenceBarrier
+        {
+            private readonly ISequenceBarrier _target;
+            private bool _suppress = true;
+
+            public DelegatingSequenceBarrier(ISequenceBarrier target)
+            {
+                _target = target;
+            }
+
+            public SequenceWaitResult WaitFor(long sequence)
+            {
+                var waitResult = _suppress ? new SequenceWaitResult(sequence - 1) : _target.WaitFor(sequence);
+                _suppress = !_suppress;
+                return waitResult;
+            }
+
+            public long Cursor => _target.Cursor;
+
+            public CancellationToken CancellationToken => _target.CancellationToken;
+
+            public void ResetProcessing()
+            {
+                _target.ResetProcessing();
+            }
+
+            public void CancelProcessing()
+            {
+                _target.CancelProcessing();
+            }
+        }
+
+        // ReSharper disable once MemberCanBePrivate.Global
+        // Public to enable dynamic code generation
+        public class BatchAwareEventHandler : IValueEventHandler<StubValueEvent>
+        {
+            public Dictionary<long, int> BatchSizeToCount { get; } = new Dictionary<long, int>();
+
+            public void OnEvent(ref StubValueEvent data, long sequence, bool endOfBatch)
+            {
+            }
+
+            public void OnBatchStart(long batchSize)
+            {
+                BatchSizeToCount[batchSize] = BatchSizeToCount.TryGetValue(batchSize, out var count) ? count + 1 : 1;
+            }
+        }
+
+        internal class BatchAwareEventHandlerInternal : BatchAwareEventHandler
+        {
         }
     }
 }

@@ -19,19 +19,19 @@ namespace Disruptor.Processing
     /// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
     /// <typeparam name="TSequenceBarrier">the type of the <see cref="ISequenceBarrier"/> used.</typeparam>
     /// <typeparam name="TEventHandler">the type of the <see cref="IEventHandler{T}"/> used.</typeparam>
-    /// <typeparam name="TBatchStartAware">the type of the <see cref="IBatchStartAware"/> used.</typeparam>
-    public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IEventProcessor<T>
+    /// <typeparam name="TOnBatchStartEvaluator">the type of the <see cref="IOnBatchStartEvaluator"/> used.</typeparam>
+    public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TOnBatchStartEvaluator> : IEventProcessor<T>
         where T : class
         where TDataProvider : IDataProvider<T>
         where TSequenceBarrier : ISequenceBarrier
         where TEventHandler : IEventHandler<T>
-        where TBatchStartAware : IBatchStartAware
+        where TOnBatchStartEvaluator : IOnBatchStartEvaluator
     {
         // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
         private TDataProvider _dataProvider;
         private TSequenceBarrier _sequenceBarrier;
         private TEventHandler _eventHandler;
-        private TBatchStartAware _batchStartAware;
+        private TOnBatchStartEvaluator _onBatchStartInvoker;
         // ReSharper restore FieldCanBeMadeReadOnly.Local
 
         private readonly Sequence _sequence = new Sequence();
@@ -39,12 +39,12 @@ namespace Disruptor.Processing
         private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
         private volatile int _runState = ProcessorRunStates.Idle;
 
-        public EventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
+        public EventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TOnBatchStartEvaluator onBatchStartEvaluator)
         {
             _dataProvider = dataProvider;
             _sequenceBarrier = sequenceBarrier;
             _eventHandler = eventHandler;
-            _batchStartAware = batchStartAware;
+            _onBatchStartInvoker = onBatchStartEvaluator;
 
             if (eventHandler is IEventProcessorSequenceAware sequenceAware)
                 sequenceAware.SetSequenceCallback(_sequence);
@@ -160,7 +160,8 @@ namespace Disruptor.Processing
                     // => The test is currently implemented on struct proxies. See EventProcessor<T>.BatchStartAware and StructProxy.
                     // For some reason this also improves EventProcessor performance for IBatchStartAware event handlers.
 
-                    _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
+                    if (_onBatchStartInvoker.ShouldInvokeOnBatchStart(availableSequence, nextSequence))
+                        _eventHandler.OnBatchStart(availableSequence - nextSequence + 1);
 
                     while (nextSequence <= availableSequence)
                     {

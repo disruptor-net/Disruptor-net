@@ -164,7 +164,7 @@ namespace Disruptor.Tests.Processing
             Assert.That(batchSizes, Is.EqualTo(new List<long> { 3, 2, 1 }));
         }
 
-        private class LoopbackEventHandler : IEventHandler<StubEvent>, IBatchStartAware
+        private class LoopbackEventHandler : IEventHandler<StubEvent>
         {
             private readonly List<long> _batchSizes;
             private readonly RingBuffer<StubEvent> _ringBuffer;
@@ -324,7 +324,7 @@ namespace Disruptor.Tests.Processing
 
         // ReSharper disable once MemberCanBePrivate.Global
         // Public to enable dynamic code generation
-        public class BatchAwareEventHandler : IEventHandler<StubEvent>, IBatchStartAware
+        public class BatchAwareEventHandler : IEventHandler<StubEvent>
         {
             public Dictionary<long, int> BatchSizeToCount { get; } = new Dictionary<long, int>();
 

@@ -7,14 +7,13 @@ using Disruptor.Util;
 
 namespace Disruptor.Benchmarks.Reference
 {
-   public class ValueBatchEventProcessorRef<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IValueEventProcessor<T>
+   public class ValueBatchEventProcessorRef<T, TDataProvider, TSequenceBarrier, TEventHandler> : IValueEventProcessor<T>
         where T : struct
 
         where TDataProvider : IValueDataProvider<T>
         where TSequenceBarrier : ISequenceBarrier
         where TEventHandler : IValueEventHandler<T>
-        where TBatchStartAware : IBatchStartAware
-    {
+   {
         private static class RunningStates
         {
             public const int Idle = 0;
@@ -26,7 +25,6 @@ namespace Disruptor.Benchmarks.Reference
         private TDataProvider _dataProvider;
         private TSequenceBarrier _sequenceBarrier;
         private TEventHandler _eventHandler;
-        private TBatchStartAware _batchStartAware;
         // ReSharper restore FieldCanBeMadeReadOnly.Local
 
         private readonly Sequence _sequence = new Sequence();
@@ -44,12 +42,11 @@ namespace Disruptor.Benchmarks.Reference
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
         /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
         /// <param name="batchStartAware"></param>
-        public ValueBatchEventProcessorRef(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
+        public ValueBatchEventProcessorRef(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler)
         {
             _dataProvider = dataProvider;
             _sequenceBarrier = sequenceBarrier;
             _eventHandler = eventHandler;
-            _batchStartAware = batchStartAware;
 
             if (eventHandler is IEventProcessorSequenceAware sequenceAware)
                 sequenceAware.SetSequenceCallback(_sequence);
@@ -158,7 +155,7 @@ namespace Disruptor.Benchmarks.Reference
 
                     var availableSequence = waitResult.UnsafeAvailableSequence;
 
-                    _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
+                    _eventHandler.OnBatchStart(availableSequence - nextSequence + 1);
 
                     while (nextSequence <= availableSequence)
                     {

@@ -3,7 +3,7 @@ using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Support
 {
-    public class PerfMutationEventHandler : IEventHandler<PerfEvent>, IBatchStartAware
+    public class PerfMutationEventHandler : IEventHandler<PerfEvent>
     {
         private readonly Operation _operation;
         private PaddedLong _value;

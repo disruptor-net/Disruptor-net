@@ -3,7 +3,7 @@ using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Support
 {
-    public class LongArrayEventHandler : IEventHandler<long[]>, IBatchStartAware
+    public class LongArrayEventHandler : IEventHandler<long[]>
     {
         private PaddedLong _value;
         private PaddedLong _batchesProcessed;

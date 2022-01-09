@@ -11,18 +11,16 @@ namespace Disruptor.Benchmarks.Reference
     /// Reference version of <see cref="EventProcessor{T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware}"/>, kept
     /// for performance comparisons.
     /// </summary>
-    public class EventProcessorRef<T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware> : IEventProcessor<T>
+    public class EventProcessorRef<T, TDataProvider, TSequenceBarrier, TEventHandler> : IEventProcessor<T>
         where T : class
         where TDataProvider : IDataProvider<T>
         where TSequenceBarrier : ISequenceBarrier
         where TEventHandler : IEventHandler<T>
-        where TBatchStartAware : IBatchStartAware
     {
         // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
         private TDataProvider _dataProvider;
         private TSequenceBarrier _sequenceBarrier;
         private TEventHandler _eventHandler;
-        private TBatchStartAware _batchStartAware;
         // ReSharper restore FieldCanBeMadeReadOnly.Local
 
         private readonly Sequence _sequence = new Sequence();
@@ -40,12 +38,11 @@ namespace Disruptor.Benchmarks.Reference
         /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
         /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
         /// <param name="batchStartAware"></param>
-        public EventProcessorRef(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchStartAware batchStartAware)
+        public EventProcessorRef(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler)
         {
             _dataProvider = dataProvider;
             _sequenceBarrier = sequenceBarrier;
             _eventHandler = eventHandler;
-            _batchStartAware = batchStartAware;
 
             if (eventHandler is IEventProcessorSequenceAware sequenceAware)
                 sequenceAware.SetSequenceCallback(_sequence);
@@ -162,7 +159,7 @@ namespace Disruptor.Benchmarks.Reference
                     // => The test is currently implemented on struct proxies. See BatchEventProcessor<T>.BatchStartAware and StructProxy.
                     // For some reason this also improves BatchEventProcessor performance for IBatchStartAware event handlers.
 
-                    _batchStartAware.OnBatchStart(availableSequence - nextSequence + 1);
+                    _eventHandler.OnBatchStart(availableSequence - nextSequence + 1);
 
                     while (nextSequence <= availableSequence)
                     {

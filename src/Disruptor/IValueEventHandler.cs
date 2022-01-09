@@ -23,6 +23,14 @@ namespace Disruptor
         /// <param name="endOfBatch">flag to indicate if this is the last event in a batch from the <see cref="ValueRingBuffer{T}"/></param>
         void OnEvent(ref T data, long sequence, bool endOfBatch);
 
+        /// <summary>
+        /// Called on each batch start before the first call to <see cref="IEventHandler{T}.OnEvent"/>.
+        /// </summary>
+        /// <param name="batchSize">the batch size.</param>
+        void OnBatchStart(long batchSize)
+        {
+        }
+
         ///<summary>
         /// Called once on thread start before first event is available.
         ///</summary>

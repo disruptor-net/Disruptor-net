@@ -101,36 +101,11 @@ namespace Disruptor.Util
 
                 var methodGenerator = method.GetILGenerator();
 
-                if (interfaceType == typeof(IBatchStartAware) && targetMethod.Name == nameof(IBatchStartAware.OnBatchStart))
-                {
-                    GenerateOnBatchStart(methodGenerator, targetMethod, field);
-                }
-                else
-                {
-                    GenerateDefaultMethod(methodGenerator, targetMethod, field, parameters);
-                }
+                GenerateMethod(methodGenerator, targetMethod, field, parameters);
             }
         }
 
-        private static void GenerateOnBatchStart(ILGenerator methodGenerator, MethodInfo targetMethod, FieldBuilder field)
-        {
-            var returnLabel = methodGenerator.DefineLabel();
-
-            // if (batchSize == 0) return
-            methodGenerator.Emit(OpCodes.Ldarg_1);
-            methodGenerator.Emit(OpCodes.Brfalse_S, returnLabel);
-
-            // _target.OnBatchStart(batchSize)
-            methodGenerator.Emit(OpCodes.Ldarg_0);
-            methodGenerator.Emit(OpCodes.Ldfld, field);
-            methodGenerator.Emit(OpCodes.Ldarg_1);
-            methodGenerator.Emit(OpCodes.Call, targetMethod);
-
-            methodGenerator.MarkLabel(returnLabel);
-            methodGenerator.Emit(OpCodes.Ret);
-        }
-
-        private static void GenerateDefaultMethod(ILGenerator methodGenerator, MethodInfo targetMethod, FieldBuilder field, ParameterInfo[] parameters)
+        private static void GenerateMethod(ILGenerator methodGenerator, MethodInfo targetMethod, FieldBuilder field, ParameterInfo[] parameters)
         {
             methodGenerator.Emit(OpCodes.Ldarg_0);
             methodGenerator.Emit(OpCodes.Ldfld, field);

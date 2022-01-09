@@ -34,7 +34,7 @@ namespace Disruptor.Benchmarks
         public void Setup()
         {
             _processor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processor.Halt()));
-            _processorRef = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processorRef.Halt()), typeof(EventProcessorRef<,,,,>));
+            _processorRef = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processorRef.Halt()), typeof(EventProcessorRef<,,,>));
             _batchProcessor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XBatchEventHandler(() => _batchProcessor.Halt()));
         }
 

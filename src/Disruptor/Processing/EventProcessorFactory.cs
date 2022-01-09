@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Disruptor.Util;
 
 namespace Disruptor.Processing
@@ -28,10 +29,18 @@ namespace Disruptor.Processing
             var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
             var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrier);
             var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
-            var batchStartAwareProxy = CreateBatchStartAwareProxy(eventHandler);
+            var onBatchStartInvoker = CreateOnBatchStartEvaluator(eventHandler);
 
-            var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), batchStartAwareProxy.GetType());
-            return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy)!;
+            var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), onBatchStartInvoker.GetType());
+            return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, onBatchStartInvoker)!;
+        }
+
+        private static IOnBatchStartEvaluator CreateOnBatchStartEvaluator<T>(IEventHandler<T> eventHandler)
+            where T : class
+        {
+            var methodInfo = eventHandler.GetType().GetMethod(nameof(IEventHandler<T>.OnBatchStart));
+
+            return methodInfo == null ? new NoopOnBatchStartEvaluator() : new DefaultOnBatchStartEvaluator();
         }
 
         /// <summary>
@@ -55,9 +64,6 @@ namespace Disruptor.Processing
             var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrier);
             var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
 
-            if (eventHandler is IBatchStartAware)
-                throw new ArgumentException($"{nameof(IBatchStartAware)} is not supported on IBatchEventHandler");
-
             var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType());
             return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy)!;
         }
@@ -76,9 +82,6 @@ namespace Disruptor.Processing
             var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
             var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrier);
             var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
-
-            if (eventHandler is IBatchStartAware)
-                throw new ArgumentException($"{nameof(IBatchStartAware)} is not supported on IAsyncBatchEventHandler");
 
             var eventProcessorType = typeof(AsyncBatchEventProcessor<,,,>).MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType());
             return (IAsyncEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy)!;
@@ -104,43 +107,35 @@ namespace Disruptor.Processing
             var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
             var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrier);
             var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
-            var batchStartAwareProxy = CreateBatchStartAwareProxy(eventHandler);
+            var onBatchStartInvoker = CreateOnBatchStartEvaluator(eventHandler);
 
-            var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), batchStartAwareProxy.GetType());
-            return (IValueEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, batchStartAwareProxy)!;
+            var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequenceBarrierProxy.GetType(), eventHandlerProxy.GetType(), onBatchStartInvoker.GetType());
+            return (IValueEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrierProxy, eventHandlerProxy, onBatchStartInvoker)!;
         }
 
-        private static IBatchStartAware CreateBatchStartAwareProxy(object eventHandler)
+        private static IOnBatchStartEvaluator CreateOnBatchStartEvaluator<T>(IValueEventHandler<T> eventHandler)
+            where T : struct
         {
-            if (!(eventHandler is IBatchStartAware batchStartAware))
-                return new NoopBatchStartAware();
+            var methodInfo = eventHandler.GetType().GetMethod(nameof(IValueEventHandler<T>.OnBatchStart));
 
-            var proxy = StructProxy.CreateProxyInstance(batchStartAware);
-            var proxyGenerationFailed = ReferenceEquals(proxy, batchStartAware);
-
-            return proxyGenerationFailed ? new DefaultBatchStartAware(batchStartAware) : proxy;
+            return methodInfo == null ? new NoopOnBatchStartEvaluator() : new DefaultOnBatchStartEvaluator();
         }
 
-        internal struct NoopBatchStartAware : IBatchStartAware
+        internal struct NoopOnBatchStartEvaluator : IOnBatchStartEvaluator
         {
-            public void OnBatchStart(long batchSize)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool ShouldInvokeOnBatchStart(long availableSequence, long nextSequence)
             {
+                return false;
             }
         }
 
-        internal readonly struct DefaultBatchStartAware : IBatchStartAware
+        internal struct DefaultOnBatchStartEvaluator : IOnBatchStartEvaluator
         {
-            private readonly IBatchStartAware _target;
-
-            public DefaultBatchStartAware(IBatchStartAware target)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool ShouldInvokeOnBatchStart(long availableSequence, long nextSequence)
             {
-                _target = target;
-            }
-
-            public void OnBatchStart(long batchSize)
-            {
-                if (batchSize != 0)
-                    _target.OnBatchStart(batchSize);
+                return availableSequence >= nextSequence;
             }
         }
     }
