@@ -10,7 +10,7 @@ namespace Disruptor.Dsl
     {
         private readonly Dictionary<object, EventProcessorInfo> _eventProcessorInfoByEventHandler;
         private readonly Dictionary<ISequence, IConsumerInfo> _eventProcessorInfoBySequence;
-        private readonly List<IConsumerInfo> _consumerInfos = new List<IConsumerInfo>();
+        private readonly List<IConsumerInfo> _consumerInfos = new();
 
         public ConsumerRepository()
         {

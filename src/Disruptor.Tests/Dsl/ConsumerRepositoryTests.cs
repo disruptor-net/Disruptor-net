@@ -10,26 +10,13 @@ namespace Disruptor.Tests.Dsl
     [TestFixture]
     public class ConsumerRepositoryTests
     {
-        private readonly ConsumerRepository _consumerRepository;
-        private readonly IEventProcessor _eventProcessor1;
-        private readonly IEventProcessor _eventProcessor2;
-        private readonly DummyEventHandler<TestEvent> _handler1;
-        private readonly DummyEventHandler<TestEvent> _handler2;
-        private readonly ISequenceBarrier _barrier1;
-        private readonly ISequenceBarrier _barrier2;
-
-        public ConsumerRepositoryTests()
-        {
-            _consumerRepository = new ConsumerRepository();
-            _eventProcessor1 = new DummyEventProcessor();
-            _eventProcessor2 = new DummyEventProcessor();
-
-            _handler1 = new DummyEventHandler<TestEvent>();
-            _handler2 = new DummyEventHandler<TestEvent>();
-
-            _barrier1 = new DummySequenceBarrier();
-            _barrier2 = new DummySequenceBarrier();
-        }
+        private readonly ConsumerRepository _consumerRepository = new();
+        private readonly DummyEventProcessor _eventProcessor1 = new();
+        private readonly DummyEventProcessor _eventProcessor2 = new();
+        private readonly DummyEventHandler<TestEvent> _handler1 = new();
+        private readonly DummyEventHandler<TestEvent> _handler2 = new();
+        private readonly DummySequenceBarrier _barrier1 = new();
+        private readonly DummySequenceBarrier _barrier2 = new();
 
         [Test]
         public void ShouldGetBarrierByHandler()

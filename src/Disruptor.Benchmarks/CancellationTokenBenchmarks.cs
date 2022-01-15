@@ -73,7 +73,7 @@ namespace Disruptor.Benchmarks
 
         public class AlertExceptionRef : Exception
         {
-            public static readonly AlertExceptionRef Instance = new AlertExceptionRef();
+            public static readonly AlertExceptionRef Instance = new();
 
             [MethodImpl(MethodImplOptions.NoInlining)]
             public static void Throw()

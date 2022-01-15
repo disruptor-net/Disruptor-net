@@ -16,15 +16,12 @@ namespace Disruptor.Tests.Dsl
     {
         private const int _timeoutInSeconds = 2;
         private readonly Disruptor<TestEvent> _disruptor;
-        private readonly StubTaskScheduler _taskScheduler;
-        private readonly List<DelayedEventHandler> _delayedEventHandlers;
-        private readonly List<TestWorkHandler> _testWorkHandlers;
+        private readonly StubTaskScheduler _taskScheduler = new();
+        private readonly List<DelayedEventHandler> _delayedEventHandlers = new();
+        private readonly List<TestWorkHandler> _testWorkHandlers = new();
 
         public DisruptorTests()
         {
-            _delayedEventHandlers = new List<DelayedEventHandler>();
-            _testWorkHandlers = new List<TestWorkHandler>();
-            _taskScheduler = new StubTaskScheduler();
             _disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 4, _taskScheduler, ProducerType.Multi, new AsyncWaitStrategy());
         }
 

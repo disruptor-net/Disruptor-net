@@ -28,7 +28,7 @@ namespace Disruptor.PerfTests.External
         private const long _iterations = 1000L * 1000L * 10L;
         private const long _expectedResult = _iterations * 3L;
 
-        private readonly ArrayConcurrentQueue<long> _blockingQueue = new ArrayConcurrentQueue<long>(_bufferSize);
+        private readonly ArrayConcurrentQueue<long> _blockingQueue = new(_bufferSize);
         private readonly PerfAdditionQueueProcessor _queueProcessor;
 
         public OneToOneQueueThroughputTest()

@@ -10,7 +10,7 @@ namespace Disruptor.PerfTests
 {
     public class ThroughputTestSession
     {
-        private readonly List<ThroughputTestSessionResult> _results = new List<ThroughputTestSessionResult>(10);
+        private readonly List<ThroughputTestSessionResult> _results = new(10);
         private readonly Type _perfTestType;
         private IThroughputTest _test;
         private int _runCount;

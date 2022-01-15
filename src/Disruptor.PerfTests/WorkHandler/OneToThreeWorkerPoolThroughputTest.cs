@@ -17,7 +17,7 @@ namespace Disruptor.PerfTests.WorkHandler
 
         private readonly PaddedLong[] _counters = new PaddedLong[_numWorkers];
 
-        private readonly BlockingCollection<long> _blockingQueue = new BlockingCollection<long>(_bufferSize);
+        private readonly BlockingCollection<long> _blockingQueue = new(_bufferSize);
         private readonly EventCountingQueueProcessor[] _queueWorkers = new EventCountingQueueProcessor[_numWorkers];
         private readonly EventCountingWorkHandler[] _handlers = new EventCountingWorkHandler[_numWorkers];
 

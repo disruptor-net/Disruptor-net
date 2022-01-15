@@ -228,8 +228,8 @@ namespace Disruptor.Tests.Processing
 
         private class LifeCycleHandler : IAsyncBatchEventHandler<object>
         {
-            private readonly ManualResetEvent _startedSignal = new ManualResetEvent(false);
-            private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
+            private readonly ManualResetEvent _startedSignal = new(false);
+            private readonly ManualResetEvent _shutdownSignal = new(false);
 
             public async ValueTask OnBatch(EventBatch<object> batch, long sequence)
             {

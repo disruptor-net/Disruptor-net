@@ -14,7 +14,7 @@ namespace Disruptor.Processing
     public sealed class WorkerPool<T> where T : class
     {
         private volatile int _runState = ProcessorRunStates.Idle;
-        private readonly Sequence _workSequence = new Sequence();
+        private readonly Sequence _workSequence = new();
         private readonly RingBuffer<T> _ringBuffer;
         // WorkProcessors are created to wrap each of the provided WorkHandlers
         private readonly WorkProcessor<T>[] _workProcessors;

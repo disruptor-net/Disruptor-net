@@ -14,7 +14,7 @@ namespace Disruptor
             UnsafeAvailableSequence = availableSequence;
         }
 
-        public static readonly SequenceWaitResult Timeout = new SequenceWaitResult(TimeoutValue);
+        public static readonly SequenceWaitResult Timeout = new(TimeoutValue);
 
         /// <summary>
         /// The available sequence, which may be greater than the requested sequence,
@@ -36,7 +36,7 @@ namespace Disruptor
         /// </summary>
         public bool IsTimeout => UnsafeAvailableSequence == TimeoutValue;
 
-        public static implicit operator SequenceWaitResult(long availableSequence) => new SequenceWaitResult(availableSequence);
+        public static implicit operator SequenceWaitResult(long availableSequence) => new(availableSequence);
 
         public bool Equals(SequenceWaitResult other)
         {

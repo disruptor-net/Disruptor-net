@@ -11,8 +11,8 @@ namespace Disruptor.PerfTests.External
         private const long _iterations = 100 * 1000 * 30;
         private const long _pauseDurationInNano = 1000;
 
-        private readonly ArrayConcurrentQueue<long> _pingQueue = new ArrayConcurrentQueue<long>(_bufferSize);
-        private readonly ArrayConcurrentQueue<long> _pongQueue = new ArrayConcurrentQueue<long>(_bufferSize);
+        private readonly ArrayConcurrentQueue<long> _pingQueue = new(_bufferSize);
+        private readonly ArrayConcurrentQueue<long> _pongQueue = new(_bufferSize);
         private readonly QueuePinger _pinger;
         private readonly QueuePonger _ponger;
 

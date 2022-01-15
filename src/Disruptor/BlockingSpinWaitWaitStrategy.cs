@@ -11,7 +11,7 @@ namespace Disruptor
     /// </remarks>
     public sealed class BlockingSpinWaitWaitStrategy : IWaitStrategy
     {
-        private readonly object _gate = new object();
+        private readonly object _gate = new();
 
         public bool IsBlockingStrategy => true;
 

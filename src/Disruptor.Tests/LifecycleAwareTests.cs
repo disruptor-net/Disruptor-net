@@ -8,9 +8,9 @@ namespace Disruptor.Tests
     [TestFixture]
     public class LifecycleAwareTests
     {
-        private readonly ManualResetEvent _startSignal = new ManualResetEvent(false);
-        private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
-        private readonly RingBuffer<StubEvent> _ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), 16);
+        private readonly ManualResetEvent _startSignal = new(false);
+        private readonly ManualResetEvent _shutdownSignal = new(false);
+        private readonly RingBuffer<StubEvent> _ringBuffer = new(() => new StubEvent(-1), 16);
         private readonly LifecycleAwareEventHandler _eventHandler;
         private readonly IEventProcessor<StubEvent> _eventProcessor;
 

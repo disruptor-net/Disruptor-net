@@ -57,7 +57,7 @@ namespace Disruptor.Benchmarks
             where TDataProvider : IDataProvider<T>
             where TEventHandler : IEventHandler<T>
         {
-            private readonly Sequence _sequence = new Sequence();
+            private readonly Sequence _sequence = new();
             private TDataProvider _dataProvider;
             private TEventHandler _eventHandler;
 
@@ -102,7 +102,7 @@ namespace Disruptor.Benchmarks
             where TDataProvider : IDataProvider<T>
             where TEventHandler : IBatchEventHandler<T>
         {
-            private readonly Sequence _sequence = new Sequence();
+            private readonly Sequence _sequence = new();
             private TDataProvider _dataProvider;
             private TEventHandler _eventHandler;
 

@@ -82,7 +82,7 @@ namespace Disruptor.Benchmarks
 
         public class XException : Exception
         {
-            public static readonly XException Instance = new XException();
+            public static readonly XException Instance = new();
         }
     }
 }

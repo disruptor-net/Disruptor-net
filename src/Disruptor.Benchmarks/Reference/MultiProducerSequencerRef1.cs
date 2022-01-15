@@ -15,12 +15,12 @@ namespace Disruptor.Benchmarks.Reference
         private readonly int _bufferSize;
         private readonly IWaitStrategy _waitStrategy;
         private readonly bool _isBlockingWaitStrategy;
-        private readonly Sequence _cursor = new Sequence();
+        private readonly Sequence _cursor = new();
 
         // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
         private ISequence[] _gatingSequences = new ISequence[0];
 
-        private readonly Sequence _gatingSequenceCache = new Sequence();
+        private readonly Sequence _gatingSequenceCache = new();
 
         // availableBuffer tracks the state of each ringbuffer slot
         // see below for more details on the approach

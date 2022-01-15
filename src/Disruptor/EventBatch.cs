@@ -66,7 +66,7 @@ namespace Disruptor
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(_array, _beginIndex, _beginIndex + _length);
+        public Enumerator GetEnumerator() => new(_array, _beginIndex, _beginIndex + _length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan<T> AsSpan() => InternalUtil.ReadSpan<T>(_array, _beginIndex, _length);

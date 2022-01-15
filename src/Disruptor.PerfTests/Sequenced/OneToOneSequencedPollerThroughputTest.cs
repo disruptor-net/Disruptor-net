@@ -36,7 +36,7 @@ namespace Disruptor.PerfTests.Sequenced
         {
             private readonly EventPoller<PerfEvent> _poller;
             private readonly EventPoller.Handler<PerfEvent> _eventHandler;
-            private readonly AutoResetEvent _started = new AutoResetEvent(false);
+            private readonly AutoResetEvent _started = new(false);
             private volatile int _running = 1;
             private PaddedLong _value;
             private ManualResetEvent _signal;

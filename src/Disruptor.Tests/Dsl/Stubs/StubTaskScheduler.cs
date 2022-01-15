@@ -10,7 +10,7 @@ namespace Disruptor.Tests.Dsl.Stubs
 {
     public class StubTaskScheduler : TaskScheduler
     {
-        private readonly ConcurrentQueue<Thread> _threads = new ConcurrentQueue<Thread>();
+        private readonly ConcurrentQueue<Thread> _threads = new();
         private bool _ignoreTasks;
         private int _taskCount;
 

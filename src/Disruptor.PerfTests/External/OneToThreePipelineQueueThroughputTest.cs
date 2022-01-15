@@ -14,9 +14,9 @@ namespace Disruptor.PerfTests.External
         private const long _operandTwoInitialValue = 777;
         private readonly long _expectedResult;
 
-        private readonly ConcurrentQueue<long[]> _stepOneQueue = new ConcurrentQueue<long[]>();
-        private readonly ConcurrentQueue<long> _stepTwoQueue = new ConcurrentQueue<long>();
-        private readonly ConcurrentQueue<long> _stepThreeQueue = new ConcurrentQueue<long>();
+        private readonly ConcurrentQueue<long[]> _stepOneQueue = new();
+        private readonly ConcurrentQueue<long> _stepTwoQueue = new();
+        private readonly ConcurrentQueue<long> _stepThreeQueue = new();
 
         private readonly FunctionQueueProcessor _stepOneQueueProcessor;
         private readonly FunctionQueueProcessor _stepTwoQueueProcessor;

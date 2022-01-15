@@ -12,8 +12,8 @@ namespace Disruptor.Tests
         protected abstract T CreateWaitStrategy();
 
         protected TimeSpan DefaultAssertTimeout { get; } = TimeSpan.FromSeconds(5);
-        protected Sequence Cursor { get; } = new Sequence();
-        protected CancellationTokenSource CancellationTokenSource { get; } = new CancellationTokenSource();
+        protected Sequence Cursor { get; } = new();
+        protected CancellationTokenSource CancellationTokenSource { get; } = new();
         protected CancellationToken CancellationToken => CancellationTokenSource.Token;
 
         [TestCase(10, 10, 10)]

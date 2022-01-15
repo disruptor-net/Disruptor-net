@@ -11,7 +11,7 @@ namespace Disruptor.PerfTests.Support
         private ManualResetEvent _latch;
 
         private readonly ArrayConcurrentQueue<long> _blockingQueue;
-        private readonly List<long> _batch = new List<long>(100);
+        private readonly List<long> _batch = new(100);
         private readonly long _count;
 
         public PerfAdditionBatchQueueProcessor(ArrayConcurrentQueue<long> blockingQueue, long count)

@@ -253,8 +253,8 @@ namespace Disruptor.Tests.Processing
 
         private class LifeCycleHandler : IValueEventHandler<long>
         {
-            private readonly ManualResetEvent _startedSignal = new ManualResetEvent(false);
-            private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
+            private readonly ManualResetEvent _startedSignal = new(false);
+            private readonly ManualResetEvent _shutdownSignal = new(false);
 
             public void OnEvent(ref long data, long sequence, bool endOfBatch)
             {
@@ -344,7 +344,7 @@ namespace Disruptor.Tests.Processing
         // Public to enable dynamic code generation
         public class BatchAwareEventHandler : IValueEventHandler<StubValueEvent>
         {
-            public Dictionary<long, int> BatchSizeToCount { get; } = new Dictionary<long, int>();
+            public Dictionary<long, int> BatchSizeToCount { get; } = new();
 
             public void OnEvent(ref StubValueEvent data, long sequence, bool endOfBatch)
             {

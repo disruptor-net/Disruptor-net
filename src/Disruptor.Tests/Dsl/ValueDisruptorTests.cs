@@ -16,13 +16,11 @@ namespace Disruptor.Tests.Dsl
     {
         private const int _timeoutInSeconds = 2;
         private readonly ValueDisruptor<TestValueEvent> _disruptor;
-        private readonly StubTaskScheduler _taskScheduler;
-        private readonly List<DelayedEventHandler> _delayedEventHandlers;
+        private readonly StubTaskScheduler _taskScheduler = new();
+        private readonly List<DelayedEventHandler> _delayedEventHandlers = new();
 
         public ValueDisruptorTests()
         {
-            _delayedEventHandlers = new List<DelayedEventHandler>();
-            _taskScheduler = new StubTaskScheduler();
             _disruptor = new ValueDisruptor<TestValueEvent>(() => new TestValueEvent(), 4, _taskScheduler);
         }
 

@@ -11,8 +11,8 @@ namespace Disruptor.PerfTests.External
         private const int _publisherCount = 3;
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000 * 1000 * 20;
-        private readonly Barrier _signal = new Barrier(_publisherCount + 1);
-        private readonly ConcurrentQueue<long> _blockingQueue = new ConcurrentQueue<long>();
+        private readonly Barrier _signal = new(_publisherCount + 1);
+        private readonly ConcurrentQueue<long> _blockingQueue = new();
         private readonly PerfAdditionQueueEventProcessor _queueProcessor;
         private readonly PerfQueueProducer[] _perfQueueProducers = new PerfQueueProducer[_publisherCount];
 

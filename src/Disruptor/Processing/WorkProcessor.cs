@@ -16,7 +16,7 @@ namespace Disruptor.Processing
         where T : class
     {
         private volatile int _runState = ProcessorRunStates.Idle;
-        private readonly Sequence _sequence = new Sequence();
+        private readonly Sequence _sequence = new();
         private readonly RingBuffer<T> _ringBuffer;
         private readonly ISequenceBarrier _sequenceBarrier;
         private readonly IWorkHandler<T> _workHandler;

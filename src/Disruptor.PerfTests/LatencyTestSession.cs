@@ -14,7 +14,7 @@ namespace Disruptor.PerfTests
     {
         private static readonly double _stopwatchTickNanoSecondsFrequency = 1000000000.0 / Stopwatch.Frequency;
 
-        private readonly List<LatencyTestSessionResult> _results = new List<LatencyTestSessionResult>(10);
+        private readonly List<LatencyTestSessionResult> _results = new(10);
         private readonly Type _perfTestType;
         private ILatencyTest _test;
         private int _runCount;

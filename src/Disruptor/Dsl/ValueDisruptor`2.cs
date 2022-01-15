@@ -19,8 +19,8 @@ namespace Disruptor.Dsl
     {
         protected readonly TRingBuffer _ringBuffer;
         private readonly TaskScheduler _taskScheduler;
-        private readonly ConsumerRepository _consumerRepository = new ConsumerRepository();
-        private readonly ValueExceptionHandlerWrapper<T> _exceptionHandler = new ValueExceptionHandlerWrapper<T>();
+        private readonly ConsumerRepository _consumerRepository = new();
+        private readonly ValueExceptionHandlerWrapper<T> _exceptionHandler = new();
         private volatile int _started;
 
         protected ValueDisruptor(TRingBuffer ringBuffer, TaskScheduler taskScheduler)

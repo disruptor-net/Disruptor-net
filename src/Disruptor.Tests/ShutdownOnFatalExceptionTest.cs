@@ -9,8 +9,8 @@ namespace Disruptor.Tests
     [TestFixture]
     public class ShutdownOnFatalExceptionTest : IDisposable
     {
-        private readonly Random _random = new Random();
-        private readonly FailingEventHandler _failingEventHandler = new FailingEventHandler();
+        private readonly Random _random = new();
+        private readonly FailingEventHandler _failingEventHandler = new();
         private readonly Disruptor<byte[]> _disruptor;
 
         public ShutdownOnFatalExceptionTest()

@@ -25,7 +25,7 @@ namespace Disruptor.Dsl
     {
         private readonly RingBuffer<T> _ringBuffer;
         private readonly TaskScheduler _taskScheduler;
-        private readonly ConsumerRepository _consumerRepository = new ConsumerRepository();
+        private readonly ConsumerRepository _consumerRepository = new();
         private IExceptionHandler<T> _exceptionHandler = new ExceptionHandlerWrapper<T>();
         private volatile int _started;
 

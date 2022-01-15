@@ -16,7 +16,7 @@ namespace Disruptor
     /// </remarks>
     public class TimeoutBlockingWaitStrategy : IWaitStrategy
     {
-        private readonly object _gate = new object();
+        private readonly object _gate = new();
         private readonly TimeSpan _timeout;
 
         public TimeoutBlockingWaitStrategy(TimeSpan timeout)

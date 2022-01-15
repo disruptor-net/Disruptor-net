@@ -60,11 +60,11 @@ namespace Disruptor.Samples.Wiki
         {
             try
             {
-                return task.Wait(timeout) ? new(true, null) : new(false, new TimeoutException());
+                return task.Wait(timeout) ? new TaskResult(true, null) : new TaskResult(false, new TimeoutException());
             }
             catch (Exception e)
             {
-                return new(false, e);
+                return new TaskResult(false, e);
             }
         }
 
@@ -193,7 +193,7 @@ namespace Disruptor.Samples.Wiki
         public class H1_Batching2 : IEventHandler<SampleEvent>
         {
             private readonly ISampleEventPersister _persister;
-            private readonly List<Task> _pendingTasks = new List<Task>();
+            private readonly List<Task> _pendingTasks = new();
 
             public H1_Batching2(ISampleEventPersister persister)
             {

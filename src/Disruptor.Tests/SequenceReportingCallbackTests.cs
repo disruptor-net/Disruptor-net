@@ -62,8 +62,8 @@ namespace Disruptor.Tests
         {
             private ISequence? _sequenceCallback;
 
-            public ManualResetEvent CallbackSignal { get; } = new ManualResetEvent(false);
-            public ManualResetEvent OnEndOfBatchSignal { get; } = new ManualResetEvent(false);
+            public ManualResetEvent CallbackSignal { get; } = new(false);
+            public ManualResetEvent OnEndOfBatchSignal { get; } = new(false);
 
             public void SetSequenceCallback(ISequence sequenceTrackerCallback)
             {

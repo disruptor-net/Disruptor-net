@@ -108,7 +108,7 @@ namespace Disruptor.Tests
 
         private class MessageProducer
         {
-            private readonly CountdownEvent _startLatch = new CountdownEvent(1);
+            private readonly CountdownEvent _startLatch = new(1);
             private readonly Disruptor<StubEvent> _disruptor;
             private readonly List<int> _dataSet;
 
@@ -141,8 +141,8 @@ namespace Disruptor.Tests
 
         private class DynamicHandler : IWorkHandler<StubEvent>
         {
-            private readonly CountdownEvent _shutdownLatch = new CountdownEvent(1);
-            private readonly CountdownEvent _startLatch = new CountdownEvent(1);
+            private readonly CountdownEvent _shutdownLatch = new(1);
+            private readonly CountdownEvent _startLatch = new(1);
             private readonly int _id;
             private readonly CountdownEvent _countdownEvent;
 

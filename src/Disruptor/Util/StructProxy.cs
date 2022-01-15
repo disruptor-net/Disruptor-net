@@ -11,7 +11,7 @@ namespace Disruptor.Util
         private static readonly ModuleBuilder _moduleBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(nameof(StructProxy) + ".DynamicAssembly"), AssemblyBuilderAccess.Run)
                                                                               .DefineDynamicModule(nameof(StructProxy));
 
-        private static readonly Dictionary<Type, Type?> _proxyTypes = new Dictionary<Type, Type?>();
+        private static readonly Dictionary<Type, Type?> _proxyTypes = new();
 
         public static TInterface CreateProxyInstance<TInterface>(TInterface target)
             where TInterface : class

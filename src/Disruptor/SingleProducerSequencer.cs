@@ -18,7 +18,7 @@ namespace Disruptor
         private readonly IWaitStrategy _waitStrategy;
 
         [FieldOffset(DefaultPadding + 8)]
-        private readonly Sequence _cursor = new Sequence();
+        private readonly Sequence _cursor = new();
 
         [FieldOffset(DefaultPadding + 16)]
         // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field

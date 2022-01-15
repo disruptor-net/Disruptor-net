@@ -50,10 +50,10 @@ namespace Disruptor.PerfTests.Sequenced
         private const int _numPublishers = 3;
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 100L;
-        private readonly CountdownEvent _cyclicBarrier = new CountdownEvent(_numPublishers + 1);
+        private readonly CountdownEvent _cyclicBarrier = new(_numPublishers + 1);
 
         private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
-        private readonly AdditionEventHandler _handler = new AdditionEventHandler();
+        private readonly AdditionEventHandler _handler = new();
         private readonly IEventProcessor<PerfEvent> _eventProcessor;
         private readonly ValueBatchPublisher[] _valuePublishers = new ValueBatchPublisher[_numPublishers];
 

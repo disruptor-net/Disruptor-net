@@ -4,7 +4,7 @@ namespace Disruptor.PerfTests
 {
     public class ThroughputSessionContext
     {
-        public readonly Stopwatch Stopwatch = new Stopwatch();
+        public readonly Stopwatch Stopwatch = new();
         public double? BatchPercent;
         public double? AverageBatchSize;
 

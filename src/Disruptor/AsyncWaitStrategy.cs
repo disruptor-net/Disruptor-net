@@ -16,8 +16,8 @@ namespace Disruptor
     /// </remarks>
     public class AsyncWaitStrategy : IAsyncWaitStrategy
     {
-        private readonly List<TaskCompletionSource<bool>> _taskCompletionSources = new List<TaskCompletionSource<bool>>();
-        private readonly object _gate = new object();
+        private readonly List<TaskCompletionSource<bool>> _taskCompletionSources = new();
+        private readonly object _gate = new();
         private readonly int _timeoutMilliseconds;
 
         /// <summary>

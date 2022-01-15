@@ -12,10 +12,10 @@ namespace Disruptor.Benchmarks
     {
         private const int _operationsPerInvoke = 500;
 
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private readonly Sequence _sequence = new Sequence();
-        private readonly Sequence _cursor = new Sequence();
-        private readonly YieldingWaitStrategy _waitStrategy = new YieldingWaitStrategy();
+        private readonly CancellationTokenSource _cancellationTokenSource = new();
+        private readonly Sequence _sequence = new();
+        private readonly Sequence _cursor = new();
+        private readonly YieldingWaitStrategy _waitStrategy = new();
         private readonly ISequence _dependentSequences;
 
         public EventProcessorBenchmarks_WaitRaw()

@@ -42,7 +42,7 @@ namespace Disruptor.Samples
 
         public class DynamicHandler : IEventHandler<DynamicEvent>
         {
-            private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
+            private readonly ManualResetEvent _shutdownSignal = new(false);
 
             public void OnEvent(DynamicEvent data, long sequence, bool endOfBatch)
             {

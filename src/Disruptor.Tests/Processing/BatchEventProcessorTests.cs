@@ -1,6 +1,5 @@
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
@@ -228,8 +227,8 @@ namespace Disruptor.Tests.Processing
 
         private class LifeCycleHandler : IBatchEventHandler<object>
         {
-            private readonly ManualResetEvent _startedSignal = new ManualResetEvent(false);
-            private readonly ManualResetEvent _shutdownSignal = new ManualResetEvent(false);
+            private readonly ManualResetEvent _startedSignal = new(false);
+            private readonly ManualResetEvent _shutdownSignal = new(false);
 
             public void OnBatch(EventBatch<object> batch, long sequence)
             {

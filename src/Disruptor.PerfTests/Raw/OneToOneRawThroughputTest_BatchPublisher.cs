@@ -48,7 +48,7 @@ namespace Disruptor.PerfTests.Raw
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 200L;
 
-        private readonly SingleProducerSequencer _sequencer = new SingleProducerSequencer(_bufferSize, new YieldingWaitStrategy());
+        private readonly SingleProducerSequencer _sequencer = new(_bufferSize, new YieldingWaitStrategy());
         private readonly MyRunnable _myRunnable;
 
         public OneToOneRawThroughputTest_BatchPublisher()
@@ -95,7 +95,7 @@ namespace Disruptor.PerfTests.Raw
         {
             private ManualResetEvent _latch;
             private long _expectedCount;
-            public readonly Sequence Sequence = new Sequence(-1);
+            public readonly Sequence Sequence = new(-1);
             private readonly ISequenceBarrier _barrier;
 
             public MyRunnable(ISequencer sequencer)

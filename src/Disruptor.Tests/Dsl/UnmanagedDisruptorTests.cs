@@ -12,12 +12,11 @@ namespace Disruptor.Tests.Dsl
     public class UnmanagedDisruptorTests : IDisposable
     {
         private readonly UnmanagedDisruptor<TestValueEvent> _disruptor;
-        private readonly StubTaskScheduler _taskScheduler;
+        private readonly StubTaskScheduler _taskScheduler = new();
         private readonly UnmanagedRingBufferMemory _memory;
 
         public UnmanagedDisruptorTests()
         {
-            _taskScheduler = new StubTaskScheduler();
             _memory = UnmanagedRingBufferMemory.Allocate(4, TestValueEvent.Size);
             _disruptor = new UnmanagedDisruptor<TestValueEvent>(_memory.PointerToFirstEvent, _memory.EventSize, _memory.EventCount, _taskScheduler);
         }

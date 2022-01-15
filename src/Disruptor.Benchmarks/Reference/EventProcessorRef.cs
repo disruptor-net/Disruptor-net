@@ -23,8 +23,8 @@ namespace Disruptor.Benchmarks.Reference
         private TEventHandler _eventHandler;
         // ReSharper restore FieldCanBeMadeReadOnly.Local
 
-        private readonly Sequence _sequence = new Sequence();
-        private readonly ManualResetEventSlim _started = new ManualResetEventSlim();
+        private readonly Sequence _sequence = new();
+        private readonly ManualResetEventSlim _started = new();
         private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
         private volatile int _runState = ProcessorRunStates.Idle;
 

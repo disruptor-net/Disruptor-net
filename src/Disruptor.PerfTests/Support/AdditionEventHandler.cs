@@ -8,7 +8,7 @@ namespace Disruptor.PerfTests.Support
         private PaddedLong _value;
         private PaddedLong _batchesProcessed;
         private long _latchSequence;
-        private readonly ManualResetEvent _latch = new ManualResetEvent(false);
+        private readonly ManualResetEvent _latch = new(false);
 
         public long Value => _value.Value;
         public long BatchesProcessed => _batchesProcessed.Value;

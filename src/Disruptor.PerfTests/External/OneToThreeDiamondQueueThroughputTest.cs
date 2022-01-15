@@ -13,10 +13,10 @@ namespace Disruptor.PerfTests.External
         private const long _iterations = 1000 * 1000 * 100;
 
         private readonly long _expectedResult;
-        private readonly ConcurrentQueue<long> _fizzInputQueue = new ConcurrentQueue<long>();
-        private readonly ConcurrentQueue<long> _buzzInputQueue = new ConcurrentQueue<long>();
-        private readonly ConcurrentQueue<bool> _fizzOutputQueue = new ConcurrentQueue<bool>();
-        private readonly ConcurrentQueue<bool> _buzzOutputQueue = new ConcurrentQueue<bool>();
+        private readonly ConcurrentQueue<long> _fizzInputQueue = new();
+        private readonly ConcurrentQueue<long> _buzzInputQueue = new();
+        private readonly ConcurrentQueue<bool> _fizzOutputQueue = new();
+        private readonly ConcurrentQueue<bool> _buzzOutputQueue = new();
 
         private readonly FizzBuzzQueueProcessor _fizzQueueProcessor;
         private readonly FizzBuzzQueueProcessor _buzzQueueProcessor;

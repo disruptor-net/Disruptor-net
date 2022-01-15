@@ -9,7 +9,7 @@ namespace Disruptor
     /// </summary>
     public class LiteTimeoutBlockingWaitStrategy : IWaitStrategy
     {
-        private readonly object _lock = new object();
+        private readonly object _lock = new();
         private volatile int _signalNeeded;
         private readonly int _timeoutInMilliseconds;
 

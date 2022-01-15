@@ -187,8 +187,8 @@ namespace Disruptor.HeapWalker
 
         private class TypeInfo
         {
-            public List<ulong> Addresses { get; } = new List<ulong>();
-            public HashSet<int> Generations { get; } = new HashSet<int>();
+            public List<ulong> Addresses { get; } = new();
+            public HashSet<int> Generations { get; } = new();
 
             public void PrintStats(ClrHeap heap)
             {

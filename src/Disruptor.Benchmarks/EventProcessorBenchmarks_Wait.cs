@@ -75,7 +75,7 @@ namespace Disruptor.Benchmarks
             where TSequenceBarrier : ISequenceBarrier
             where TTimeoutActivation : ITimeoutActivation
         {
-            private readonly Sequence _sequence = new Sequence();
+            private readonly Sequence _sequence = new();
             private TSequenceBarrier _sequenceBarrier;
             private TTimeoutActivation _timeoutActivation;
 

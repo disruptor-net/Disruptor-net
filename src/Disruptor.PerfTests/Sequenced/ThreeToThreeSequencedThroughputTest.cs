@@ -38,13 +38,13 @@ namespace Disruptor.PerfTests.Sequenced
         private const int _arraySize = 3;
         private const int _bufferSize = 1024 * 64;
         private const long _iterations = 1000L * 1000L * 180L;
-        private readonly CountdownEvent _cyclicBarrier = new CountdownEvent(_numPublishers + 1);
+        private readonly CountdownEvent _cyclicBarrier = new(_numPublishers + 1);
 
         private readonly RingBuffer<long[]>[] _buffers = new RingBuffer<long[]>[_numPublishers];
         private readonly ISequenceBarrier[] _barriers = new ISequenceBarrier[_numPublishers];
         private readonly LongArrayPublisher[] _valuePublishers = new LongArrayPublisher[_numPublishers];
 
-        private readonly LongArrayEventHandler _handler = new LongArrayEventHandler();
+        private readonly LongArrayEventHandler _handler = new();
         private readonly MultiBufferEventProcessor<long[]> _eventProcessor;
 
         public ThreeToThreeSequencedThroughputTest()
