@@ -3,46 +3,45 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Tests.Support;
 
-namespace Disruptor.PerfTests.Support
+namespace Disruptor.PerfTests.Support;
+
+public class AdditionAsyncBatchEventHandler : IAsyncBatchEventHandler<PerfEvent>
 {
-    public class AdditionAsyncBatchEventHandler : IAsyncBatchEventHandler<PerfEvent>
+    private PaddedLong _value;
+    private PaddedLong _batchesProcessed;
+    private long _latchSequence;
+    private readonly ManualResetEvent _latch = new(false);
+
+    public long Value => _value.Value;
+    public long BatchesProcessed => _batchesProcessed.Value;
+
+    public void WaitForSequence()
     {
-        private PaddedLong _value;
-        private PaddedLong _batchesProcessed;
-        private long _latchSequence;
-        private readonly ManualResetEvent _latch = new(false);
+        _latch.WaitOne();
+    }
 
-        public long Value => _value.Value;
-        public long BatchesProcessed => _batchesProcessed.Value;
+    public void Reset(long expectedSequence)
+    {
+        _value.Value = 0;
+        _latch.Reset();
+        _latchSequence = expectedSequence;
+        _batchesProcessed.Value = 0;
+    }
 
-        public void WaitForSequence()
+    public ValueTask OnBatch(EventBatch<PerfEvent> batch, long sequence)
+    {
+        _batchesProcessed.Value++;
+
+        foreach (var data in batch)
         {
-            _latch.WaitOne();
+            _value.Value += data.Value;
         }
 
-        public void Reset(long expectedSequence)
+        if(sequence + batch.Length - 1 == _latchSequence)
         {
-            _value.Value = 0;
-            _latch.Reset();
-            _latchSequence = expectedSequence;
-            _batchesProcessed.Value = 0;
+            _latch.Set();
         }
 
-        public ValueTask OnBatch(EventBatch<PerfEvent> batch, long sequence)
-        {
-            _batchesProcessed.Value++;
-
-            foreach (var data in batch)
-            {
-                _value.Value += data.Value;
-            }
-
-            if(sequence + batch.Length - 1 == _latchSequence)
-            {
-                _latch.Set();
-            }
-
-            return ValueTask.CompletedTask;
-        }
+        return ValueTask.CompletedTask;
     }
 }

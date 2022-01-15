@@ -1,61 +1,60 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading;
 
-namespace Disruptor.PerfTests.Support
+namespace Disruptor.PerfTests.Support;
+
+public class PerfAdditionQueueProcessor
 {
-    public class PerfAdditionQueueProcessor
+    private volatile bool _running;
+    private long _value;
+    private long _sequence;
+    private ManualResetEvent _latch;
+
+    //private readonly ConcurrentQueue<long> _blockingQueue;
+    private readonly ArrayConcurrentQueue<long> _blockingQueue;
+    private readonly long _count;
+
+    //public PerfAdditionQueueProcessor(ConcurrentQueue<long> blockingQueue, long count)
+    public PerfAdditionQueueProcessor(ArrayConcurrentQueue<long> blockingQueue, long count)
     {
-        private volatile bool _running;
-        private long _value;
-        private long _sequence;
-        private ManualResetEvent _latch;
+        _blockingQueue = blockingQueue;
+        _count = count;
+    }
 
-        //private readonly ConcurrentQueue<long> _blockingQueue;
-        private readonly ArrayConcurrentQueue<long> _blockingQueue;
-        private readonly long _count;
+    public long GetValue()
+    {
+        return _value;
+    }
 
-        //public PerfAdditionQueueProcessor(ConcurrentQueue<long> blockingQueue, long count)
-        public PerfAdditionQueueProcessor(ArrayConcurrentQueue<long> blockingQueue, long count)
+    public void Reset(ManualResetEvent latch)
+    {
+        _value = 0L;
+        _sequence = 0L;
+        _latch = latch;
+    }
+
+    public void Halt()
+    {
+        _running = false;
+    }
+
+    public void Run()
+    {
+        _running = true;
+        while (_running)
         {
-            _blockingQueue = blockingQueue;
-            _count = count;
-        }
+            //long value;
+            //while (!_blockingQueue.TryDequeue(out value))
+            //    break;
 
-        public long GetValue()
-        {
-            return _value;
-        }
+            long value;
+            while (!_blockingQueue.TryDequeue(out value))
+                break;
 
-        public void Reset(ManualResetEvent latch)
-        {
-            _value = 0L;
-            _sequence = 0L;
-            _latch = latch;
-        }
+            _value += value;
 
-        public void Halt()
-        {
-            _running = false;
-        }
-
-        public void Run()
-        {
-            _running = true;
-            while (_running)
-            {
-                //long value;
-                //while (!_blockingQueue.TryDequeue(out value))
-                //    break;
-
-                long value;
-                while (!_blockingQueue.TryDequeue(out value))
-                    break;
-
-                _value += value;
-
-                if (_sequence++ == _count)
-                    _latch.Set();
-            }
+            if (_sequence++ == _count)
+                _latch.Set();
         }
     }
 }

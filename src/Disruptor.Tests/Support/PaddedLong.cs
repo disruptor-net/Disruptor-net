@@ -1,16 +1,15 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace Disruptor.Tests.Support
+namespace Disruptor.Tests.Support;
+
+[StructLayout(LayoutKind.Explicit, Size = 72)]
+public struct PaddedLong
 {
-    [StructLayout(LayoutKind.Explicit, Size = 72)]
-    public struct PaddedLong
-    {
-        // padding: 12 (java object header)
-        // padding: 4 (java padding)
+    // padding: 12 (java object header)
+    // padding: 4 (java padding)
 
-        [FieldOffset(16)]
-        public long Value;
+    [FieldOffset(16)]
+    public long Value;
 
-        // padding: 46
-    }
+    // padding: 46
 }

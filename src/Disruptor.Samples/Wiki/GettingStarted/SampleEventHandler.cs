@@ -1,12 +1,11 @@
 ﻿using System;
 
-namespace Disruptor.Samples.Wiki.GettingStarted
+namespace Disruptor.Samples.Wiki.GettingStarted;
+
+public class SampleEventHandler : IEventHandler<SampleEvent>
 {
-    public class SampleEventHandler : IEventHandler<SampleEvent>
+    public void OnEvent(SampleEvent data, long sequence, bool endOfBatch)
     {
-        public void OnEvent(SampleEvent data, long sequence, bool endOfBatch)
-        {
-            Console.WriteLine($"Event: {data.Id} => {data.Value}");
-        }
+        Console.WriteLine($"Event: {data.Id} => {data.Value}");
     }
 }

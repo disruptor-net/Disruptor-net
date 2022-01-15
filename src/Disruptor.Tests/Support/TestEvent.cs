@@ -1,9 +1,8 @@
-﻿namespace Disruptor.Tests.Support
-{
-    public class TestEvent
-    {
-        public int Value { get; set; }
+﻿namespace Disruptor.Tests.Support;
 
-        public override string ToString() => $"Test Event {Value}";
-    }
+public class TestEvent
+{
+    public int Value { get; set; }
+
+    public override string ToString() => $"Test Event {Value}";
 }

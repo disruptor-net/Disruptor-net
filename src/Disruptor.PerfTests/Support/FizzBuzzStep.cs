@@ -1,9 +1,8 @@
-namespace Disruptor.PerfTests.Support
+namespace Disruptor.PerfTests.Support;
+
+public enum FizzBuzzStep
 {
-    public enum FizzBuzzStep
-    {
-        Fizz,
-        Buzz,
-        FizzBuzz,
-    }
+    Fizz,
+    Buzz,
+    FizzBuzz,
 }

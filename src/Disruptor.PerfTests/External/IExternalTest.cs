@@ -1,6 +1,5 @@
-﻿namespace Disruptor.PerfTests.External
+﻿namespace Disruptor.PerfTests.External;
+
+public interface IExternalTest
 {
-    public interface IExternalTest
-    {
-    }
 }

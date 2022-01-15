@@ -1,12 +1,11 @@
 using System;
 
-namespace Disruptor.Tests
+namespace Disruptor.Tests;
+
+public class PhasedBackoffWaitStrategyTestWithSleep : WaitStrategyFixture<PhasedBackoffWaitStrategy>
 {
-    public class PhasedBackoffWaitStrategyTestWithSleep : WaitStrategyFixture<PhasedBackoffWaitStrategy>
+    protected override PhasedBackoffWaitStrategy CreateWaitStrategy()
     {
-        protected override PhasedBackoffWaitStrategy CreateWaitStrategy()
-        {
-            return PhasedBackoffWaitStrategy.WithSleep(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1));
-        }
+        return PhasedBackoffWaitStrategy.WithSleep(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1));
     }
 }

@@ -3,119 +3,118 @@ using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
 using LongArrayPublisher = System.Action<System.Threading.CountdownEvent, Disruptor.RingBuffer<long[]>, long, long>;
 
-namespace Disruptor.PerfTests.Sequenced
+namespace Disruptor.PerfTests.Sequenced;
+
+/// <summary>
+/// Sequence a series of events from multiple publishers going to one event processor.
+///
+/// Disruptor:
+/// ==========
+///             track to prevent wrap
+///             +--------------------+
+///             |                    |
+///             |                    |
+/// +----+    +====+    +====+       |
+/// | P1 |--->| RB |--->| SB |--+    |
+/// +----+    +====+    +====+  |    |
+///                             |    v
+/// +----+    +====+    +====+  | +----+
+/// | P2 |--->| RB |--->| SB |--+>| EP |
+/// +----+    +====+    +====+  | +----+
+///                             |
+/// +----+    +====+    +====+  |
+/// | P3 |--->| RB |--->| SB |--+
+/// +----+    +====+    +====+
+/// P1 - Publisher 1
+/// P2 - Publisher 2
+/// P3 - Publisher 3
+/// RB - RingBuffer
+/// SB - SequenceBarrier
+/// EP - EventProcessor
+/// </summary>
+public class ThreeToThreeSequencedThroughputTest : IThroughputTest
 {
-    /// <summary>
-    /// Sequence a series of events from multiple publishers going to one event processor.
-    ///
-    /// Disruptor:
-    /// ==========
-    ///             track to prevent wrap
-    ///             +--------------------+
-    ///             |                    |
-    ///             |                    |
-    /// +----+    +====+    +====+       |
-    /// | P1 |--->| RB |--->| SB |--+    |
-    /// +----+    +====+    +====+  |    |
-    ///                             |    v
-    /// +----+    +====+    +====+  | +----+
-    /// | P2 |--->| RB |--->| SB |--+>| EP |
-    /// +----+    +====+    +====+  | +----+
-    ///                             |
-    /// +----+    +====+    +====+  |
-    /// | P3 |--->| RB |--->| SB |--+
-    /// +----+    +====+    +====+
-    /// P1 - Publisher 1
-    /// P2 - Publisher 2
-    /// P3 - Publisher 3
-    /// RB - RingBuffer
-    /// SB - SequenceBarrier
-    /// EP - EventProcessor
-    /// </summary>
-    public class ThreeToThreeSequencedThroughputTest : IThroughputTest
+    private const int _numPublishers = 3;
+    private const int _arraySize = 3;
+    private const int _bufferSize = 1024 * 64;
+    private const long _iterations = 1000L * 1000L * 180L;
+    private readonly CountdownEvent _cyclicBarrier = new(_numPublishers + 1);
+
+    private readonly RingBuffer<long[]>[] _buffers = new RingBuffer<long[]>[_numPublishers];
+    private readonly ISequenceBarrier[] _barriers = new ISequenceBarrier[_numPublishers];
+    private readonly LongArrayPublisher[] _valuePublishers = new LongArrayPublisher[_numPublishers];
+
+    private readonly LongArrayEventHandler _handler = new();
+    private readonly MultiBufferEventProcessor<long[]> _eventProcessor;
+
+    public ThreeToThreeSequencedThroughputTest()
     {
-        private const int _numPublishers = 3;
-        private const int _arraySize = 3;
-        private const int _bufferSize = 1024 * 64;
-        private const long _iterations = 1000L * 1000L * 180L;
-        private readonly CountdownEvent _cyclicBarrier = new(_numPublishers + 1);
-
-        private readonly RingBuffer<long[]>[] _buffers = new RingBuffer<long[]>[_numPublishers];
-        private readonly ISequenceBarrier[] _barriers = new ISequenceBarrier[_numPublishers];
-        private readonly LongArrayPublisher[] _valuePublishers = new LongArrayPublisher[_numPublishers];
-
-        private readonly LongArrayEventHandler _handler = new();
-        private readonly MultiBufferEventProcessor<long[]> _eventProcessor;
-
-        public ThreeToThreeSequencedThroughputTest()
+        for (var i = 0; i < _numPublishers; i++)
         {
-            for (var i = 0; i < _numPublishers; i++)
-            {
-                _buffers[i] = RingBuffer<long[]>.CreateSingleProducer(() => new long[_arraySize], _bufferSize, new YieldingWaitStrategy());
-                _barriers[i] = _buffers[i].NewBarrier();
-                _valuePublishers[i] = ValuePublisher;
-            }
-
-            _eventProcessor = new MultiBufferEventProcessor<long[]>(_buffers, _barriers, _handler);
-
-            for (var i = 0; i < _numPublishers; i++)
-            {
-                _buffers[i].AddGatingSequences(_eventProcessor.GetSequences()[i]);
-            }
+            _buffers[i] = RingBuffer<long[]>.CreateSingleProducer(() => new long[_arraySize], _bufferSize, new YieldingWaitStrategy());
+            _barriers[i] = _buffers[i].NewBarrier();
+            _valuePublishers[i] = ValuePublisher;
         }
 
-        public int RequiredProcessorCount => 4;
+        _eventProcessor = new MultiBufferEventProcessor<long[]>(_buffers, _barriers, _handler);
 
-        public long Run(ThroughputSessionContext sessionContext)
+        for (var i = 0; i < _numPublishers; i++)
         {
-            _cyclicBarrier.Reset();
+            _buffers[i].AddGatingSequences(_eventProcessor.GetSequences()[i]);
+        }
+    }
 
-            var latch = new ManualResetEvent(false);
-            _handler.Reset(latch, _iterations);
+    public int RequiredProcessorCount => 4;
 
-            var futures = new Task[_numPublishers];
-            for (var i = 0; i < _numPublishers; i++)
-            {
-                var index = i;
-                futures[i] = Task.Run(() => _valuePublishers[index](_cyclicBarrier, _buffers[index], _iterations / _numPublishers, _arraySize));
-            }
-            var processorTask = Task.Run(() => _eventProcessor.Run());
+    public long Run(ThroughputSessionContext sessionContext)
+    {
+        _cyclicBarrier.Reset();
 
-            sessionContext.Start();
-            _cyclicBarrier.Signal();
-            _cyclicBarrier.Wait();
+        var latch = new ManualResetEvent(false);
+        _handler.Reset(latch, _iterations);
 
-            for (var i = 0; i < _numPublishers; i++)
-            {
-                futures[i].Wait();
-            }
+        var futures = new Task[_numPublishers];
+        for (var i = 0; i < _numPublishers; i++)
+        {
+            var index = i;
+            futures[i] = Task.Run(() => _valuePublishers[index](_cyclicBarrier, _buffers[index], _iterations / _numPublishers, _arraySize));
+        }
+        var processorTask = Task.Run(() => _eventProcessor.Run());
 
-            latch.WaitOne();
+        sessionContext.Start();
+        _cyclicBarrier.Signal();
+        _cyclicBarrier.Wait();
 
-            sessionContext.Stop();
-            _eventProcessor.Halt();
-            processorTask.Wait(2000);
-
-            sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations * _arraySize);
-
-            return _iterations * _arraySize;
+        for (var i = 0; i < _numPublishers; i++)
+        {
+            futures[i].Wait();
         }
 
-        private static void ValuePublisher(CountdownEvent countdownEvent, RingBuffer<long[]> ringBuffer, long iterations, long arraySize)
-        {
-            countdownEvent.Signal();
-            countdownEvent.Wait();
+        latch.WaitOne();
 
-            for (long i = 0; i < iterations; i++)
+        sessionContext.Stop();
+        _eventProcessor.Halt();
+        processorTask.Wait(2000);
+
+        sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations * _arraySize);
+
+        return _iterations * _arraySize;
+    }
+
+    private static void ValuePublisher(CountdownEvent countdownEvent, RingBuffer<long[]> ringBuffer, long iterations, long arraySize)
+    {
+        countdownEvent.Signal();
+        countdownEvent.Wait();
+
+        for (long i = 0; i < iterations; i++)
+        {
+            var sequence = ringBuffer.Next();
+            var eventData = ringBuffer[sequence];
+            for (var j = 0; j < arraySize; j++)
             {
-                var sequence = ringBuffer.Next();
-                var eventData = ringBuffer[sequence];
-                for (var j = 0; j < arraySize; j++)
-                {
-                    eventData[j] = i + j;
-                }
-                ringBuffer.Publish(sequence);
+                eventData[j] = i + j;
             }
+            ringBuffer.Publish(sequence);
         }
     }
 }

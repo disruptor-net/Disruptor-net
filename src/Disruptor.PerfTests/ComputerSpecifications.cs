@@ -3,50 +3,49 @@ using System.Linq;
 using System.Text;
 using BenchmarkDotNet.Environments;
 
-namespace Disruptor.PerfTests
+namespace Disruptor.PerfTests;
+
+public class ComputerSpecifications
 {
-    public class ComputerSpecifications
+    private readonly HostEnvironmentInfo _hostEnvironmentInfo;
+
+    public ComputerSpecifications()
     {
-        private readonly HostEnvironmentInfo _hostEnvironmentInfo;
+        _hostEnvironmentInfo = HostEnvironmentInfo.GetCurrent();
+    }
 
-        public ComputerSpecifications()
+    public int? PhysicalCoreCount => _hostEnvironmentInfo.CpuInfo.Value.PhysicalCoreCount;
+    public int? LogicalCoreCount => _hostEnvironmentInfo.CpuInfo.Value.LogicalCoreCount;
+    public bool IsHyperThreaded => LogicalCoreCount > PhysicalCoreCount;
+
+    public override string ToString()
+    {
+        var builder = new StringBuilder();
+
+        foreach (var line in GetLines())
         {
-            _hostEnvironmentInfo = HostEnvironmentInfo.GetCurrent();
+            builder.AppendLine(line);
         }
 
-        public int? PhysicalCoreCount => _hostEnvironmentInfo.CpuInfo.Value.PhysicalCoreCount;
-        public int? LogicalCoreCount => _hostEnvironmentInfo.CpuInfo.Value.LogicalCoreCount;
-        public bool IsHyperThreaded => LogicalCoreCount > PhysicalCoreCount;
+        return builder.ToString();
+    }
 
-        public override string ToString()
+    public void AppendHtml(StringBuilder builder)
+    {
+        foreach (var line in GetLines())
         {
-            var builder = new StringBuilder();
-
-            foreach (var line in GetLines())
-            {
-                builder.AppendLine(line);
-            }
-
-            return builder.ToString();
+            builder.Append(line);
+            builder.AppendLine("<br>");
         }
+    }
 
-        public void AppendHtml(StringBuilder builder)
+    private IEnumerable<string> GetLines()
+    {
+        yield return "OS = " + _hostEnvironmentInfo.OsVersion.Value;
+
+        foreach (var line in _hostEnvironmentInfo.ToFormattedString().Skip(1))
         {
-            foreach (var line in GetLines())
-            {
-                builder.Append(line);
-                builder.AppendLine("<br>");
-            }
-        }
-
-        private IEnumerable<string> GetLines()
-        {
-            yield return "OS = " + _hostEnvironmentInfo.OsVersion.Value;
-
-            foreach (var line in _hostEnvironmentInfo.ToFormattedString().Skip(1))
-            {
-                yield return line;
-            }
+            yield return line;
         }
     }
 }

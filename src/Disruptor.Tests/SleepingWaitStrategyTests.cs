@@ -1,10 +1,9 @@
-﻿namespace Disruptor.Tests
+﻿namespace Disruptor.Tests;
+
+public class SleepingWaitStrategyTests : WaitStrategyFixture<SleepingWaitStrategy>
 {
-    public class SleepingWaitStrategyTests : WaitStrategyFixture<SleepingWaitStrategy>
+    protected override SleepingWaitStrategy CreateWaitStrategy()
     {
-        protected override SleepingWaitStrategy CreateWaitStrategy()
-        {
-            return new SleepingWaitStrategy();
-        }
+        return new SleepingWaitStrategy();
     }
 }

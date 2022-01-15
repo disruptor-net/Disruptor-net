@@ -1,9 +1,8 @@
-namespace Disruptor.Processing
+namespace Disruptor.Processing;
+
+internal static class ProcessorRunStates
 {
-    internal static class ProcessorRunStates
-    {
-        public const int Idle = 0;
-        public const int Running = 1;
-        public const int Halted = 2;
-    }
+    public const int Idle = 0;
+    public const int Running = 1;
+    public const int Halted = 2;
 }

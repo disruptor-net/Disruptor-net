@@ -6,69 +6,68 @@ using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
-namespace Disruptor.Tests.Dsl.Stubs
+namespace Disruptor.Tests.Dsl.Stubs;
+
+public class StubTaskScheduler : TaskScheduler
 {
-    public class StubTaskScheduler : TaskScheduler
+    private readonly ConcurrentQueue<Thread> _threads = new();
+    private bool _ignoreTasks;
+    private int _taskCount;
+
+    public int TaskCount => _taskCount;
+
+    protected override IEnumerable<Task> GetScheduledTasks()
     {
-        private readonly ConcurrentQueue<Thread> _threads = new();
-        private bool _ignoreTasks;
-        private int _taskCount;
+        return Enumerable.Empty<Task>();
+    }
 
-        public int TaskCount => _taskCount;
+    protected override void QueueTask(Task task)
+    {
+        Interlocked.Increment(ref _taskCount);
 
-        protected override IEnumerable<Task> GetScheduledTasks()
+        if (Volatile.Read(ref _ignoreTasks))
+            return;
+
+        var thread = new Thread(ExecuteTask);
+        thread.Start();
+        _threads.Enqueue(thread);
+
+        void ExecuteTask()
         {
-            return Enumerable.Empty<Task>();
-        }
-
-        protected override void QueueTask(Task task)
-        {
-            Interlocked.Increment(ref _taskCount);
-
-            if (Volatile.Read(ref _ignoreTasks))
-                return;
-
-            var thread = new Thread(ExecuteTask);
-            thread.Start();
-            _threads.Enqueue(thread);
-
-            void ExecuteTask()
+            try
             {
-                try
-                {
-                    TryExecuteTask(task);
-                }
-                catch (ThreadInterruptedException e)
-                {
-                    Console.WriteLine(e);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
+                TryExecuteTask(task);
+            }
+            catch (ThreadInterruptedException e)
+            {
+                Console.WriteLine(e);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
+    }
 
-        protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
-        {
-            return false;
-        }
+    protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
+    {
+        return false;
+    }
 
-        public void JoinAllThreads()
+    public void JoinAllThreads()
+    {
+        while (_threads.TryDequeue(out var thread))
         {
-            while (_threads.TryDequeue(out var thread))
+            if (!thread.Join(5000))
             {
-                if (!thread.Join(5000))
-                {
-                    thread.Interrupt();
-                    Assert.IsTrue(thread.Join(5000), "Failed to stop thread: " + thread);
-                }
+                thread.Interrupt();
+                Assert.IsTrue(thread.Join(5000), "Failed to stop thread: " + thread);
             }
         }
+    }
 
-        public void IgnoreExecutions()
-        {
-            _ignoreTasks = true;
-        }
+    public void IgnoreExecutions()
+    {
+        _ignoreTasks = true;
     }
 }

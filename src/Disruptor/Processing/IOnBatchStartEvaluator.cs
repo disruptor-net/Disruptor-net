@@ -1,7 +1,6 @@
-namespace Disruptor.Processing
+namespace Disruptor.Processing;
+
+public interface IOnBatchStartEvaluator
 {
-    public interface IOnBatchStartEvaluator
-    {
-        bool ShouldInvokeOnBatchStart(long availableSequence, long nextSequence);
-    }
+    bool ShouldInvokeOnBatchStart(long availableSequence, long nextSequence);
 }

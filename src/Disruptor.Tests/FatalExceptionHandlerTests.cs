@@ -2,23 +2,22 @@ using System;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
-namespace Disruptor.Tests
+namespace Disruptor.Tests;
+
+[TestFixture]
+public class FatalExceptionHandlerTests
 {
-    [TestFixture]
-    public class FatalExceptionHandlerTests
+    [Test]
+    public void ShouldHandleFatalException()
     {
-        [Test]
-        public void ShouldHandleFatalException()
-        {
-            var causeException = new Exception();
-            var evt = new StubEvent(0);
+        var causeException = new Exception();
+        var evt = new StubEvent(0);
 
-            var exceptionHandler = new FatalExceptionHandler<StubEvent>();
+        var exceptionHandler = new FatalExceptionHandler<StubEvent>();
 
-            var exception = Assert.Throws<ApplicationException>(() => exceptionHandler.HandleEventException(causeException, 0L, evt));
+        var exception = Assert.Throws<ApplicationException>(() => exceptionHandler.HandleEventException(causeException, 0L, evt));
 
-            Assert.IsNotNull(exception);
-            Assert.AreEqual(causeException, exception!.InnerException);
-        }
+        Assert.IsNotNull(exception);
+        Assert.AreEqual(causeException, exception!.InnerException);
     }
 }

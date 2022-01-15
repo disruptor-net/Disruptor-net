@@ -1,18 +1,17 @@
-﻿namespace Disruptor.Dsl
+﻿namespace Disruptor.Dsl;
+
+/// <summary>
+/// Defines producer types to support creation of RingBuffer with correct sequencer and publisher.
+/// </summary>
+public enum ProducerType
 {
     /// <summary>
-    /// Defines producer types to support creation of RingBuffer with correct sequencer and publisher.
+    /// Create a RingBuffer with a single event publisher to the RingBuffer
     /// </summary>
-    public enum ProducerType
-    {
-        /// <summary>
-        /// Create a RingBuffer with a single event publisher to the RingBuffer
-        /// </summary>
-        Single,
+    Single,
 
-        /// <summary>
-        /// Create a RingBuffer supporting multiple event publishers to the one RingBuffer
-        /// </summary>
-        Multi
-    }
+    /// <summary>
+    /// Create a RingBuffer supporting multiple event publishers to the one RingBuffer
+    /// </summary>
+    Multi
 }

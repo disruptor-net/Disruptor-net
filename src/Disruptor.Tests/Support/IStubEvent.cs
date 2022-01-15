@@ -1,7 +1,6 @@
-namespace Disruptor.Tests.Support
+namespace Disruptor.Tests.Support;
+
+public interface IStubEvent
 {
-    public interface IStubEvent
-    {
-        int Value { get; set; }
-    }
+    int Value { get; set; }
 }

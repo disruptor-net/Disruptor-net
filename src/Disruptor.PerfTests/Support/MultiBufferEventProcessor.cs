@@ -3,108 +3,107 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Processing;
 
-namespace Disruptor.PerfTests.Support
+namespace Disruptor.PerfTests.Support;
+
+public class MultiBufferEventProcessor<T> : IEventProcessor
+    where T : class
 {
-    public class MultiBufferEventProcessor<T> : IEventProcessor
-        where T : class
+    private volatile int _isRunning;
+    private readonly IDataProvider<T>[] _providers;
+    private readonly ISequenceBarrier[] _barriers;
+    private readonly IEventHandler<T> _handler;
+    private readonly Sequence[] _sequences;
+    private long _count;
+
+    public MultiBufferEventProcessor(IDataProvider<T>[] providers, ISequenceBarrier[] barriers, IEventHandler<T> handler)
     {
-        private volatile int _isRunning;
-        private readonly IDataProvider<T>[] _providers;
-        private readonly ISequenceBarrier[] _barriers;
-        private readonly IEventHandler<T> _handler;
-        private readonly Sequence[] _sequences;
-        private long _count;
+        if (providers.Length != barriers.Length)
+            throw new ArgumentException();
 
-        public MultiBufferEventProcessor(IDataProvider<T>[] providers, ISequenceBarrier[] barriers, IEventHandler<T> handler)
+        _providers = providers;
+        _barriers = barriers;
+        _handler = handler;
+
+        _sequences = new Sequence[providers.Length];
+        for (var i = 0; i < _sequences.Length; i++)
         {
-            if (providers.Length != barriers.Length)
-                throw new ArgumentException();
+            _sequences[i] = new Sequence();
+        }
+    }
 
-            _providers = providers;
-            _barriers = barriers;
-            _handler = handler;
+    public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+    {
+        return Task.Factory.StartNew(Run, CancellationToken.None, taskCreationOptions, taskScheduler);
+    }
 
-            _sequences = new Sequence[providers.Length];
-            for (var i = 0; i < _sequences.Length; i++)
-            {
-                _sequences[i] = new Sequence();
-            }
+    public void Run()
+    {
+        if (Interlocked.Exchange(ref _isRunning, 1) != 0)
+            throw new ApplicationException("Already running");
+
+        foreach (var barrier in _barriers)
+        {
+            barrier.ResetProcessing();
         }
 
-        public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+        var barrierLength = _barriers.Length;
+
+        while (true)
         {
-            return Task.Factory.StartNew(Run, CancellationToken.None, taskCreationOptions, taskScheduler);
-        }
-
-        public void Run()
-        {
-            if (Interlocked.Exchange(ref _isRunning, 1) != 0)
-                throw new ApplicationException("Already running");
-
-            foreach (var barrier in _barriers)
+            try
             {
-                barrier.ResetProcessing();
-            }
-
-            var barrierLength = _barriers.Length;
-
-            while (true)
-            {
-                try
+                for (var i = 0; i < barrierLength; i++)
                 {
-                    for (var i = 0; i < barrierLength; i++)
+                    var waitResult = _barriers[i].WaitFor(-1);
+                    if (waitResult.IsTimeout)
+                        continue;
+
+                    var available = waitResult.UnsafeAvailableSequence;
+                    var sequence = _sequences[i];
+
+                    var nextSequence = sequence.Value + 1;
+
+                    for (var l = nextSequence; l <= available; l++)
                     {
-                        var waitResult = _barriers[i].WaitFor(-1);
-                        if (waitResult.IsTimeout)
-                            continue;
-
-                        var available = waitResult.UnsafeAvailableSequence;
-                        var sequence = _sequences[i];
-
-                        var nextSequence = sequence.Value + 1;
-
-                        for (var l = nextSequence; l <= available; l++)
-                        {
-                            _handler.OnEvent(_providers[i][l], l, l == available);
-                        }
-
-                        sequence.SetValue(available);
-
-                        _count += available - nextSequence + 1;
+                        _handler.OnEvent(_providers[i][l], l, l == available);
                     }
 
-                    Thread.Yield();
+                    sequence.SetValue(available);
+
+                    _count += available - nextSequence + 1;
                 }
-                catch (OperationCanceledException) when (_barriers[0].IsCancellationRequested())
-                {
-                    if (_isRunning == 0)
-                        break;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
+
+                Thread.Yield();
+            }
+            catch (OperationCanceledException) when (_barriers[0].IsCancellationRequested())
+            {
+                if (_isRunning == 0)
                     break;
-                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                break;
             }
         }
-
-
-
-        public ISequence Sequence { get { throw new NotSupportedException(); } }
-
-        public long Count => _count;
-
-        public Sequence[] GetSequences()
-        {
-            return _sequences;
-        }
-
-        public void Halt()
-        {
-            _isRunning = 0;
-            _barriers[0].CancelProcessing();
-        }
-
-        public bool IsRunning => _isRunning == 1;
     }
+
+
+
+    public ISequence Sequence { get { throw new NotSupportedException(); } }
+
+    public long Count => _count;
+
+    public Sequence[] GetSequences()
+    {
+        return _sequences;
+    }
+
+    public void Halt()
+    {
+        _isRunning = 0;
+        _barriers[0].CancelProcessing();
+    }
+
+    public bool IsRunning => _isRunning == 1;
 }

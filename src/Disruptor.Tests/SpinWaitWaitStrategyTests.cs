@@ -1,10 +1,9 @@
-﻿namespace Disruptor.Tests
+﻿namespace Disruptor.Tests;
+
+public class SpinWaitWaitStrategyTests : WaitStrategyFixture<SpinWaitWaitStrategy>
 {
-    public class SpinWaitWaitStrategyTests : WaitStrategyFixture<SpinWaitWaitStrategy>
+    protected override SpinWaitWaitStrategy CreateWaitStrategy()
     {
-        protected override SpinWaitWaitStrategy CreateWaitStrategy()
-        {
-            return new SpinWaitWaitStrategy();
-        }
+        return new SpinWaitWaitStrategy();
     }
 }

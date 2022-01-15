@@ -2,37 +2,36 @@ using System.Linq;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
-namespace Disruptor.Tests
+namespace Disruptor.Tests;
+
+[TestFixture]
+public class EventBatchTests
 {
-    [TestFixture]
-    public class EventBatchTests
+    [Test]
+    public void ShouldConvertBatchToArray()
     {
-        [Test]
-        public void ShouldConvertBatchToArray()
-        {
-            // Arrange
-            var array = new[] { new TestEvent(), new TestEvent(), new TestEvent() };
-            var batch = new EventBatch<TestEvent>(array, 1, 2);
+        // Arrange
+        var array = new[] { new TestEvent(), new TestEvent(), new TestEvent() };
+        var batch = new EventBatch<TestEvent>(array, 1, 2);
 
-            // Act
-            var copy = batch.ToArray();
+        // Act
+        var copy = batch.ToArray();
 
-            // Assert
-            Assert.AreEqual(array.Skip(1).ToArray(), copy);
-        }
+        // Assert
+        Assert.AreEqual(array.Skip(1).ToArray(), copy);
+    }
 
-        [Test]
-        public void ShouldConvertBatchToArrayFromEnumerable()
-        {
-            // Arrange
-            var array = new[] { new TestEvent(), new TestEvent(), new TestEvent() };
-            var batch = new EventBatch<TestEvent>(array, 1, 2);
+    [Test]
+    public void ShouldConvertBatchToArrayFromEnumerable()
+    {
+        // Arrange
+        var array = new[] { new TestEvent(), new TestEvent(), new TestEvent() };
+        var batch = new EventBatch<TestEvent>(array, 1, 2);
 
-            // Act
-            var copy = batch.AsEnumerable().ToArray();
+        // Act
+        var copy = batch.AsEnumerable().ToArray();
 
-            // Assert
-            Assert.AreEqual(array.Skip(1).ToArray(), copy);
-        }
+        // Assert
+        Assert.AreEqual(array.Skip(1).ToArray(), copy);
     }
 }

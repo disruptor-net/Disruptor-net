@@ -2,186 +2,185 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 
-namespace Disruptor.Benchmarks
+namespace Disruptor.Benchmarks;
+
+public class RingBufferDataProviderBenchmarks
 {
-    public class RingBufferDataProviderBenchmarks
+    private readonly RingBuffer<Event> _ringBuffer;
+
+    public RingBufferDataProviderBenchmarks()
     {
-        private readonly RingBuffer<Event> _ringBuffer;
+        _ringBuffer = new RingBuffer<Event>(() => new Event(), new SingleProducerSequencer(4096, new BusySpinWaitStrategy()));
+    }
 
-        public RingBufferDataProviderBenchmarks()
+    public long Sequence { get; set; } = 75;
+
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValue_1()
+    {
+        for (var i = 0; i < 20; i++)
         {
-            _ringBuffer = new RingBuffer<Event>(() => new Event(), new SingleProducerSequencer(4096, new BusySpinWaitStrategy()));
+            UseEvent(_ringBuffer[Sequence]);
         }
+    }
 
-        public long Sequence { get; set; } = 75;
-
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValue_1()
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValue_2()
+    {
+        for (var i = 0; i < 20; i++)
         {
-            for (var i = 0; i < 20; i++)
+            UseEvent(_ringBuffer[Sequence]);
+            UseEvent(_ringBuffer[Sequence + 1]);
+        }
+    }
+
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValue_5()
+    {
+        for (var i = 0; i < 20; i++)
+        {
+            UseEvent(_ringBuffer[Sequence]);
+            UseEvent(_ringBuffer[Sequence + 1]);
+            UseEvent(_ringBuffer[Sequence + 2]);
+            UseEvent(_ringBuffer[Sequence + 3]);
+            UseEvent(_ringBuffer[Sequence + 4]);
+        }
+    }
+
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValueSpan_1()
+    {
+        for (var i = 0; i < 20; i++)
+        {
+            var span = _ringBuffer[Sequence, Sequence];
+
+            foreach (var data in span)
             {
-                UseEvent(_ringBuffer[Sequence]);
+                UseEvent(data);
             }
         }
+    }
 
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValue_2()
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValueSpan_2()
+    {
+        for (var i = 0; i < 20; i++)
         {
-            for (var i = 0; i < 20; i++)
+            var span = _ringBuffer[Sequence, Sequence + 1];
+
+            foreach (var data in span)
             {
-                UseEvent(_ringBuffer[Sequence]);
-                UseEvent(_ringBuffer[Sequence + 1]);
+                UseEvent(data);
             }
         }
+    }
 
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValue_5()
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValueSpan_5()
+    {
+        for (var i = 0; i < 20; i++)
         {
-            for (var i = 0; i < 20; i++)
+            var span = _ringBuffer[Sequence, Sequence + 4];
+
+            foreach (var data in span)
             {
-                UseEvent(_ringBuffer[Sequence]);
-                UseEvent(_ringBuffer[Sequence + 1]);
-                UseEvent(_ringBuffer[Sequence + 2]);
-                UseEvent(_ringBuffer[Sequence + 3]);
-                UseEvent(_ringBuffer[Sequence + 4]);
+                UseEvent(data);
             }
         }
+    }
 
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValueSpan_1()
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValueBatch_1()
+    {
+        for (var i = 0; i < 20; i++)
         {
-            for (var i = 0; i < 20; i++)
-            {
-                var span = _ringBuffer[Sequence, Sequence];
+            var batch = _ringBuffer.GetBatch(Sequence, Sequence);
 
-                foreach (var data in span)
-                {
-                    UseEvent(data);
-                }
+            foreach (var data in batch)
+            {
+                UseEvent(data);
             }
         }
+    }
 
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValueSpan_2()
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValueBatch_2()
+    {
+        for (var i = 0; i < 20; i++)
         {
-            for (var i = 0; i < 20; i++)
-            {
-                var span = _ringBuffer[Sequence, Sequence + 1];
+            var batch = _ringBuffer.GetBatch(Sequence, Sequence + 1);
 
-                foreach (var data in span)
-                {
-                    UseEvent(data);
-                }
+            foreach (var data in batch)
+            {
+                UseEvent(data);
             }
         }
+    }
 
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValueSpan_5()
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValueBatch_5()
+    {
+        for (var i = 0; i < 20; i++)
         {
-            for (var i = 0; i < 20; i++)
-            {
-                var span = _ringBuffer[Sequence, Sequence + 4];
+            var batch = _ringBuffer.GetBatch(Sequence, Sequence + 4);
 
-                foreach (var data in span)
-                {
-                    UseEvent(data);
-                }
+            foreach (var data in batch)
+            {
+                UseEvent(data);
             }
         }
+    }
 
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValueBatch_1()
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValueBatchAsSpan_1()
+    {
+        for (var i = 0; i < 20; i++)
         {
-            for (var i = 0; i < 20; i++)
-            {
-                var batch = _ringBuffer.GetBatch(Sequence, Sequence);
+            var batch = _ringBuffer.GetBatch(Sequence, Sequence);
 
-                foreach (var data in batch)
-                {
-                    UseEvent(data);
-                }
+            foreach (var data in batch.AsSpan())
+            {
+                UseEvent(data);
             }
         }
+    }
 
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValueBatch_2()
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValueBatchAsSpan_2()
+    {
+        for (var i = 0; i < 20; i++)
         {
-            for (var i = 0; i < 20; i++)
-            {
-                var batch = _ringBuffer.GetBatch(Sequence, Sequence + 1);
+            var batch = _ringBuffer.GetBatch(Sequence, Sequence + 1);
 
-                foreach (var data in batch)
-                {
-                    UseEvent(data);
-                }
+            foreach (var data in batch.AsSpan())
+            {
+                UseEvent(data);
             }
         }
+    }
 
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValueBatch_5()
+    [Benchmark(OperationsPerInvoke = 20)]
+    public void SetValueBatchAsSpan_5()
+    {
+        for (var i = 0; i < 20; i++)
         {
-            for (var i = 0; i < 20; i++)
-            {
-                var batch = _ringBuffer.GetBatch(Sequence, Sequence + 4);
+            var batch = _ringBuffer.GetBatch(Sequence, Sequence + 4);
 
-                foreach (var data in batch)
-                {
-                    UseEvent(data);
-                }
+            foreach (var data in batch.AsSpan())
+            {
+                UseEvent(data);
             }
         }
+    }
 
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValueBatchAsSpan_1()
-        {
-            for (var i = 0; i < 20; i++)
-            {
-                var batch = _ringBuffer.GetBatch(Sequence, Sequence);
+    public class Event
+    {
+        public long Value { get; set; }
+    }
 
-                foreach (var data in batch.AsSpan())
-                {
-                    UseEvent(data);
-                }
-            }
-        }
-
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValueBatchAsSpan_2()
-        {
-            for (var i = 0; i < 20; i++)
-            {
-                var batch = _ringBuffer.GetBatch(Sequence, Sequence + 1);
-
-                foreach (var data in batch.AsSpan())
-                {
-                    UseEvent(data);
-                }
-            }
-        }
-
-        [Benchmark(OperationsPerInvoke = 20)]
-        public void SetValueBatchAsSpan_5()
-        {
-            for (var i = 0; i < 20; i++)
-            {
-                var batch = _ringBuffer.GetBatch(Sequence, Sequence + 4);
-
-                foreach (var data in batch.AsSpan())
-                {
-                    UseEvent(data);
-                }
-            }
-        }
-
-        public class Event
-        {
-            public long Value { get; set; }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public void UseEvent(Event evt)
-        {
-            evt.Value = 42;
-        }
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public void UseEvent(Event evt)
+    {
+        evt.Value = 42;
     }
 }

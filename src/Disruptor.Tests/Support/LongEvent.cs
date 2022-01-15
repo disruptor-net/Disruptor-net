@@ -1,9 +1,8 @@
 using System;
 
-namespace Disruptor.Tests.Support
+namespace Disruptor.Tests.Support;
+
+public class LongEvent
 {
-    public class LongEvent
-    {
-        public long Value { get; set; }
-    }
+    public long Value { get; set; }
 }

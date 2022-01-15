@@ -4,87 +4,86 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading;
 
-namespace Disruptor.PerfTests.Support
+namespace Disruptor.PerfTests.Support;
+
+public class ThreadAffinityUtil
 {
-    public class ThreadAffinityUtil
+    [DllImport("kernel32.dll")]
+    private static extern uint GetCurrentThreadId();
+
+    [DllImport("libc.so.6")]
+    private static extern int sched_setaffinity(int pid, IntPtr cpusetsize, ref ulong cpuset);
+
+    public static Scope SetThreadAffinity(int processorIndex)
     {
-        [DllImport("kernel32.dll")]
-        private static extern uint GetCurrentThreadId();
+        Thread.BeginThreadAffinity();
 
-        [DllImport("libc.so.6")]
-        private static extern int sched_setaffinity(int pid, IntPtr cpusetsize, ref ulong cpuset);
+        var affinity = (1u << processorIndex);
+        SetProcessorAffinity(affinity);
 
-        public static Scope SetThreadAffinity(int processorIndex)
-        {
-            Thread.BeginThreadAffinity();
+        return new Scope();
+    }
 
-            var affinity = (1u << processorIndex);
-            SetProcessorAffinity(affinity);
+    private static void RemoveThreadAffinity()
+    {
+        var affinity = (1u << Environment.ProcessorCount) - 1;
+        SetProcessorAffinity(affinity);
 
-            return new Scope();
-        }
+        Thread.EndThreadAffinity();
+    }
 
-        private static void RemoveThreadAffinity()
-        {
-            var affinity = (1u << Environment.ProcessorCount) - 1;
-            SetProcessorAffinity(affinity);
-
-            Thread.EndThreadAffinity();
-        }
-
-        private static void SetProcessorAffinity(uint mask)
-        {
+    private static void SetProcessorAffinity(uint mask)
+    {
 #if NETFRAMEWORK
             SetProcessorAffinityWindows(mask);
 #else
-            if (OperatingSystem.IsWindows())
-                SetProcessorAffinityWindows(mask);
-            else if (OperatingSystem.IsLinux())
-                SetProcessorAffinityLinux(mask);
-            else
-                throw new PlatformNotSupportedException();
+        if (OperatingSystem.IsWindows())
+            SetProcessorAffinityWindows(mask);
+        else if (OperatingSystem.IsLinux())
+            SetProcessorAffinityLinux(mask);
+        else
+            throw new PlatformNotSupportedException();
 #endif
-        }
+    }
 
 #if NETCOREAPP
-        [SupportedOSPlatform("windows")]
+    [SupportedOSPlatform("windows")]
 #endif
-        private static void SetProcessorAffinityWindows(uint mask)
-        {
-            var processThread = GetCurrentProcessThread();
-            processThread.ProcessorAffinity = new IntPtr(mask);
-        }
+    private static void SetProcessorAffinityWindows(uint mask)
+    {
+        var processThread = GetCurrentProcessThread();
+        processThread.ProcessorAffinity = new IntPtr(mask);
+    }
 
 #if NETCOREAPP
-        [SupportedOSPlatform("linux")]
-        private static void SetProcessorAffinityLinux(uint mask)
-        {
-            var cpuset = (ulong)mask;
-            sched_setaffinity(0, new IntPtr(sizeof(ulong)), ref cpuset);
-        }
+    [SupportedOSPlatform("linux")]
+    private static void SetProcessorAffinityLinux(uint mask)
+    {
+        var cpuset = (ulong)mask;
+        sched_setaffinity(0, new IntPtr(sizeof(ulong)), ref cpuset);
+    }
 #endif
 
-        private static ProcessThread GetCurrentProcessThread()
+    private static ProcessThread GetCurrentProcessThread()
+    {
+        var threadId = GetCurrentThreadId();
+
+        foreach (ProcessThread processThread in Process.GetCurrentProcess().Threads)
         {
-            var threadId = GetCurrentThreadId();
-
-            foreach (ProcessThread processThread in Process.GetCurrentProcess().Threads)
+            if (processThread.Id == threadId)
             {
-                if (processThread.Id == threadId)
-                {
-                    return processThread;
-                }
+                return processThread;
             }
-
-            throw new InvalidOperationException($"Could not retrieve native thread with ID: {threadId}, current managed thread ID was {threadId}");
         }
 
-        public readonly ref struct Scope
+        throw new InvalidOperationException($"Could not retrieve native thread with ID: {threadId}, current managed thread ID was {threadId}");
+    }
+
+    public readonly ref struct Scope
+    {
+        public void Dispose()
         {
-            public void Dispose()
-            {
-                RemoveThreadAffinity();
-            }
+            RemoveThreadAffinity();
         }
     }
 }

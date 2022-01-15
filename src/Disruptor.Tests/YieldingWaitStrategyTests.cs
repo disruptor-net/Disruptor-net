@@ -1,10 +1,9 @@
-﻿namespace Disruptor.Tests
+﻿namespace Disruptor.Tests;
+
+public class YieldingWaitStrategyTests : WaitStrategyFixture<YieldingWaitStrategy>
 {
-    public class YieldingWaitStrategyTests : WaitStrategyFixture<YieldingWaitStrategy>
+    protected override YieldingWaitStrategy CreateWaitStrategy()
     {
-        protected override YieldingWaitStrategy CreateWaitStrategy()
-        {
-            return new YieldingWaitStrategy();
-        }
+        return new YieldingWaitStrategy();
     }
 }

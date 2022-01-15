@@ -5,235 +5,234 @@ using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.Util;
 
-namespace Disruptor.Processing
+namespace Disruptor.Processing;
+
+/// <summary>
+/// Convenience class for handling the batching semantics of consuming events from a <see cref="ValueRingBuffer{T}"/>
+/// and delegating the available events to an <see cref="IValueEventHandler{T}"/>.
+/// </summary>
+/// <remarks>
+/// You should probably not use this type directly but instead implement <see cref="IValueEventHandler{T}"/> and register your handler
+/// using <see cref="ValueDisruptor{T, TR}.HandleEventsWith(IValueEventHandler{T}[])"/>.
+/// </remarks>
+/// <typeparam name="T">the type of event used.</typeparam>
+/// <typeparam name="TDataProvider">the type of the <see cref="IValueDataProvider{T}"/> used.</typeparam>
+/// <typeparam name="TSequenceBarrier">the type of the <see cref="ISequenceBarrier"/> used.</typeparam>
+/// <typeparam name="TEventHandler">the type of the <see cref="IValueEventHandler{T}"/> used.</typeparam>
+/// <typeparam name="TOnBatchStartEvaluator">the type of the <see cref="IOnBatchStartEvaluator"/> used.</typeparam>
+public class ValueEventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TOnBatchStartEvaluator> : IValueEventProcessor<T>
+    where T : struct
+
+    where TDataProvider : IValueDataProvider<T>
+    where TSequenceBarrier : ISequenceBarrier
+    where TEventHandler : IValueEventHandler<T>
+    where TOnBatchStartEvaluator : IOnBatchStartEvaluator
 {
-    /// <summary>
-    /// Convenience class for handling the batching semantics of consuming events from a <see cref="ValueRingBuffer{T}"/>
-    /// and delegating the available events to an <see cref="IValueEventHandler{T}"/>.
-    /// </summary>
-    /// <remarks>
-    /// You should probably not use this type directly but instead implement <see cref="IValueEventHandler{T}"/> and register your handler
-    /// using <see cref="ValueDisruptor{T, TR}.HandleEventsWith(IValueEventHandler{T}[])"/>.
-    /// </remarks>
-    /// <typeparam name="T">the type of event used.</typeparam>
-    /// <typeparam name="TDataProvider">the type of the <see cref="IValueDataProvider{T}"/> used.</typeparam>
-    /// <typeparam name="TSequenceBarrier">the type of the <see cref="ISequenceBarrier"/> used.</typeparam>
-    /// <typeparam name="TEventHandler">the type of the <see cref="IValueEventHandler{T}"/> used.</typeparam>
-    /// <typeparam name="TOnBatchStartEvaluator">the type of the <see cref="IOnBatchStartEvaluator"/> used.</typeparam>
-    public class ValueEventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TOnBatchStartEvaluator> : IValueEventProcessor<T>
-        where T : struct
+    // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
+    private TDataProvider _dataProvider;
+    private TSequenceBarrier _sequenceBarrier;
+    private TEventHandler _eventHandler;
+    private TOnBatchStartEvaluator _onBatchStartEvaluator;
+    // ReSharper restore FieldCanBeMadeReadOnly.Local
 
-        where TDataProvider : IValueDataProvider<T>
-        where TSequenceBarrier : ISequenceBarrier
-        where TEventHandler : IValueEventHandler<T>
-        where TOnBatchStartEvaluator : IOnBatchStartEvaluator
+    private readonly Sequence _sequence = new();
+    private readonly ManualResetEventSlim _started = new();
+    private IValueExceptionHandler<T> _exceptionHandler = new ValueFatalExceptionHandler<T>();
+    private volatile int _running;
+
+    public ValueEventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TOnBatchStartEvaluator onBatchStartEvaluator)
     {
-        // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
-        private TDataProvider _dataProvider;
-        private TSequenceBarrier _sequenceBarrier;
-        private TEventHandler _eventHandler;
-        private TOnBatchStartEvaluator _onBatchStartEvaluator;
-        // ReSharper restore FieldCanBeMadeReadOnly.Local
+        _dataProvider = dataProvider;
+        _sequenceBarrier = sequenceBarrier;
+        _eventHandler = eventHandler;
+        _onBatchStartEvaluator = onBatchStartEvaluator;
 
-        private readonly Sequence _sequence = new();
-        private readonly ManualResetEventSlim _started = new();
-        private IValueExceptionHandler<T> _exceptionHandler = new ValueFatalExceptionHandler<T>();
-        private volatile int _running;
+        if (eventHandler is IEventProcessorSequenceAware sequenceAware)
+            sequenceAware.SetSequenceCallback(_sequence);
+    }
 
-        public ValueEventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TOnBatchStartEvaluator onBatchStartEvaluator)
-        {
-            _dataProvider = dataProvider;
-            _sequenceBarrier = sequenceBarrier;
-            _eventHandler = eventHandler;
-            _onBatchStartEvaluator = onBatchStartEvaluator;
+    /// <summary>
+    /// <see cref="IEventProcessor.Sequence"/>
+    /// </summary>
+    public ISequence Sequence => _sequence;
 
-            if (eventHandler is IEventProcessorSequenceAware sequenceAware)
-                sequenceAware.SetSequenceCallback(_sequence);
-        }
+    /// <summary>
+    /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
+    /// It will call <see cref="ISequenceBarrier.CancelProcessing"/> to notify the thread to check status.
+    /// </summary>
+    public void Halt()
+    {
+        _running = ProcessorRunStates.Halted;
+        _sequenceBarrier.CancelProcessing();
+    }
 
-        /// <summary>
-        /// <see cref="IEventProcessor.Sequence"/>
-        /// </summary>
-        public ISequence Sequence => _sequence;
+    /// <summary>
+    /// <see cref="IEventProcessor.IsRunning"/>
+    /// </summary>
+    public bool IsRunning => _running != ProcessorRunStates.Idle;
 
-        /// <summary>
-        /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
-        /// It will call <see cref="ISequenceBarrier.CancelProcessing"/> to notify the thread to check status.
-        /// </summary>
-        public void Halt()
-        {
-            _running = ProcessorRunStates.Halted;
-            _sequenceBarrier.CancelProcessing();
-        }
+    /// <summary>
+    /// Set a new <see cref="IValueExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IValueEventHandler{T}"/>
+    /// </summary>
+    /// <param name="exceptionHandler">exceptionHandler to replace the existing exceptionHandler.</param>
+    public void SetExceptionHandler(IValueExceptionHandler<T> exceptionHandler)
+    {
+        _exceptionHandler = exceptionHandler ?? throw new ArgumentNullException(nameof(exceptionHandler));
+    }
 
-        /// <summary>
-        /// <see cref="IEventProcessor.IsRunning"/>
-        /// </summary>
-        public bool IsRunning => _running != ProcessorRunStates.Idle;
+    /// <summary>
+    /// Waits before the event processor enters the <see cref="IsRunning"/> state.
+    /// </summary>
+    /// <param name="timeout">maximum wait duration</param>
+    public void WaitUntilStarted(TimeSpan timeout)
+    {
+        _started.Wait(timeout);
+    }
 
-        /// <summary>
-        /// Set a new <see cref="IValueExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IValueEventHandler{T}"/>
-        /// </summary>
-        /// <param name="exceptionHandler">exceptionHandler to replace the existing exceptionHandler.</param>
-        public void SetExceptionHandler(IValueExceptionHandler<T> exceptionHandler)
-        {
-            _exceptionHandler = exceptionHandler ?? throw new ArgumentNullException(nameof(exceptionHandler));
-        }
+    /// <summary>
+    /// <inheritdoc cref="IEventProcessor.Start"/>.
+    /// </summary>
+    public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+    {
+        return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
+    }
 
-        /// <summary>
-        /// Waits before the event processor enters the <see cref="IsRunning"/> state.
-        /// </summary>
-        /// <param name="timeout">maximum wait duration</param>
-        public void WaitUntilStarted(TimeSpan timeout)
-        {
-            _started.Wait(timeout);
-        }
-
-        /// <summary>
-        /// <inheritdoc cref="IEventProcessor.Start"/>.
-        /// </summary>
-        public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
-        {
-            return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
-        }
-
-        /// <summary>
-        /// It is ok to have another thread rerun this method after a halt().
-        /// </summary>
-        /// <exception cref="InvalidOperationException">if this object instance is already running in a thread</exception>
-        public void Run()
-        {
+    /// <summary>
+    /// It is ok to have another thread rerun this method after a halt().
+    /// </summary>
+    /// <exception cref="InvalidOperationException">if this object instance is already running in a thread</exception>
+    public void Run()
+    {
 #pragma warning disable 420
-            var previousRunning = Interlocked.CompareExchange(ref _running, ProcessorRunStates.Running, ProcessorRunStates.Idle);
+        var previousRunning = Interlocked.CompareExchange(ref _running, ProcessorRunStates.Running, ProcessorRunStates.Idle);
 #pragma warning restore 420
 
-            if (previousRunning == ProcessorRunStates.Running)
-            {
-                throw new InvalidOperationException("Thread is already running");
-            }
-
-            if (previousRunning == ProcessorRunStates.Idle)
-            {
-                _sequenceBarrier.ResetProcessing();
-
-                NotifyStart();
-                try
-                {
-                    if (_running == ProcessorRunStates.Running)
-                    {
-                        ProcessEvents();
-                    }
-                }
-                finally
-                {
-                    NotifyShutdown();
-                    _running = ProcessorRunStates.Idle;
-                }
-            }
-            else
-            {
-                EarlyExit();
-            }
+        if (previousRunning == ProcessorRunStates.Running)
+        {
+            throw new InvalidOperationException("Thread is already running");
         }
 
-        [MethodImpl(Constants.AggressiveOptimization)]
-        private void ProcessEvents()
+        if (previousRunning == ProcessorRunStates.Idle)
         {
-            var nextSequence = _sequence.Value + 1L;
+            _sequenceBarrier.ResetProcessing();
 
-            while (true)
-            {
-                try
-                {
-                    var waitResult = _sequenceBarrier.WaitFor(nextSequence);
-                    if (waitResult.IsTimeout)
-                    {
-                        NotifyTimeout(_sequence.Value);
-                        continue;
-                    }
-
-                    var availableSequence = waitResult.UnsafeAvailableSequence;
-
-                    if (_onBatchStartEvaluator.ShouldInvokeOnBatchStart(availableSequence, nextSequence))
-                        _eventHandler.OnBatchStart(availableSequence - nextSequence + 1);
-
-                    while (nextSequence <= availableSequence)
-                    {
-                        ref T evt = ref _dataProvider[nextSequence];
-                        _eventHandler.OnEvent(ref evt, nextSequence, nextSequence == availableSequence);
-                        nextSequence++;
-                    }
-
-                    _sequence.SetValue(availableSequence);
-                }
-                catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
-                {
-                    if (_running != ProcessorRunStates.Running)
-                    {
-                        break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ref T evt = ref _dataProvider[nextSequence];
-
-                    _exceptionHandler.HandleEventException(ex, nextSequence, ref evt);
-                    _sequence.SetValue(nextSequence);
-                    nextSequence++;
-                }
-            }
-        }
-
-        private void EarlyExit()
-        {
             NotifyStart();
-            NotifyShutdown();
+            try
+            {
+                if (_running == ProcessorRunStates.Running)
+                {
+                    ProcessEvents();
+                }
+            }
+            finally
+            {
+                NotifyShutdown();
+                _running = ProcessorRunStates.Idle;
+            }
         }
+        else
+        {
+            EarlyExit();
+        }
+    }
 
-        private void NotifyTimeout(long availableSequence)
+    [MethodImpl(Constants.AggressiveOptimization)]
+    private void ProcessEvents()
+    {
+        var nextSequence = _sequence.Value + 1L;
+
+        while (true)
         {
             try
             {
-                _eventHandler.OnTimeout(availableSequence);
+                var waitResult = _sequenceBarrier.WaitFor(nextSequence);
+                if (waitResult.IsTimeout)
+                {
+                    NotifyTimeout(_sequence.Value);
+                    continue;
+                }
+
+                var availableSequence = waitResult.UnsafeAvailableSequence;
+
+                if (_onBatchStartEvaluator.ShouldInvokeOnBatchStart(availableSequence, nextSequence))
+                    _eventHandler.OnBatchStart(availableSequence - nextSequence + 1);
+
+                while (nextSequence <= availableSequence)
+                {
+                    ref T evt = ref _dataProvider[nextSequence];
+                    _eventHandler.OnEvent(ref evt, nextSequence, nextSequence == availableSequence);
+                    nextSequence++;
+                }
+
+                _sequence.SetValue(availableSequence);
+            }
+            catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
+            {
+                if (_running != ProcessorRunStates.Running)
+                {
+                    break;
+                }
             }
             catch (Exception ex)
             {
-                _exceptionHandler.HandleOnTimeoutException(ex, availableSequence);
+                ref T evt = ref _dataProvider[nextSequence];
+
+                _exceptionHandler.HandleEventException(ex, nextSequence, ref evt);
+                _sequence.SetValue(nextSequence);
+                nextSequence++;
             }
         }
+    }
 
-        /// <summary>
-        /// Notifies the EventHandler when this processor is starting up
-        /// </summary>
-        private void NotifyStart()
+    private void EarlyExit()
+    {
+        NotifyStart();
+        NotifyShutdown();
+    }
+
+    private void NotifyTimeout(long availableSequence)
+    {
+        try
         {
-            try
-            {
-                _eventHandler.OnStart();
-            }
-            catch (Exception e)
-            {
-                _exceptionHandler.HandleOnStartException(e);
-            }
-
-            _started.Set();
+            _eventHandler.OnTimeout(availableSequence);
         }
-
-        /// <summary>
-        /// Notifies the EventHandler immediately prior to this processor shutting down
-        /// </summary>
-        private void NotifyShutdown()
+        catch (Exception ex)
         {
-            try
-            {
-                _eventHandler.OnShutdown();
-            }
-            catch (Exception e)
-            {
-                _exceptionHandler.HandleOnShutdownException(e);
-            }
-
-            _started.Reset();
+            _exceptionHandler.HandleOnTimeoutException(ex, availableSequence);
         }
+    }
+
+    /// <summary>
+    /// Notifies the EventHandler when this processor is starting up
+    /// </summary>
+    private void NotifyStart()
+    {
+        try
+        {
+            _eventHandler.OnStart();
+        }
+        catch (Exception e)
+        {
+            _exceptionHandler.HandleOnStartException(e);
+        }
+
+        _started.Set();
+    }
+
+    /// <summary>
+    /// Notifies the EventHandler immediately prior to this processor shutting down
+    /// </summary>
+    private void NotifyShutdown()
+    {
+        try
+        {
+            _eventHandler.OnShutdown();
+        }
+        catch (Exception e)
+        {
+            _exceptionHandler.HandleOnShutdownException(e);
+        }
+
+        _started.Reset();
     }
 }

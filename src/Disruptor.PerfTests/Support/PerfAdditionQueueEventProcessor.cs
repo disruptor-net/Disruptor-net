@@ -2,56 +2,55 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Disruptor.PerfTests.Support
+namespace Disruptor.PerfTests.Support;
+
+public class PerfAdditionQueueEventProcessor
 {
-    public class PerfAdditionQueueEventProcessor
+    private volatile bool _running;
+    private long _value;
+    private long _sequence;
+    private ManualResetEvent _signal;
+
+    private readonly ConcurrentQueue<long> _queue;
+    private readonly long _count;
+
+    public PerfAdditionQueueEventProcessor(ConcurrentQueue<long> queue, long count)
     {
-        private volatile bool _running;
-        private long _value;
-        private long _sequence;
-        private ManualResetEvent _signal;
+        _queue = queue;
+        _count = count;
+    }
 
-        private readonly ConcurrentQueue<long> _queue;
-        private readonly long _count;
+    public long Value => _value;
 
-        public PerfAdditionQueueEventProcessor(ConcurrentQueue<long> queue, long count)
+    public void Reset(ManualResetEvent signal)
+    {
+        _value = 0L;
+        _sequence = 0L;
+        _signal = signal;
+    }
+
+    public void Halt() => _running = false;
+
+    public void Run()
+    {
+        _running = true;
+        while (_running)
         {
-            _queue = queue;
-            _count = count;
-        }
+            long value;
+            if (!_queue.TryDequeue(out value))
+                continue;
 
-        public long Value => _value;
+            _value += value;
 
-        public void Reset(ManualResetEvent signal)
-        {
-            _value = 0L;
-            _sequence = 0L;
-            _signal = signal;
-        }
-
-        public void Halt() => _running = false;
-
-        public void Run()
-        {
-            _running = true;
-            while (_running)
+            if (_sequence++ == _count)
             {
-                long value;
-                if (!_queue.TryDequeue(out value))
-                    continue;
-
-                _value += value;
-
-                if (_sequence++ == _count)
-                {
-                    _signal.Set();
-                }
+                _signal.Set();
             }
         }
+    }
 
-        public Task Start()
-        {
-            return PerfTestUtil.StartLongRunning(Run);
-        }
+    public Task Start()
+    {
+        return PerfTestUtil.StartLongRunning(Run);
     }
 }

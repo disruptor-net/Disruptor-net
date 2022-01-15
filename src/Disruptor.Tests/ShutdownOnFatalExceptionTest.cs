@@ -4,59 +4,58 @@ using NUnit.Framework;
 using Disruptor.Dsl;
 using Disruptor.Tests.Support;
 
-namespace Disruptor.Tests
+namespace Disruptor.Tests;
+
+[TestFixture]
+public class ShutdownOnFatalExceptionTest : IDisposable
 {
-    [TestFixture]
-    public class ShutdownOnFatalExceptionTest : IDisposable
+    private readonly Random _random = new();
+    private readonly FailingEventHandler _failingEventHandler = new();
+    private readonly Disruptor<byte[]> _disruptor;
+
+    public ShutdownOnFatalExceptionTest()
     {
-        private readonly Random _random = new();
-        private readonly FailingEventHandler _failingEventHandler = new();
-        private readonly Disruptor<byte[]> _disruptor;
+        _disruptor = new Disruptor<byte[]>(() => new byte[256], 1024, TaskScheduler.Current, ProducerType.Single, new BlockingWaitStrategy());
+        _disruptor.HandleEventsWith(_failingEventHandler);
+        _disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler<byte[]>());
+    }
 
-        public ShutdownOnFatalExceptionTest()
-        {
-            _disruptor = new Disruptor<byte[]>(() => new byte[256], 1024, TaskScheduler.Current, ProducerType.Single, new BlockingWaitStrategy());
-            _disruptor.HandleEventsWith(_failingEventHandler);
-            _disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler<byte[]>());
-        }
+    public void Dispose()
+    {
+        _disruptor.Shutdown();
+    }
 
-        public void Dispose()
+    [Test]
+    public void ShouldShutdownGracefulEvenWithFatalExceptionHandler()
+    {
+        var task = Task.Run(() =>
         {
-            _disruptor.Shutdown();
-        }
+            _disruptor.Start();
 
-        [Test]
-        public void ShouldShutdownGracefulEvenWithFatalExceptionHandler()
-        {
-            var task = Task.Run(() =>
+            for (var i = 1; i < 10; i++)
             {
-                _disruptor.Start();
-
-                for (var i = 1; i < 10; i++)
+                var bytes = new byte[32];
+                _random.NextBytes(bytes);
+                using (var scope = _disruptor.PublishEvent())
                 {
-                    var bytes = new byte[32];
-                    _random.NextBytes(bytes);
-                    using (var scope = _disruptor.PublishEvent())
-                    {
-                        bytes.CopyTo(scope.Event(), 0);
-                    }
+                    bytes.CopyTo(scope.Event(), 0);
                 }
-            });
+            }
+        });
 
-            Assert.IsTrue(task.Wait(1000));
-        }
+        Assert.IsTrue(task.Wait(1000));
+    }
 
-        private class FailingEventHandler : IEventHandler<byte[]>
+    private class FailingEventHandler : IEventHandler<byte[]>
+    {
+        private int _count = 0;
+
+        public void OnEvent(byte[] data, long sequence, bool endOfBatch)
         {
-            private int _count = 0;
-
-            public void OnEvent(byte[] data, long sequence, bool endOfBatch)
+            _count++;
+            if (_count == 3)
             {
-                _count++;
-                if (_count == 3)
-                {
-                    throw new InvalidOperationException();
-                }
+                throw new InvalidOperationException();
             }
         }
     }

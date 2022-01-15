@@ -1,59 +1,58 @@
 using System;
 
-namespace Disruptor
+namespace Disruptor;
+
+public static class EventPoller
 {
-    public static class EventPoller
+    /// <summary>
+    /// Indicates the polling result result for  <see cref="EventPoller{T}"/> or <see cref="ValueEventPoller{T}"/>
+    /// </summary>
+    public enum PollState
     {
         /// <summary>
-        /// Indicates the polling result result for  <see cref="EventPoller{T}"/> or <see cref="ValueEventPoller{T}"/>
+        /// The poller processed one or more events
         /// </summary>
-        public enum PollState
-        {
-            /// <summary>
-            /// The poller processed one or more events
-            /// </summary>
-            Processing,
-            /// <summary>
-            /// The poller is waiting for gated sequences to advance before events become available
-            /// </summary>
-            Gating,
-            /// <summary>
-            /// No events need to be processed
-            /// </summary>
-            Idle,
-        }
-
+        Processing,
         /// <summary>
-        /// A callback used to process events
+        /// The poller is waiting for gated sequences to advance before events become available
         /// </summary>
-        public delegate bool Handler<T>(T data, long sequence, bool endOfBatch);
-
+        Gating,
         /// <summary>
-        /// A callback used to process events
+        /// No events need to be processed
         /// </summary>
-        public delegate void BatchHandler<T>(EventBatch<T> batch, long sequence)
-            where T : class;
+        Idle,
+    }
 
-        /// <summary>
-        /// A callback used to process value events
-        /// </summary>
-        public delegate bool ValueHandler<T>(ref T data, long sequence, bool endOfBatch)
-            where T : struct;
+    /// <summary>
+    /// A callback used to process events
+    /// </summary>
+    public delegate bool Handler<T>(T data, long sequence, bool endOfBatch);
 
-        public static EventPoller<T> Create<T>(IDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
-            where T : class
-        {
-            var gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
+    /// <summary>
+    /// A callback used to process events
+    /// </summary>
+    public delegate void BatchHandler<T>(EventBatch<T> batch, long sequence)
+        where T : class;
 
-            return new EventPoller<T>(dataProvider, sequencer, sequence, gatingSequence);
-        }
+    /// <summary>
+    /// A callback used to process value events
+    /// </summary>
+    public delegate bool ValueHandler<T>(ref T data, long sequence, bool endOfBatch)
+        where T : struct;
 
-        public static ValueEventPoller<T> Create<T>(IValueDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
-            where T : struct
-        {
-            var gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
+    public static EventPoller<T> Create<T>(IDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
+        where T : class
+    {
+        var gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
 
-            return new ValueEventPoller<T>(dataProvider, sequencer, sequence, gatingSequence);
-        }
+        return new EventPoller<T>(dataProvider, sequencer, sequence, gatingSequence);
+    }
+
+    public static ValueEventPoller<T> Create<T>(IValueDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
+        where T : struct
+    {
+        var gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
+
+        return new ValueEventPoller<T>(dataProvider, sequencer, sequence, gatingSequence);
     }
 }

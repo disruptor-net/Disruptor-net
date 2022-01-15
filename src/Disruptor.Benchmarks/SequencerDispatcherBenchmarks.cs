@@ -1,50 +1,49 @@
 using BenchmarkDotNet.Attributes;
 
-namespace Disruptor.Benchmarks
+namespace Disruptor.Benchmarks;
+
+public class SequencerDispatcherBenchmarks
 {
-    public class SequencerDispatcherBenchmarks
+    private const int _operationsPerInvoke = 100;
+
+    private readonly SingleProducerSequencer _singleProducerSequencer;
+    private readonly ISequencer _sequencer;
+    private readonly SequencerDispatcher _dispatcher;
+
+    public SequencerDispatcherBenchmarks()
     {
-        private const int _operationsPerInvoke = 100;
+        _singleProducerSequencer = new SingleProducerSequencer(1024, new YieldingWaitStrategy());
+        _sequencer = _singleProducerSequencer;
+        _dispatcher = new SequencerDispatcher(_sequencer);
+    }
 
-        private readonly SingleProducerSequencer _singleProducerSequencer;
-        private readonly ISequencer _sequencer;
-        private readonly SequencerDispatcher _dispatcher;
-
-        public SequencerDispatcherBenchmarks()
+    [Benchmark(Baseline = true, OperationsPerInvoke = _operationsPerInvoke)]
+    public void UseInterface()
+    {
+        for (var i = 0; i < _operationsPerInvoke; i++)
         {
-            _singleProducerSequencer = new SingleProducerSequencer(1024, new YieldingWaitStrategy());
-            _sequencer = _singleProducerSequencer;
-            _dispatcher = new SequencerDispatcher(_sequencer);
+            var sequence = _sequencer.Next();
+            _sequencer.Publish(sequence);
         }
+    }
 
-        [Benchmark(Baseline = true, OperationsPerInvoke = _operationsPerInvoke)]
-        public void UseInterface()
+    [Benchmark(OperationsPerInvoke = _operationsPerInvoke)]
+    public void UseDispatcher()
+    {
+        for (var i = 0; i < _operationsPerInvoke; i++)
         {
-            for (var i = 0; i < _operationsPerInvoke; i++)
-            {
-                var sequence = _sequencer.Next();
-                _sequencer.Publish(sequence);
-            }
+            var sequence = _dispatcher.Next();
+            _dispatcher.Publish(sequence);
         }
+    }
 
-        [Benchmark(OperationsPerInvoke = _operationsPerInvoke)]
-        public void UseDispatcher()
+    [Benchmark(OperationsPerInvoke = _operationsPerInvoke)]
+    public void UseDirectCalls()
+    {
+        for (var i = 0; i < _operationsPerInvoke; i++)
         {
-            for (var i = 0; i < _operationsPerInvoke; i++)
-            {
-                var sequence = _dispatcher.Next();
-                _dispatcher.Publish(sequence);
-            }
-        }
-
-        [Benchmark(OperationsPerInvoke = _operationsPerInvoke)]
-        public void UseDirectCalls()
-        {
-            for (var i = 0; i < _operationsPerInvoke; i++)
-            {
-                var sequence = _singleProducerSequencer.Next();
-                _singleProducerSequencer.Publish(sequence);
-            }
+            var sequence = _singleProducerSequencer.Next();
+            _singleProducerSequencer.Publish(sequence);
         }
     }
 }

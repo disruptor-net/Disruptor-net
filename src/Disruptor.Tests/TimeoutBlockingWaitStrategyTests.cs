@@ -1,12 +1,11 @@
 using System;
 
-namespace Disruptor.Tests
+namespace Disruptor.Tests;
+
+public class TimeoutBlockingWaitStrategyTests : TimeoutWaitStrategyFixture<TimeoutBlockingWaitStrategy>
 {
-    public class TimeoutBlockingWaitStrategyTests : TimeoutWaitStrategyFixture<TimeoutBlockingWaitStrategy>
+    protected override TimeoutBlockingWaitStrategy CreateWaitStrategy(TimeSpan timeout)
     {
-        protected override TimeoutBlockingWaitStrategy CreateWaitStrategy(TimeSpan timeout)
-        {
-            return new TimeoutBlockingWaitStrategy(timeout);
-        }
+        return new TimeoutBlockingWaitStrategy(timeout);
     }
 }

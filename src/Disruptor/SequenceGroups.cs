@@ -1,100 +1,99 @@
 ﻿using System;
 using System.Threading;
 
-namespace Disruptor
+namespace Disruptor;
+
+/// <summary>
+/// Provides static methods for managing groups of <see cref="ISequence"/>.
+/// </summary>
+internal static class SequenceGroups
 {
-    /// <summary>
-    /// Provides static methods for managing groups of <see cref="ISequence"/>.
-    /// </summary>
-    internal static class SequenceGroups
+    public static ISequence CreateReadOnlySequence(Sequence cursorSequence, ISequence[] dependentSequences)
     {
-        public static ISequence CreateReadOnlySequence(Sequence cursorSequence, ISequence[] dependentSequences)
+        if (dependentSequences.Length == 0)
         {
-            if (dependentSequences.Length == 0)
-            {
-                return cursorSequence;
-            }
-
-            if (dependentSequences.Length == 1)
-            {
-                return dependentSequences[0];
-            }
-
-            return new ReadOnlySequenceGroup(dependentSequences);
+            return cursorSequence;
         }
 
-        public static void AddSequences(ref ISequence[] sequences, ICursored cursor, params ISequence[] sequencesToAdd)
+        if (dependentSequences.Length == 1)
         {
-            long cursorSequence;
-            ISequence[] updatedSequences;
-            ISequence[] currentSequences;
+            return dependentSequences[0];
+        }
 
-            do
-            {
-                currentSequences = Volatile.Read(ref sequences);
-                updatedSequences = new ISequence[currentSequences.Length + sequencesToAdd.Length];
-                Array.Copy(currentSequences, updatedSequences, currentSequences.Length);
-                cursorSequence = cursor.Cursor;
+        return new ReadOnlySequenceGroup(dependentSequences);
+    }
 
-                var index = currentSequences.Length;
-                foreach (var sequence in sequencesToAdd)
-                {
-                    sequence.SetValue(cursorSequence);
-                    updatedSequences[index++] = sequence;
-                }
-            }
-            while (Interlocked.CompareExchange(ref sequences, updatedSequences, currentSequences) != currentSequences);
+    public static void AddSequences(ref ISequence[] sequences, ICursored cursor, params ISequence[] sequencesToAdd)
+    {
+        long cursorSequence;
+        ISequence[] updatedSequences;
+        ISequence[] currentSequences;
 
+        do
+        {
+            currentSequences = Volatile.Read(ref sequences);
+            updatedSequences = new ISequence[currentSequences.Length + sequencesToAdd.Length];
+            Array.Copy(currentSequences, updatedSequences, currentSequences.Length);
             cursorSequence = cursor.Cursor;
+
+            var index = currentSequences.Length;
             foreach (var sequence in sequencesToAdd)
             {
                 sequence.SetValue(cursorSequence);
+                updatedSequences[index++] = sequence;
             }
         }
+        while (Interlocked.CompareExchange(ref sequences, updatedSequences, currentSequences) != currentSequences);
 
-        public static bool RemoveSequence(ref ISequence[] sequences, ISequence sequence)
+        cursorSequence = cursor.Cursor;
+        foreach (var sequence in sequencesToAdd)
         {
-            int numToRemove;
-            ISequence[] oldSequences;
-            ISequence[] newSequences;
+            sequence.SetValue(cursorSequence);
+        }
+    }
 
-            do
+    public static bool RemoveSequence(ref ISequence[] sequences, ISequence sequence)
+    {
+        int numToRemove;
+        ISequence[] oldSequences;
+        ISequence[] newSequences;
+
+        do
+        {
+            oldSequences = Volatile.Read(ref sequences);
+
+            numToRemove = CountMatching(oldSequences, sequence);
+
+            if (numToRemove == 0)
+                break;
+
+            var oldSize = oldSequences.Length;
+            newSequences = new ISequence[oldSize - numToRemove];
+
+            for (int i = 0, pos = 0; i < oldSize; i++)
             {
-                oldSequences = Volatile.Read(ref sequences);
-
-                numToRemove = CountMatching(oldSequences, sequence);
-
-                if (numToRemove == 0)
-                    break;
-
-                var oldSize = oldSequences.Length;
-                newSequences = new ISequence[oldSize - numToRemove];
-
-                for (int i = 0, pos = 0; i < oldSize; i++)
+                var testSequence = oldSequences[i];
+                if (sequence != testSequence)
                 {
-                    var testSequence = oldSequences[i];
-                    if (sequence != testSequence)
-                    {
-                        newSequences[pos++] = testSequence;
-                    }
+                    newSequences[pos++] = testSequence;
                 }
             }
-            while (Interlocked.CompareExchange(ref sequences, newSequences, oldSequences) != oldSequences);
-
-            return numToRemove != 0;
         }
+        while (Interlocked.CompareExchange(ref sequences, newSequences, oldSequences) != oldSequences);
 
-        private static int CountMatching(ISequence[] values, ISequence toMatch)
+        return numToRemove != 0;
+    }
+
+    private static int CountMatching(ISequence[] values, ISequence toMatch)
+    {
+        var numToRemove = 0;
+        foreach (var value in values)
         {
-            var numToRemove = 0;
-            foreach (var value in values)
+            if (ReferenceEquals(value, toMatch)) // Specifically uses identity
             {
-                if (ReferenceEquals(value, toMatch)) // Specifically uses identity
-                {
-                    numToRemove++;
-                }
+                numToRemove++;
             }
-            return numToRemove;
         }
+        return numToRemove;
     }
 }

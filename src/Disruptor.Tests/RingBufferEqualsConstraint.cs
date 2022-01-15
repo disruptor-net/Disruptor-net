@@ -1,32 +1,31 @@
 using NUnit.Framework.Constraints;
 
-namespace Disruptor.Tests
+namespace Disruptor.Tests;
+
+public class RingBufferEqualsConstraint : Constraint
 {
-    public class RingBufferEqualsConstraint : Constraint
+    private readonly object?[] _values;
+
+    public RingBufferEqualsConstraint(params object?[] values)
     {
-        private readonly object?[] _values;
+        _values = values;
+    }
 
-        public RingBufferEqualsConstraint(params object?[] values)
+    public override ConstraintResult ApplyTo<TActual>(TActual actual)
+    {
+        var valid = true;
+        var ringBuffer = (RingBuffer<object[]>)(object)actual;
+        for (var i = 0; i < _values.Length; i++)
         {
-            _values = values;
+            var value = _values[i];
+            valid &= value == null || value.Equals(ringBuffer[i][0]);
         }
 
-        public override ConstraintResult ApplyTo<TActual>(TActual actual)
-        {
-            var valid = true;
-            var ringBuffer = (RingBuffer<object[]>)(object)actual;
-            for (var i = 0; i < _values.Length; i++)
-            {
-                var value = _values[i];
-                valid &= value == null || value.Equals(ringBuffer[i][0]);
-            }
+        return new ConstraintResult(this, actual, valid);
+    }
 
-            return new ConstraintResult(this, actual, valid);
-        }
-
-        public static RingBufferEqualsConstraint IsRingBufferWithEvents(params object?[] values)
-        {
-            return new RingBufferEqualsConstraint(values);
-        }
+    public static RingBufferEqualsConstraint IsRingBufferWithEvents(params object?[] values)
+    {
+        return new RingBufferEqualsConstraint(values);
     }
 }

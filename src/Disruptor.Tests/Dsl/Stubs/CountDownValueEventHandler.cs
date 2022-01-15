@@ -1,20 +1,19 @@
 ﻿using System.Threading;
 
-namespace Disruptor.Tests.Dsl.Stubs
+namespace Disruptor.Tests.Dsl.Stubs;
+
+public class CountDownValueEventHandler<T> : IValueEventHandler<T>
+    where T : struct
 {
-    public class CountDownValueEventHandler<T> : IValueEventHandler<T>
-        where T : struct
+    private readonly CountdownEvent _countDownLatch;
+
+    public CountDownValueEventHandler(CountdownEvent countDownLatch)
     {
-        private readonly CountdownEvent _countDownLatch;
+        _countDownLatch = countDownLatch;
+    }
 
-        public CountDownValueEventHandler(CountdownEvent countDownLatch)
-        {
-            _countDownLatch = countDownLatch;
-        }
-
-        public void OnEvent(ref T data, long sequence, bool endOfBatch)
-        {
-            _countDownLatch.Signal();
-        }
+    public void OnEvent(ref T data, long sequence, bool endOfBatch)
+    {
+        _countDownLatch.Signal();
     }
 }

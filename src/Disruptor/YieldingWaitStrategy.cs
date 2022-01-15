@@ -1,51 +1,50 @@
 ﻿using System.Threading;
 
-namespace Disruptor
+namespace Disruptor;
+
+/// <summary>
+/// Yielding strategy that uses <c>Thread.Yield()</c> for event processors waiting on a barrier
+/// after an initially spinning.
+/// </summary>
+/// <remarks>
+/// This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.
+/// </remarks>
+public sealed class YieldingWaitStrategy : IWaitStrategy
 {
-    /// <summary>
-    /// Yielding strategy that uses <c>Thread.Yield()</c> for event processors waiting on a barrier
-    /// after an initially spinning.
-    /// </summary>
-    /// <remarks>
-    /// This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.
-    /// </remarks>
-    public sealed class YieldingWaitStrategy : IWaitStrategy
+    private const int _spinTries = 100;
+
+    public bool IsBlockingStrategy => false;
+
+    public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
     {
-        private const int _spinTries = 100;
+        long availableSequence;
+        var counter = _spinTries;
 
-        public bool IsBlockingStrategy => false;
-
-        public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+        while ((availableSequence = dependentSequence.Value) < sequence)
         {
-            long availableSequence;
-            var counter = _spinTries;
-
-            while ((availableSequence = dependentSequence.Value) < sequence)
-            {
-                counter = ApplyWaitMethod(cancellationToken, counter);
-            }
-
-            return availableSequence;
+            counter = ApplyWaitMethod(cancellationToken, counter);
         }
 
-        public void SignalAllWhenBlocking()
+        return availableSequence;
+    }
+
+    public void SignalAllWhenBlocking()
+    {
+    }
+
+    private static int ApplyWaitMethod(CancellationToken cancellationToken, int counter)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if(counter == 0)
         {
+            Thread.Yield();
+        }
+        else
+        {
+            --counter;
         }
 
-        private static int ApplyWaitMethod(CancellationToken cancellationToken, int counter)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            if(counter == 0)
-            {
-                Thread.Yield();
-            }
-            else
-            {
-                --counter;
-            }
-
-            return counter;
-        }
+        return counter;
     }
 }

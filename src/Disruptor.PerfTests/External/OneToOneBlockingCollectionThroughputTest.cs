@@ -4,95 +4,94 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
 
-namespace Disruptor.PerfTests.External
+namespace Disruptor.PerfTests.External;
+
+public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExternalTest
 {
-    public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExternalTest
+    private const int _bufferSize = 1024 * 64;
+    private const long _iterations = 1000L * 1000L * 100L;
+
+    private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
+
+    private readonly BlockingCollection<PerfEvent> _queue;
+    private readonly AdditionEventHandler _eventHandler;
+    private readonly Consumer _consumer;
+
+    public OneToOneBlockingCollectionThroughputTest()
     {
-        private const int _bufferSize = 1024 * 64;
-        private const long _iterations = 1000L * 1000L * 100L;
+        _queue = new BlockingCollection<PerfEvent>(_bufferSize);
+        _eventHandler = new AdditionEventHandler();
+        _consumer = new Consumer(_queue, _eventHandler);
+    }
 
-        private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
+    public int RequiredProcessorCount => 2;
 
+    public long Run(ThroughputSessionContext sessionContext)
+    {
+        _eventHandler.Reset(_iterations - 1);
+        _consumer.Start();
+
+        sessionContext.Start();
+
+        for (long i = 0; i < _iterations; i++)
+        {
+            var data = new PerfEvent { Value = i };
+            _queue.Add(data);
+        }
+
+        _eventHandler.WaitForSequence();
+        sessionContext.Stop();
+        _consumer.Stop();
+
+        sessionContext.SetBatchData(_eventHandler.BatchesProcessed, _iterations);
+
+        PerfTestUtil.FailIfNot(_expectedResult, _eventHandler.Value, $"Handler should have processed {_expectedResult} events, but was: {_eventHandler.Value}");
+
+        return _iterations;
+    }
+
+    private class Consumer
+    {
         private readonly BlockingCollection<PerfEvent> _queue;
         private readonly AdditionEventHandler _eventHandler;
-        private readonly Consumer _consumer;
+        private Task _task;
+        private CancellationTokenSource _cancellationTokenSource;
 
-        public OneToOneBlockingCollectionThroughputTest()
+        public Consumer(BlockingCollection<PerfEvent> queue, AdditionEventHandler eventHandler)
         {
-            _queue = new BlockingCollection<PerfEvent>(_bufferSize);
-            _eventHandler = new AdditionEventHandler();
-            _consumer = new Consumer(_queue, _eventHandler);
+            _queue = queue;
+            _eventHandler = eventHandler;
         }
 
-        public int RequiredProcessorCount => 2;
-
-        public long Run(ThroughputSessionContext sessionContext)
+        public void Start()
         {
-            _eventHandler.Reset(_iterations - 1);
-            _consumer.Start();
+            var started = new ManualResetEventSlim();
 
-            sessionContext.Start();
-
-            for (long i = 0; i < _iterations; i++)
+            _cancellationTokenSource = new CancellationTokenSource();
+            _task = Task.Run(() =>
             {
-                var data = new PerfEvent { Value = i };
-                _queue.Add(data);
-            }
+                started.Set();
 
-            _eventHandler.WaitForSequence();
-            sessionContext.Stop();
-            _consumer.Stop();
-
-            sessionContext.SetBatchData(_eventHandler.BatchesProcessed, _iterations);
-
-            PerfTestUtil.FailIfNot(_expectedResult, _eventHandler.Value, $"Handler should have processed {_expectedResult} events, but was: {_eventHandler.Value}");
-
-            return _iterations;
-        }
-
-        private class Consumer
-        {
-            private readonly BlockingCollection<PerfEvent> _queue;
-            private readonly AdditionEventHandler _eventHandler;
-            private Task _task;
-            private CancellationTokenSource _cancellationTokenSource;
-
-            public Consumer(BlockingCollection<PerfEvent> queue, AdditionEventHandler eventHandler)
-            {
-                _queue = queue;
-                _eventHandler = eventHandler;
-            }
-
-            public void Start()
-            {
-                var started = new ManualResetEventSlim();
-
-                _cancellationTokenSource = new CancellationTokenSource();
-                _task = Task.Run(() =>
+                try
                 {
-                    started.Set();
-
-                    try
+                    foreach (var perfEvent in _queue.GetConsumingEnumerable(_cancellationTokenSource.Token))
                     {
-                        foreach (var perfEvent in _queue.GetConsumingEnumerable(_cancellationTokenSource.Token))
-                        {
-                            _eventHandler.OnBatchStart(1);
-                            _eventHandler.OnEvent(perfEvent, perfEvent.Value, true);
-                        }
+                        _eventHandler.OnBatchStart(1);
+                        _eventHandler.OnEvent(perfEvent, perfEvent.Value, true);
                     }
-                    catch (OperationCanceledException)
-                    {
-                    }
-                });
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            });
 
-                started.Wait();
-            }
+            started.Wait();
+        }
 
-            public void Stop()
-            {
-                _cancellationTokenSource.Cancel();
-                _task.Wait();
-            }
+        public void Stop()
+        {
+            _cancellationTokenSource.Cancel();
+            _task.Wait();
         }
     }
 }

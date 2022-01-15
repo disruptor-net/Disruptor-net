@@ -1,9 +1,8 @@
-namespace Disruptor.PerfTests.Support
+namespace Disruptor.PerfTests.Support;
+
+public enum FunctionStep
 {
-    public enum FunctionStep
-    {
-        One,
-        Two,
-        Three
-    }
+    One,
+    Two,
+    Three
 }

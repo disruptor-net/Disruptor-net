@@ -1,7 +1,6 @@
-﻿namespace Disruptor
+﻿namespace Disruptor;
+
+public interface IEventReleaser
 {
-    public interface IEventReleaser
-    {
-        void Release();
-    }
+    void Release();
 }

@@ -1,34 +1,33 @@
 ﻿using System;
 using Disruptor.Util;
 
-namespace Disruptor.Processing
+namespace Disruptor.Processing;
+
+/// <summary>
+/// Factory that creates optimized instance of <see cref="ProcessingSequenceBarrier{TSequencer,TWaitStrategy}"/>.
+/// </summary>
+internal static class ProcessingSequenceBarrierFactory
 {
     /// <summary>
-    /// Factory that creates optimized instance of <see cref="ProcessingSequenceBarrier{TSequencer,TWaitStrategy}"/>.
+    /// Create a new <see cref="ProcessingSequenceBarrier{TSequencer,TWaitStrategy}"/> with dedicated generic arguments.
     /// </summary>
-    internal static class ProcessingSequenceBarrierFactory
+    public static ISequenceBarrier Create(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
     {
-        /// <summary>
-        /// Create a new <see cref="ProcessingSequenceBarrier{TSequencer,TWaitStrategy}"/> with dedicated generic arguments.
-        /// </summary>
-        public static ISequenceBarrier Create(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
+        var sequencerProxy = StructProxy.CreateProxyInstance(sequencer);
+
+        if (waitStrategy is IAsyncWaitStrategy asyncWaitStrategy)
         {
-            var sequencerProxy = StructProxy.CreateProxyInstance(sequencer);
+            var waitStrategyProxy = StructProxy.CreateProxyInstance(asyncWaitStrategy);
 
-            if (waitStrategy is IAsyncWaitStrategy asyncWaitStrategy)
-            {
-                var waitStrategyProxy = StructProxy.CreateProxyInstance(asyncWaitStrategy);
+            var sequencerBarrierType = typeof(AsyncProcessingSequenceBarrier<,>).MakeGenericType(sequencerProxy.GetType(), waitStrategyProxy.GetType());
+            return (ISequenceBarrier)Activator.CreateInstance(sequencerBarrierType, sequencerProxy, waitStrategyProxy, cursorSequence, dependentSequences)!;
+        }
+        else
+        {
+            var waitStrategyProxy = StructProxy.CreateProxyInstance(waitStrategy);
 
-                var sequencerBarrierType = typeof(AsyncProcessingSequenceBarrier<,>).MakeGenericType(sequencerProxy.GetType(), waitStrategyProxy.GetType());
-                return (ISequenceBarrier)Activator.CreateInstance(sequencerBarrierType, sequencerProxy, waitStrategyProxy, cursorSequence, dependentSequences)!;
-            }
-            else
-            {
-                var waitStrategyProxy = StructProxy.CreateProxyInstance(waitStrategy);
-
-                var sequencerBarrierType = typeof(ProcessingSequenceBarrier<,>).MakeGenericType(sequencerProxy.GetType(), waitStrategyProxy.GetType());
-                return (ISequenceBarrier)Activator.CreateInstance(sequencerBarrierType, sequencerProxy, waitStrategyProxy, cursorSequence, dependentSequences)!;
-            }
+            var sequencerBarrierType = typeof(ProcessingSequenceBarrier<,>).MakeGenericType(sequencerProxy.GetType(), waitStrategyProxy.GetType());
+            return (ISequenceBarrier)Activator.CreateInstance(sequencerBarrierType, sequencerProxy, waitStrategyProxy, cursorSequence, dependentSequences)!;
         }
     }
 }

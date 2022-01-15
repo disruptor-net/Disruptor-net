@@ -2,31 +2,31 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Disruptor
-{
-    /// <summary>
-    /// Provides support for spin-based waiting, without using <code>Thread.Sleep(1)</code>.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Using this type is less aggressive than a busy-spin. The use of <code>Thread.Sleep(0)</code> allows the thread to give up
-    /// its time-slice, thus preventing starvation.
-    ///</para>
-    /// <para>
-    /// Using this type is more aggressive than a <see cref="SpinWait"/>. <code>Thread.Sleep(1)</code> is not used to avoid generating pauses
-    /// that are not acceptable for many low latency use cases.
-    /// </para>
-    /// </remarks>
-    public struct AggressiveSpinWait
-    {
-#if NETCOREAPP
-        private SpinWait _spinWait;
+namespace Disruptor;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SpinOnce()
-        {
-            _spinWait.SpinOnce(-1);
-        }
+/// <summary>
+/// Provides support for spin-based waiting, without using <code>Thread.Sleep(1)</code>.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Using this type is less aggressive than a busy-spin. The use of <code>Thread.Sleep(0)</code> allows the thread to give up
+/// its time-slice, thus preventing starvation.
+///</para>
+/// <para>
+/// Using this type is more aggressive than a <see cref="SpinWait"/>. <code>Thread.Sleep(1)</code> is not used to avoid generating pauses
+/// that are not acceptable for many low latency use cases.
+/// </para>
+/// </remarks>
+public struct AggressiveSpinWait
+{
+#if NETCOREAPP
+    private SpinWait _spinWait;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SpinOnce()
+    {
+        _spinWait.SpinOnce(-1);
+    }
 #else
         private static readonly bool _isSingleProcessor = Environment.ProcessorCount == 1;
         private const int _yieldThreshold = 10;
@@ -59,5 +59,4 @@ namespace Disruptor
             _count = (_count == int.MaxValue ? _yieldThreshold : _count + 1);
         }
 #endif
-    }
 }

@@ -1,54 +1,53 @@
 using System.Threading;
 using Disruptor.Tests.Support;
 
-namespace Disruptor.PerfTests.Support
+namespace Disruptor.PerfTests.Support;
+
+public class AdditionEventHandler : IEventHandler<PerfEvent>, IValueEventHandler<PerfValueEvent>
 {
-    public class AdditionEventHandler : IEventHandler<PerfEvent>, IValueEventHandler<PerfValueEvent>
+    private PaddedLong _value;
+    private PaddedLong _batchesProcessed;
+    private long _latchSequence;
+    private readonly ManualResetEvent _latch = new(false);
+
+    public long Value => _value.Value;
+    public long BatchesProcessed => _batchesProcessed.Value;
+
+    public void WaitForSequence()
     {
-        private PaddedLong _value;
-        private PaddedLong _batchesProcessed;
-        private long _latchSequence;
-        private readonly ManualResetEvent _latch = new(false);
+        _latch.WaitOne();
+    }
 
-        public long Value => _value.Value;
-        public long BatchesProcessed => _batchesProcessed.Value;
+    public void Reset(long expectedSequence)
+    {
+        _value.Value = 0;
+        _latch.Reset();
+        _latchSequence = expectedSequence;
+        _batchesProcessed.Value = 0;
+    }
 
-        public void WaitForSequence()
+    public void OnEvent(PerfEvent data, long sequence, bool endOfBatch)
+    {
+        _value.Value = _value.Value + data.Value;
+
+        if(_latchSequence == sequence)
         {
-            _latch.WaitOne();
+            _latch.Set();
         }
+    }
 
-        public void Reset(long expectedSequence)
+    public void OnEvent(ref PerfValueEvent data, long sequence, bool endOfBatch)
+    {
+        _value.Value += data.Value;
+
+        if (_latchSequence == sequence)
         {
-            _value.Value = 0;
-            _latch.Reset();
-            _latchSequence = expectedSequence;
-            _batchesProcessed.Value = 0;
+            _latch.Set();
         }
+    }
 
-        public void OnEvent(PerfEvent data, long sequence, bool endOfBatch)
-        {
-            _value.Value = _value.Value + data.Value;
-
-            if(_latchSequence == sequence)
-            {
-                _latch.Set();
-            }
-        }
-
-        public void OnEvent(ref PerfValueEvent data, long sequence, bool endOfBatch)
-        {
-            _value.Value += data.Value;
-
-            if (_latchSequence == sequence)
-            {
-                _latch.Set();
-            }
-        }
-
-        public void OnBatchStart(long batchSize)
-        {
-            _batchesProcessed.Value++;
-        }
+    public void OnBatchStart(long batchSize)
+    {
+        _batchesProcessed.Value++;
     }
 }

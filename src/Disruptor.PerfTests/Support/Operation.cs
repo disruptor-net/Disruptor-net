@@ -1,9 +1,8 @@
-namespace Disruptor.PerfTests.Support
+namespace Disruptor.PerfTests.Support;
+
+public enum Operation
 {
-    public enum Operation
-    {
-        Addition,
-        Subtraction,
-        And
-    }
+    Addition,
+    Subtraction,
+    And
 }

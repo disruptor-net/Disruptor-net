@@ -1,34 +1,33 @@
 using System.Diagnostics;
 
-namespace Disruptor.PerfTests
+namespace Disruptor.PerfTests;
+
+public class ThroughputSessionContext
 {
-    public class ThroughputSessionContext
+    public readonly Stopwatch Stopwatch = new();
+    public double? BatchPercent;
+    public double? AverageBatchSize;
+
+    public void Reset()
     {
-        public readonly Stopwatch Stopwatch = new();
-        public double? BatchPercent;
-        public double? AverageBatchSize;
+        Stopwatch.Reset();
+        BatchPercent = null;
+        AverageBatchSize = null;
+    }
 
-        public void Reset()
-        {
-            Stopwatch.Reset();
-            BatchPercent = null;
-            AverageBatchSize = null;
-        }
+    public void Start()
+    {
+        Stopwatch.Start();
+    }
 
-        public void Start()
-        {
-            Stopwatch.Start();
-        }
+    public void Stop()
+    {
+        Stopwatch.Stop();
+    }
 
-        public void Stop()
-        {
-            Stopwatch.Stop();
-        }
-
-        public void SetBatchData(long batchesProcessedCount, long iterations)
-        {
-            AverageBatchSize = (double)iterations / batchesProcessedCount;
-            BatchPercent = 1 - (double)batchesProcessedCount / iterations;
-        }
+    public void SetBatchData(long batchesProcessedCount, long iterations)
+    {
+        AverageBatchSize = (double)iterations / batchesProcessedCount;
+        BatchPercent = 1 - (double)batchesProcessedCount / iterations;
     }
 }
