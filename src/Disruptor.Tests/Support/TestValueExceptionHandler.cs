@@ -6,24 +6,29 @@ namespace Disruptor.Tests.Support
     public class TestValueExceptionHandler<T> : IValueExceptionHandler<T>
         where T : struct
     {
-        private readonly Action<T> _action;
+        private readonly Action<T?> _action;
 
-        public TestValueExceptionHandler(Action<T> action)
+        public TestValueExceptionHandler(Action<T?> action)
         {
             _action = action;
         }
 
-        public List<(Exception exception, long sequence, T data)> EventExceptions { get; } = new();
+        public int EventExceptionCount { get; private set; }
 
         public void HandleEventException(Exception ex, long sequence, ref T evt)
         {
-            EventExceptions.Add((ex, sequence, evt));
+            EventExceptionCount++;
 
             _action.Invoke(evt);
         }
 
+        public int TimeoutExceptionCount { get; private set; }
+
         public void HandleOnTimeoutException(Exception ex, long sequence)
         {
+            TimeoutExceptionCount++;
+
+            _action.Invoke(null);
         }
 
         public void HandleOnStartException(Exception ex)

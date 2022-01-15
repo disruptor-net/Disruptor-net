@@ -57,6 +57,27 @@ namespace Disruptor.Tests.Processing
         }
 
         [Test]
+        public void ShouldCallOnTimeout()
+        {
+            var waitStrategy = new AsyncWaitStrategy(TimeSpan.FromMilliseconds(1));
+            var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new SingleProducerSequencer(16, waitStrategy));
+            var sequenceBarrier = (IAsyncSequenceBarrier)ringBuffer.NewBarrier();
+
+            var onTimeoutSignal = new ManualResetEvent(false);
+            var eventHandler = new TestAsyncBatchEventHandler<StubEvent>(x => { }, () => onTimeoutSignal.Set());
+            var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
+            ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+
+            var task = eventProcessor.Start();
+
+            Assert.IsTrue(onTimeoutSignal.WaitOne(TimeSpan.FromSeconds(2)));
+
+            eventProcessor.Halt();
+
+            Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        }
+
+        [Test]
         public void ShouldCallExceptionHandlerOnTimeoutException()
         {
             var waitStrategy = new AsyncWaitStrategy(TimeSpan.FromMilliseconds(1));

@@ -57,6 +57,53 @@ namespace Disruptor.Tests.Processing
         }
 
         [Test]
+        public void ShouldCallOnTimeout()
+        {
+            var waitStrategy = new TimeoutBlockingWaitStrategy(TimeSpan.FromMilliseconds(1));
+            var ringBuffer = new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), new SingleProducerSequencer(16, waitStrategy));
+            var sequenceBarrier = ringBuffer.NewBarrier();
+
+            var onTimeoutSignal = new ManualResetEvent(false);
+            var eventHandler = new TestValueEventHandler<StubValueEvent>(x => { }, () => onTimeoutSignal.Set());
+            var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
+            ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+
+            var task = eventProcessor.Start();
+
+            Assert.IsTrue(onTimeoutSignal.WaitOne(TimeSpan.FromSeconds(2)));
+
+            eventProcessor.Halt();
+
+            Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        }
+
+        [Test]
+        public void ShouldCallExceptionHandlerOnTimeoutException()
+        {
+            var waitStrategy = new TimeoutBlockingWaitStrategy(TimeSpan.FromMilliseconds(1));
+            var ringBuffer = new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), new SingleProducerSequencer(16, waitStrategy));
+            var sequenceBarrier = ringBuffer.NewBarrier();
+
+            var exceptionSignal = new CountdownEvent(1);
+            var exceptionHandler = new TestValueExceptionHandler<StubValueEvent>(x => exceptionSignal.Signal());
+            var eventHandler = new TestValueEventHandler<StubValueEvent>(x => { }, () => throw new NullReferenceException());
+            var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
+            ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+
+            eventProcessor.SetExceptionHandler(exceptionHandler);
+
+            var task = eventProcessor.Start();
+
+            Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
+            Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
+            Assert.AreEqual(1, exceptionHandler.TimeoutExceptionCount);
+
+            eventProcessor.Halt();
+
+            Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        }
+
+        [Test]
         public void ShouldCallExceptionHandlerOnUncaughtException()
         {
             var exceptionSignal = new CountdownEvent(1);
@@ -72,6 +119,8 @@ namespace Disruptor.Tests.Processing
             _ringBuffer.PublishStubEvent(0);
 
             Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
+            Assert.AreEqual(1, exceptionHandler.EventExceptionCount);
+            Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
 
             eventProcessor.Halt();
 
@@ -104,11 +153,12 @@ namespace Disruptor.Tests.Processing
             _ringBuffer.PublishStubEvent(0);
 
             Assert.IsTrue(processingSignal.Wait(TimeSpan.FromSeconds(2)));
+            Assert.AreEqual(2, exceptionHandler.EventExceptionCount);
+            Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
 
             eventProcessor.Halt();
 
             Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
-            Assert.That(exceptionHandler.EventExceptions, Has.Exactly(2).Items);
         }
 
         [Test]
