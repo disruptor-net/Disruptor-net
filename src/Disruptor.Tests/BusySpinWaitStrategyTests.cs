@@ -1,9 +1,10 @@
-﻿using NUnit.Framework;
-
-namespace Disruptor.Tests
+﻿namespace Disruptor.Tests
 {
-    [TestFixture]
     public class BusySpinWaitStrategyTests : WaitStrategyFixture<BusySpinWaitStrategy>
     {
+        protected override BusySpinWaitStrategy CreateWaitStrategy()
+        {
+            return new BusySpinWaitStrategy();
+        }
     }
 }

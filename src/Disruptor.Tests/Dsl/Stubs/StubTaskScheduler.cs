@@ -29,8 +29,8 @@ namespace Disruptor.Tests.Dsl.Stubs
                 return;
 
             var thread = new Thread(ExecuteTask);
-            _threads.Enqueue(thread);
             thread.Start();
+            _threads.Enqueue(thread);
 
             void ExecuteTask()
             {

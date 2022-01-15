@@ -9,18 +9,9 @@ namespace Disruptor.Tests
     public abstract class WaitStrategyFixture<T>
         where T : IWaitStrategy
     {
-        protected WaitStrategyFixture(T waitStrategy)
-        {
-            WaitStrategy = waitStrategy;
-        }
-
-        protected WaitStrategyFixture()
-            : this(Activator.CreateInstance<T>())
-        {
-        }
+        protected abstract T CreateWaitStrategy();
 
         protected TimeSpan DefaultAssertTimeout { get; } = TimeSpan.FromSeconds(5);
-        protected T WaitStrategy { get; }
         protected Sequence Cursor { get; } = new Sequence();
         protected CancellationTokenSource CancellationTokenSource { get; } = new CancellationTokenSource();
         protected CancellationToken CancellationToken => CancellationTokenSource.Token;
@@ -31,12 +22,13 @@ namespace Disruptor.Tests
         public void ShouldWaitForAvailableSequence(long cursorValue, long dependentSequenceValue, long expectedResult)
         {
             // Arrange
+            var waitStrategy = CreateWaitStrategy();
             Cursor.SetValue(cursorValue);
 
             var dependentSequence = new Sequence(dependentSequenceValue);
 
             // Act
-            var waitResult = WaitStrategy.WaitFor(10, Cursor, dependentSequence, CancellationToken);
+            var waitResult = waitStrategy.WaitFor(10, Cursor, dependentSequence, CancellationToken);
 
             // Assert
             Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedResult)));
@@ -48,17 +40,18 @@ namespace Disruptor.Tests
         public void ShouldWaitAndReturnOnceSequenceIsAvailable(long sequence, long dependentSequenceValue, long expectedResult)
         {
             // Arrange
+            var waitStrategy = CreateWaitStrategy();
             var dependentSequence = new Sequence();
             var waitResult = new TaskCompletionSource<SequenceWaitResult>();
 
-            var waitTask = Task.Run(() => waitResult.SetResult(WaitStrategy.WaitFor(10, Cursor, dependentSequence, CancellationToken)));
+            var waitTask = Task.Run(() => waitResult.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence, CancellationToken)));
 
             // Ensure waiting tasks are blocked
             AssertIsNotCompleted(waitTask);
 
             // Act
             Cursor.SetValue(sequence);
-            WaitStrategy.SignalAllWhenBlocking();
+            waitStrategy.SignalAllWhenBlocking();
             dependentSequence.SetValue(dependentSequenceValue);
 
             // Assert
@@ -70,6 +63,7 @@ namespace Disruptor.Tests
         public void ShouldWaitFromMultipleThreads()
         {
             // Arrange
+            var waitStrategy = CreateWaitStrategy();
             var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
             var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
@@ -78,12 +72,12 @@ namespace Disruptor.Tests
 
             var waitTask1 = Task.Run(() =>
             {
-                waitResult1.SetResult(WaitStrategy.WaitFor(10, Cursor, dependentSequence1, CancellationToken));
+                waitResult1.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence1, CancellationToken));
                 Thread.Sleep(1);
                 dependentSequence2.SetValue(10);
             });
 
-            var waitTask2 = Task.Run(() => waitResult2.SetResult(WaitStrategy.WaitFor(10, Cursor, dependentSequence2, CancellationToken)));
+            var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence2, CancellationToken)));
 
             // Ensure waiting tasks are blocked
             AssertIsNotCompleted(waitResult1.Task);
@@ -91,7 +85,7 @@ namespace Disruptor.Tests
 
             // Act
             Cursor.SetValue(10);
-            WaitStrategy.SignalAllWhenBlocking();
+            waitStrategy.SignalAllWhenBlocking();
 
             // Assert
             AssertHasResult(waitResult1.Task, new SequenceWaitResult(10));
@@ -104,6 +98,7 @@ namespace Disruptor.Tests
         public void ShouldWaitFromMultipleThreadsInOrder()
         {
             // Arrange
+            var waitStrategy = CreateWaitStrategy();
             var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
             var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
             var task1Signal = new ManualResetEvent(false);
@@ -113,12 +108,12 @@ namespace Disruptor.Tests
 
             var waitTask1 = Task.Run(() =>
             {
-                waitResult1.SetResult(WaitStrategy.WaitFor(10, Cursor, dependentSequence1, CancellationToken));
+                waitResult1.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence1, CancellationToken));
                 task1Signal.WaitOne(DefaultAssertTimeout);
                 dependentSequence2.SetValue(10);
             });
 
-            var waitTask2 = Task.Run(() => waitResult2.SetResult(WaitStrategy.WaitFor(10, Cursor, dependentSequence2, CancellationToken)));
+            var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence2, CancellationToken)));
 
             // Ensure waiting tasks are blocked
             AssertIsNotCompleted(waitResult1.Task);
@@ -126,7 +121,7 @@ namespace Disruptor.Tests
 
             // Act 1: set cursor
             Cursor.SetValue(10);
-            WaitStrategy.SignalAllWhenBlocking();
+            waitStrategy.SignalAllWhenBlocking();
 
             // Assert
             AssertHasResult(waitResult1.Task, new SequenceWaitResult(10));

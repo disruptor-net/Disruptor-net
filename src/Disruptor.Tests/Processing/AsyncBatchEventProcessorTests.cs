@@ -56,10 +56,10 @@ namespace Disruptor.Tests.Processing
             Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
         }
 
-        [Test, Ignore("TMP")]
+        [Test]
         public void ShouldCallExceptionHandlerOnTimeoutException()
         {
-            var waitStrategy = new AsyncWaitStrategy(new TimeoutBlockingWaitStrategy(TimeSpan.FromMilliseconds(1)));
+            var waitStrategy = new AsyncWaitStrategy(TimeSpan.FromMilliseconds(1));
             var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new SingleProducerSequencer(16, waitStrategy));
             var sequenceBarrier = (IAsyncSequenceBarrier)ringBuffer.NewBarrier();
 

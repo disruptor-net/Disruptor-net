@@ -46,7 +46,7 @@ namespace Disruptor.PerfTests.Sequenced
         {
             _eventHandler = new AdditionAsyncBatchEventHandler();
             //_ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
-            _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new AsyncWaitStrategy(new YieldingWaitStrategy()));
+            _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new AsyncWaitStrategy());
             var sequenceBarrier = (IAsyncSequenceBarrier)_ringBuffer.NewBarrier();
             _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
             _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);

@@ -1,9 +1,10 @@
-﻿using NUnit.Framework;
-
-namespace Disruptor.Tests
+﻿namespace Disruptor.Tests
 {
-    [TestFixture]
     public class YieldingWaitStrategyTests : WaitStrategyFixture<YieldingWaitStrategy>
     {
+        protected override YieldingWaitStrategy CreateWaitStrategy()
+        {
+            return new YieldingWaitStrategy();
+        }
     }
 }

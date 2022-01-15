@@ -25,7 +25,7 @@ namespace Disruptor.Tests.Dsl
             _delayedEventHandlers = new List<DelayedEventHandler>();
             _testWorkHandlers = new List<TestWorkHandler>();
             _taskScheduler = new StubTaskScheduler();
-            _disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 4, _taskScheduler, ProducerType.Multi, new AsyncWaitStrategy(new BlockingWaitStrategy()));
+            _disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 4, _taskScheduler, ProducerType.Multi, new AsyncWaitStrategy());
         }
 
         public void Dispose()

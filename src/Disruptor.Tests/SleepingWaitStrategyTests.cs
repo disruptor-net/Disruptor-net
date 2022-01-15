@@ -1,13 +1,10 @@
-﻿using NUnit.Framework;
-
-namespace Disruptor.Tests
+﻿namespace Disruptor.Tests
 {
-    [TestFixture]
     public class SleepingWaitStrategyTests : WaitStrategyFixture<SleepingWaitStrategy>
     {
-        public SleepingWaitStrategyTests()
-            : base(new SleepingWaitStrategy())
+        protected override SleepingWaitStrategy CreateWaitStrategy()
         {
+            return new SleepingWaitStrategy();
         }
     }
 }
