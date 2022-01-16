@@ -15,6 +15,7 @@ jobs:
           dotnet-version: | 
             3.1.x
             5.0.x
+            6.0.x
       - name: Clear NuGet Cache
         run: dotnet nuget locals all --clear
       - name: Restore
@@ -42,6 +43,7 @@ jobs:
           dotnet-version: | 
             3.1.x
             5.0.x
+            6.0.x
       - name: Clear NuGet Cache
         run: dotnet nuget locals all --clear
       - name: Restore
