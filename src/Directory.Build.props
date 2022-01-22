@@ -14,11 +14,11 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>5.0.0-beta</Version>
+    <Version>5.0.0-rc1</Version>
     <LastPortedJavaRevision>a18f8198ab94590f0a5ec7c3378ba87f997ea670</LastPortedJavaRevision>
     <Product>Disruptor</Product>
     <Description>A High Performance Inter-Thread Messaging Library</Description>
-    <Authors>Olivier Deheurles;Mendel Monteiro Beckerman;Antoine Blanchet;Olivier Coanet</Authors>
+    <Authors>Olivier Coanet;Olivier Deheurles;Mendel Monteiro Beckerman;Antoine Blanchet</Authors>
     <PackageProjectUrl>https://github.com/disruptor-net/Disruptor-net</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>Concurrency;Disruptor;Latency;Throughput;Queue</PackageTags>
