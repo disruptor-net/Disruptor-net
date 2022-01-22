@@ -19,6 +19,7 @@ public class AsyncWaitStrategy : IAsyncWaitStrategy
     private readonly List<TaskCompletionSource<bool>> _taskCompletionSources = new();
     private readonly object _gate = new();
     private readonly int _timeoutMilliseconds;
+    private bool _hasSyncWaiter;
 
     /// <summary>
     /// Creates an async wait strategy without timeouts.
@@ -50,6 +51,7 @@ public class AsyncWaitStrategy : IAsyncWaitStrategy
         {
             lock (_gate)
             {
+                _hasSyncWaiter = true;
                 while (cursor.Value < sequence)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -77,7 +79,10 @@ public class AsyncWaitStrategy : IAsyncWaitStrategy
     {
         lock (_gate)
         {
-            Monitor.PulseAll(_gate);
+            if (_hasSyncWaiter)
+            {
+                Monitor.PulseAll(_gate);
+            }
 
             foreach (var completionSource in _taskCompletionSources)
             {
@@ -124,11 +129,12 @@ public class AsyncWaitStrategy : IAsyncWaitStrategy
             _taskCompletionSources.Add(tcs);
         }
 
-        using var x = cancellationToken.Register(s => ((TaskCompletionSource<bool>)s!).TrySetResult(false), tcs);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Using cancellationToken in the await is not required because SignalAllWhenBlocking is always invoked by
+        // the sequencer barrier after cancellation.
 
         await AddTimeout(tcs.Task).ConfigureAwait(false);
-
-        cancellationToken.ThrowIfCancellationRequested();
 
         return tcs.Task.IsCompleted;
     }
@@ -136,7 +142,9 @@ public class AsyncWaitStrategy : IAsyncWaitStrategy
     private Task AddTimeout(Task task)
     {
         if (_timeoutMilliseconds == Timeout.Infinite)
+        {
             return task;
+        }
 
         return Task.WhenAny(task, Task.Delay(_timeoutMilliseconds));
     }
