@@ -136,6 +136,39 @@ public abstract class WaitStrategyFixture<T>
         AssertIsCompleted(waitTask2);
     }
 
+    [Test]
+    public void ShouldUnblockAfterCancellation()
+    {
+        // Arrange
+        var waitStrategy = CreateWaitStrategy();
+        var dependentSequence = new Sequence();
+        var waitResult = new TaskCompletionSource<Exception>();
+
+        var waitTask = Task.Run(() =>
+        {
+            try
+            {
+                waitStrategy.WaitFor(10, Cursor, dependentSequence, CancellationToken);
+            }
+            catch (Exception e)
+            {
+                waitResult.SetResult(e);
+            }
+        });
+
+        // Ensure waiting tasks are blocked
+        AssertIsNotCompleted(waitTask);
+
+        // Act
+        CancellationTokenSource.Cancel();
+        waitStrategy.SignalAllWhenBlocking();
+
+        // Assert
+        AssertIsCompleted(waitResult.Task);
+        Assert.That(waitResult.Task.Result, Is.InstanceOf<OperationCanceledException>());
+        AssertIsCompleted(waitTask);
+    }
+
     protected static void AssertIsNotCompleted(Task task)
     {
         Assert.That(task.Wait(2), Is.False);

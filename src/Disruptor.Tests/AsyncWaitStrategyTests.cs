@@ -1,10 +1,11 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace Disruptor.Tests;
 
-public abstract partial class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStrategy>
+public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStrategy>
 {
     [Test]
     public void ShouldWaitFromMultipleThreadsAsync()
@@ -86,5 +87,38 @@ public abstract partial class AsyncWaitStrategyTests : WaitStrategyFixture<Async
         AssertIsCompleted(waitTask1);
         AssertIsCompleted(waitTask2);
         AssertIsCompleted(waitTask3);
+    }
+
+    [Test]
+    public void ShouldUnblockAfterCancellationAsync()
+    {
+        // Arrange
+        var waitStrategy = CreateWaitStrategy();
+        var dependentSequence = new Sequence();
+        var waitResult = new TaskCompletionSource<Exception>();
+
+        var waitTask = Task.Run(async () =>
+        {
+            try
+            {
+                await waitStrategy.WaitForAsync(10, Cursor, dependentSequence, CancellationToken);
+            }
+            catch (Exception e)
+            {
+                waitResult.SetResult(e);
+            }
+        });
+
+        // Ensure waiting tasks are blocked
+        AssertIsNotCompleted(waitTask);
+
+        // Act
+        CancellationTokenSource.Cancel();
+        waitStrategy.SignalAllWhenBlocking();
+
+        // Assert
+        AssertIsCompleted(waitResult.Task);
+        Assert.That(waitResult.Task.Result, Is.InstanceOf<OperationCanceledException>());
+        AssertIsCompleted(waitTask);
     }
 }
