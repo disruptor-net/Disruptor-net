@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
@@ -83,8 +84,8 @@ public class BatchEventProcessorTests
         var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new SingleProducerSequencer(16, waitStrategy));
         var sequenceBarrier = ringBuffer.NewBarrier();
 
-        var exceptionSignal = new CountdownEvent(1);
-        var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
+        var exception = new TaskCompletionSource<Exception>();
+        var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exception.TrySetResult(x.ex));
         var eventHandler = new TestBatchEventHandler<StubEvent>(x => { }, () => throw new NullReferenceException());
         var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
@@ -93,7 +94,7 @@ public class BatchEventProcessorTests
 
         var task = eventProcessor.Start();
 
-        Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
+        Assert.IsTrue(exception.Task.Wait(TimeSpan.FromSeconds(2)));
         Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
         Assert.AreEqual(1, exceptionHandler.TimeoutExceptionCount);
         Assert.AreEqual(0, exceptionHandler.BatchExceptionCount);

@@ -84,8 +84,8 @@ public class AsyncBatchEventProcessorTests
         var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new SingleProducerSequencer(16, waitStrategy));
         var sequenceBarrier = (IAsyncSequenceBarrier)ringBuffer.NewBarrier();
 
-        var exceptionSignal = new CountdownEvent(1);
-        var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
+        var exception = new TaskCompletionSource<Exception>();
+        var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exception.TrySetResult(x.ex));
         var eventHandler = new TestAsyncBatchEventHandler<StubEvent>(x => { }, () => throw new NullReferenceException());
         var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
@@ -94,7 +94,7 @@ public class AsyncBatchEventProcessorTests
 
         var task = eventProcessor.Start();
 
-        Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
+        Assert.IsTrue(exception.Task.Wait(TimeSpan.FromSeconds(2)));
         Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
         Assert.AreEqual(1, exceptionHandler.TimeoutExceptionCount);
         Assert.AreEqual(0, exceptionHandler.BatchExceptionCount);

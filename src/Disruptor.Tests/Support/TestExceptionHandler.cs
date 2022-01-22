@@ -5,9 +5,9 @@ namespace Disruptor.Tests.Support;
 public class TestExceptionHandler<T> : IExceptionHandler<T>
     where T : class
 {
-    private readonly Action<T?> _action;
+    private readonly Action<(T? data, Exception ex)> _action;
 
-    public TestExceptionHandler(Action<T?> action)
+    public TestExceptionHandler(Action<(T? data, Exception ex)> action)
     {
         _action = action;
     }
@@ -18,7 +18,7 @@ public class TestExceptionHandler<T> : IExceptionHandler<T>
     {
         EventExceptionCount++;
 
-        _action.Invoke(evt);
+        _action.Invoke((evt, ex));
     }
 
     public int TimeoutExceptionCount { get; private set; }
@@ -27,7 +27,7 @@ public class TestExceptionHandler<T> : IExceptionHandler<T>
     {
         TimeoutExceptionCount++;
 
-        _action.Invoke(null);
+        _action.Invoke((null, ex));
     }
 
     public int BatchExceptionCount { get; private set; }
@@ -38,7 +38,7 @@ public class TestExceptionHandler<T> : IExceptionHandler<T>
 
         foreach (var evt in batch)
         {
-            _action.Invoke(evt);
+            _action.Invoke((evt, ex));
         }
     }
 
