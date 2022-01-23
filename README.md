@@ -17,7 +17,16 @@ Most of the information from the Java documentation is applicable to the .NET ve
 
 The quickest way to get started with the disruptor is by using the [NuGet package](https://www.nuget.org/packages/Disruptor).
 
-## Sample code
+## Release notes
+
+[Version 5.0.0 RC1](https://github.com/disruptor-net/Disruptor-net/releases/tag/5.0.0-rc1) has been released and is available on NuGet.
+
+## Supported runtimes
+
+- .NET 5.0+
+- .NET Standard 2.1
+
+## Basic usage
 
 First, you need to define your event (message) type:
 
@@ -63,17 +72,6 @@ using (var scope = disruptor.PublishEvent())
 ```
 
 Other event [publication options](https://github.com/disruptor-net/Disruptor-net/wiki/Publication-Options) are described in the Wiki.
-
-## Roadmap
-
-* Include latest changes made to the future Java versions
-* Remove exception-based APIs
-* Improve documentation
-
-## Build from source and run tests
-
-You may build the Disruptor directly from the source, run `Cake-Build.bat`: it will compile, run the tests and output binaries and results into `\output\assembly` folder
-You can also run all the performance tests by running `Cake-Perf.bat`.
 
 ## License
 
