@@ -149,4 +149,26 @@ internal static class InternalUtil
 
         return IL.Return<int>();
     }
+
+    public static int ComputeArrayDataOffset()
+    {
+        var array = new object[1];
+
+        return (int)GetElementOffset(array, ref array[0]);
+    }
+
+    private static IntPtr GetElementOffset(object origin, ref object target)
+    {
+        IL.DeclareLocals(false, typeof(byte).MakeByRefType());
+
+        Ldarg(nameof(target));
+
+        Ldarg(nameof(origin)); // load the object
+        Stloc_0(); // convert the object pointer to a byref
+        Ldloc_0(); // load the object pointer as a byref
+
+        Sub();
+
+        return IL.Return<IntPtr>();
+    }
 }

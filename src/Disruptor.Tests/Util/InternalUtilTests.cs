@@ -1,11 +1,10 @@
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Disruptor.Tests.Support;
 using Disruptor.Util;
-using InlineIL;
 using NUnit.Framework;
-using static InlineIL.IL.Emit;
 
 namespace Disruptor.Tests.Util;
 
@@ -60,7 +59,6 @@ public class InternalUtilTests
             {
                 Assert.AreEqual(new StubEvent(i + dataIndex), block[dataIndex]);
             }
-
         }
     }
 
@@ -181,32 +179,39 @@ public class InternalUtilTests
     }
 
     [Test]
-    public void ShouldGetArrayDataOffset()
+    public void ShouldRecomputeArrayDataOffsetWithInternalUtil()
     {
         Console.WriteLine(Environment.Is64BitProcess ? "64BIT" : "32BIT");
 
-        Assert.AreEqual(ComputeArrayDataOffset(), InternalUtil.ArrayDataOffset);
+        Assert.AreEqual(InternalUtil.ComputeArrayDataOffset(), InternalUtil.ArrayDataOffset);
     }
 
-    private static int ComputeArrayDataOffset()
+    [Test]
+    public void ShouldRecomputeArrayDataOffsetWithMemoryMarshal()
     {
+        Console.WriteLine(Environment.Is64BitProcess ? "64BIT" : "32BIT");
+
+        Assert.AreEqual(ComputeArrayDataOffsetWithMemoryMarshal(), InternalUtil.ArrayDataOffset);
+    }
+
+    private static int ComputeArrayDataOffsetWithMemoryMarshal()
+    {
+        var methodPointerSize = IntPtr.Size;
+
         var array = new object[1];
 
-        return (int)GetElementOffset(array, ref array[0]);
+        ref var arrayStart = ref GetArrayStartReference(array);
+        ref var firstElement = ref array[0];
+
+        return methodPointerSize + Unsafe.ByteOffset(ref arrayStart, ref firstElement).ToInt32();
     }
 
-    private static IntPtr GetElementOffset(object origin, ref object target)
+    private static ref T GetArrayStartReference<T>(T[] array)
+        => ref Unsafe.As<byte, T>(ref Unsafe.As<ByteContainer>(array).Data);
+
+    // ReSharper disable once ClassNeverInstantiated.Local
+    private class ByteContainer
     {
-        IL.DeclareLocals(false, typeof(byte).MakeByRefType());
-
-        Ldarg(nameof(target));
-
-        Ldarg(nameof(origin)); // load the object
-        Stloc_0(); // convert the object pointer to a byref
-        Ldloc_0(); // load the object pointer as a byref
-
-        Sub();
-
-        return IL.Return<IntPtr>();
+        public byte Data;
     }
 }
