@@ -11,8 +11,4 @@
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Wiki\Async" />
-  </ItemGroup>
-
 </Project>
