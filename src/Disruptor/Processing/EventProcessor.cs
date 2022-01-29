@@ -153,13 +153,6 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, T
 
                 var availableSequence = waitResult.UnsafeAvailableSequence;
 
-                // WaitFor can return a value lower than nextSequence, for example when using a MultiProducerSequencer.
-                // The Java version includes the test "if (availableSequence >= nextSequence)" to avoid invoking OnBatchStart on empty batches.
-                // However, this test has a negative impact on performance even for event handlers that are not IBatchStartAware.
-                // This is unfortunate because this test should be removed by the JIT when OnBatchStart is a noop.
-                // => The test is currently implemented on struct proxies. See EventProcessor<T>.BatchStartAware and StructProxy.
-                // For some reason this also improves EventProcessor performance for IBatchStartAware event handlers.
-
                 if (_onBatchStartInvoker.ShouldInvokeOnBatchStart(availableSequence, nextSequence))
                     _eventHandler.OnBatchStart(availableSequence - nextSequence + 1);
 
