@@ -10,23 +10,48 @@ namespace Disruptor.Tests;
 public class DisruptorStressTest
 {
     [Test]
-    public void ShouldHandleLotsOfThreads()
+    public void ShouldHandleLotsOfThreads_EventHandler()
     {
-        var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, new BusySpinWaitStrategy());
+        ShouldHandleLotsOfThreads<TestEventHandler>(new BusySpinWaitStrategy(), 20_000_000);
+    }
+
+    [Test]
+    public void ShouldHandleLotsOfThreads_BatchEventHandler()
+    {
+        ShouldHandleLotsOfThreads<TestBatchEventHandler>(new BusySpinWaitStrategy(), 20_000_000);
+    }
+
+    [Test]
+    public void ShouldHandleLotsOfThreads_AsyncBatchEventHandler()
+    {
+        ShouldHandleLotsOfThreads<TestAsyncBatchEventHandler>(new AsyncWaitStrategy(), 2_000_000);
+    }
+
+    private static void ShouldHandleLotsOfThreads<T>(IWaitStrategy waitStrategy, int iterations) where T : IHandler, new()
+    {
+        var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, waitStrategy);
         var ringBuffer = disruptor.RingBuffer;
         disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler<TestEvent>());
 
-        var threads = Math.Max(1, Environment.ProcessorCount / 2);
-
-        const int iterations = 20_000_000;
-        var publisherCount = threads;
-        var handlerCount = threads;
+        var publisherCount = Math.Max(1, Environment.ProcessorCount / 2);
+        var handlerCount = Math.Max(1, Environment.ProcessorCount / 2);
 
         var end = new CountdownEvent(publisherCount);
         var start = new CountdownEvent(publisherCount);
 
-        var handlers = Initialise(disruptor, new TestEventHandler[handlerCount]);
-        var publishers = Initialise(new Publisher[publisherCount], ringBuffer, iterations, start, end);
+        var handlers = new T[handlerCount];
+        for (var i = 0; i < handlers.Length; i++)
+        {
+            var handler = new T();
+            handler.Register(disruptor);
+            handlers[i] = handler;
+        }
+
+        var publishers = new Publisher[publisherCount];
+        for (var i = 0; i < publishers.Length; i++)
+        {
+            publishers[i] = new Publisher(ringBuffer, iterations, start, end);
+        }
 
         disruptor.Start();
 
@@ -37,7 +62,7 @@ public class DisruptorStressTest
 
         end.Wait();
 
-        var spinWait = new AggressiveSpinWait();
+        var spinWait = new SpinWait();
 
         while (ringBuffer.Cursor < (iterations - 1))
         {
@@ -58,32 +83,23 @@ public class DisruptorStressTest
         }
     }
 
-    private Publisher[] Initialise(Publisher[] publishers, RingBuffer<TestEvent> buffer, int messageCount, CountdownEvent start, CountdownEvent end)
+    private interface IHandler
     {
-        for (var i = 0; i < publishers.Length; i++)
-        {
-            publishers[i] = new Publisher(buffer, messageCount, start, end);
-        }
+        int FailureCount { get; }
+        int MessagesSeen { get; }
 
-        return publishers;
+        void Register(Disruptor<TestEvent> disruptor);
     }
 
-    private TestEventHandler[] Initialise(Disruptor<TestEvent> disruptor, TestEventHandler[] testEventHandlers)
+    private class TestEventHandler : IEventHandler<TestEvent>, IHandler
     {
-        for (var i = 0; i < testEventHandlers.Length; i++)
+        public int FailureCount { get; private set; }
+        public int MessagesSeen { get; private set; }
+
+        public void Register(Disruptor<TestEvent> disruptor)
         {
-            var handler = new TestEventHandler();
-            disruptor.HandleEventsWith(handler);
-            testEventHandlers[i] = handler;
+            disruptor.HandleEventsWith(this);
         }
-
-        return testEventHandlers;
-    }
-
-    private class TestEventHandler : IEventHandler<TestEvent>
-    {
-        public int FailureCount;
-        public int MessagesSeen;
 
         public void OnEvent(TestEvent @event, long sequence, bool endOfBatch)
         {
@@ -93,6 +109,62 @@ public class DisruptorStressTest
             }
 
             MessagesSeen++;
+        }
+    }
+
+    private class TestBatchEventHandler : IBatchEventHandler<TestEvent>, IHandler
+    {
+        public int FailureCount { get; private set; }
+        public int MessagesSeen { get; private set; }
+
+        public void Register(Disruptor<TestEvent> disruptor)
+        {
+            disruptor.HandleEventsWith(this);
+        }
+
+        public void OnBatch(EventBatch<TestEvent> batch, long sequence)
+        {
+            for (var i = 0; i < batch.Length; i++)
+            {
+                var @event = batch[i];
+                var s = sequence + i;
+
+                if (@event.Sequence != s || @event.A != s + 13 || @event.B != s - 7)
+                {
+                    FailureCount++;
+                }
+
+                MessagesSeen++;
+            }
+        }
+    }
+
+    private class TestAsyncBatchEventHandler : IAsyncBatchEventHandler<TestEvent>, IHandler
+    {
+        public int FailureCount { get; private set; }
+        public int MessagesSeen { get; private set; }
+
+        public void Register(Disruptor<TestEvent> disruptor)
+        {
+            disruptor.HandleEventsWith(this);
+        }
+
+        public async ValueTask OnBatch(EventBatch<TestEvent> batch, long sequence)
+        {
+            for (var i = 0; i < batch.Length; i++)
+            {
+                var @event = batch[i];
+                var s = sequence + i;
+
+                if (@event.Sequence != s || @event.A != s + 13 || @event.B != s - 7)
+                {
+                    FailureCount++;
+                }
+
+                MessagesSeen++;
+            }
+
+            await Task.Yield();
         }
     }
 
