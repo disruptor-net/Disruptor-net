@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -98,6 +99,22 @@ public sealed class WorkerPool<T> where T : class
         sequences[sequences.Length - 1] = _workSequence;
 
         return sequences;
+    }
+
+    /// <summary>
+    /// Waits before the event processors are started.
+    /// </summary>
+    /// <param name="timeout">maximum wait duration</param>
+    public void WaitUntilStarted(TimeSpan timeout)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        foreach (var workProcessor in _workProcessors)
+        {
+            var elapsed = stopwatch.Elapsed;
+            var remaining = timeout >= elapsed ? timeout - elapsed : TimeSpan.Zero;
+            workProcessor.WaitUntilStarted(remaining);
+        }
     }
 
     /// <summary>

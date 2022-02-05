@@ -15,14 +15,14 @@ namespace Disruptor.Processing;
 public sealed class WorkProcessor<T> : IEventProcessor
     where T : class
 {
-    private volatile int _runState = ProcessorRunStates.Idle;
     private readonly Sequence _sequence = new();
     private readonly RingBuffer<T> _ringBuffer;
     private readonly ISequenceBarrier _sequenceBarrier;
     private readonly IWorkHandler<T> _workHandler;
     private readonly IExceptionHandler<T> _exceptionHandler;
     private readonly Sequence _workSequence;
-    private readonly IEventReleaser _eventReleaser;
+    private readonly ManualResetEventSlim _started = new();
+    private volatile int _runState = ProcessorRunStates.Idle;
 
     /// <summary>
     /// Construct a <see cref="WorkProcessor{T}"/>.
@@ -40,9 +40,10 @@ public sealed class WorkProcessor<T> : IEventProcessor
         _workHandler = workHandler;
         _exceptionHandler = exceptionHandler;
         _workSequence = workSequence;
-        _eventReleaser = new EventReleaser(this);
 
-        (_workHandler as IEventReleaseAware)?.SetEventReleaser(_eventReleaser);
+        // TODO: Move to IWorkHandler with default implementation.
+        if (_workHandler is IEventReleaseAware eventReleaseAware)
+            eventReleaseAware.SetEventReleaser(new EventReleaser(this));
     }
 
     /// <summary>
@@ -71,6 +72,15 @@ public sealed class WorkProcessor<T> : IEventProcessor
     /// <see cref="IEventProcessor.IsRunning"/>
     /// </summary>
     public bool IsRunning => _runState == ProcessorRunStates.Running;
+
+    /// <summary>
+    /// Waits before the event processor enters the <see cref="IsRunning"/> state.
+    /// </summary>
+    /// <param name="timeout">maximum wait duration</param>
+    public void WaitUntilStarted(TimeSpan timeout)
+    {
+        _started.Wait(timeout);
+    }
 
     /// <summary>
     /// <inheritdoc cref="IEventProcessor.Start"/>.
@@ -189,6 +199,8 @@ public sealed class WorkProcessor<T> : IEventProcessor
         {
             _exceptionHandler.HandleOnStartException(ex);
         }
+
+        _started.Set();
     }
 
     private void NotifyShutdown()
@@ -201,6 +213,8 @@ public sealed class WorkProcessor<T> : IEventProcessor
         {
             _exceptionHandler.HandleOnShutdownException(ex);
         }
+
+        _started.Reset();
     }
 
     private class EventReleaser : IEventReleaser

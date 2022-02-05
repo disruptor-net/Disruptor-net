@@ -1,8 +1,6 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Threading;
-using System.Threading.Tasks;
-using Disruptor.Dsl;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 using Disruptor.Tests.Support;
@@ -19,13 +17,8 @@ public class OneToThreeWorkerPoolThroughputTest : IThroughputTest
 
     private readonly BlockingCollection<long> _blockingQueue = new(_bufferSize);
     private readonly EventCountingQueueProcessor[] _queueWorkers = new EventCountingQueueProcessor[_numWorkers];
-    private readonly EventCountingWorkHandler[] _handlers = new EventCountingWorkHandler[_numWorkers];
-
-    private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory,
-                                                                                                    _bufferSize,
-                                                                                                    new YieldingWaitStrategy());
-
-    private readonly WorkerPool<PerfEvent> _workerPool;
+    private readonly IWorkHandler<PerfEvent>[] _handlers = new IWorkHandler<PerfEvent>[_numWorkers];
+    private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
 
     public OneToThreeWorkerPoolThroughputTest()
     {
@@ -38,17 +31,11 @@ public class OneToThreeWorkerPoolThroughputTest : IThroughputTest
         {
             _queueWorkers[i] = new EventCountingQueueProcessor(_blockingQueue, _counters, i);
         }
+
         for (var i = 0; i < _numWorkers; i++)
         {
             _handlers[i] = new EventCountingWorkHandler(_counters, i);
         }
-
-        _workerPool = new WorkerPool<PerfEvent>(_ringBuffer,
-                                                _ringBuffer.NewBarrier(),
-                                                new FatalExceptionHandler<PerfEvent>(),
-                                                _handlers);
-
-        _ringBuffer.AddGatingSequences(_workerPool.GetWorkerSequences());
     }
 
     public int RequiredProcessorCount => 4;
@@ -57,7 +44,12 @@ public class OneToThreeWorkerPoolThroughputTest : IThroughputTest
     {
         ResetCounters();
 
-        _workerPool.Start();
+        var workerPool = new WorkerPool<PerfEvent>(_ringBuffer, _ringBuffer.NewBarrier(), new FatalExceptionHandler<PerfEvent>(), _handlers);
+
+        _ringBuffer.AddGatingSequences(workerPool.GetWorkerSequences());
+
+        workerPool.Start();
+        workerPool.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();
 
@@ -69,13 +61,18 @@ public class OneToThreeWorkerPoolThroughputTest : IThroughputTest
             ringBuffer.Publish(sequence);
         }
 
-        _workerPool.DrainAndHalt();
+        workerPool.DrainAndHalt();
 
         // Workaround to ensure that the last worker(s) have completed after releasing their events
         Thread.Sleep(1);
         sessionContext.Stop();
 
         PerfTestUtil.FailIfNot(_iterations, SumCounters());
+
+        foreach (var workerSequence in workerPool.GetWorkerSequences())
+        {
+            _ringBuffer.RemoveGatingSequence(workerSequence);
+        }
 
         return _iterations;
     }

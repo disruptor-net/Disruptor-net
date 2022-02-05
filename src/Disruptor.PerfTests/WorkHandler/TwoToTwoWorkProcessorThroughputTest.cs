@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
@@ -32,54 +33,46 @@ public class TwoToTwoWorkProcessorThroughputTest : IThroughputTest
 
     private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
     private readonly Sequence _workSequence = new();
-    private readonly ValueAdditionWorkHandler[] _handlers = new ValueAdditionWorkHandler[2];
-    private readonly WorkProcessor<PerfEvent>[] _workProcessors = new WorkProcessor<PerfEvent>[2];
     private readonly ValuePublisher[] _valuePublishers = new ValuePublisher[_numPublishers];
 
     public TwoToTwoWorkProcessorThroughputTest()
     {
-        var sequenceBarrier = _ringBuffer.NewBarrier();
-        _handlers[0] = new ValueAdditionWorkHandler();
-        _handlers[1] = new ValueAdditionWorkHandler();
-
-        _workProcessors[0] = new WorkProcessor<PerfEvent>(_ringBuffer, sequenceBarrier, _handlers[0], new IgnoreExceptionHandler<PerfEvent>(), _workSequence);
-        _workProcessors[1] = new WorkProcessor<PerfEvent>(_ringBuffer, sequenceBarrier, _handlers[1], new IgnoreExceptionHandler<PerfEvent>(), _workSequence);
-
         for (var i = 0; i < _numPublishers; i++)
         {
-            _valuePublishers[i] = new ValuePublisher(_cyclicBarrier, _ringBuffer, _iterations);
+            _valuePublishers[i] = new ValuePublisher(_cyclicBarrier, _ringBuffer);
         }
-
-        _ringBuffer.AddGatingSequences(_workProcessors[0].Sequence, _workProcessors[1].Sequence);
     }
 
     public int RequiredProcessorCount => 4;
 
     public long Run(ThroughputSessionContext sessionContext)
     {
+        var sequenceBarrier = _ringBuffer.NewBarrier();
+
+        var workProcessors = new[]
+        {
+            new WorkProcessor<PerfEvent>(_ringBuffer, sequenceBarrier, new ValueAdditionWorkHandler(), new IgnoreExceptionHandler<PerfEvent>(), _workSequence),
+            new WorkProcessor<PerfEvent>(_ringBuffer, sequenceBarrier, new ValueAdditionWorkHandler(), new IgnoreExceptionHandler<PerfEvent>(), _workSequence),
+        };
+
+        _ringBuffer.AddGatingSequences(workProcessors.Select(x => x.Sequence).ToArray());
+
         _cyclicBarrier.Reset();
 
         var expected = _ringBuffer.Cursor + (_numPublishers * _iterations);
-        var futures = new Task[_numPublishers];
-        for (var i = 0; i < _numPublishers; i++)
-        {
-            var index = i;
-            futures[i] = Task.Run(() => _valuePublishers[index].Run());
-        }
+        var valuePublisherTasks = _valuePublishers.Select(x => x.Start()).ToArray();
 
-        foreach (var processor in _workProcessors)
+        foreach (var workProcessor in workProcessors)
         {
-            Task.Run(() => processor.Run());
+            workProcessor.StartLongRunning();
+            workProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
         }
 
         sessionContext.Start();
         _cyclicBarrier.Signal();
         _cyclicBarrier.Wait();
 
-        for (var i = 0; i < _numPublishers; i++)
-        {
-            futures[i].Wait();
-        }
+        Task.WaitAll(valuePublisherTasks);
 
         while (_workSequence.Value < expected)
         {
@@ -90,9 +83,10 @@ public class TwoToTwoWorkProcessorThroughputTest : IThroughputTest
 
         Thread.Sleep(1000);
 
-        foreach (var processor in _workProcessors)
+        foreach (var workProcessor in workProcessors)
         {
-            processor.Halt();
+            workProcessor.Halt();
+            _ringBuffer.RemoveGatingSequence(workProcessor.Sequence);
         }
 
         return _iterations;
@@ -102,13 +96,16 @@ public class TwoToTwoWorkProcessorThroughputTest : IThroughputTest
     {
         private readonly CountdownEvent _cyclicBarrier;
         private readonly RingBuffer<PerfEvent> _ringBuffer;
-        private readonly long _iterations;
 
-        public ValuePublisher(CountdownEvent cyclicBarrier, RingBuffer<PerfEvent> ringBuffer, long iterations)
+        public ValuePublisher(CountdownEvent cyclicBarrier, RingBuffer<PerfEvent> ringBuffer)
         {
             _cyclicBarrier = cyclicBarrier;
             _ringBuffer = ringBuffer;
-            _iterations = iterations;
+        }
+
+        public Task Start()
+        {
+            return Task.Run(Run);
         }
 
         public void Run()
