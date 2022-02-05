@@ -24,7 +24,7 @@
     <PackageTags>Concurrency;Disruptor;Latency;Throughput;Queue</PackageTags>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <PackageOutputPath>$(MSBuildThisFileDirectory)..\output\nuget</PackageOutputPath>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)..\build\nuget</PackageOutputPath>
     <ContinuousIntegrationBuild Condition="'$(TF_BUILD)' != ''">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 

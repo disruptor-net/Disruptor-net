@@ -30,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: NuGet
-          path: output/nuget/*.nupkg
+          path: build/nuget/*.nupkg
   linux:
     name: Build-Test (Linux)
     runs-on: ubuntu-latest
