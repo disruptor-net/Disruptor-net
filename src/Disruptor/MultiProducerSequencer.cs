@@ -145,25 +145,30 @@ public unsafe class MultiProducerSequencer : ISequencer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal long NextInternal(int n)
     {
-        var nextSequence = _cursor.AddAndGet(n);
-        var current = nextSequence - n;
-        var wrapPoint = nextSequence - _bufferSize;
+        var next = _cursor.AddAndGet(n);
+        var current = next - n;
+        var wrapPoint = next - _bufferSize;
         var cachedGatingSequence = _gatingSequenceCache.Value;
 
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
         {
-            var spinWait = default(AggressiveSpinWait);
-            long gatingSequence;
-
-            while (wrapPoint > (gatingSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current)))
-            {
-                spinWait.SpinOnce();
-            }
-
-            _gatingSequenceCache.SetValue(gatingSequence);
+            NextInternalOnWrapPointReached(wrapPoint, current);
         }
 
-        return nextSequence;
+        return next;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void NextInternalOnWrapPointReached(long wrapPoint, long current)
+    {
+        var spinWait = default(AggressiveSpinWait);
+        long minSequence;
+        while (wrapPoint > (minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current)))
+        {
+            spinWait.SpinOnce();
+        }
+
+        _gatingSequenceCache.SetValue(minSequence);
     }
 
     /// <summary>

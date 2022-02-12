@@ -137,30 +137,30 @@ public class SingleProducerSequencer : ISequencer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal long NextInternal(int n)
     {
-        long nextValue = _nextValue;
+        var current = _nextValue;
 
-        long nextSequence = nextValue + n;
-        long wrapPoint = nextSequence - _bufferSize;
-        long cachedGatingSequence = _cachedValue;
+        var next = current + n;
+        var wrapPoint = next - _bufferSize;
+        var cachedGatingSequence = _cachedValue;
 
-        if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
+        if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
         {
-            NextInternalWrap(nextValue, wrapPoint);
+            NextInternalOnWrapPointReached(current, wrapPoint);
         }
 
-        _nextValue = nextSequence;
+        _nextValue = next;
 
-        return nextSequence;
+        return next;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private void NextInternalWrap(long nextValue, long wrapPoint)
+    private void NextInternalOnWrapPointReached(long current, long wrapPoint)
     {
-        _cursor.SetValueVolatile(nextValue);
+        _cursor.SetValueVolatile(current);
 
         var spinWait = default(AggressiveSpinWait);
         long minSequence;
-        while (wrapPoint > (minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue)))
+        while (wrapPoint > (minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current)))
         {
             spinWait.SpinOnce();
         }
