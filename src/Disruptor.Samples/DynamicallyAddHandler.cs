@@ -5,7 +5,7 @@ using Disruptor.Processing;
 
 namespace Disruptor.Samples;
 
-public class DynamiclyAddHandler
+public class DynamicallyAddHandler
 {
     public static void Main(string[] args)
     {
@@ -23,15 +23,19 @@ public class DynamiclyAddHandler
         ringBuffer.AddGatingSequences(processor1.Sequence, processor2.Sequence);
 
         // Start the new batch processors.
-        processor1.Start();
-        processor2.Start();
+        var t1 = processor1.Start();
+        var t2 = processor2.Start();
+
+        Thread.Sleep(5000);
 
         // Remove a processor.
 
         // Stop the processor
         processor2.Halt();
+
         // Wait for shutdown the complete
-        handler2.WaitShutdown();
+        handler2.WaitShutdown(); // Or simply t2.Wait()
+        
         // Remove the gating sequence from the ring buffer
         ringBuffer.RemoveGatingSequence(processor2.Sequence);
     }
