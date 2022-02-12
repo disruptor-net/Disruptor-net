@@ -113,7 +113,7 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEvent
             {
                 if (_runState == ProcessorRunStates.Running)
                 {
-                    await ProcessEvents();
+                    await ProcessEvents().ConfigureAwait(false);
                 }
             }
             finally
@@ -138,7 +138,7 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEvent
         {
             try
             {
-                var waitResult = await _sequenceBarrier.WaitForAsync(nextSequence);
+                var waitResult = await _sequenceBarrier.WaitForAsync(nextSequence).ConfigureAwait(false);
                 if (waitResult.IsTimeout)
                 {
                     NotifyTimeout(_sequence.Value);
@@ -149,7 +149,7 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEvent
                 if (availableSequence >= nextSequence)
                 {
                     var batch = _dataProvider.GetBatch(nextSequence, availableSequence);
-                    await _eventHandler.OnBatch(batch, nextSequence);
+                    await _eventHandler.OnBatch(batch, nextSequence).ConfigureAwait(false);
                     nextSequence += batch.Length;
                 }
 

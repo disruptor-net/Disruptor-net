@@ -51,7 +51,7 @@ internal struct AsyncProcessingSequenceBarrier<TSequencer, TWaitStrategy> : IAsy
         var cancellationToken = _cancellationTokenSource.Token;
         cancellationToken.ThrowIfCancellationRequested();
 
-        var result = await _waitStrategy.WaitForAsync(sequence, _cursorSequence, _dependentSequence, cancellationToken);
+        var result = await _waitStrategy.WaitForAsync(sequence, _cursorSequence, _dependentSequence, cancellationToken).ConfigureAwait(false);
 
         if (result.UnsafeAvailableSequence < sequence)
             return result;
