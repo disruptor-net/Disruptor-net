@@ -16,7 +16,7 @@ public class Program
             return;
         }
 
-        if (!TryLoadPerfTestTypes(options.Target, out var perfTestTypes))
+        if (!TryLoadPerfTestTypes(options, out var perfTestTypes))
         {
             Console.WriteLine($"Invalid target: [{options.Target}]");
             return;
@@ -28,15 +28,18 @@ public class Program
         }
     }
 
-    private static bool TryLoadPerfTestTypes(string target, out Type[] perfTestTypes)
+    private static bool TryLoadPerfTestTypes(Options options, out Type[] perfTestTypes)
     {
-        if ("all".Equals(target, StringComparison.OrdinalIgnoreCase))
+        if ("all".Equals(options.Target, StringComparison.OrdinalIgnoreCase))
         {
             perfTestTypes = typeof(Program).Assembly.GetTypes().Where(x => IsValidTestType(x) && !typeof(IExternalTest).IsAssignableFrom(x)).ToArray();
+            if (!string.IsNullOrEmpty(options.From))
+                perfTestTypes = perfTestTypes.SkipWhile(x => !x.Name.EndsWith(options.From)).ToArray();
+
             return true;
         }
 
-        var type = Resolve(target);
+        var type = Resolve(options.Target);
         if (type != null && IsValidTestType(type))
         {
             perfTestTypes = new[] { type };
@@ -53,10 +56,6 @@ public class Program
     private static void RunTestForType(Type perfTestType, Options options)
     {
         var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType);
-        var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
-
-        //Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
-
         if (isThroughputTest)
         {
             var session = new ThroughputTestSession(perfTestType);
@@ -64,6 +63,7 @@ public class Program
             session.Report(options);
         }
 
+        var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
         if (isLatencyTest)
         {
             var session = new LatencyTestSession(perfTestType);
@@ -79,6 +79,7 @@ public class Program
         public bool ShouldPrintComputerSpecifications { get; set; }
         public bool ShouldGenerateReport { get; set; }
         public bool ShouldOpenReport { get; set; }
+        public string From { get; set; }
 
         public static bool TryParse(string[] args, out Options options)
         {
@@ -96,22 +97,26 @@ public class Program
 
             foreach (var arg in args.Skip(1))
             {
-                switch (arg.ToLowerInvariant())
+                switch (arg)
                 {
-                    case string s when Regex.Match(s, "--report=(true|false)") is var m && m.Success:
+                    case string s when Regex.Match(s, "--report=(true|false)", RegexOptions.IgnoreCase) is var m && m.Success:
                         options.ShouldGenerateReport = bool.Parse(m.Groups[1].Value);
                         break;
 
-                    case string s when Regex.Match(s, "--openreport=(true|false)") is var m && m.Success:
+                    case string s when Regex.Match(s, "--openreport=(true|false)", RegexOptions.IgnoreCase) is var m && m.Success:
                         options.ShouldOpenReport = bool.Parse(m.Groups[1].Value);
                         break;
 
-                    case string s when Regex.Match(s, "--printspec=(true|false)") is var m && m.Success:
+                    case string s when Regex.Match(s, "--printspec=(true|false)", RegexOptions.IgnoreCase) is var m && m.Success:
                         options.ShouldPrintComputerSpecifications = bool.Parse(m.Groups[1].Value);
                         break;
 
-                    case string s when Regex.Match(s, "--runs=(\\d+)") is var m && m.Success:
+                    case string s when Regex.Match(s, "--runs=(\\d+)", RegexOptions.IgnoreCase) is var m && m.Success:
                         options.RunCount = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
+                        break;
+
+                    case string s when Regex.Match(s, "--from=(\\w+)", RegexOptions.IgnoreCase) is var m && m.Success:
+                        options.From = m.Groups[1].Value;
                         break;
 
                     default:
@@ -124,11 +129,18 @@ public class Program
 
         public static void PrintUsage()
         {
-            Console.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} target [--report=false] [--openreport=false] [--printspec=false] [--runs=count]");
+            Console.WriteLine($"Usage:");
+            Console.WriteLine($"  {AppDomain.CurrentDomain.FriendlyName} <TARGET> [options]");
+            Console.WriteLine();
+            Console.WriteLine("Arguments:");
+            Console.WriteLine("  <TARGET>                   The test type name or \"all\" for all tests");
             Console.WriteLine();
             Console.WriteLine("Options:");
-            Console.WriteLine("     target           Test type full name or \"all\" for all tests");
-            Console.WriteLine("   --runs=count     Number of runs");
+            Console.WriteLine("  --report=<true|false>      Generate an HTML report file at the end of the test. Default is true.");
+            Console.WriteLine("  --openreport=<true|false>  Opens the HTML report file at the end of the test. Default is false.");
+            Console.WriteLine("  --printspec=<true|false>   Prints computer specifications. Default is true.");
+            Console.WriteLine("  --runs=<COUNT>             Number of runs per test");
+            Console.WriteLine("  --from=<NAME>              The first test type name to run when running all tests");
             Console.WriteLine();
         }
     }
