@@ -11,7 +11,7 @@ namespace Disruptor;
 /// <remarks>
 /// This strategy can be used when throughput and low-latency are not as important as CPU resource.
 /// </remarks>
-public class PhasedBackoffWaitStrategy : IWaitStrategy
+public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
 {
     [DllImport("Kernel32.dll", CallingConvention = CallingConvention.Winapi)]
     private static extern void GetSystemTimePreciseAsFileTime(out long filetime);

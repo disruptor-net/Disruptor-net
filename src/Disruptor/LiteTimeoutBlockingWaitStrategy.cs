@@ -7,7 +7,7 @@ namespace Disruptor;
 /// Variation of the <see cref="TimeoutBlockingWaitStrategy"/> that attempts to elide conditional wake-ups
 /// when the lock is uncontended.
 /// </summary>
-public class LiteTimeoutBlockingWaitStrategy : IWaitStrategy
+public sealed class LiteTimeoutBlockingWaitStrategy : IWaitStrategy
 {
     private readonly object _lock = new();
     private volatile int _signalNeeded;

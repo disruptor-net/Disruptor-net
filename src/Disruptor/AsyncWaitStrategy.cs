@@ -14,7 +14,7 @@ namespace Disruptor;
 /// <remarks>
 /// This strategy can be used when throughput and low-latency are not as important as CPU resource.
 /// </remarks>
-public class AsyncWaitStrategy : IAsyncWaitStrategy
+public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
 {
     private readonly List<TaskCompletionSource<bool>> _taskCompletionSources = new();
     private readonly object _gate = new();

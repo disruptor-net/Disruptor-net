@@ -14,7 +14,7 @@ namespace Disruptor;
 /// <remarks>
 /// This strategy can be used when throughput and low-latency are not as important as CPU resource.
 /// </remarks>
-public class TimeoutBlockingWaitStrategy : IWaitStrategy
+public sealed class TimeoutBlockingWaitStrategy : IWaitStrategy
 {
     private readonly object _gate = new();
     private readonly TimeSpan _timeout;
