@@ -2,17 +2,17 @@ using BenchmarkDotNet.Attributes;
 
 namespace Disruptor.Benchmarks;
 
-public class SequencerDispatcherBenchmarks
+public class SequencerDispatcherBenchmarks_MultiProducer
 {
     private const int _operationsPerInvoke = 100;
 
-    private readonly SingleProducerSequencer _singleProducerSequencer;
+    private readonly MultiProducerSequencer _singleProducerSequencer;
     private readonly ISequencer _sequencer;
     private readonly SequencerDispatcher _dispatcher;
 
-    public SequencerDispatcherBenchmarks()
+    public SequencerDispatcherBenchmarks_MultiProducer()
     {
-        _singleProducerSequencer = new SingleProducerSequencer(1024, new YieldingWaitStrategy());
+        _singleProducerSequencer = new MultiProducerSequencer(1024, new YieldingWaitStrategy());
         _sequencer = _singleProducerSequencer;
         _dispatcher = new SequencerDispatcher(_sequencer);
     }
