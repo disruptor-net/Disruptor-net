@@ -79,6 +79,17 @@ public readonly struct EventBatch<T>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public EventBatch<T> Slice(int start, int length)
+    {
+        if ((uint)start > (uint)_length || (uint)length > (uint)(_length - start))
+        {
+            ThrowHelper.ThrowArgumentOutOfRangeException();
+        }
+
+        return new EventBatch<T>(_array, _beginIndex + start, length);
+    }
+
     /// <summary>
     /// Copies the content of the batch into a new array.
     /// </summary>
