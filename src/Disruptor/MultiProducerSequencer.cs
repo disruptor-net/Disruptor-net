@@ -352,4 +352,16 @@ public unsafe class MultiProducerSequencer : ISequencer
     {
         return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
     }
+
+    /// <summary>
+    /// <see cref="ISequencer.NewAsyncEventStream{T}(IDataProvider{T}, ISequence[])"/>.
+    /// </summary>
+    public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, ISequence[] gatingSequences)
+        where T : class
+    {
+        if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
+            throw new InvalidOperationException($"Unable to create an async event stream: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
+
+        return new AsyncEventStream<T>(provider, asyncWaitStrategy, this, _cursor, gatingSequences);
+    }
 }

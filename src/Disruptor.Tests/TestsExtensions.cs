@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Disruptor.Tests.Support;
 
 namespace Disruptor.Tests;
@@ -27,6 +29,20 @@ public static class TestsExtensions
         finally
         {
             ringBuffer.Publish(sequence);
+        }
+    }
+
+    public static async IAsyncEnumerable<EventBatch<StubEvent>> TakeEvents(this IAsyncEnumerable<EventBatch<StubEvent>> enumerable, int breakAfterCount)
+    {
+        var processedCount = 0;
+
+        await foreach (var batch in enumerable)
+        {
+            yield return batch;
+
+            processedCount += batch.Length;
+            if (processedCount >= breakAfterCount)
+                break;
         }
     }
 }

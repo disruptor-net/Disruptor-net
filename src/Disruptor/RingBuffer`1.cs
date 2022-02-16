@@ -198,10 +198,18 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// Creates an event poller for this ring buffer gated on the supplied sequences.
     /// </summary>
     /// <param name="gatingSequences">gatingSequences to be gated on.</param>
-    /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
     public EventPoller<T> NewPoller(params ISequence[] gatingSequences)
     {
         return _sequencerDispatcher.Sequencer.NewPoller(this, gatingSequences);
+    }
+
+    /// <summary>
+    /// Creates an event stream for this ring buffer gated on the supplied sequences.
+    /// </summary>
+    /// <param name="gatingSequences">gatingSequences to be gated on.</param>
+    public AsyncEventStream<T> NewAsyncEventStream(params ISequence[] gatingSequences)
+    {
+        return _sequencerDispatcher.Sequencer.NewAsyncEventStream(this, gatingSequences);
     }
 
     /// <summary>

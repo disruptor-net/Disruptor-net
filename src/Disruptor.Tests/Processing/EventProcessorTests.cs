@@ -166,7 +166,7 @@ public class EventProcessorTests
     }
 
     [Test]
-    public void ReportAccurateBatchSizesAtBatchStartTime()
+    public void ShouldReportAccurateBatchSizesAtBatchStartTime()
     {
         var batchSizes = new List<long>();
         var signal = new CountdownEvent(6);
@@ -184,6 +184,40 @@ public class EventProcessorTests
 
         Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
         Assert.That(batchSizes, Is.EqualTo(new List<long> { 3, 2, 1 }));
+    }
+
+    [Test]
+    public void ShouldIgnorePreviouslyPublishedEvents()
+    {
+        _ringBuffer.PublishStubEvent(0);
+        _ringBuffer.PublishStubEvent(1);
+        _ringBuffer.PublishStubEvent(2);
+        _ringBuffer.PublishStubEvent(3);
+
+        var capturedValues = new List<int>();
+        var completed = new ManualResetEventSlim();
+        var eventHandler = new TestEventHandler<StubEvent>(x =>
+        {
+            capturedValues.Add(x.Value);
+
+            if (x.Value == 5)
+                completed.Set();
+        });
+
+        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+
+        var task = eventProcessor.Start();
+
+        _ringBuffer.PublishStubEvent(4);
+        _ringBuffer.PublishStubEvent(5);
+
+        Assert.IsTrue(completed.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(capturedValues, Is.EquivalentTo(new[] { 4, 5 }));
+
+        eventProcessor.Halt();
+
+        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
     }
 
     private class LoopbackEventHandler : IEventHandler<StubEvent>

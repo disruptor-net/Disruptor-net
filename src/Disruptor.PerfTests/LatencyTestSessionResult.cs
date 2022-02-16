@@ -56,6 +56,11 @@ public class LatencyTestSessionResult
         }
     }
 
-    public override string ToString() => _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2} - Mean: {Histogram.GetValueAtPercentile(50)}";
+    public override string ToString()
+    {
+        if (_exception != null)
+            return $"Run: FAILED: {_exception.Message}";
 
+        return $"Run: Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2} - Median: {Histogram.GetValueAtPercentile(50)}";
+    }
 }

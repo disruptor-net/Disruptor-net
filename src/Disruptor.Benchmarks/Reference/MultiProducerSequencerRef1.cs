@@ -349,4 +349,10 @@ public class MultiProducerSequencerRef1 : ISequencer
     {
         return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
     }
+
+    public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, ISequence[] gatingSequences)
+        where T : class
+    {
+        throw new NotSupportedException();
+    }
 }

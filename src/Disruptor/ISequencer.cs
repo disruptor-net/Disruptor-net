@@ -72,4 +72,11 @@ public interface ISequencer : ISequenced, ICursored
     /// </summary>
     ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params ISequence[] gatingSequences)
         where T : struct;
+
+    /// <summary>
+    /// Creates an event stream for this sequence that will use the supplied data provider and
+    /// gating sequences.
+    /// </summary>
+    AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, ISequence[] gatingSequences)
+        where T : class;
 }

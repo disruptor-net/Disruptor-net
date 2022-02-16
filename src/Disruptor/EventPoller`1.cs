@@ -3,7 +3,7 @@ using Disruptor.Processing;
 namespace Disruptor;
 
 /// <summary>
-/// Experimental poll-based interface for the Disruptor. Unlike a <see cref="IEventProcessor{T}"/>,
+/// Experimental poll-based API for the Disruptor. Unlike a <see cref="IEventProcessor{T}"/>,
 /// an event poller allows the user to control the flow of execution. This makes it ideal
 /// for interoperability with existing threads whose lifecycle is not controlled by the
 /// disruptor DSL.

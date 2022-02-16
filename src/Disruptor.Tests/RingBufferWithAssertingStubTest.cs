@@ -151,5 +151,11 @@ public class RingBufferWithAssertingStubTest
         {
             throw new NotSupportedException();
         }
+
+        public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, ISequence[] gatingSequences)
+            where T : class
+        {
+            throw new NotSupportedException();
+        }
     }
 }
