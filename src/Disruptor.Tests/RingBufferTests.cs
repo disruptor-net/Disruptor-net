@@ -416,7 +416,7 @@ public class RingBufferTests
         var index = 0;
         var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(index++), 32);
 
-        var span = ringBuffer[sequence, sequence];
+        var span = ringBuffer.GetBatch(sequence, sequence);
 
         Assert.That(span.Length, Is.EqualTo(1));
 
@@ -435,7 +435,7 @@ public class RingBufferTests
         var init = 0;
         var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(init++), 32);
 
-        var span = ringBuffer[sequence, sequence + 31];
+        var span = ringBuffer.GetBatch(sequence, sequence + 31);
 
         var expectedStartIndex = sequence % 32;
         var expectedEndIndex = 31;
