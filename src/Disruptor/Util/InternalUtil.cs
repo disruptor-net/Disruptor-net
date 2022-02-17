@@ -64,7 +64,6 @@ internal static class InternalUtil
         Mul(); // index x sizeof(object)
 
         Call(MethodRef.PropertyGet(typeof(InternalUtil), nameof(ArrayDataOffset)));
-        Conv_U(); // zero extend
         Add(); // index x sizeof(object) +  ArrayDataOffset
 
         Add(); // array + index x sizeof(object) + ArrayDataOffset
@@ -111,6 +110,8 @@ internal static class InternalUtil
         Ldloc_0(); // load the object pointer as a byref
 
         Ldarg(nameof(index));
+        Conv_U(); // zero extend
+
         Sizeof(typeof(T));
         Mul(); // index x sizeof(T)
 
@@ -136,7 +137,9 @@ internal static class InternalUtil
 
         Ldarg(nameof(index));
         Ldarg(nameof(size));
+
         Mul(); // index x size
+        Conv_U(); // zero extend
 
         Add(); // pointer + index x size
 
