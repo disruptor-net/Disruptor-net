@@ -39,9 +39,11 @@ BenchmarkDotNet.Artifacts/
 #ncrunch
 *.ncrunchsolution
 *.ncrunchproject
+/build/nuget/**
 build/tools/**
 output/**
 src/packages/**
 launchSettings.json
 src/Disruptor.PerfTests/Properties/launchSettings.json
 /src/.idea
+*.nupkg
