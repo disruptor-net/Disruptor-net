@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Disruptor.Processing;
 using Disruptor.Tests.Support;
@@ -23,5 +24,39 @@ public class EventProcessorFactoryTests
         {
             Assert.True(genericArgument.IsValueType, $"Generic argument {genericArgument.Name} is not a value type");
         }
+    }
+
+    [Test]
+    public void should_detect_explicit_implementation()
+    {
+        Assert.True(EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithImplicitImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
+        Assert.True(EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithExplicitImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
+        Assert.False(EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithNoImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
+    }
+
+    [SuppressMessage("ReSharper", "UnusedTypeParameter")]
+    private interface IInterface<T>
+    {
+        void Method()
+        {
+        }
+    }
+
+    private class TypeWithImplicitImplementation<T> : IInterface<T>
+    {
+        public void Method()
+        {
+        }
+    }
+
+    private class TypeWithExplicitImplementation<T> : IInterface<T>
+    {
+        void IInterface<T>.Method()
+        {
+        }
+    }
+
+    private class TypeWithNoImplementation<T> : IInterface<T>
+    {
     }
 }

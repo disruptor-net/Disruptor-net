@@ -38,9 +38,9 @@ public static class EventProcessorFactory
     private static IOnBatchStartEvaluator CreateOnBatchStartEvaluator<T>(IEventHandler<T> eventHandler)
         where T : class
     {
-        var methodInfo = eventHandler.GetType().GetMethod(nameof(IEventHandler<T>.OnBatchStart));
-
-        return methodInfo == null ? new NoopOnBatchStartEvaluator() : new DefaultOnBatchStartEvaluator();
+        return HasNonDefaultImplementation(eventHandler.GetType(), typeof(IEventHandler<T>), nameof(IEventHandler<T>.OnBatchStart))
+            ? new DefaultOnBatchStartEvaluator()
+            : new NoopOnBatchStartEvaluator();
     }
 
     /// <summary>
@@ -116,9 +116,17 @@ public static class EventProcessorFactory
     private static IOnBatchStartEvaluator CreateOnBatchStartEvaluator<T>(IValueEventHandler<T> eventHandler)
         where T : struct
     {
-        var methodInfo = eventHandler.GetType().GetMethod(nameof(IValueEventHandler<T>.OnBatchStart));
+        return HasNonDefaultImplementation(eventHandler.GetType(), typeof(IValueEventHandler<T>), nameof(IValueEventHandler<T>.OnBatchStart))
+            ? new DefaultOnBatchStartEvaluator()
+            : new NoopOnBatchStartEvaluator();
+    }
 
-        return methodInfo == null ? new NoopOnBatchStartEvaluator() : new DefaultOnBatchStartEvaluator();
+    internal static bool HasNonDefaultImplementation(Type implementationType, Type interfaceType, string methodName)
+    {
+        var interfaceMap = implementationType.GetInterfaceMap(interfaceType);
+        var methodIndex = Array.IndexOf(interfaceMap.InterfaceMethods, interfaceType.GetMethod(methodName));
+        var targetMethod = interfaceMap.TargetMethods[methodIndex];
+        return targetMethod.DeclaringType != interfaceType;
     }
 
     internal struct NoopOnBatchStartEvaluator : IOnBatchStartEvaluator

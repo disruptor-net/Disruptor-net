@@ -308,6 +308,25 @@ public class ValueEventProcessorTests
         Assert.That(eventHandler.BatchSizeToCount.Keys, Has.No.Member(0));
     }
 
+    [Test]
+    public void ShouldCallBatchStartWithExplicitImplementation()
+    {
+        var signal = new CountdownEvent(1);
+
+        var eventHandler = new ExplicitBatchStartImplementationEventHandler(signal);
+        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+
+        _ringBuffer.PublishStubEvent(0);
+
+        var task = eventProcessor.Start();
+        Assert.IsTrue(signal.Wait(TimeSpan.FromSeconds(2)));
+
+        eventProcessor.Halt();
+
+        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(eventHandler.BatchCount, Is.EqualTo(1));
+    }
+
     private class DelegatingSequenceBarrier : ISequenceBarrier
     {
         private readonly ISequenceBarrier _target;
@@ -358,5 +377,27 @@ public class ValueEventProcessorTests
 
     internal class BatchAwareEventHandlerInternal : BatchAwareEventHandler
     {
+    }
+
+    public class ExplicitBatchStartImplementationEventHandler : IValueEventHandler<StubValueEvent>
+    {
+        private readonly CountdownEvent _signal;
+
+        public int BatchCount { get; private set; }
+
+        public ExplicitBatchStartImplementationEventHandler(CountdownEvent signal)
+        {
+            _signal = signal;
+        }
+
+        public void OnEvent(ref StubValueEvent data, long sequence, bool endOfBatch)
+        {
+            _signal.Signal();
+        }
+
+        void IValueEventHandler<StubValueEvent>.OnBatchStart(long batchSize)
+        {
+            ++BatchCount;
+        }
     }
 }
