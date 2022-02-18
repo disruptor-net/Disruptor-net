@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Disruptor.Processing;
 
@@ -28,6 +29,12 @@ public interface IEventProcessor
     /// Starts this processor.
     /// </summary>
     Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions);
+
+    /// <summary>
+    /// Waits before the event processor enters the <see cref="IEventProcessor.IsRunning"/> state.
+    /// </summary>
+    /// <param name="timeout">Maximum wait duration</param>
+    void WaitUntilStarted(TimeSpan timeout);
 
     /// <summary>
     /// Gets if the processor is running

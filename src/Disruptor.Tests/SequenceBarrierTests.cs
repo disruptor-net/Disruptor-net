@@ -156,8 +156,9 @@ public class SequenceBarrierTests
 
     private class StubEventProcessor : IEventProcessor
     {
-        private volatile int _running;
         private readonly Sequence _sequence = new();
+        private readonly ManualResetEventSlim _runEvent = new();
+        private volatile int _running;
 
         public StubEventProcessor(long sequence)
         {
@@ -169,10 +170,17 @@ public class SequenceBarrierTests
             return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
         }
 
+        public void WaitUntilStarted(TimeSpan timeout)
+        {
+            _runEvent.Wait();
+        }
+
         public void Run()
         {
-            if(Interlocked.Exchange(ref _running, 1) != 0)
+            if (Interlocked.Exchange(ref _running, 1) != 0)
                 throw new InvalidOperationException("Already running");
+
+            _runEvent.Set();
         }
 
         public bool IsRunning => _running == 1;
@@ -182,6 +190,7 @@ public class SequenceBarrierTests
         public void Halt()
         {
             _running = 0;
+            _runEvent.Reset();
         }
     }
 
