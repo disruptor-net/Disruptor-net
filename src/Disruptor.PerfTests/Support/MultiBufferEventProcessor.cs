@@ -8,6 +8,7 @@ namespace Disruptor.PerfTests.Support;
 public class MultiBufferEventProcessor<T> : IEventProcessor
     where T : class
 {
+    private readonly ManualResetEventSlim _runEvent = new();
     private volatile int _isRunning;
     private readonly IDataProvider<T>[] _providers;
     private readonly ISequenceBarrier[] _barriers;
@@ -36,10 +37,17 @@ public class MultiBufferEventProcessor<T> : IEventProcessor
         return Task.Factory.StartNew(Run, CancellationToken.None, taskCreationOptions, taskScheduler);
     }
 
+    public void WaitUntilStarted(TimeSpan timeout)
+    {
+        _runEvent.Wait();
+    }
+
     public void Run()
     {
         if (Interlocked.Exchange(ref _isRunning, 1) != 0)
             throw new ApplicationException("Already running");
+
+        _runEvent.Set();
 
         foreach (var barrier in _barriers)
         {
@@ -102,6 +110,7 @@ public class MultiBufferEventProcessor<T> : IEventProcessor
     public void Halt()
     {
         _isRunning = 0;
+        _runEvent.Reset();
         _barriers[0].CancelProcessing();
     }
 

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Disruptor.Processing;
+﻿namespace Disruptor.Processing;
 
 /// <summary>
 /// An event processor (<see cref="IEventProcessor"/>) for a value-type ring buffer.
@@ -13,12 +11,6 @@ public interface IValueEventProcessor<T> : IEventProcessor
     /// Synchronously runs the processor.
     /// </summary>
     void Run();
-
-    /// <summary>
-    /// Waits before the event processor enters the <see cref="IEventProcessor.IsRunning"/> state.
-    /// </summary>
-    /// <param name="timeout">maximum wait duration</param>
-    void WaitUntilStarted(TimeSpan timeout);
 
     /// <summary>
     /// Set a new <see cref="IValueExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IValueEventHandler{T}"/>

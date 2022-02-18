@@ -7,6 +7,7 @@ namespace Disruptor.Tests.Support;
 
 public sealed class NoOpEventProcessor<T> : IEventProcessor
 {
+    private readonly ManualResetEventSlim _runEvent = new();
     private readonly SequencerFollowingSequence _sequence;
     private volatile int _running;
 
@@ -20,12 +21,17 @@ public sealed class NoOpEventProcessor<T> : IEventProcessor
         return Task.Factory.StartNew(Run, CancellationToken.None, taskCreationOptions, taskScheduler);
     }
 
+    public void WaitUntilStarted(TimeSpan timeout)
+    {
+        _runEvent.Wait();
+    }
+
     public void Run()
     {
         if (Interlocked.Exchange(ref _running, 1) != 0)
-        {
             throw new InvalidOperationException("Thread is already running");
-        }
+
+        _runEvent.Set();
     }
 
     public ISequence Sequence => _sequence;
@@ -33,6 +39,7 @@ public sealed class NoOpEventProcessor<T> : IEventProcessor
     public void Halt()
     {
         _running = 0;
+        _runEvent.Reset();
     }
 
     public bool IsRunning => _running == 1;
