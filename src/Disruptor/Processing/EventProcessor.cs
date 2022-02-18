@@ -31,7 +31,7 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, T
     private TDataProvider _dataProvider;
     private TSequenceBarrier _sequenceBarrier;
     private TEventHandler _eventHandler;
-    private TOnBatchStartEvaluator _onBatchStartInvoker;
+    private TOnBatchStartEvaluator _onBatchStartEvaluator;
     // ReSharper restore FieldCanBeMadeReadOnly.Local
 
     private readonly Sequence _sequence = new();
@@ -44,7 +44,7 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, T
         _dataProvider = dataProvider;
         _sequenceBarrier = sequenceBarrier;
         _eventHandler = eventHandler;
-        _onBatchStartInvoker = onBatchStartEvaluator;
+        _onBatchStartEvaluator = onBatchStartEvaluator;
 
         if (eventHandler is IEventProcessorSequenceAware sequenceAware)
             sequenceAware.SetSequenceCallback(_sequence);
@@ -153,7 +153,7 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, T
 
                 var availableSequence = waitResult.UnsafeAvailableSequence;
 
-                if (_onBatchStartInvoker.ShouldInvokeOnBatchStart(availableSequence, nextSequence))
+                if (_onBatchStartEvaluator.ShouldInvokeOnBatchStart(availableSequence, nextSequence))
                     _eventHandler.OnBatchStart(availableSequence - nextSequence + 1);
 
                 while (nextSequence <= availableSequence)
