@@ -10,7 +10,7 @@ namespace Disruptor.Tests.Processing;
 public class EventProcessorFactoryTests
 {
     [Test]
-    public void should_create_value_type_proxy_for_each_parameter()
+    public void ShouldCreateValueTypeProxyForEachParameter()
     {
         // Arrange
         var dataProvider = new RingBuffer<TestEvent>(() => new TestEvent(), 64);
@@ -27,7 +27,7 @@ public class EventProcessorFactoryTests
     }
 
     [Test]
-    public void should_detect_explicit_implementation()
+    public void ShouldDetectExplicitImplementation()
     {
         Assert.True(EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithImplicitImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
         Assert.True(EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithExplicitImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
