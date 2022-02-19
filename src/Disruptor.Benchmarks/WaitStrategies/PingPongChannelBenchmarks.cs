@@ -55,8 +55,6 @@ public class PingPongChannelBenchmarks : IDisposable
     {
         for (var i = 0; i < 1_000_000; i++)
         {
-            Thread.SpinWait(100);
-
             await _pingChannel.Writer.WriteAsync(_event).ConfigureAwait(false);
             await _pongChannel.Reader.ReadAsync().ConfigureAwait(false);
         }
