@@ -121,4 +121,50 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStra
         Assert.That(waitResult.Task.Result, Is.InstanceOf<OperationCanceledException>());
         AssertIsCompleted(waitTask);
     }
+
+
+    [Test]
+    public void ShouldWaitMultipleTimesAsync()
+    {
+        // Arrange
+        var waitStrategy = CreateWaitStrategy();
+        var sequence1 = new Sequence();
+
+        var waitTask1 = Task.Run(async () =>
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+            var dependentSequence = Cursor;
+
+            for (var i = 0; i < 500; i++)
+            {
+                await waitStrategy.WaitForAsync(i, Cursor, dependentSequence, cancellationTokenSource.Token).ConfigureAwait(false);
+                sequence1.SetValue(i);
+            }
+        });
+
+        var waitTask2 = Task.Run(async () =>
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+            var dependentSequence = sequence1;
+
+            for (var i = 0; i < 500; i++)
+            {
+                await waitStrategy.WaitForAsync(i, Cursor, dependentSequence, cancellationTokenSource.Token).ConfigureAwait(false);
+            }
+        });
+
+        // Act
+        for (var i = 0; i < 500; i++)
+        {
+            if (i % 50 == 0)
+                Thread.Sleep(1);
+
+            Cursor.SetValue(i);
+            waitStrategy.SignalAllWhenBlocking();
+        }
+
+        // Assert
+        AssertIsCompleted(waitTask1);
+        AssertIsCompleted(waitTask2);
+    }
 }

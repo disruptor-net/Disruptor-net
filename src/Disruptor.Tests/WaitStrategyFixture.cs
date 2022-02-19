@@ -169,6 +169,51 @@ public abstract class WaitStrategyFixture<T>
         AssertIsCompleted(waitTask);
     }
 
+    [Test]
+    public void ShouldWaitMultipleTimes()
+    {
+        // Arrange
+        var waitStrategy = CreateWaitStrategy();
+        var sequence1 = new Sequence();
+
+        var waitTask1 = Task.Run(() =>
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+            var dependentSequence = Cursor;
+
+            for (var i = 0; i < 500; i++)
+            {
+                waitStrategy.WaitFor(i, Cursor, dependentSequence, cancellationTokenSource.Token);
+                sequence1.SetValue(i);
+            }
+        });
+
+        var waitTask2 = Task.Run(() =>
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+            var dependentSequence = sequence1;
+
+            for (var i = 0; i < 500; i++)
+            {
+                waitStrategy.WaitFor(i, Cursor, dependentSequence, cancellationTokenSource.Token);
+            }
+        });
+
+        // Act
+        for (var i = 0; i < 500; i++)
+        {
+            if (i % 50 == 0)
+                Thread.Sleep(1);
+
+            Cursor.SetValue(i);
+            waitStrategy.SignalAllWhenBlocking();
+        }
+
+        // Assert
+        AssertIsCompleted(waitTask1);
+        AssertIsCompleted(waitTask2);
+    }
+
     protected static void AssertIsNotCompleted(Task task)
     {
         Assert.That(task.Wait(2), Is.False);
