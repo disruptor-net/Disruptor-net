@@ -117,7 +117,6 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
     {
         private readonly AsyncEventStream<T> _asyncEventStream;
         private readonly Sequence _sequence;
-        private readonly Sequence _availableSequence;
         private readonly CancellationTokenRegistration _cancellationTokenRegistration;
         private readonly CancellationTokenSource _linkedTokenSource;
 
@@ -125,7 +124,6 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
         {
             _asyncEventStream = asyncEventStream;
             _sequence = sequence;
-            _availableSequence = new Sequence(sequence.Value);
             _linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(streamCancellationToken, enumeratorCancellationToken);
 
             _cancellationTokenRegistration = _linkedTokenSource.Token.Register(x => ((IAsyncWaitStrategy)x!).SignalAllWhenBlocking(), asyncEventStream._waitStrategy);
@@ -146,12 +144,6 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
         {
             _sequence.SetValue(_sequence.Value + Current.Length);
 
-            if (_sequence.Value < _availableSequence.Value)
-            {
-                Current = _asyncEventStream._dataProvider.GetBatch(_sequence.Value + 1, _availableSequence.Value);
-                return true;
-            }
-
             while (true)
             {
                 var currentSequence = _sequence.Value;
@@ -166,8 +158,7 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
                 var availableSequence = _asyncEventStream._sequencer.GetHighestPublishedSequence(nextSequence, waitResult.UnsafeAvailableSequence);
                 if (availableSequence >= nextSequence)
                 {
-                    _availableSequence.SetValue(availableSequence);
-                    Current = _asyncEventStream._dataProvider.GetBatch(_sequence.Value + 1, _availableSequence.Value);
+                    Current = _asyncEventStream._dataProvider.GetBatch(nextSequence, availableSequence);
                     return true;
                 }
             }
