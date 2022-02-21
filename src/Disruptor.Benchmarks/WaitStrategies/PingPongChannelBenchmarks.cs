@@ -50,10 +50,12 @@ public class PingPongChannelBenchmarks : IDisposable
         }
     }
 
-    [Benchmark(OperationsPerInvoke = 1_000_000)]
+    public const int OperationsPerInvoke = 1_000_000;
+
+    [Benchmark(OperationsPerInvoke = OperationsPerInvoke)]
     public async Task Run()
     {
-        for (var i = 0; i < 1_000_000; i++)
+        for (var i = 0; i < OperationsPerInvoke; i++)
         {
             await _pingChannel.Writer.WriteAsync(_event).ConfigureAwait(false);
             await _pongChannel.Reader.ReadAsync().ConfigureAwait(false);

@@ -9,18 +9,17 @@ namespace Disruptor.Benchmarks.WaitStrategies;
 public class PingPongBlockingWaitStrategyBenchmarks : IDisposable
 {
     private readonly CancellationTokenSource _cancellationTokenSource = new();
-    private readonly BlockingWaitStrategy _pingWaitStrategy;
-    private readonly BlockingWaitStrategy _pongWaitStrategy;
+    private readonly BlockingWaitStrategy _pingWaitStrategy = new();
+    private readonly BlockingWaitStrategy _pongWaitStrategy = new();
     private readonly Sequence _pingCursor = new();
     private readonly Sequence _pongCursor = new();
+    private readonly ManualResetEventSlim _pongStarted = new();
     private readonly Task _pongTask;
 
     public PingPongBlockingWaitStrategyBenchmarks()
     {
-        _pingWaitStrategy = new BlockingWaitStrategy();
-        _pongWaitStrategy = new BlockingWaitStrategy();
-
         _pongTask = Task.Run(RunPong);
+        _pongStarted.Wait();
     }
 
     public void Dispose()
@@ -31,10 +30,12 @@ public class PingPongBlockingWaitStrategyBenchmarks : IDisposable
 
     private void RunPong()
     {
-        var sequence = -1L;
+        _pongStarted.Set();
 
         try
         {
+            var sequence = -1L;
+
             while (true)
             {
                 sequence++;
@@ -42,7 +43,6 @@ public class PingPongBlockingWaitStrategyBenchmarks : IDisposable
                 _pingWaitStrategy.WaitFor(sequence, _pingCursor, _pingCursor, _cancellationTokenSource.Token);
 
                 _pongCursor.SetValue(sequence);
-
                 _pongWaitStrategy.SignalAllWhenBlocking();
             }
         }
@@ -52,17 +52,20 @@ public class PingPongBlockingWaitStrategyBenchmarks : IDisposable
         }
     }
 
-    [Benchmark(OperationsPerInvoke = 10_000_000)]
+    public const int OperationsPerInvoke = 1_000_000;
+
+    [Benchmark(OperationsPerInvoke = OperationsPerInvoke)]
     public void Run()
     {
-        var sequence = -1L;
-        for (var i = 0; i < 10_000_000; i++)
+        var start = _pingCursor.Value + 1;
+        var end = start + OperationsPerInvoke;
+
+        for (var s = start; s < end; s++)
         {
-            sequence++;
-            _pingCursor.SetValue(sequence);
+            _pingCursor.SetValue(s);
             _pingWaitStrategy.SignalAllWhenBlocking();
 
-            _pongWaitStrategy.WaitFor(sequence, _pongCursor, _pongCursor, _cancellationTokenSource.Token);
+            _pongWaitStrategy.WaitFor(s, _pongCursor, _pongCursor, _cancellationTokenSource.Token);
         }
     }
 }

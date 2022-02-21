@@ -6,18 +6,20 @@ using BenchmarkDotNet.Attributes;
 namespace Disruptor.Benchmarks.WaitStrategies;
 
 [MemoryDiagnoser]
-public class PingPongAsyncWaitStrategyBenchmarks : IDisposable
+public class PingPongYieldingWaitStrategyBenchmarks : IDisposable
 {
     private readonly CancellationTokenSource _cancellationTokenSource = new();
-    private readonly AsyncWaitStrategy _pingWaitStrategy = new();
-    private readonly AsyncWaitStrategy _pongWaitStrategy = new();
+    private readonly YieldingWaitStrategy _pingWaitStrategy = new();
+    private readonly YieldingWaitStrategy _pongWaitStrategy = new();
     private readonly Sequence _pingCursor = new();
     private readonly Sequence _pongCursor = new();
+    private readonly ManualResetEventSlim _pongStarted = new();
     private readonly Task _pongTask;
 
-    public PingPongAsyncWaitStrategyBenchmarks()
+    public PingPongYieldingWaitStrategyBenchmarks()
     {
         _pongTask = Task.Run(RunPong);
+        _pongStarted.Wait();
     }
 
     public void Dispose()
@@ -26,17 +28,19 @@ public class PingPongAsyncWaitStrategyBenchmarks : IDisposable
         _pongTask.Wait();
     }
 
-    private async Task RunPong()
+    private void RunPong()
     {
-        var sequence = -1L;
+        _pongStarted.Set();
 
         try
         {
+            var sequence = -1L;
+
             while (true)
             {
                 sequence++;
 
-                await _pingWaitStrategy.WaitForAsync(sequence, _pingCursor, _pingCursor, _cancellationTokenSource.Token).ConfigureAwait(false);
+                _pingWaitStrategy.WaitFor(sequence, _pingCursor, _pingCursor, _cancellationTokenSource.Token);
 
                 _pongCursor.SetValue(sequence);
                 _pongWaitStrategy.SignalAllWhenBlocking();
@@ -51,7 +55,7 @@ public class PingPongAsyncWaitStrategyBenchmarks : IDisposable
     public const int OperationsPerInvoke = 1_000_000;
 
     [Benchmark(OperationsPerInvoke = OperationsPerInvoke)]
-    public async Task Run()
+    public void Run()
     {
         var start = _pingCursor.Value + 1;
         var end = start + OperationsPerInvoke;
@@ -61,7 +65,7 @@ public class PingPongAsyncWaitStrategyBenchmarks : IDisposable
             _pingCursor.SetValue(s);
             _pingWaitStrategy.SignalAllWhenBlocking();
 
-            await _pongWaitStrategy.WaitForAsync(s, _pongCursor, _pongCursor, _cancellationTokenSource.Token).ConfigureAwait(false);
+            _pongWaitStrategy.WaitFor(s, _pongCursor, _pongCursor, _cancellationTokenSource.Token);
         }
     }
 }
