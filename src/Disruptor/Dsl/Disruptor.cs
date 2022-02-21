@@ -81,7 +81,7 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWith(params IEventHandler<T>[] handlers)
     {
-        return CreateEventProcessors(new ISequence[0], handlers);
+        return CreateEventProcessors(Array.Empty<ISequence>(), handlers);
     }
 
     /// <summary>
@@ -96,7 +96,7 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWith(params IBatchEventHandler<T>[] handlers)
     {
-        return CreateEventProcessors(new ISequence[0], handlers);
+        return CreateEventProcessors(Array.Empty<ISequence>(), handlers);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWith(params IAsyncBatchEventHandler<T>[] handlers)
     {
-        return CreateEventProcessors(new ISequence[0], handlers);
+        return CreateEventProcessors(Array.Empty<ISequence>(), handlers);
     }
 
     /// <summary>
@@ -133,7 +133,7 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWith(params IEventProcessorFactory<T>[] eventProcessorFactories)
     {
-        return CreateEventProcessors(new ISequence[0], eventProcessorFactories);
+        return CreateEventProcessors(Array.Empty<ISequence>(), eventProcessorFactories);
     }
 
     /// <summary>
@@ -173,7 +173,7 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWithWorkerPool(params IWorkHandler<T>[] workHandlers)
     {
-        return CreateWorkerPool(new ISequence[0], workHandlers);
+        return CreateWorkerPool(Array.Empty<ISequence>(), workHandlers);
     }
 
     /// <summary>

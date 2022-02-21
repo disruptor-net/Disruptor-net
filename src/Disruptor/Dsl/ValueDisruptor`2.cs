@@ -43,7 +43,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public ValueEventHandlerGroup<T> HandleEventsWith(params IValueEventHandler<T>[] handlers)
     {
-        return CreateEventProcessors(new ISequence[0], handlers);
+        return CreateEventProcessors(Array.Empty<ISequence>(), handlers);
     }
 
     /// <summary>
@@ -128,7 +128,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public ValueEventHandlerGroup<T> HandleEventsWith(params IValueEventProcessorFactory<T>[] eventProcessorFactories)
     {
-        return CreateEventProcessors(new ISequence[0], eventProcessorFactories);
+        return CreateEventProcessors(Array.Empty<ISequence>(), eventProcessorFactories);
     }
 
     /// <summary>

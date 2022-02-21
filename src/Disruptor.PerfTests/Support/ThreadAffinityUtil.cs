@@ -35,7 +35,7 @@ public class ThreadAffinityUtil
     private static void SetProcessorAffinity(uint mask)
     {
 #if NETFRAMEWORK
-            SetProcessorAffinityWindows(mask);
+        SetProcessorAffinityWindows(mask);
 #else
         if (OperatingSystem.IsWindows())
             SetProcessorAffinityWindows(mask);

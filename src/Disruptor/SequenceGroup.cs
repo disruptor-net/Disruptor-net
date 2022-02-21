@@ -13,7 +13,7 @@ namespace Disruptor;
 public class SequenceGroup : ISequence
 {
     /// <summary>Volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field.</summary>
-    private ISequence[] _sequences = new ISequence[0];
+    private ISequence[] _sequences = Array.Empty<ISequence>();
 
     /// <summary>
     /// Get the minimum sequence value for the group.

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Disruptor.Dsl;
@@ -23,13 +24,17 @@ public unsafe class MultiProducerSequencer : ISequencer
     private readonly Sequence _cursor = new();
 
     // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
-    private ISequence[] _gatingSequences = new ISequence[0];
+    private ISequence[] _gatingSequences = Array.Empty<ISequence>();
 
     private readonly Sequence _gatingSequenceCache = new();
+
+    [SuppressMessage("ReSharper", "PrivateFieldCanBeConvertedToLocalVariable", Justification = "Prevents the GC from collecting the array")]
     private readonly int[] _availableBuffer;
+
 #if NETCOREAPP
-        private readonly int* _availableBufferPointer;
+    private readonly int* _availableBufferPointer;
 #endif
+
     private readonly int _indexMask;
     private readonly int _indexShift;
 
@@ -53,8 +58,8 @@ public unsafe class MultiProducerSequencer : ISequencer
         _waitStrategy = waitStrategy;
         _isBlockingWaitStrategy = waitStrategy.IsBlockingStrategy;
 #if NETCOREAPP
-            _availableBuffer = GC.AllocateArray<int>(bufferSize, pinned: true);
-            _availableBufferPointer = (int*)Unsafe.AsPointer(ref _availableBuffer[0]);
+        _availableBuffer = GC.AllocateArray<int>(bufferSize, pinned: true);
+        _availableBufferPointer = (int*)Unsafe.AsPointer(ref _availableBuffer[0]);
 #else
         _availableBuffer = new int[bufferSize];
 #endif
@@ -261,7 +266,7 @@ public unsafe class MultiProducerSequencer : ISequencer
     private void SetAvailableBufferValue(int index, int flag)
     {
 #if NETCOREAPP
-            _availableBufferPointer[index] = flag;
+        _availableBufferPointer[index] = flag;
 #else
         _availableBuffer[index] = flag;
 #endif
@@ -277,7 +282,7 @@ public unsafe class MultiProducerSequencer : ISequencer
         var flag = CalculateAvailabilityFlag(sequence);
 
 #if NETCOREAPP
-            return Volatile.Read(ref _availableBufferPointer[index]) == flag;
+        return Volatile.Read(ref _availableBufferPointer[index]) == flag;
 #else
         return Volatile.Read(ref _availableBuffer[index]) == flag;
 #endif
