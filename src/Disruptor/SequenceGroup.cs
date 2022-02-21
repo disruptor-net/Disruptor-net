@@ -6,7 +6,7 @@ namespace Disruptor;
 /// <summary>
 /// A <see cref="Sequence"/> group that can dynamically have <see cref="Sequence"/>s added and removed while being
 /// thread safe.
-/// 
+///
 /// The <see cref="SequenceGroup.Value"/> get and set methods are lock free and can be
 /// concurrently called with the <see cref="SequenceGroup.Add"/> and <see cref="SequenceGroup.Remove"/>.
 /// </summary>
@@ -31,35 +31,6 @@ public class SequenceGroup : ISequence
         {
             sequences[i].SetValue(value);
         }
-    }
-
-    /// <summary>
-    /// Performs a volatile write of this sequence.  The intent is a Store/Store barrier between this write and any previous
-    /// write and a Store/Load barrier between this write and any subsequent volatile read. 
-    /// </summary>
-    /// <param name="value"></param>
-    public void SetValueVolatile(long value)
-    {
-        var sequences = Volatile.Read(ref _sequences);
-        for (var i = 0; i < sequences.Length; i++)
-        {
-            sequences[i].SetValueVolatile(value);
-        }
-    }
-
-    public bool CompareAndSet(long expectedSequence, long nextSequence)
-    {
-        throw new NotImplementedException();
-    }
-
-    public long IncrementAndGet()
-    {
-        throw new NotImplementedException();
-    }
-
-    public long AddAndGet(long value)
-    {
-        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -96,7 +67,7 @@ public class SequenceGroup : ISequence
     /// Get the size of the group.
     /// </summary>
     public int Size => Volatile.Read(ref _sequences).Length;
-        
+
     /// <summary>
     /// Adds a sequence to the sequence group after threads have started to publish to
     /// the Disruptor.It will set the sequences to cursor value of the ringBuffer

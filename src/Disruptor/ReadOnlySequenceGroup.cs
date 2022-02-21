@@ -30,41 +30,8 @@ internal sealed class ReadOnlySequenceGroup : ISequence
         throw new NotSupportedException();
     }
 
-    /// <summary>
-    /// Not supported
-    /// </summary>
-    /// <param name="value"></param>
-    public void SetValueVolatile(long value)
-    {
-        throw new NotSupportedException();
-    }
-
-    /// <summary>
-    /// Not supported.
-    /// </summary>
-    public bool CompareAndSet(long expectedValue, long newValue)
-    {
-        throw new NotSupportedException();
-    }
-
-    /// <summary>
-    /// Not supported.
-    /// </summary>
-    public long IncrementAndGet()
-    {
-        throw new NotSupportedException();
-    }
-
-    /// <summary>
-    /// Not supported.
-    /// </summary>
-    public long AddAndGet(long increment)
-    {
-        throw new NotSupportedException();
-    }
-
     public override string ToString()
     {
-        return $"FixedSequenceGroup {{{string.Join(", ", _sequences.Select(x => x.ToString()))}}}";
+        return $"ReadOnlySequenceGroup {{{string.Join(", ", _sequences.Select(x => x.ToString()))}}}";
     }
 }

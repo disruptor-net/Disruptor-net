@@ -220,25 +220,5 @@ public class SequenceBarrierTests
         {
             _sequenceImplementation.SetValue(value);
         }
-
-        public void SetValueVolatile(long value)
-        {
-            _sequenceImplementation.SetValueVolatile(value);
-        }
-
-        public bool CompareAndSet(long expectedSequence, long nextSequence)
-        {
-            return _sequenceImplementation.CompareAndSet(expectedSequence, nextSequence);
-        }
-
-        public long IncrementAndGet()
-        {
-            return _sequenceImplementation.IncrementAndGet();
-        }
-
-        public long AddAndGet(long value)
-        {
-            return _sequenceImplementation.AddAndGet(value);
-        }
     }
 }
