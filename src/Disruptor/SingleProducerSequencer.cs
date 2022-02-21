@@ -22,7 +22,7 @@ public class SingleProducerSequencer : ISequencer
 
     [FieldOffset(DefaultPadding + 16)]
     // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
-    private ISequence[] _gatingSequences = new ISequence[0];
+    private ISequence[] _gatingSequences = Array.Empty<ISequence>();
 
     [FieldOffset(DefaultPadding + 24)]
     private readonly int _bufferSize;

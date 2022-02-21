@@ -67,4 +67,22 @@ public class EventBatchTests
         // Act/Assert
         Assert.Throws<ArgumentOutOfRangeException>(() => batch.Slice(start, length));
     }
+
+    [Test]
+    public void ShouldSupportDefaultBatch()
+    {
+        var batch = default(EventBatch<TestEvent>);
+        var itemCount = 0;
+
+        foreach (var _ in batch)
+        {
+            ++itemCount;
+        }
+
+        Assert.Zero(itemCount);
+        Assert.Zero(batch.Length);
+        Assert.Zero(batch.AsSpan().Length);
+        Assert.Zero(batch.Slice(0, 0).Length);
+        Assert.AreEqual(Array.Empty<TestEvent>(), batch.ToArray());
+    }
 }

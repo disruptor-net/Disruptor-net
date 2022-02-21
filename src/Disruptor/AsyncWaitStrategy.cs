@@ -152,7 +152,7 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
     private static int ToMilliseconds(TimeSpan timeout)
     {
         var totalMilliseconds = (long)timeout.TotalMilliseconds;
-        if (totalMilliseconds <= 0 || totalMilliseconds >= int.MaxValue)
+        if (totalMilliseconds is < 0 or >= int.MaxValue)
         {
             throw new ArgumentOutOfRangeException();
         }

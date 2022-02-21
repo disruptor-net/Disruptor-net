@@ -51,7 +51,7 @@ public unsafe class MultiProducerSequencerRef2 : ISequencer
         _availableBuffer = GC.AllocateArray<int>(bufferSize, pinned: true);
         _availableBufferPointer = (int*)Unsafe.AsPointer(ref _availableBuffer[0]);
 #else
-            _availableBuffer = new int[bufferSize];
+        _availableBuffer = new int[bufferSize];
 #endif
         _indexMask = bufferSize - 1;
         _indexShift = DisruptorUtil.Log2(bufferSize);
@@ -263,7 +263,7 @@ public unsafe class MultiProducerSequencerRef2 : ISequencer
 #if NETCOREAPP
         _availableBufferPointer[index] = flag;
 #else
-            _availableBuffer[index] = flag;
+        _availableBuffer[index] = flag;
 #endif
     }
 
@@ -279,7 +279,7 @@ public unsafe class MultiProducerSequencerRef2 : ISequencer
 #if NETCOREAPP
         return Volatile.Read(ref _availableBufferPointer[index]) == flag;
 #else
-            return Volatile.Read(ref _availableBuffer[index]) == flag;
+        return Volatile.Read(ref _availableBuffer[index]) == flag;
 #endif
     }
 

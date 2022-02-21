@@ -28,35 +28,35 @@ public struct AggressiveSpinWait
         _spinWait.SpinOnce(-1);
     }
 #else
-        private static readonly bool _isSingleProcessor = Environment.ProcessorCount == 1;
-        private const int _yieldThreshold = 10;
-        private const int _sleep0EveryHowManyTimes = 5;
-        private int _count;
+    private static readonly bool _isSingleProcessor = Environment.ProcessorCount == 1;
+    private const int _yieldThreshold = 10;
+    private const int _sleep0EveryHowManyTimes = 5;
+    private int _count;
 
-        private bool NextSpinWillYield => _count > _yieldThreshold || _isSingleProcessor;
+    private bool NextSpinWillYield => _count > _yieldThreshold || _isSingleProcessor;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SpinOnce()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SpinOnce()
+    {
+        if (NextSpinWillYield)
         {
-            if (NextSpinWillYield)
-            {
-                int yieldsSoFar = (_count >= _yieldThreshold ? _count - _yieldThreshold : _count);
+            int yieldsSoFar = (_count >= _yieldThreshold ? _count - _yieldThreshold : _count);
 
-                if ((yieldsSoFar % _sleep0EveryHowManyTimes) == (_sleep0EveryHowManyTimes - 1))
-                {
-                    Thread.Sleep(0);
-                }
-                else
-                {
-                    Thread.Yield();
-                }
+            if ((yieldsSoFar % _sleep0EveryHowManyTimes) == (_sleep0EveryHowManyTimes - 1))
+            {
+                Thread.Sleep(0);
             }
             else
             {
-                Thread.SpinWait(4 << _count);
+                Thread.Yield();
             }
-
-            _count = (_count == int.MaxValue ? _yieldThreshold : _count + 1);
         }
+        else
+        {
+            Thread.SpinWait(4 << _count);
+        }
+
+        _count = (_count == int.MaxValue ? _yieldThreshold : _count + 1);
+    }
 #endif
 }

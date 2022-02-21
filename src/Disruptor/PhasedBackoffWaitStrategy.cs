@@ -13,8 +13,11 @@ namespace Disruptor;
 /// </remarks>
 public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
 {
+#if NETCOREAPP
+    [SuppressGCTransition]
+#endif
     [DllImport("Kernel32.dll", CallingConvention = CallingConvention.Winapi)]
-    private static extern void GetSystemTimePreciseAsFileTime(out long filetime);
+    private static extern void GetSystemTimePreciseAsFileTime(out long fileTime);
 
     private static readonly bool _isSystemTimePreciseAsFileTimeAvailable;
 
@@ -27,8 +30,7 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
     {
         try
         {
-            long fileTime;
-            GetSystemTimePreciseAsFileTime(out fileTime);
+            GetSystemTimePreciseAsFileTime(out _);
             _isSystemTimePreciseAsFileTimeAvailable = true;
         }
         catch (TypeLoadException)
@@ -97,6 +99,7 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
                         Thread.Yield();
                     }
                 }
+
                 counter = _spinTries;
             }
         }
@@ -119,6 +122,7 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
         {
             ticks = DateTime.UtcNow.Ticks;
         }
+
         return ticks;
     }
 }
