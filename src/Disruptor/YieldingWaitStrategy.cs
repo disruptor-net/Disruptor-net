@@ -7,7 +7,7 @@ namespace Disruptor;
 /// after an initially spinning.
 /// </summary>
 /// <remarks>
-/// This strategy is a good compromise between performance and CPU resource without incurring significant latency spikes.
+/// This strategy is a good compromise between performance and CPU resources without incurring significant latency spikes.
 /// </remarks>
 public sealed class YieldingWaitStrategy : IWaitStrategy
 {

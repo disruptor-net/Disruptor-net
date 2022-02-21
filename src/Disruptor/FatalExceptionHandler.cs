@@ -3,8 +3,8 @@ using System;
 namespace Disruptor;
 
 /// <summary>
-/// Convenience implementation of an exception handler that using standard Console.Writeline to log
-/// the exception re-throw it wrapped in a <see cref="ApplicationException"/>
+/// Convenience implementation of an exception handler that uses <c>Console.WriteLine</c> to log
+/// the exception and re-throw it wrapped in a <see cref="ApplicationException"/>
 /// </summary>
 public sealed class FatalExceptionHandler<T> : IExceptionHandler<T>
     where T : class

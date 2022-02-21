@@ -83,8 +83,8 @@ public class EventPoller<T>
     /// Polls for events using the given handler.
     /// </para>
     /// <para>
-    /// This poller will continue to feed events to the given handler until known available
-    /// events are consumed or <see cref="EventPoller.BatchHandler{T}"/> returns false.
+    /// This poller will feed a single event batch to the given handler, even if more events
+    /// are already available due to ring buffer wrap around.
     /// </para>
     /// <para>
     /// Note that it is possible for more events to become available while the current events

@@ -6,12 +6,12 @@ using static Disruptor.Util.Constants;
 namespace Disruptor;
 
 /// <summary>
-/// <p>Concurrent sequence class used for tracking the progress of
-/// the ring buffer and event processors.Support a number
-/// of concurrent operations including CAS and order writes.</p>
+/// <para>Concurrent sequence class used for tracking the progress of
+/// the ring buffer and event processors. Supports a number
+/// of concurrent operations including CAS and order writes.</para>
 ///
-/// <p>Also attempts to be more efficient with regards to false
-/// sharing by adding padding around the volatile field.</p>
+/// <para>Also attempts to be more efficient with regards to false
+/// sharing by adding padding around the volatile field.</para>
 /// </summary>
 [StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 8)]
 public class Sequence : ISequence

@@ -4,8 +4,9 @@ using System.Threading.Tasks;
 namespace Disruptor;
 
 /// <summary>
-/// Coordination barrier for asynchronous event processors. <see cref="ISequenceBarrier"/>
+/// Coordination barrier for asynchronous event processors.
 /// </summary>
+/// <seealso cref="ISequenceBarrier"/>
 public interface IAsyncSequenceBarrier : ISequenceBarrier
 {
     /// <summary>

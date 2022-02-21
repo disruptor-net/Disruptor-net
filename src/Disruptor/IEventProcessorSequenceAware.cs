@@ -4,14 +4,18 @@ namespace Disruptor;
 
 /// <summary>
 /// Implement this interface in your event handler to obtain the <see cref="IEventProcessor"/> sequence.
-///
+/// </summary>
+/// <remarks>
+/// <para>
 /// Used by the <see cref="IEventProcessor"/> to set a callback allowing the event handler to notify
-/// when it has finished consuming an event if this happens after the OnEvent call.
-///
+/// when it has finished consuming an event if this happens after the <c>OnEvent</c> call.
+/// </para>
+/// <para>
 /// Typically this would be used when the handler is performing some sort of batching operation such as writing to an IO
 /// device; after the operation has completed, the implementation should set <see cref="Sequence.Value"/> to update the
 /// sequence and allow other processes that are dependent on this handler to progress.
-/// </summary>
+/// </para>
+/// </remarks>
 public interface IEventProcessorSequenceAware
 {
     /// <summary>

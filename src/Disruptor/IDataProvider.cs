@@ -15,12 +15,15 @@ public interface IDataProvider<T>
     /// Gets a batch of events for the given sequences in the RingBuffer.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Because the ring buffer is a circular data structure, it is possible that the [lo, hi] sequence interval
     /// does not reference a contiguous portion of the underlying array. In this case the returned batch will contain
     /// the largest possible contiguous array segment that starts from <paramref name="lo"/>.
-    ///
+    /// </para>
+    /// <para>
     /// Please never assume that the returned batch contains all the events.
     /// Always check the returned batch length.
+    /// </para>
     /// </remarks>
     /// <param name="lo">the lowest sequence number</param>
     /// <param name="hi">the highest sequence number</param>

@@ -9,7 +9,7 @@ namespace Disruptor;
 /// Spins, then yields, then waits using the configured fallback <see cref="IWaitStrategy"/>.
 /// </summary>
 /// <remarks>
-/// This strategy can be used when throughput and low-latency are not as important as CPU resource.
+/// This strategy can be used when throughput and low-latency are not as important as CPU resources.
 /// </remarks>
 public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
 {

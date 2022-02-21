@@ -7,13 +7,17 @@ namespace Disruptor;
 /// Callback interface to be implemented for processing events as they become available in the <see cref="RingBuffer{T}"/>
 /// </summary>
 /// <remarks>
+/// <para>
 /// This interface is an alternative to <see cref="IEventHandler{T}"/>. It is very slightly slower than <see cref="IEventHandler{T}"/>
 /// for batches of size one, but faster for larger batches.
-///
+/// </para>
+/// <para>
 /// Consider using this type if you need to process events in batches.
-///
+/// </para>
+/// <para>
 /// Please note that the batches can be very large, the worst case being the size of your ring buffer. It might be appropriate to process
 /// the batch in bounded-size chunks in some use cases (e.g.: database persistence).
+/// </para>
 /// </remarks>
 /// <typeparam name="T">Type of events for sharing during exchange or parallel coordination of an event.</typeparam>
 public interface IBatchEventHandler<T>
@@ -38,10 +42,11 @@ public interface IBatchEventHandler<T>
 
     /// <summary>
     /// Called once just before the thread is shutdown.
-    ///
+    /// </summary>
+    /// <remarks>
     /// Sequence event processing will already have stopped before this method is called. No events will
     /// be processed after this message.
-    /// </summary>
+    /// </remarks>
     void OnShutdown()
     {
     }
