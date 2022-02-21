@@ -1,8 +1,7 @@
-using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Disruptor.Util;
+using JetBrains.Annotations;
 
 namespace Disruptor.Processing;
 
@@ -25,6 +24,7 @@ internal struct ProcessingSequenceBarrier<TSequencer, TWaitStrategy> : ISequence
     private readonly Sequence _cursorSequence;
     private volatile CancellationTokenSource _cancellationTokenSource;
 
+    [UsedImplicitly]
     public ProcessingSequenceBarrier(TSequencer sequencer, TWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
     {
         _sequencer = sequencer;

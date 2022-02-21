@@ -9,8 +9,9 @@ namespace Disruptor;
 public interface IAsyncWaitStrategy : IWaitStrategy
 {
     /// <summary>
-    /// Wait for the given sequence to be available. <see cref="IWaitStrategy.WaitFor"/>
+    /// Wait for the given sequence to be available.
     /// </summary>
+    /// <seealso cref="IWaitStrategy.WaitFor"/>
     /// <param name="sequence">sequence to be waited on</param>
     /// <param name="cursor">main sequence from the ring buffer</param>
     /// <param name="dependentSequence">sequence on which to wait</param>

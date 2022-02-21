@@ -6,7 +6,7 @@ namespace Disruptor;
 /// Busy Spin strategy that uses a busy spin loop for event processors waiting on a barrier.
 /// </summary>
 /// <remarks>
-/// This strategy will use CPU resource to avoid syscalls which can introduce latency jitter. It is best
+/// This strategy will use CPU resources to avoid syscalls which can introduce latency jitter. It is best
 /// used when threads can be bound to specific CPU cores.
 /// </remarks>
 public sealed class BusySpinWaitStrategy : IWaitStrategy

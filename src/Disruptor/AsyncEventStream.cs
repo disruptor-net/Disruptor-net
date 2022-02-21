@@ -19,10 +19,12 @@ namespace Disruptor;
 /// The first enumerator sequence is added as a gating sequence to the ring buffer when the steam is created.
 ///
 /// As a consequence:
-/// - The first iteration will process all events published after the creation of the event stream.
-/// - The stream will act as a backpressure source right after its creation. Creating a stream and not iterating it will block the ring buffer.
+/// <list type="bullet">
+/// <item>The first iteration will process all events published after the creation of the event stream.</item>
+/// <item>The stream will act as a backpressure source right after its creation. Creating a stream and not iterating it will block the ring buffer.</item>
+/// </list>
 ///
-/// Subsequent iterations of the stream will start from the last published published event.
+/// Subsequent iterations of the stream will start from the last published event.
 /// </para>
 /// </remarks>
 public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable

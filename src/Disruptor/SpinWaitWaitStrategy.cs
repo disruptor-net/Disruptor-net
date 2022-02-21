@@ -6,7 +6,7 @@ namespace Disruptor;
 /// Spin strategy that uses a <see cref="SpinWait"/> for event processors waiting on a barrier.
 /// </summary>
 /// <remarks>
-/// This strategy is a good compromise between performance and CPU resource.
+/// This strategy is a good compromise between performance and CPU resources.
 /// Latency spikes can occur after quiet periods.
 /// </remarks>
 public sealed class SpinWaitWaitStrategy : IWaitStrategy

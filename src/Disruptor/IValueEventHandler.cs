@@ -44,10 +44,11 @@ public interface IValueEventHandler<T>
 
     /// <summary>
     /// Called once just before the thread is shutdown.
-    ///
+    /// </summary>
+    /// <remarks>
     /// Sequence event processing will already have stopped before this method is called. No events will
     /// be processed after this message.
-    /// </summary>
+    /// </remarks>
     void OnShutdown()
     {
     }

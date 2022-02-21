@@ -12,7 +12,7 @@ namespace Disruptor;
 /// handles timeouts (<see cref="IAsyncBatchEventHandler{T}.OnTimeout"/>).
 /// </summary>
 /// <remarks>
-/// This strategy can be used when throughput and low-latency are not as important as CPU resource.
+/// This strategy can be used when throughput and low-latency are not as important as CPU resources.
 /// </remarks>
 public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
 {

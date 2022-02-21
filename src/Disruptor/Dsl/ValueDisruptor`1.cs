@@ -10,12 +10,14 @@ namespace Disruptor.Dsl;
 ///
 /// A simple example of setting up the disruptor with two event handlers that
 /// must process events in order:
-/// <code>var disruptor = new ValueDisruptor{MyEvent}(() => new MyEvent(), 32, TaskScheduler.Default);
+/// <code>
+/// var disruptor = new ValueDisruptor{MyEvent}(() => new MyEvent(), 32, TaskScheduler.Default);
 /// var handler1 = new EventHandler1{MyEvent}() { ... };
 /// var handler2 = new EventHandler2{MyEvent}() { ... };
 /// disruptor.HandleEventsWith(handler1).Then(handler2);
 ///
-/// var ringBuffer = disruptor.Start();</code>
+/// var ringBuffer = disruptor.Start();
+/// </code>
 /// </summary>
 /// <typeparam name="T">the type of event used.</typeparam>
 public class ValueDisruptor<T> : ValueDisruptor<T, ValueRingBuffer<T>>

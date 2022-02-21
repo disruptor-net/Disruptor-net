@@ -3,7 +3,7 @@ using System;
 namespace Disruptor;
 
 /// <summary>
-/// Convenience implementation of an exception handler that using Console.WriteLine to log the exception
+/// Convenience implementation of an exception handler that uses <c>Console.WriteLine</c> to log the exception.
 /// </summary>
 public class IgnoreExceptionHandler<T> : IExceptionHandler<T>
     where T : class

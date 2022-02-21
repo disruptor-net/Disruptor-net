@@ -6,7 +6,7 @@ namespace Disruptor;
 /// Blocking strategy that uses <c>Monitor.Wait</c> for event processors waiting on a barrier.
 /// </summary>
 /// <remarks>
-/// This strategy can be used when throughput and low-latency are not as important as CPU resource.
+/// This strategy can be used when throughput and low-latency are not as important as CPU resources.
 /// This strategy uses a <see cref="SpinWait"/> when waiting for the dependent sequence to prevent excessive CPU usage.
 /// </remarks>
 public sealed class BlockingSpinWaitWaitStrategy : IWaitStrategy

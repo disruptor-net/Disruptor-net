@@ -6,15 +6,20 @@ namespace Disruptor;
 /// Callback interface to be implemented for processing events as they become available in the <see cref="RingBuffer{T}"/>
 /// </summary>
 /// <remarks>
+/// <para>
 /// This interface is the asynchronous alternative to <see cref="IBatchEventHandler{T}"/>.
-///
+/// </para>
+/// <para>
 /// It is the only event handler that has a processor that generates heap allocations.
 /// It is the only event handler that does not run on a dedicated thread but uses thread-pool threads instead.
-///
+/// </para>
+/// <para>
 /// Consider using this type if you absolutely need an asynchronous event handler and if you can tolerate heap allocations.
-///
+/// </para>
+/// <para>
 /// Please note that the batches can be very large, the worst case being the size of your ring buffer. It might be appropriate to process
 /// the batch in bounded-size chunks in some use cases (e.g.: database persistence).
+/// </para>
 /// </remarks>
 /// <typeparam name="T">Type of events for sharing during exchange or parallel coordination of an event.</typeparam>
 public interface IAsyncBatchEventHandler<T> where T : class
@@ -38,10 +43,11 @@ public interface IAsyncBatchEventHandler<T> where T : class
 
     /// <summary>
     /// Called once just before the thread is shutdown.
-    ///
+    /// </summary>
+    /// <remarks>
     /// Sequence event processing will already have stopped before this method is called. No events will
     /// be processed after this message.
-    /// </summary>
+    /// </remarks>
     void OnShutdown()
     {
     }

@@ -34,7 +34,7 @@ public interface IWaitStrategy
 
     /// <summary>
     /// Signal those <see cref="IEventProcessor"/> waiting that the cursor has advanced.
-    /// Only invoked when <see cref="IsBlockingStrategy"/> is false.
+    /// Only invoked when <see cref="IsBlockingStrategy"/> is true.
     /// </summary>
     void SignalAllWhenBlocking();
 }

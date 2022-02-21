@@ -3,7 +3,7 @@ using System;
 namespace Disruptor;
 
 /// <summary>
-/// Convenience implementation of an exception handler that using standard Console.Writeline to log
+/// Convenience implementation of an exception handler that using standard <c>Console.WriteLine</c> to log
 /// the exception re-throw it wrapped in a <see cref="ApplicationException"/>
 /// </summary>
 public sealed class ValueFatalExceptionHandler<T> : IValueExceptionHandler<T>
