@@ -170,6 +170,36 @@ public abstract class WaitStrategyFixture<T>
     }
 
     [Test]
+    public void ShouldWaitAfterCancellation()
+    {
+        // Arrange
+        var waitStrategy = CreateWaitStrategy();
+        var dependentSequence = new Sequence();
+        var waitResult = new TaskCompletionSource<Exception>();
+
+        CancellationTokenSource.Cancel();
+        waitStrategy.SignalAllWhenBlocking();
+
+        // Act
+        var waitTask = Task.Run(() =>
+        {
+            try
+            {
+                waitStrategy.WaitFor(10, Cursor, dependentSequence, CancellationToken);
+            }
+            catch (Exception e)
+            {
+                waitResult.SetResult(e);
+            }
+        });
+
+        // Assert
+        AssertIsCompleted(waitResult.Task);
+        Assert.That(waitResult.Task.Result, Is.InstanceOf<OperationCanceledException>());
+        AssertIsCompleted(waitTask);
+    }
+
+    [Test]
     public void ShouldWaitMultipleTimes()
     {
         // Arrange

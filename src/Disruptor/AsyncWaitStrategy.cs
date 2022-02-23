@@ -125,11 +125,11 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
                 return true;
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             _taskCompletionSources.Add(tcs);
         }
-
-        cancellationToken.ThrowIfCancellationRequested();
 
         // Using cancellationToken in the await is not required because SignalAllWhenBlocking is always invoked by
         // the sequencer barrier after cancellation.
