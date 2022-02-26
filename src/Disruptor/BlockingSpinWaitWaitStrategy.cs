@@ -29,15 +29,7 @@ public sealed class BlockingSpinWaitWaitStrategy : IWaitStrategy
             }
         }
 
-        var spinWait = new SpinWait();
-        long availableSequence;
-        while ((availableSequence = dependentSequence.Value) < sequence)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            spinWait.SpinOnce();
-        }
-
-        return availableSequence;
+        return dependentSequence.SpinWaitFor(sequence, cancellationToken);
     }
 
     public void SignalAllWhenBlocking()

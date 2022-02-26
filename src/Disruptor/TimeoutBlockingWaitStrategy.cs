@@ -44,15 +44,7 @@ public sealed class TimeoutBlockingWaitStrategy : IWaitStrategy
             }
         }
 
-        var aggressiveSpinWait = new AggressiveSpinWait();
-        long availableSequence;
-        while ((availableSequence = dependentSequence.Value) < sequence)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            aggressiveSpinWait.SpinOnce();
-        }
-
-        return availableSequence;
+        return dependentSequence.AggressiveSpinWaitFor(sequence, cancellationToken);
     }
 
     public void SignalAllWhenBlocking()

@@ -24,7 +24,6 @@ public sealed class LiteTimeoutBlockingWaitStrategy : IWaitStrategy
     {
         var milliseconds = _timeoutInMilliseconds;
 
-        long availableSequence;
         if (cursor.Value < sequence)
         {
             lock (_lock)
@@ -43,14 +42,7 @@ public sealed class LiteTimeoutBlockingWaitStrategy : IWaitStrategy
             }
         }
 
-        var aggressiveSpinWait = new AggressiveSpinWait();
-        while ((availableSequence = dependentSequence.Value) < sequence)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            aggressiveSpinWait.SpinOnce();
-        }
-
-        return availableSequence;
+        return dependentSequence.AggressiveSpinWaitFor(sequence, cancellationToken);
     }
 
     public void SignalAllWhenBlocking()

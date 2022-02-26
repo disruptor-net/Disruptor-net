@@ -15,16 +15,7 @@ public sealed class SpinWaitWaitStrategy : IWaitStrategy
 
     public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
     {
-        long availableSequence;
-
-        var spinWait = new SpinWait();
-        while ((availableSequence = dependentSequence.Value) < sequence)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            spinWait.SpinOnce();
-        }
-
-        return availableSequence;
+        return dependentSequence.SpinWaitFor(sequence, cancellationToken);
     }
 
     public void SignalAllWhenBlocking()
