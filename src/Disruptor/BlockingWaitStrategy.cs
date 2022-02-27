@@ -21,17 +21,33 @@ public sealed class BlockingWaitStrategy : IWaitStrategy
     {
         if (cursor.Value < sequence)
         {
-            lock (_gate)
-            {
-                while (cursor.Value < sequence)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    Monitor.Wait(_gate);
-                }
-            }
+            Wait(sequence, cursor, cancellationToken);
         }
 
         return dependentSequence.AggressiveSpinWaitFor(sequence, cancellationToken);
+    }
+
+    private void Wait(long sequence, Sequence cursor, CancellationToken cancellationToken)
+    {
+        var spinCount = AggressiveSpinWait.SpinCountSpinBeforeWait;
+        var spinWait = new AggressiveSpinWait();
+        while (spinWait.Count < spinCount)
+        {
+            spinWait.SpinOnce();
+            if (cursor.Value >= sequence)
+            {
+                return;
+            }
+        }
+
+        lock (_gate)
+        {
+            while (cursor.Value < sequence)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                Monitor.Wait(_gate);
+            }
+        }
     }
 
     public void SignalAllWhenBlocking()
