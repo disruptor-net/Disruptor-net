@@ -14,6 +14,7 @@ namespace Disruptor;
 public sealed class BlockingWaitStrategy : IWaitStrategy
 {
     private readonly object _gate = new();
+    private volatile int _waitersCount;
 
     public bool IsBlockingStrategy => true;
 
@@ -26,7 +27,17 @@ public sealed class BlockingWaitStrategy : IWaitStrategy
                 while (cursor.Value < sequence)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    Monitor.Wait(_gate);
+
+                    _waitersCount++;
+
+                    try
+                    {
+                        Monitor.Wait(_gate);
+                    }
+                    finally
+                    {
+                        _waitersCount--;
+                    }
                 }
             }
         }
@@ -36,9 +47,12 @@ public sealed class BlockingWaitStrategy : IWaitStrategy
 
     public void SignalAllWhenBlocking()
     {
-        lock (_gate)
+        if (_waitersCount > 0)
         {
-            Monitor.PulseAll(_gate);
+            lock (_gate)
+            {
+                Monitor.PulseAll(_gate);
+            }
         }
     }
 }
