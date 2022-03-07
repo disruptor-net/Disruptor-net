@@ -5,7 +5,7 @@ using HdrHistogram;
 
 namespace Disruptor.PerfTests.External;
 
-public class PingPingQueueLatencyTest : ILatencyTest, IExternalTest
+public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
 {
     private const int _bufferSize = 1024;
     private const long _iterations = 100 * 1000 * 30;
@@ -16,7 +16,7 @@ public class PingPingQueueLatencyTest : ILatencyTest, IExternalTest
     private readonly QueuePinger _pinger;
     private readonly QueuePonger _ponger;
 
-    public PingPingQueueLatencyTest()
+    public PingPongQueueLatencyTest()
     {
         _pinger = new QueuePinger(_pingQueue, _pongQueue, _iterations, _pauseDurationInNano);
         _ponger = new QueuePonger(_pingQueue, _pongQueue);
