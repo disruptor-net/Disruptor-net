@@ -44,15 +44,15 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         var timeout = _timeoutMilliseconds;
-        if (cursor.Value < sequence)
+        if (dependentSequences.CursorValue < sequence)
         {
             lock (_gate)
             {
                 _hasSyncWaiter = true;
-                while (cursor.Value < sequence)
+                while (dependentSequences.CursorValue < sequence)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     var waitSucceeded = Monitor.Wait(_gate, timeout);
@@ -64,7 +64,7 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
             }
         }
 
-        return dependentSequence.AggressiveSpinWaitFor(sequence, cancellationToken);
+        return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
     }
 
     public void SignalAllWhenBlocking()
@@ -84,27 +84,27 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
         }
     }
 
-    public async ValueTask<SequenceWaitResult> WaitForAsync(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+    public async ValueTask<SequenceWaitResult> WaitForAsync(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
-        while (cursor.Value < sequence)
+        while (dependentSequences.CursorValue < sequence)
         {
-            var waitSucceeded = await WaitForAsyncImpl(sequence, cursor, cancellationToken).ConfigureAwait(false);
+            var waitSucceeded = await WaitForAsyncImpl(sequence, dependentSequences, cancellationToken).ConfigureAwait(false);
             if (!waitSucceeded)
             {
                 return SequenceWaitResult.Timeout;
             }
         }
 
-        return dependentSequence.AggressiveSpinWaitFor(sequence, cancellationToken);
+        return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
     }
 
-    private async ValueTask<bool> WaitForAsyncImpl(long sequence, Sequence cursor, CancellationToken cancellationToken)
+    private async ValueTask<bool> WaitForAsyncImpl(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         TaskCompletionSource<bool> tcs;
 
         lock (_gate)
         {
-            if (cursor.Value >= sequence)
+            if (dependentSequences.CursorValue >= sequence)
             {
                 return true;
             }

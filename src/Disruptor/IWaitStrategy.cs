@@ -26,11 +26,10 @@ public interface IWaitStrategy
     /// handles this case and will signal a timeout if required.
     /// </summary>
     /// <param name="sequence">sequence to be waited on</param>
-    /// <param name="cursor">main sequence from the ring buffer</param>
-    /// <param name="dependentSequence">sequence on which to wait</param>
+    /// <param name="dependentSequences">sequences on which to wait</param>
     /// <param name="cancellationToken">processing cancellation token</param>
     /// <returns>either the sequence that is available (which may be greater than the requested sequence), or a timeout</returns>
-    SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken);
+    SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken);
 
     /// <summary>
     /// Signal those <see cref="IEventProcessor"/> waiting that the cursor has advanced.

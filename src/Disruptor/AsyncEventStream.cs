@@ -34,8 +34,7 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
     private readonly IDataProvider<T> _dataProvider;
     private readonly IAsyncWaitStrategy _waitStrategy;
     private readonly ISequencer _sequencer;
-    private readonly Sequence _cursorSequence;
-    private readonly ISequence _gatingSequence;
+    private DependentSequenceGroup _dependentSequences;
     private Sequence? _nextEnumeratorSequence;
     private bool _disposed;
 
@@ -43,9 +42,8 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
     {
         _dataProvider = dataProvider;
         _sequencer = sequencer;
-        _cursorSequence = cursorSequence;
+        _dependentSequences = new DependentSequenceGroup(cursorSequence, gatingSequences);
         _waitStrategy = waitStrategy;
-        _gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
 
         SetNextEnumeratorSequence();
     }
@@ -153,7 +151,7 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
 
                 _linkedTokenSource.Token.ThrowIfCancellationRequested();
 
-                var waitResult = await _asyncEventStream._waitStrategy.WaitForAsync(nextSequence, _asyncEventStream._cursorSequence, _asyncEventStream._gatingSequence, _linkedTokenSource.Token).ConfigureAwait(false);
+                var waitResult = await _asyncEventStream._waitStrategy.WaitForAsync(nextSequence, _asyncEventStream._dependentSequences, _linkedTokenSource.Token).ConfigureAwait(false);
                 if (waitResult.UnsafeAvailableSequence < nextSequence)
                     continue;
 

@@ -13,9 +13,9 @@ public sealed class SpinWaitWaitStrategy : IWaitStrategy
 {
     public bool IsBlockingStrategy => false;
 
-    public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
-        return dependentSequence.SpinWaitFor(sequence, cancellationToken);
+        return dependentSequences.SpinWaitFor(sequence, cancellationToken);
     }
 
     public void SignalAllWhenBlocking()

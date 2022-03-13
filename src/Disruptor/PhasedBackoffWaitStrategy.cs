@@ -69,7 +69,7 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
         return new PhasedBackoffWaitStrategy(spinTimeout, yieldTimeout, new SleepingWaitStrategy(0));
     }
 
-    public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         long startTime = 0;
         int counter = _spinTries;
@@ -77,7 +77,7 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
         do
         {
             long availableSequence;
-            if ((availableSequence = dependentSequence.Value) >= sequence)
+            if ((availableSequence = dependentSequences.Value) >= sequence)
                 return availableSequence;
 
             if (0 == --counter)
@@ -91,7 +91,7 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
                     var timeDelta = GetSystemTimeTicks() - startTime;
                     if (timeDelta > _yieldTimeoutTicks)
                     {
-                        return _fallbackStrategy.WaitFor(sequence, cursor, dependentSequence, cancellationToken);
+                        return _fallbackStrategy.WaitFor(sequence, dependentSequences, cancellationToken);
                     }
 
                     if (timeDelta > _spinTimeoutTicks)

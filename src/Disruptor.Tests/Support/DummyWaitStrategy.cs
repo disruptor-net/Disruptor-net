@@ -13,7 +13,7 @@ public class DummyWaitStrategy : IWaitStrategy
 
     public int SignalAllWhenBlockingCalls { get; private set; }
 
-    public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         return 0;
     }

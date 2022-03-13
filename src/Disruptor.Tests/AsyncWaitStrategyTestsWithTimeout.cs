@@ -22,18 +22,17 @@ public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
         var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
-        var dependentSequence1 = Cursor;
-        var dependentSequence2 = new Sequence();
+        var sequence1 = new Sequence();
         var stopwatch = Stopwatch.StartNew();
 
         var waitTask1 = Task.Run(() =>
         {
-            waitResult1.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence1, CancellationToken));
+            waitResult1.SetResult(waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor), CancellationToken));
             Thread.Sleep(1);
-            dependentSequence2.SetValue(10);
+            sequence1.SetValue(10);
         });
 
-        var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence2, CancellationToken)));
+        var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor, sequence1), CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitResult1.Task);
@@ -62,18 +61,17 @@ public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
         var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
-        var dependentSequence1 = Cursor;
-        var dependentSequence2 = new Sequence();
+        var sequence1 = new Sequence();
         var stopwatch = Stopwatch.StartNew();
 
         var waitTask1 = Task.Run(async () =>
         {
-            waitResult1.SetResult(await waitStrategy.WaitForAsync(10, Cursor, dependentSequence1, CancellationToken));
+            waitResult1.SetResult(await waitStrategy.WaitForAsync(10, new DependentSequenceGroup(Cursor), CancellationToken));
             Thread.Sleep(1);
-            dependentSequence2.SetValue(10);
+            sequence1.SetValue(10);
         });
 
-        var waitTask2 = Task.Run(async () => waitResult2.SetResult(await waitStrategy.WaitForAsync(10, Cursor, dependentSequence2, CancellationToken)));
+        var waitTask2 = Task.Run(async () => waitResult2.SetResult(await waitStrategy.WaitForAsync(10, new DependentSequenceGroup(Cursor, sequence1), CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitResult1.Task);

@@ -25,12 +25,12 @@ public sealed class SleepingWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy => false;
 
-    public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         long availableSequence;
         int counter = _retries;
 
-        while ((availableSequence = dependentSequence.Value) < sequence)
+        while ((availableSequence = dependentSequences.Value) < sequence)
         {
             counter = ApplyWaitMethod(cancellationToken, counter);
         }

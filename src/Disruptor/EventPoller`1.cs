@@ -17,14 +17,14 @@ public class EventPoller<T>
     private readonly IDataProvider<T> _dataProvider;
     private readonly ISequencer _sequencer;
     private readonly ISequence _sequence;
-    private readonly ISequence _gatingSequence;
+    private readonly DependentSequenceGroup _dependentSequences;
 
-    public EventPoller(IDataProvider<T> dataProvider, ISequencer sequencer, ISequence sequence, ISequence gatingSequence)
+    public EventPoller(IDataProvider<T> dataProvider, ISequencer sequencer, ISequence sequence, DependentSequenceGroup dependentSequences)
     {
         _dataProvider = dataProvider;
         _sequencer = sequencer;
         _sequence = sequence;
-        _gatingSequence = gatingSequence;
+        _dependentSequences = dependentSequences;
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ public class EventPoller<T>
     {
         var currentSequence = _sequence.Value;
         var nextSequence = currentSequence + 1;
-        var availableSequence = _sequencer.GetHighestPublishedSequence(nextSequence, _gatingSequence.Value);
+        var availableSequence = _sequencer.GetHighestPublishedSequence(nextSequence, _dependentSequences.Value);
 
         if (nextSequence <= availableSequence)
         {
@@ -95,7 +95,7 @@ public class EventPoller<T>
     {
         var currentSequence = _sequence.Value;
         var nextSequence = currentSequence + 1;
-        var availableSequence = _sequencer.GetHighestPublishedSequence(nextSequence, _gatingSequence.Value);
+        var availableSequence = _sequencer.GetHighestPublishedSequence(nextSequence, _dependentSequences.Value);
 
         if (nextSequence <= availableSequence)
         {

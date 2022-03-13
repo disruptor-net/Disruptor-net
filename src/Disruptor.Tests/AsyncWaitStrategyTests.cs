@@ -15,17 +15,16 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStra
         var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
-        var dependentSequence1 = Cursor;
-        var dependentSequence2 = new Sequence();
+        var sequence1 = new Sequence();
 
         var waitTask1 = Task.Run(async () =>
         {
-            waitResult1.SetResult(await waitStrategy.WaitForAsync(10, Cursor, dependentSequence1, CancellationToken));
+            waitResult1.SetResult(await waitStrategy.WaitForAsync(10, new DependentSequenceGroup(Cursor), CancellationToken));
             Thread.Sleep(1);
-            dependentSequence2.SetValue(10);
+            sequence1.SetValue(10);
         });
 
-        var waitTask2 = Task.Run(async () => waitResult2.SetResult(await waitStrategy.WaitForAsync(10, Cursor, dependentSequence2, CancellationToken)));
+        var waitTask2 = Task.Run(async () => waitResult2.SetResult(await waitStrategy.WaitForAsync(10, new DependentSequenceGroup(Cursor, sequence1), CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitResult1.Task);
@@ -51,25 +50,24 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStra
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
         var waitResult3 = new TaskCompletionSource<SequenceWaitResult>();
 
-        var dependentSequence1 = Cursor;
-        var dependentSequence2 = new Sequence();
-        var dependentSequence3 = new Sequence();
+        var sequence1 = new Sequence();
+        var sequence2 = new Sequence();
 
         var waitTask1 = Task.Run(() =>
         {
-            waitResult1.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence1, CancellationToken));
+            waitResult1.SetResult(waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor), CancellationToken));
             Thread.Sleep(1);
-            dependentSequence2.SetValue(10);
+            sequence1.SetValue(10);
         });
 
         var waitTask2 = Task.Run(async () =>
         {
-            waitResult2.SetResult(await waitStrategy.WaitForAsync(10, Cursor, dependentSequence2, CancellationToken));
+            waitResult2.SetResult(await waitStrategy.WaitForAsync(10, new DependentSequenceGroup(Cursor, sequence1), CancellationToken));
             Thread.Sleep(1);
-            dependentSequence3.SetValue(10);
+            sequence2.SetValue(10);
         });
 
-        var waitTask3 = Task.Run(async () => waitResult3.SetResult(await waitStrategy.WaitForAsync(10, Cursor, dependentSequence3, CancellationToken)));
+        var waitTask3 = Task.Run(async () => waitResult3.SetResult(await waitStrategy.WaitForAsync(10, new DependentSequenceGroup(Cursor, sequence2), CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitResult1.Task);
@@ -105,7 +103,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStra
         {
             try
             {
-                await waitStrategy.WaitForAsync(10, Cursor, dependentSequence, CancellationToken);
+                await waitStrategy.WaitForAsync(10, new DependentSequenceGroup(Cursor, dependentSequence), CancellationToken);
             }
             catch (Exception e)
             {
@@ -131,7 +129,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStra
         {
             try
             {
-                await waitStrategy.WaitForAsync(10, Cursor, dependentSequence, CancellationToken);
+                await waitStrategy.WaitForAsync(10, new DependentSequenceGroup(Cursor, dependentSequence), CancellationToken);
             }
             catch (Exception e)
             {
@@ -163,11 +161,11 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStra
         var waitTask1 = Task.Run(async () =>
         {
             var cancellationTokenSource = new CancellationTokenSource();
-            var dependentSequence = Cursor;
+            var dependentSequences = new DependentSequenceGroup(Cursor);
 
             for (var i = 0; i < 500; i++)
             {
-                await waitStrategy.WaitForAsync(i, Cursor, dependentSequence, cancellationTokenSource.Token).ConfigureAwait(false);
+                await waitStrategy.WaitForAsync(i, dependentSequences, cancellationTokenSource.Token).ConfigureAwait(false);
                 sequence1.SetValue(i);
             }
         });
@@ -175,11 +173,11 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStra
         var waitTask2 = Task.Run(async () =>
         {
             var cancellationTokenSource = new CancellationTokenSource();
-            var dependentSequence = sequence1;
+            var dependentSequences = new DependentSequenceGroup(Cursor, sequence1);
 
             for (var i = 0; i < 500; i++)
             {
-                await waitStrategy.WaitForAsync(i, Cursor, dependentSequence, cancellationTokenSource.Token).ConfigureAwait(false);
+                await waitStrategy.WaitForAsync(i, dependentSequences, cancellationTokenSource.Token).ConfigureAwait(false);
             }
         });
 

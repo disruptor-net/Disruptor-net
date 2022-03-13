@@ -170,16 +170,14 @@ public class EventProcessorBenchmarks_Wait
     {
         private readonly SingleProducerSequencer _sequencer;
         private readonly YieldingWaitStrategy _waitStrategy;
-        private readonly Sequence _cursorSequence;
-        private readonly ISequence _dependentSequence;
+        private readonly DependentSequenceGroup _dependentSequences;
         private volatile CancellationTokenSource _cancellationTokenSource;
 
         public ValueSequenceBarrier(SingleProducerSequencer sequencer, YieldingWaitStrategy waitStrategy, Sequence cursorSequence)
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
-            _cursorSequence = cursorSequence;
-            _dependentSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, Array.Empty<ISequence>());
+            _dependentSequences = new DependentSequenceGroup(cursorSequence);
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -189,7 +187,7 @@ public class EventProcessorBenchmarks_Wait
             var cancellationToken = _cancellationTokenSource.Token;
             cancellationToken.ThrowIfCancellationRequested();
 
-            var result = _waitStrategy.WaitFor(sequence, _cursorSequence, _dependentSequence, cancellationToken);
+            var result = _waitStrategy.WaitFor(sequence, _dependentSequences, cancellationToken);
 
             if (result.UnsafeAvailableSequence < sequence)
                 return result;

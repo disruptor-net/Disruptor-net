@@ -43,16 +43,16 @@ public static class EventPoller
     public static EventPoller<T> Create<T>(IDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
         where T : class
     {
-        var gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
+        var dependentSequences = new DependentSequenceGroup(cursorSequence, gatingSequences);
 
-        return new EventPoller<T>(dataProvider, sequencer, sequence, gatingSequence);
+        return new EventPoller<T>(dataProvider, sequencer, sequence, dependentSequences);
     }
 
     public static ValueEventPoller<T> Create<T>(IValueDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
         where T : struct
     {
-        var gatingSequence = SequenceGroups.CreateReadOnlySequence(cursorSequence, gatingSequences);
+        var dependentSequences = new DependentSequenceGroup(cursorSequence, gatingSequences);
 
-        return new ValueEventPoller<T>(dataProvider, sequencer, sequence, gatingSequence);
+        return new ValueEventPoller<T>(dataProvider, sequencer, sequence, dependentSequences);
     }
 }

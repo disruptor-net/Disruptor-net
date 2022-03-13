@@ -28,7 +28,7 @@ public abstract class WaitStrategyFixture<T>
         var dependentSequence = new Sequence(dependentSequenceValue);
 
         // Act
-        var waitResult = waitStrategy.WaitFor(10, Cursor, dependentSequence, CancellationToken);
+        var waitResult = waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor, dependentSequence), CancellationToken);
 
         // Assert
         Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedResult)));
@@ -44,7 +44,7 @@ public abstract class WaitStrategyFixture<T>
         var dependentSequence = new Sequence();
         var waitResult = new TaskCompletionSource<SequenceWaitResult>();
 
-        var waitTask = Task.Run(() => waitResult.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence, CancellationToken)));
+        var waitTask = Task.Run(() => waitResult.SetResult(waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor, dependentSequence), CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitTask);
@@ -67,17 +67,16 @@ public abstract class WaitStrategyFixture<T>
         var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
-        var dependentSequence1 = Cursor;
-        var dependentSequence2 = new Sequence();
+        var sequence1 = new Sequence();
 
         var waitTask1 = Task.Run(() =>
         {
-            waitResult1.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence1, CancellationToken));
+            waitResult1.SetResult(waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor), CancellationToken));
             Thread.Sleep(1);
-            dependentSequence2.SetValue(10);
+            sequence1.SetValue(10);
         });
 
-        var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence2, CancellationToken)));
+        var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor, sequence1), CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitResult1.Task);
@@ -103,17 +102,16 @@ public abstract class WaitStrategyFixture<T>
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
         var task1Signal = new ManualResetEvent(false);
 
-        var dependentSequence1 = Cursor;
-        var dependentSequence2 = new Sequence();
+        var sequence1 = new Sequence();
 
         var waitTask1 = Task.Run(() =>
         {
-            waitResult1.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence1, CancellationToken));
+            waitResult1.SetResult(waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor), CancellationToken));
             task1Signal.WaitOne(DefaultAssertTimeout);
-            dependentSequence2.SetValue(10);
+            sequence1.SetValue(10);
         });
 
-        var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence2, CancellationToken)));
+        var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor, sequence1), CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitResult1.Task);
@@ -148,7 +146,7 @@ public abstract class WaitStrategyFixture<T>
         {
             try
             {
-                waitStrategy.WaitFor(10, Cursor, dependentSequence, CancellationToken);
+                waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor, dependentSequence), CancellationToken);
             }
             catch (Exception e)
             {
@@ -185,7 +183,7 @@ public abstract class WaitStrategyFixture<T>
         {
             try
             {
-                waitStrategy.WaitFor(10, Cursor, dependentSequence, CancellationToken);
+                waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor, dependentSequence), CancellationToken);
             }
             catch (Exception e)
             {
@@ -209,11 +207,11 @@ public abstract class WaitStrategyFixture<T>
         var waitTask1 = Task.Run(() =>
         {
             var cancellationTokenSource = new CancellationTokenSource();
-            var dependentSequence = Cursor;
+            var dependentSequences = new DependentSequenceGroup(Cursor);
 
             for (var i = 0; i < 500; i++)
             {
-                waitStrategy.WaitFor(i, Cursor, dependentSequence, cancellationTokenSource.Token);
+                waitStrategy.WaitFor(i, dependentSequences, cancellationTokenSource.Token);
                 sequence1.SetValue(i);
             }
         });
@@ -221,11 +219,11 @@ public abstract class WaitStrategyFixture<T>
         var waitTask2 = Task.Run(() =>
         {
             var cancellationTokenSource = new CancellationTokenSource();
-            var dependentSequence = sequence1;
+            var dependentSequences = new DependentSequenceGroup(Cursor, sequence1);
 
             for (var i = 0; i < 500; i++)
             {
-                waitStrategy.WaitFor(i, Cursor, dependentSequence, cancellationTokenSource.Token);
+                waitStrategy.WaitFor(i, dependentSequences, cancellationTokenSource.Token);
             }
         });
 

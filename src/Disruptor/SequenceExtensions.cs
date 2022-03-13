@@ -10,17 +10,17 @@ public static class SequenceExtensions
     /// </summary>
     /// <returns>the sequence value</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long AggressiveSpinWaitFor(this ISequence sequence, long expectedValue, CancellationToken cancellationToken)
+    public static long AggressiveSpinWaitFor(this DependentSequenceGroup sequenceGroup, long expectedValue, CancellationToken cancellationToken)
     {
-        var availableSequence = sequence.Value;
+        var availableSequence = sequenceGroup.Value;
         if (availableSequence >= expectedValue)
             return availableSequence;
 
-        return AggressiveSpinWaitForImpl(sequence, expectedValue, cancellationToken);
+        return AggressiveSpinWaitForImpl(sequenceGroup, expectedValue, cancellationToken);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static long AggressiveSpinWaitForImpl(ISequence sequence, long expectedValue, CancellationToken cancellationToken)
+    private static long AggressiveSpinWaitForImpl(DependentSequenceGroup sequenceGroup, long expectedValue, CancellationToken cancellationToken)
     {
         var aggressiveSpinWait = new AggressiveSpinWait();
         long availableSequence;
@@ -28,7 +28,7 @@ public static class SequenceExtensions
         {
             cancellationToken.ThrowIfCancellationRequested();
             aggressiveSpinWait.SpinOnce();
-            availableSequence = sequence.Value;
+            availableSequence = sequenceGroup.Value;
         }
         while (availableSequence < expectedValue);
 
@@ -40,17 +40,17 @@ public static class SequenceExtensions
     /// </summary>
     /// <returns>the sequence value</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long SpinWaitFor(this ISequence sequence, long expectedValue, CancellationToken cancellationToken)
+    public static long SpinWaitFor(this DependentSequenceGroup sequenceGroup, long expectedValue, CancellationToken cancellationToken)
     {
-        var availableSequence = sequence.Value;
+        var availableSequence = sequenceGroup.Value;
         if (availableSequence >= expectedValue)
             return availableSequence;
 
-        return SpinWaitForImpl(sequence, expectedValue, cancellationToken);
+        return SpinWaitForImpl(sequenceGroup, expectedValue, cancellationToken);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static long SpinWaitForImpl(ISequence sequence, long expectedValue, CancellationToken cancellationToken)
+    private static long SpinWaitForImpl(DependentSequenceGroup sequenceGroup, long expectedValue, CancellationToken cancellationToken)
     {
         var spinWait = new SpinWait();
         long availableSequence;
@@ -58,7 +58,7 @@ public static class SequenceExtensions
         {
             cancellationToken.ThrowIfCancellationRequested();
             spinWait.SpinOnce();
-            availableSequence = sequence.Value;
+            availableSequence = sequenceGroup.Value;
         }
         while (availableSequence < expectedValue);
 

@@ -8,21 +8,6 @@ namespace Disruptor;
 /// </summary>
 internal static class SequenceGroups
 {
-    public static ISequence CreateReadOnlySequence(Sequence cursorSequence, ISequence[] dependentSequences)
-    {
-        if (dependentSequences.Length == 0)
-        {
-            return cursorSequence;
-        }
-
-        if (dependentSequences.Length == 1)
-        {
-            return dependentSequences[0];
-        }
-
-        return new ReadOnlySequenceGroup(dependentSequences);
-    }
-
     public static void AddSequences(ref ISequence[] sequences, ICursored cursor, params ISequence[] sequencesToAdd)
     {
         long cursorSequence;

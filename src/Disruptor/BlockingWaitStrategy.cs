@@ -17,13 +17,13 @@ public sealed class BlockingWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
-        if (cursor.Value < sequence)
+        if (dependentSequences.CursorValue < sequence)
         {
             lock (_gate)
             {
-                while (cursor.Value < sequence)
+                while (dependentSequences.CursorValue < sequence)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     Monitor.Wait(_gate);
@@ -31,7 +31,7 @@ public sealed class BlockingWaitStrategy : IWaitStrategy
             }
         }
 
-        return dependentSequence.AggressiveSpinWaitFor(sequence, cancellationToken);
+        return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
     }
 
     public void SignalAllWhenBlocking()

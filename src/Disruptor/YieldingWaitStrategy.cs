@@ -15,12 +15,12 @@ public sealed class YieldingWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy => false;
 
-    public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         long availableSequence;
         var counter = _spinTries;
 
-        while ((availableSequence = dependentSequence.Value) < sequence)
+        while ((availableSequence = dependentSequences.Value) < sequence)
         {
             counter = ApplyWaitMethod(cancellationToken, counter);
         }

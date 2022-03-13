@@ -20,15 +20,15 @@ public sealed class LiteTimeoutBlockingWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public SequenceWaitResult WaitFor(long sequence, Sequence cursor, ISequence dependentSequence, CancellationToken cancellationToken)
+    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         var milliseconds = _timeoutInMilliseconds;
 
-        if (cursor.Value < sequence)
+        if (dependentSequences.CursorValue < sequence)
         {
             lock (_lock)
             {
-                while (cursor.Value < sequence)
+                while (dependentSequences.CursorValue < sequence)
                 {
                     Interlocked.Exchange(ref _signalNeeded, 1);
 
@@ -42,7 +42,7 @@ public sealed class LiteTimeoutBlockingWaitStrategy : IWaitStrategy
             }
         }
 
-        return dependentSequence.AggressiveSpinWaitFor(sequence, cancellationToken);
+        return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
     }
 
     public void SignalAllWhenBlocking()

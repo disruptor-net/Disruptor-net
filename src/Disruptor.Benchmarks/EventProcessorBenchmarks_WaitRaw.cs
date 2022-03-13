@@ -16,11 +16,11 @@ internal class EventProcessorBenchmarks_WaitRaw
     private readonly Sequence _sequence = new();
     private readonly Sequence _cursor = new();
     private readonly YieldingWaitStrategy _waitStrategy = new();
-    private readonly ISequence _dependentSequences;
+    private readonly DependentSequenceGroup _dependentSequences;
 
     public EventProcessorBenchmarks_WaitRaw()
     {
-        _dependentSequences = SequenceGroups.CreateReadOnlySequence(_cursor, Array.Empty<ISequence>());
+        _dependentSequences = new DependentSequenceGroup(_cursor);
         _cursor.SetValue(42);
     }
 
@@ -31,7 +31,7 @@ internal class EventProcessorBenchmarks_WaitRaw
     {
         for (var i = 0; i < _operationsPerInvoke; i++)
         {
-            var waitResult = _waitStrategy.WaitFor(NextSequence, _cursor, _dependentSequences, _cancellationTokenSource.Token);
+            var waitResult = _waitStrategy.WaitFor(NextSequence, _dependentSequences, _cancellationTokenSource.Token);
             if (waitResult.IsTimeout)
             {
                 HandleTimeout(_sequence.Value);
@@ -50,7 +50,7 @@ internal class EventProcessorBenchmarks_WaitRaw
     {
         for (var i = 0; i < _operationsPerInvoke; i++)
         {
-            var waitResult = _waitStrategy.WaitFor(NextSequence, _cursor, _dependentSequences, _cancellationTokenSource.Token);
+            var waitResult = _waitStrategy.WaitFor(NextSequence, _dependentSequences, _cancellationTokenSource.Token);
 
             var availableSequence = waitResult.UnsafeAvailableSequence;
             Process(availableSequence);

@@ -14,9 +14,13 @@ public class PingPongAsyncWaitStrategyBenchmarks : IDisposable
     private readonly Sequence _pingCursor = new();
     private readonly Sequence _pongCursor = new();
     private readonly Task _pongTask;
+    private readonly DependentSequenceGroup _pingDependentSequences;
+    private readonly DependentSequenceGroup _pongDependentSequences;
 
     public PingPongAsyncWaitStrategyBenchmarks()
     {
+        _pingDependentSequences = new DependentSequenceGroup(_pingCursor);
+        _pongDependentSequences = new DependentSequenceGroup(_pongCursor);
         _pongTask = Task.Run(RunPong);
     }
 
@@ -36,7 +40,7 @@ public class PingPongAsyncWaitStrategyBenchmarks : IDisposable
             {
                 sequence++;
 
-                await _pingWaitStrategy.WaitForAsync(sequence, _pingCursor, _pingCursor, _cancellationTokenSource.Token).ConfigureAwait(false);
+                await _pingWaitStrategy.WaitForAsync(sequence, _pingDependentSequences, _cancellationTokenSource.Token).ConfigureAwait(false);
 
                 _pongCursor.SetValue(sequence);
                 _pongWaitStrategy.SignalAllWhenBlocking();
@@ -61,7 +65,7 @@ public class PingPongAsyncWaitStrategyBenchmarks : IDisposable
             _pingCursor.SetValue(s);
             _pingWaitStrategy.SignalAllWhenBlocking();
 
-            await _pongWaitStrategy.WaitForAsync(s, _pongCursor, _pongCursor, _cancellationTokenSource.Token).ConfigureAwait(false);
+            await _pongWaitStrategy.WaitForAsync(s, _pongDependentSequences, _cancellationTokenSource.Token).ConfigureAwait(false);
         }
     }
 }

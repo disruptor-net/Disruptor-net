@@ -25,18 +25,17 @@ public abstract class TimeoutWaitStrategyFixture<T> : WaitStrategyFixture<T>
         var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
-        var dependentSequence1 = Cursor;
-        var dependentSequence2 = new Sequence();
+        var step1Sequence = new Sequence();
         var stopwatch = Stopwatch.StartNew();
 
         var waitTask1 = Task.Run(() =>
         {
-            waitResult1.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence1, CancellationToken));
+            waitResult1.SetResult(waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor), CancellationToken));
             Thread.Sleep(1);
-            dependentSequence2.SetValue(10);
+            step1Sequence.SetValue(10);
         });
 
-        var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, Cursor, dependentSequence2, CancellationToken)));
+        var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, new DependentSequenceGroup(Cursor, step1Sequence), CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitResult1.Task);
