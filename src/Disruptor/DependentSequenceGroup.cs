@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Disruptor;
 
@@ -90,5 +91,65 @@ public class DependentSequenceGroup
         }
 
         return minimum;
+    }
+
+    /// <summary>
+    /// Waits until the dependent sequences value is greater than or equal to the expected value using <see cref="AggressiveSpinWait"/>.
+    /// </summary>
+    /// <returns>the sequence value</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long AggressiveSpinWaitFor(long expectedValue, CancellationToken cancellationToken)
+    {
+        var availableSequence = Value;
+        if (availableSequence >= expectedValue)
+            return availableSequence;
+
+        return AggressiveSpinWaitForImpl(expectedValue, cancellationToken);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private long AggressiveSpinWaitForImpl(long expectedValue, CancellationToken cancellationToken)
+    {
+        var aggressiveSpinWait = new AggressiveSpinWait();
+        long availableSequence;
+        do
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            aggressiveSpinWait.SpinOnce();
+            availableSequence = Value;
+        }
+        while (availableSequence < expectedValue);
+
+        return availableSequence;
+    }
+
+    /// <summary>
+    /// Waits until the dependent sequences value is greater than or equal to the expected value using <see cref="SpinWait"/>.
+    /// </summary>
+    /// <returns>the sequence value</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long SpinWaitFor(long expectedValue, CancellationToken cancellationToken)
+    {
+        var availableSequence = Value;
+        if (availableSequence >= expectedValue)
+            return availableSequence;
+
+        return SpinWaitForImpl(expectedValue, cancellationToken);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private long SpinWaitForImpl(long expectedValue, CancellationToken cancellationToken)
+    {
+        var spinWait = new SpinWait();
+        long availableSequence;
+        do
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            spinWait.SpinOnce();
+            availableSequence = Value;
+        }
+        while (availableSequence < expectedValue);
+
+        return availableSequence;
     }
 }
