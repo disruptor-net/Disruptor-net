@@ -11,7 +11,7 @@ namespace Disruptor.Processing;
 /// </summary>
 /// <typeparam name="TSequencer">the type of the <see cref="ISequencer"/> used.</typeparam>
 /// <typeparam name="TWaitStrategy">the type of the <see cref="IWaitStrategy"/> used.</typeparam>
-internal struct ProcessingSequenceBarrier<TSequencer, TWaitStrategy> : ISequenceBarrier
+public class ProcessingSequenceBarrier<TSequencer, TWaitStrategy> : ISequenceBarrier
     where TWaitStrategy : IWaitStrategy
     where TSequencer : ISequencer
 {
