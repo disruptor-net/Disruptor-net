@@ -46,7 +46,7 @@ public class ProcessingSequenceBarrier<TSequencer, TWaitStrategy> : ISequenceBar
         return _sequencer.GetHighestPublishedSequence(sequence, result.UnsafeAvailableSequence);
     }
 
-    public long Cursor => _dependentSequences.Value;
+    public DependentSequenceGroup DependentSequences => _dependentSequences;
 
     public CancellationToken CancellationToken
     {

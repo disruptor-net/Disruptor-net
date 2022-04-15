@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Threading;
-using Disruptor.Processing;
 
 namespace Disruptor;
 
 /// <summary>
-/// Coordination barrier for tracking the cursor for producers and sequence of
-/// dependent <see cref="IEventProcessor"/>s for a <see cref="RingBuffer{T}"/>
+/// Coordination barrier used by synchronous processors to wait before processing events.
 /// </summary>
+/// <remarks>
+/// The barrier may be shared by multiple handlers.
+/// </remarks>
 public interface ISequenceBarrier
 {
     /// <summary>
@@ -19,10 +20,10 @@ public interface ISequenceBarrier
     SequenceWaitResult WaitFor(long sequence);
 
     /// <summary>
-    /// Delegate a call to the <see cref="ISequencer"/>.
-    /// Returns the value of the cursor for events that have been published.
+    /// The <see cref="DependentSequenceGroup"/> that contains the sequences of the processors
+    /// that must run before the barrier processors.
     /// </summary>
-    long Cursor { get; }
+    DependentSequenceGroup DependentSequences { get; }
 
     /// <summary>
     /// The cancellation token used to stop the processing.

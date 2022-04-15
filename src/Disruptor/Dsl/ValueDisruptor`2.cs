@@ -216,12 +216,12 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     }
 
     /// <summary>
-    /// Get the <see cref="ISequenceBarrier"/> used by a specific handler. Note that the <see cref="ISequenceBarrier"/>
+    /// Get the <see cref="DependentSequenceGroup"/> used by a specific handler. Note that the <see cref="DependentSequenceGroup"/>
     /// may be shared by multiple event handlers.
     /// </summary>
     /// <param name="handler">the handler to get the barrier for</param>
     /// <returns>the SequenceBarrier used by the given handler</returns>
-    public ISequenceBarrier? GetBarrierFor(IValueEventHandler<T> handler) => _consumerRepository.GetBarrierFor(handler);
+    public DependentSequenceGroup? GetDependentSequencesFor(IValueEventHandler<T> handler) => _consumerRepository.GetDependentSequencesFor(handler);
 
     /// <summary>
     /// Gets the sequence value for the specified event handlers.
@@ -267,7 +267,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
             if (_exceptionHandler != null)
                 eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-            _consumerRepository.Add(eventProcessor, eventHandler, barrier);
+            _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;
         }
 

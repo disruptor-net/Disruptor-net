@@ -749,7 +749,7 @@ public class DisruptorTests : IDisposable
         PublishEvent();
         PublishEvent();
 
-        Assert.That(_disruptor.GetBarrierFor(delayedEventHandler)?.Cursor, Is.EqualTo(-1L));
+        Assert.That(_disruptor.GetDependentSequencesFor(delayedEventHandler)?.Value, Is.EqualTo(-1L));
 
         workHandler2.ProcessEvent();
         workHandler1.ProcessEvent();

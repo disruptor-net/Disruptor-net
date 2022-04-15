@@ -9,7 +9,7 @@ public class DummySequenceBarrier : ISequenceBarrier
         return 0;
     }
 
-    public long Cursor => 0;
+    public DependentSequenceGroup DependentSequences { get; } = new(new Sequence());
 
     public CancellationToken CancellationToken => default;
 

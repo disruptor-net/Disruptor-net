@@ -30,7 +30,5 @@ public class ExceptionHandlerSetting<T> where T : class
             asyncEventProcessor.SetExceptionHandler(exceptionHandler);
         else
             ((IEventProcessor<T>)eventProcessor).SetExceptionHandler(exceptionHandler);
-
-        _consumerRepository.GetBarrierFor(_eventHandler)?.CancelProcessing();
     }
 }

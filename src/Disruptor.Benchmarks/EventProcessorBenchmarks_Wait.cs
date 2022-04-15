@@ -195,7 +195,7 @@ public class EventProcessorBenchmarks_Wait
             return _sequencer.GetHighestPublishedSequence(sequence, result.UnsafeAvailableSequence);
         }
 
-        public long Cursor => default;
+        public DependentSequenceGroup DependentSequences => _dependentSequences;
         public CancellationToken CancellationToken => _cancellationTokenSource.Token;
 
         public void ResetProcessing()

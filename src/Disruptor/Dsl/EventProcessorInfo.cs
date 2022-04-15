@@ -10,11 +10,11 @@ namespace Disruptor.Dsl;
 /// </summary>
 internal class EventProcessorInfo : IConsumerInfo
 {
-    public EventProcessorInfo(IEventProcessor eventProcessor, object? eventHandler, ISequenceBarrier? barrier)
+    public EventProcessorInfo(IEventProcessor eventProcessor, object? eventHandler, DependentSequenceGroup? dependentSequences)
     {
         EventProcessor = eventProcessor;
         Handler = eventHandler;
-        Barrier = barrier;
+        DependentSequences = dependentSequences;
         IsEndOfChain = true;
     }
 
@@ -24,7 +24,7 @@ internal class EventProcessorInfo : IConsumerInfo
 
     public object? Handler { get; }
 
-    public ISequenceBarrier? Barrier { get; }
+    public DependentSequenceGroup? DependentSequences { get; }
 
     public bool IsEndOfChain { get; private set; }
 

@@ -26,6 +26,5 @@ public class ValueExceptionHandlerSetting<T> where T : struct
     public void With(IValueExceptionHandler<T> exceptionHandler)
     {
         ((IValueEventProcessor<T>)_consumerRepository.GetEventProcessorFor(_eventHandler)).SetExceptionHandler(exceptionHandler);
-        _consumerRepository.GetBarrierFor(_eventHandler)?.CancelProcessing();
     }
 }

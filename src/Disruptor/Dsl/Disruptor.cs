@@ -387,12 +387,12 @@ public class Disruptor<T>
     public T this[long sequence] => _ringBuffer[sequence];
 
     /// <summary>
-    /// Get the <see cref="ISequenceBarrier"/> used by a specific handler. Note that the <see cref="ISequenceBarrier"/>
+    /// Get the <see cref="DependentSequenceGroup"/> used by a specific handler. Note that the <see cref="DependentSequenceGroup"/>
     /// may be shared by multiple event handlers.
     /// </summary>
     /// <param name="handler">the handler to get the barrier for</param>
     /// <returns>the SequenceBarrier used by the given handler</returns>
-    public ISequenceBarrier? GetBarrierFor(IEventHandler<T> handler) => _consumerRepository.GetBarrierFor(handler);
+    public DependentSequenceGroup? GetDependentSequencesFor(IEventHandler<T> handler) => _consumerRepository.GetDependentSequencesFor(handler);
 
     /// <summary>
     /// Gets the sequence value for the specified event handlers.
@@ -433,7 +433,7 @@ public class Disruptor<T>
             if (_exceptionHandler != null)
                 eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-            _consumerRepository.Add(eventProcessor, eventHandler, barrier);
+            _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;
         }
 
@@ -458,7 +458,7 @@ public class Disruptor<T>
             if (_exceptionHandler != null)
                 eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-            _consumerRepository.Add(eventProcessor, eventHandler, barrier);
+            _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;
         }
 
@@ -485,7 +485,7 @@ public class Disruptor<T>
             if (_exceptionHandler != null)
                 eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-            _consumerRepository.Add(eventProcessor, eventHandler, barrier);
+            _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;
         }
 
@@ -520,7 +520,7 @@ public class Disruptor<T>
         var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
         var workerPool = new WorkerPool<T>(_ringBuffer, sequenceBarrier, _exceptionHandler, workHandlers);
 
-        _consumerRepository.Add(workerPool, sequenceBarrier);
+        _consumerRepository.Add(workerPool, sequenceBarrier.DependentSequences);
 
         var workerSequences = workerPool.GetWorkerSequences();
 

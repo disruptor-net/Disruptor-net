@@ -15,28 +15,28 @@ public class ConsumerRepositoryTests
     private readonly DummyEventProcessor _eventProcessor2 = new();
     private readonly DummyEventHandler<TestEvent> _handler1 = new();
     private readonly DummyEventHandler<TestEvent> _handler2 = new();
-    private readonly DummySequenceBarrier _barrier1 = new();
-    private readonly DummySequenceBarrier _barrier2 = new();
+    private readonly DependentSequenceGroup _dependentSequenceGroup1 = new(new Sequence());
+    private readonly DependentSequenceGroup _dependentSequenceGroup2 = new(new Sequence());
 
     [Test]
-    public void ShouldGetBarrierByHandler()
+    public void ShouldGetDependentSequenceGroupByHandler()
     {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _barrier1);
+        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
 
-        Assert.That(_consumerRepository.GetBarrierFor(_handler1), Is.SameAs(_barrier1));
+        Assert.That(_consumerRepository.GetDependentSequencesFor(_handler1), Is.SameAs(_dependentSequenceGroup1));
     }
 
     [Test]
-    public void ShouldReturnNullForBarrierWhenHandlerIsNotRegistered()
+    public void ShouldReturnNullForDependentSequenceGroupWhenHandlerIsNotRegistered()
     {
-        Assert.That(_consumerRepository.GetBarrierFor(_handler1), Is.Null);
+        Assert.That(_consumerRepository.GetDependentSequencesFor(_handler1), Is.Null);
     }
 
     [Test]
     public void ShouldGetLastEventProcessorsInChain()
     {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _barrier1);
-        _consumerRepository.Add(_eventProcessor2, _handler2, _barrier2);
+        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
+        _consumerRepository.Add(_eventProcessor2, _handler2, _dependentSequenceGroup2);
 
         _consumerRepository.UnMarkEventProcessorsAsEndOfChain(_eventProcessor2.Sequence);
 
@@ -48,7 +48,7 @@ public class ConsumerRepositoryTests
     [Test]
     public void ShouldRetrieveEventProcessorForHandler()
     {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _barrier1);
+        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
         Assert.That(_consumerRepository.GetEventProcessorFor(_handler1), Is.SameAs(_eventProcessor1));
     }
 
@@ -61,8 +61,8 @@ public class ConsumerRepositoryTests
     [Test]
     public void ShouldIterateAllEventProcessors()
     {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _barrier1);
-        _consumerRepository.Add(_eventProcessor2, _handler2, _barrier2);
+        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
+        _consumerRepository.Add(_eventProcessor2, _handler2, _dependentSequenceGroup2);
 
         var seen1 = false;
         var seen2 = false;

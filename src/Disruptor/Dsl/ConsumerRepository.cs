@@ -18,9 +18,9 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         _eventProcessorInfoBySequence = new Dictionary<ISequence, IConsumerInfo>(new IdentityComparer<ISequence>());
     }
 
-    public void Add(IEventProcessor eventProcessor, object eventHandler, ISequenceBarrier sequenceBarrier)
+    public void Add(IEventProcessor eventProcessor, object eventHandler, DependentSequenceGroup dependentSequences)
     {
-        var consumerInfo = new EventProcessorInfo(eventProcessor, eventHandler, sequenceBarrier);
+        var consumerInfo = new EventProcessorInfo(eventProcessor, eventHandler, dependentSequences);
         _eventProcessorInfoByEventHandler[eventHandler] = consumerInfo;
         _eventProcessorInfoBySequence[eventProcessor.Sequence] = consumerInfo;
         _consumerInfos.Add(consumerInfo);
@@ -33,10 +33,10 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         _consumerInfos.Add(consumerInfo);
     }
 
-    public void Add<T>(WorkerPool<T> workerPool, ISequenceBarrier sequenceBarrier)
+    public void Add<T>(WorkerPool<T> workerPool, DependentSequenceGroup dependentSequences)
         where T : class
     {
-        var workerPoolInfo = new WorkerPoolInfo<T>(workerPool, sequenceBarrier);
+        var workerPoolInfo = new WorkerPoolInfo<T>(workerPool, dependentSequences);
         _consumerInfos.Add(workerPoolInfo);
         foreach (var sequence in workerPool.GetWorkerSequences())
         {
@@ -80,14 +80,13 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
 
     public IEventProcessor GetEventProcessorFor(object eventHandler)
     {
-        EventProcessorInfo eventprocessorInfo;
-        var found = _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventprocessorInfo!);
+        var found = _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo);
         if(!found)
         {
             throw new ArgumentException("The event handler " + eventHandler + " is not processing events.");
         }
 
-        return eventprocessorInfo.EventProcessor;
+        return eventProcessorInfo!.EventProcessor;
     }
 
     public ISequence GetSequenceFor(object eventHandler)
@@ -99,18 +98,16 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
     {
         foreach (var barrierEventProcessor in barrierEventProcessors)
         {
-            IConsumerInfo consumerInfo;
-            if (_eventProcessorInfoBySequence.TryGetValue(barrierEventProcessor, out consumerInfo!))
+            if (_eventProcessorInfoBySequence.TryGetValue(barrierEventProcessor, out var consumerInfo))
             {
                 consumerInfo.MarkAsUsedInBarrier();
             }
         }
     }
 
-    public ISequenceBarrier? GetBarrierFor(object eventHandler)
+    public DependentSequenceGroup? GetDependentSequencesFor(object eventHandler)
     {
-        EventProcessorInfo eventProcessorInfo;
-        return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out eventProcessorInfo!) ? eventProcessorInfo.Barrier : null;
+        return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo) ? eventProcessorInfo.DependentSequences : null;
     }
 
     public IEnumerator<IConsumerInfo> GetEnumerator() => _consumerInfos.GetEnumerator();

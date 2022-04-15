@@ -382,7 +382,7 @@ public class EventProcessorTests
             return waitResult;
         }
 
-        public long Cursor => _target.Cursor;
+        public DependentSequenceGroup DependentSequences => _target.DependentSequences;
 
         public CancellationToken CancellationToken => _target.CancellationToken;
 

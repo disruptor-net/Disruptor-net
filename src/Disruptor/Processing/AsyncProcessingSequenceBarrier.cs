@@ -59,7 +59,7 @@ public class AsyncProcessingSequenceBarrier<TSequencer, TWaitStrategy> : IAsyncS
         return _sequencer.GetHighestPublishedSequence(sequence, result.UnsafeAvailableSequence);
     }
 
-    public long Cursor => _dependentSequences.Value;
+    public DependentSequenceGroup DependentSequences => _dependentSequences;
 
     public CancellationToken CancellationToken
     {
