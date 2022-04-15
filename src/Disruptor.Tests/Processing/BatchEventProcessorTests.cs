@@ -64,7 +64,7 @@ public class BatchEventProcessorTests
         var sequenceBarrier = ringBuffer.NewBarrier();
 
         var onTimeoutSignal = new ManualResetEvent(false);
-        var eventHandler = new TestBatchEventHandler<StubEvent>(x => { }, () => onTimeoutSignal.Set());
+        var eventHandler = new TestBatchEventHandler<StubEvent> { OnTimeoutAction = () => onTimeoutSignal.Set() };
         var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
@@ -86,7 +86,8 @@ public class BatchEventProcessorTests
 
         var exception = new TaskCompletionSource<Exception>();
         var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exception.TrySetResult(x.ex));
-        var eventHandler = new TestBatchEventHandler<StubEvent>(x => { }, () => throw new NullReferenceException());
+        var eventHandler = new TestBatchEventHandler<StubEvent> { OnTimeoutAction = TestException.ThrowOnce() };
+
         var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 

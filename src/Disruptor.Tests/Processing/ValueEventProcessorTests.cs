@@ -64,7 +64,7 @@ public class ValueEventProcessorTests
         var sequenceBarrier = ringBuffer.NewBarrier();
 
         var onTimeoutSignal = new ManualResetEvent(false);
-        var eventHandler = new TestValueEventHandler<StubValueEvent>(x => { }, () => onTimeoutSignal.Set());
+        var eventHandler = new TestValueEventHandler<StubValueEvent> { OnTimeoutAction = () => onTimeoutSignal.Set() };
         var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
@@ -86,7 +86,7 @@ public class ValueEventProcessorTests
 
         var exceptionSignal = new CountdownEvent(1);
         var exceptionHandler = new TestValueExceptionHandler<StubValueEvent>(x => exceptionSignal.Signal());
-        var eventHandler = new TestValueEventHandler<StubValueEvent>(x => { }, () => throw new NullReferenceException());
+        var eventHandler = new TestValueEventHandler<StubValueEvent> { OnTimeoutAction = TestException.ThrowOnce() };
         var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 

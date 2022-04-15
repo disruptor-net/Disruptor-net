@@ -5,30 +5,30 @@ namespace Disruptor.Tests.Support;
 public class TestBatchEventHandler<T> : IBatchEventHandler<T>
     where T : class
 {
-    private readonly Action<T> _onEventAction;
-    private readonly Action _onTimeoutAction;
+    public TestBatchEventHandler()
+        : this(_ => { })
+    {
+    }
 
     public TestBatchEventHandler(Action<T> onEventAction)
-        : this(onEventAction, () => { })
     {
+        OnEventAction = onEventAction;
+        OnTimeoutAction = () => { };
     }
 
-    public TestBatchEventHandler(Action<T> onEventAction, Action onTimeoutAction)
-    {
-        _onEventAction = onEventAction;
-        _onTimeoutAction = onTimeoutAction;
-    }
+    public Action<T> OnEventAction { get; set; }
+    public Action OnTimeoutAction { get; set; }
 
     public void OnBatch(EventBatch<T> batch, long sequence)
     {
         foreach (var data in batch)
         {
-            _onEventAction.Invoke(data);
+            OnEventAction.Invoke(data);
         }
     }
 
     public void OnTimeout(long sequence)
     {
-        _onTimeoutAction.Invoke();
+        OnTimeoutAction.Invoke();
     }
 }
