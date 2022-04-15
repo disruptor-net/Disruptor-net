@@ -13,26 +13,26 @@ public class SequencerTests
 {
     private const int _bufferSize = 16;
     private readonly ProducerType _producerType;
-    private ISequencer _sequencer;
-    private Sequence _gatingSequence;
+    private readonly ISequencer _sequencer;
+    private readonly Sequence _gatingSequence;
 
     public SequencerTests(ProducerType producerType)
     {
         _producerType = producerType;
         _gatingSequence = new Sequence();
-        _sequencer = NewProducer(_producerType, _bufferSize, new BlockingWaitStrategy());
+        _sequencer = NewSequencer(new BlockingWaitStrategy());
     }
 
-    private ISequencer NewProducer(ProducerType producerType, int bufferSize, IWaitStrategy waitStrategy)
+    private ISequencer NewSequencer(IWaitStrategy waitStrategy)
     {
-        switch (producerType)
+        switch (_producerType)
         {
             case ProducerType.Single:
-                return new SingleProducerSequencer(bufferSize, waitStrategy);
+                return new SingleProducerSequencer(_bufferSize, waitStrategy);
             case ProducerType.Multi:
-                return new MultiProducerSequencer(bufferSize, waitStrategy);
+                return new MultiProducerSequencer(_bufferSize, waitStrategy);
             default:
-                throw new ArgumentOutOfRangeException(nameof(producerType), producerType, null);
+                throw new NotSupportedException($"Unable producer type {_producerType}");
         }
     }
 
@@ -157,7 +157,7 @@ public class SequencerTests
     public void ShouldNotifyWaitStrategyOnPublish()
     {
         var waitStrategy = new DummyWaitStrategy();
-        var sequencer = NewProducer(_producerType, _bufferSize, waitStrategy);
+        var sequencer = NewSequencer(waitStrategy);
 
         sequencer.Publish(sequencer.Next());
 
@@ -168,7 +168,7 @@ public class SequencerTests
     public void ShouldNotNotifyNonBlockingWaitStrategyOnPublish()
     {
         var waitStrategy = new DummyWaitStrategy(isBlockingStrategy: false);
-        var sequencer = NewProducer(_producerType, _bufferSize, waitStrategy);
+        var sequencer = NewSequencer(waitStrategy);
 
         sequencer.Publish(sequencer.Next());
 
@@ -179,7 +179,7 @@ public class SequencerTests
     public void ShouldNotifyWaitStrategyOnPublishBatch()
     {
         var waitStrategy = new DummyWaitStrategy();
-        var sequencer = NewProducer(_producerType, _bufferSize, waitStrategy);
+        var sequencer = NewSequencer(waitStrategy);
 
         var next = _sequencer.Next(4);
         sequencer.Publish(next - (4 - 1), next);
@@ -191,7 +191,7 @@ public class SequencerTests
     public void ShouldNotNotifyNonBlockingWaitStrategyOnPublishBatch()
     {
         var waitStrategy = new DummyWaitStrategy(isBlockingStrategy: false);
-        var sequencer = NewProducer(_producerType, _bufferSize, waitStrategy);
+        var sequencer = NewSequencer(waitStrategy);
 
         var next = _sequencer.Next(4);
         sequencer.Publish(next - (4 - 1), next);
@@ -220,6 +220,35 @@ public class SequencerTests
             _sequencer.Publish(l);
         }
         Assert.That(barrier.WaitFor(-1), Is.EqualTo(new SequenceWaitResult(next)));
+    }
+
+    [Test]
+    public async Task ShouldWaitOnPublicationAsync()
+    {
+        var sequencer = NewSequencer(new AsyncWaitStrategy());
+        var barrier = sequencer.NewAsyncBarrier();
+
+        var next = sequencer.Next(10);
+        var lo = next - (10 - 1);
+        var mid = next - 5;
+
+        for (var l = lo; l < mid; l++)
+        {
+            sequencer.Publish(l);
+        }
+
+        var s1 = await barrier.WaitForAsync(-1);
+
+        Assert.That(s1, Is.EqualTo(new SequenceWaitResult(mid - 1)));
+
+        for (var l = mid; l <= next; l++)
+        {
+            sequencer.Publish(l);
+        }
+
+        var s2 = await barrier.WaitForAsync(-1);
+
+        Assert.That(s2, Is.EqualTo(new SequenceWaitResult(next)));
     }
 
     [Test]

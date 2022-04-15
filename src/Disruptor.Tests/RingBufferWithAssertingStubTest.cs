@@ -130,6 +130,11 @@ public class RingBufferWithAssertingStubTest
             throw new NotSupportedException();
         }
 
+        public IAsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+        {
+            throw new NotSupportedException();
+        }
+
         public long GetMinimumSequence()
         {
             return 0;

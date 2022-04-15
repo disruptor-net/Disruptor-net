@@ -459,9 +459,7 @@ public class Disruptor<T>
         CheckNotStarted();
 
         var processorSequences = new ISequence[eventHandlers.Length];
-        var barrier = _ringBuffer.NewBarrier(barrierSequences) as IAsyncSequenceBarrier;
-        if (barrier == null)
-            throw new InvalidOperationException($"Unable to add an async event handler: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
+        var barrier = _ringBuffer.NewAsyncBarrier(barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
         {

@@ -77,6 +77,12 @@ public unsafe class MultiProducerSequencer : ISequencer
         return ProcessingSequenceBarrierFactory.Create(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
+    /// <inheritdoc cref="ISequencer.NewAsyncBarrier"/>
+    public IAsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+    {
+        return ProcessingSequenceBarrierFactory.CreateAsync(this, _waitStrategy, _cursor, sequencesToTrack);
+    }
+
     /// <summary>
     /// <see cref="ISequenced.BufferSize"/>.
     /// </summary>

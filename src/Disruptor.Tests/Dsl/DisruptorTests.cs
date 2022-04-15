@@ -628,6 +628,25 @@ public class DisruptorTests : IDisposable
     }
 
     [Test]
+    public void ShouldSupportHandlersAsDependenciesToCustomProcessorsAsync()
+    {
+        var delayedEventHandler = CreateDelayedEventHandler();
+        _disruptor.HandleEventsWith(delayedEventHandler);
+
+        var ringBuffer = _disruptor.RingBuffer;
+        var countDownLatch = new CountdownEvent(2);
+        var handlerWithBarrier = new AsyncCountDownEventHandler<TestEvent>(countDownLatch);
+
+        var sequenceBarrier = _disruptor.After(delayedEventHandler).AsAsyncSequenceBarrier();
+        var processor = EventProcessorFactory.Create(ringBuffer, sequenceBarrier, handlerWithBarrier);
+        _disruptor.HandleEventsWith(processor);
+
+        EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
+
+        Assert.That(_taskScheduler.TaskCount, Is.EqualTo(2));
+    }
+
+    [Test]
     public void ShouldSupportCustomProcessorsAndHandlersAsDependencies()
     {
         var delayedEventHandler1 = CreateDelayedEventHandler();

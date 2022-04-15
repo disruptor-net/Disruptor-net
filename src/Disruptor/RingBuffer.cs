@@ -281,7 +281,7 @@ public abstract class RingBuffer : ICursored
     }
 
     /// <summary>
-    /// Create a new SequenceBarrier to be used by an EventProcessor to track which messages
+    /// Create a new sequence barrier to be used by an event processor to track which messages
     /// are available to be read from the ring buffer given a list of sequences to track.
     /// </summary>
     /// <param name="sequencesToTrack">the additional sequences to track</param>

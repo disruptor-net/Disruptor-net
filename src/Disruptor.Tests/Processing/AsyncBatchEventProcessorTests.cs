@@ -16,7 +16,7 @@ public class AsyncBatchEventProcessorTests
     public AsyncBatchEventProcessorTests()
     {
         _ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new MultiProducerSequencer(16, new AsyncWaitStrategy()));
-        _sequenceBarrier = (IAsyncSequenceBarrier)_ringBuffer.NewBarrier();
+        _sequenceBarrier = _ringBuffer.NewAsyncBarrier();
     }
 
     private static IAsyncEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, IAsyncSequenceBarrier sequenceBarrier, IAsyncBatchEventHandler<T> eventHandler)
@@ -61,7 +61,7 @@ public class AsyncBatchEventProcessorTests
     {
         var waitStrategy = new AsyncWaitStrategy(TimeSpan.FromMilliseconds(1));
         var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new SingleProducerSequencer(16, waitStrategy));
-        var sequenceBarrier = (IAsyncSequenceBarrier)ringBuffer.NewBarrier();
+        var sequenceBarrier = ringBuffer.NewAsyncBarrier();
 
         var onTimeoutSignal = new ManualResetEvent(false);
         var eventHandler = new TestAsyncBatchEventHandler<StubEvent>(x => { }, () => onTimeoutSignal.Set());
@@ -82,7 +82,7 @@ public class AsyncBatchEventProcessorTests
     {
         var waitStrategy = new AsyncWaitStrategy(TimeSpan.FromMilliseconds(1));
         var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new SingleProducerSequencer(16, waitStrategy));
-        var sequenceBarrier = (IAsyncSequenceBarrier)ringBuffer.NewBarrier();
+        var sequenceBarrier = ringBuffer.NewAsyncBarrier();
 
         var exception = new TaskCompletionSource<Exception>();
         var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exception.TrySetResult(x.ex));
@@ -188,7 +188,7 @@ public class AsyncBatchEventProcessorTests
     {
         var waitStrategy = new AsyncWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
-        var barrier = (IAsyncSequenceBarrier)ProcessingSequenceBarrierFactory.Create(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
+        var barrier = ProcessingSequenceBarrierFactory.CreateAsync(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
         var dp = new ArrayDataProvider<object>(sequencer.BufferSize);
 
         var h1 = new LifeCycleHandler();

@@ -40,6 +40,13 @@ public interface ISequencer : ISequenced, ICursored
     ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack);
 
     /// <summary>
+    /// Create a <see cref="IAsyncSequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
+    /// </summary>
+    /// <param name="sequencesToTrack">All of the sequences that the newly constructed barrier will wait on.</param>
+    /// <returns>A sequence barrier that will track the specified sequences.</returns>
+    IAsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack);
+
+    /// <summary>
     /// Get the minimum sequence value from all of the gating sequences
     /// added to this ringBuffer.
     /// </summary>

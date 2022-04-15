@@ -161,7 +161,7 @@ public class EventHandlerGroup<T> where T : class
     public EventHandlerGroup<T> HandleEventsWithWorkerPool(IWorkHandler<T>[] handlers) => _disruptor.CreateWorkerPool(_sequences, handlers);
 
     /// <summary>
-    /// Create a dependency barrier for the processors in this group.
+    /// Create a sequence barrier for the processors in this group.
     /// This allows custom event processors to have dependencies on
     /// <see cref="IEventProcessor{T}"/>s created by the disruptor.
     /// </summary>
@@ -169,5 +169,16 @@ public class EventHandlerGroup<T> where T : class
     public ISequenceBarrier AsSequenceBarrier()
     {
         return _disruptor.RingBuffer.NewBarrier(_sequences);
+    }
+
+    /// <summary>
+    /// Create a sequence barrier for the processors in this group.
+    /// This allows custom event processors to have dependencies on
+    /// <see cref="IEventProcessor{T}"/>s created by the disruptor.
+    /// </summary>
+    /// <returns>a <see cref="ISequenceBarrier"/> including all the processors in this group.</returns>
+    public IAsyncSequenceBarrier AsAsyncSequenceBarrier()
+    {
+        return _disruptor.RingBuffer.NewAsyncBarrier(_sequences);
     }
 }

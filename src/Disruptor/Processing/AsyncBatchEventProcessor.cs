@@ -155,7 +155,7 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEvent
 
                 _sequence.SetValue(nextSequence - 1);
             }
-            catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
+            catch (OperationCanceledException) when (_sequenceBarrier.CancellationToken.IsCancellationRequested)
             {
                 if (_runState != ProcessorRunStates.Running)
                 {

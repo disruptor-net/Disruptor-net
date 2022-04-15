@@ -66,6 +66,12 @@ public class SingleProducerSequencer : ISequencer
         return ProcessingSequenceBarrierFactory.Create(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
+    /// <inheritdoc cref="ISequencer.NewAsyncBarrier"/>
+    public IAsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+    {
+        return ProcessingSequenceBarrierFactory.CreateAsync(this, _waitStrategy, _cursor, sequencesToTrack);
+    }
+
     /// <inheritdoc cref="ISequenced.BufferSize"/>.
     public int BufferSize => _bufferSize;
 

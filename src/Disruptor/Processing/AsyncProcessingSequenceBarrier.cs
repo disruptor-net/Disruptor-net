@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Disruptor.Util;
 using JetBrains.Annotations;
 
 namespace Disruptor.Processing;
@@ -30,20 +29,6 @@ public class AsyncProcessingSequenceBarrier<TSequencer, TWaitStrategy> : IAsyncS
         _waitStrategy = waitStrategy;
         _dependentSequences = new DependentSequenceGroup(cursorSequence, dependentSequences);
         _cancellationTokenSource = new CancellationTokenSource();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
-    public SequenceWaitResult WaitFor(long sequence)
-    {
-        var cancellationToken = _cancellationTokenSource.Token;
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var result = _waitStrategy.WaitFor(sequence, _dependentSequences, cancellationToken);
-
-        if (result.UnsafeAvailableSequence < sequence)
-            return result;
-
-        return _sequencer.GetHighestPublishedSequence(sequence, result.UnsafeAvailableSequence);
     }
 
     public async ValueTask<SequenceWaitResult> WaitForAsync(long sequence)

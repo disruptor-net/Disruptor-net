@@ -31,8 +31,8 @@ public class PingPongSequencedLatencyTest_AsyncBatchHandler : ILatencyTest
         _pingBuffer = RingBuffer<PingPongEvent>.CreateSingleProducer(() => new PingPongEvent(), _bufferSize, new AsyncWaitStrategy());
         _pongBuffer = RingBuffer<PingPongEvent>.CreateSingleProducer(() => new PingPongEvent(), _bufferSize, new AsyncWaitStrategy());
 
-        _pingBarrier = (IAsyncSequenceBarrier)_pingBuffer.NewBarrier();
-        _pongBarrier = (IAsyncSequenceBarrier)_pongBuffer.NewBarrier();
+        _pingBarrier = _pingBuffer.NewAsyncBarrier();
+        _pongBarrier = _pongBuffer.NewAsyncBarrier();
 
         _pinger = new Pinger(_pongBuffer, _pauseNanos);
         _ponger = new Ponger(_pingBuffer);

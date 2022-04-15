@@ -213,6 +213,17 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     }
 
     /// <summary>
+    /// Create a new sequence barrier to be used by an event processor to track which messages
+    /// are available to be read from the ring buffer given a list of sequences to track.
+    /// </summary>
+    /// <param name="sequencesToTrack">the additional sequences to track</param>
+    /// <returns>A sequence barrier that will track the specified sequences.</returns>
+    public IAsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+    {
+        return _sequencerDispatcher.Sequencer.NewAsyncBarrier(sequencesToTrack);
+    }
+
+    /// <summary>
     /// Increment the ring buffer sequence and return a scope that will publish the sequence on disposing.
     /// </summary>
     /// <remarks>
