@@ -459,12 +459,12 @@ public class Disruptor<T>
         CheckNotStarted();
 
         var processorSequences = new ISequence[eventHandlers.Length];
-        var barrier = _ringBuffer.NewAsyncBarrier(barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
         {
             var eventHandler = eventHandlers[i];
 
+            var barrier = _ringBuffer.NewAsyncBarrier(barrierSequences);
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
             eventProcessor.SetExceptionHandler(_exceptionHandler);

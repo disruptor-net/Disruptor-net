@@ -8,7 +8,7 @@ namespace Disruptor;
 /// Coordination barrier used by asynchronous processors to wait before processing events.
 /// </summary>
 /// <remarks>
-/// The barrier may be shared by multiple handlers.
+/// The barrier is dedicated to a specific event handler.
 /// </remarks>
 public interface IAsyncSequenceBarrier
 {
