@@ -264,8 +264,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
 
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
-            if (_exceptionHandler != null)
-                eventProcessor.SetExceptionHandler(_exceptionHandler);
+            eventProcessor.SetExceptionHandler(_exceptionHandler);
 
             _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;

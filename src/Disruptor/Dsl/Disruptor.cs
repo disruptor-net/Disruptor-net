@@ -26,7 +26,7 @@ public class Disruptor<T>
     private readonly RingBuffer<T> _ringBuffer;
     private readonly TaskScheduler _taskScheduler;
     private readonly ConsumerRepository _consumerRepository = new();
-    private IExceptionHandler<T> _exceptionHandler = new ExceptionHandlerWrapper<T>();
+    private readonly ExceptionHandlerWrapper<T> _exceptionHandler = new();
     private volatile int _started;
 
     /// <summary>
@@ -177,17 +177,6 @@ public class Disruptor<T>
     }
 
     /// <summary>
-    /// Specify an exception handler to be used for any future event handlers.
-    /// Note that only event handlers set up after calling this method will use the exception handler.
-    /// </summary>
-    /// <param name="exceptionHandler">the exception handler to use for any future <see cref="IEventProcessor"/>.</param>
-    [Obsolete("This method only applies to future event handlers. Use setDefaultExceptionHandler instead which applies to existing and new event handlers.")]
-    public void HandleExceptionsWith(IExceptionHandler<T> exceptionHandler)
-    {
-        _exceptionHandler = exceptionHandler;
-    }
-
-    /// <summary>
     /// Specify an exception handler to be used for event handlers and worker pools created by this disruptor.
     /// The exception handler will be used by existing and future event handlers and worker pools created by this disruptor instance.
     /// </summary>
@@ -195,7 +184,7 @@ public class Disruptor<T>
     public void SetDefaultExceptionHandler(IExceptionHandler<T> exceptionHandler)
     {
         CheckNotStarted();
-        ((ExceptionHandlerWrapper<T>)_exceptionHandler).SwitchTo(exceptionHandler);
+        _exceptionHandler.SwitchTo(exceptionHandler);
     }
 
     /// <summary>
@@ -430,8 +419,7 @@ public class Disruptor<T>
 
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
-            if (_exceptionHandler != null)
-                eventProcessor.SetExceptionHandler(_exceptionHandler);
+            eventProcessor.SetExceptionHandler(_exceptionHandler);
 
             _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;
@@ -455,8 +443,7 @@ public class Disruptor<T>
 
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
-            if (_exceptionHandler != null)
-                eventProcessor.SetExceptionHandler(_exceptionHandler);
+            eventProcessor.SetExceptionHandler(_exceptionHandler);
 
             _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;
@@ -482,8 +469,7 @@ public class Disruptor<T>
 
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
-            if (_exceptionHandler != null)
-                eventProcessor.SetExceptionHandler(_exceptionHandler);
+            eventProcessor.SetExceptionHandler(_exceptionHandler);
 
             _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;

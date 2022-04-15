@@ -391,41 +391,6 @@ public class DisruptorTests : IDisposable
     }
 
     [Test]
-    public void ShouldSupportSpecifyingAExceptionHandlerForEventProcessors()
-    {
-        var eventHandled = new AtomicReference<Exception>();
-        var exceptionHandler = new StubExceptionHandler(eventHandled);
-        var testException = new Exception();
-        var handler = new ExceptionThrowingEventHandler(testException);
-
-        _disruptor.HandleExceptionsWith(exceptionHandler);
-        _disruptor.HandleEventsWith(handler);
-
-        PublishEvent();
-
-        var actualException = WaitFor(eventHandled);
-        Assert.AreSame(testException, actualException);
-    }
-
-    [Test]
-    public void ShouldOnlyApplyExceptionsHandlersSpecifiedViaHandleExceptionsWithOnNewEventProcessors()
-    {
-        var eventHandled = new AtomicReference<Exception>();
-        var exceptionHandler = new StubExceptionHandler(eventHandled);
-        var testException = new Exception();
-        var handler = new ExceptionThrowingEventHandler(testException);
-
-        _disruptor.HandleExceptionsWith(exceptionHandler);
-        _disruptor.HandleEventsWith(handler);
-        _disruptor.HandleExceptionsWith(new FatalExceptionHandler<TestEvent>());
-
-        PublishEvent();
-
-        var actualException = WaitFor(eventHandled);
-        Assert.AreSame(testException, actualException);
-    }
-
-    [Test]
     public void ShouldSupportSpecifyingADefaultExceptionHandlerForEventProcessors_EventHandler()
     {
         var eventHandled = new AtomicReference<Exception>();
