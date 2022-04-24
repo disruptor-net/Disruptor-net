@@ -53,7 +53,7 @@ public class SampleEventHandler : IEventHandler<SampleEvent>
 Then you can setup the Disruptor:
 
 ```cs
-var disruptor = new Disruptor<SampleEvent>(() => new SampleEvent(), bufferSize: 1024);
+var disruptor = new Disruptor<SampleEvent>(() => new SampleEvent(), ringBufferSize: 1024);
 
 disruptor.HandleEventsWith(new SampleEventHandler());
 
