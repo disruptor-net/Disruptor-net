@@ -17,7 +17,7 @@ public abstract class ValueRingBufferFixture<T>
 {
     private readonly Func<(int size, ProducerType producerType), IValueRingBuffer<T>> _ringBufferFactory;
     private readonly IValueRingBuffer<T> _ringBuffer;
-    private readonly ISequenceBarrier _sequenceBarrier;
+    private readonly SequenceBarrier _sequenceBarrier;
 
     protected ValueRingBufferFixture(Func<(int size, ProducerType producerType), IValueRingBuffer<T>> ringBufferFactory)
     {
@@ -268,12 +268,12 @@ public abstract class ValueRingBufferFixture<T>
     private class TestWaiter
     {
         private readonly Barrier _barrier;
-        private readonly ISequenceBarrier _sequenceBarrier;
+        private readonly SequenceBarrier _sequenceBarrier;
         private readonly long _initialSequence;
         private readonly long _toWaitForSequence;
         private readonly IValueRingBuffer<T> _ringBuffer;
 
-        public TestWaiter(Barrier barrier, ISequenceBarrier sequenceBarrier, IValueRingBuffer<T> ringBuffer, long initialSequence, long toWaitForSequence)
+        public TestWaiter(Barrier barrier, SequenceBarrier sequenceBarrier, IValueRingBuffer<T> ringBuffer, long initialSequence, long toWaitForSequence)
         {
             _barrier = barrier;
             _sequenceBarrier = sequenceBarrier;

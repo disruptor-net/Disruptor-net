@@ -137,7 +137,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <see cref="After(IValueEventHandler{T}[])"/>
     /// <param name="processors">processors the event processors, previously set up with <see cref="HandleEventsWith(IValueEventHandler{T}[])"/>,
     /// that will form the barrier for subsequent handlers or processors.</param>
-    /// <returns>an <see cref="ValueEventHandlerGroup{T}"/> that can be used to setup a <see cref="ISequenceBarrier"/> over the specified event processors.</returns>
+    /// <returns>an <see cref="ValueEventHandlerGroup{T}"/> that can be used to setup a <see cref="SequenceBarrier"/> over the specified event processors.</returns>
     public ValueEventHandlerGroup<T> After(params IEventProcessor[] processors)
     {
         return new ValueEventHandlerGroup<T>(this, _consumerRepository, DisruptorUtil.GetSequencesFor(processors));

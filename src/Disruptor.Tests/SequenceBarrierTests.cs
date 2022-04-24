@@ -3,19 +3,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Processing;
 using Disruptor.Tests.Support;
-using Disruptor.Util;
 using NUnit.Framework;
 
 namespace Disruptor.Tests;
 
 [TestFixture]
-public class SequenceBarrierTests
+public abstract class SequenceBarrierTests
 {
     private readonly RingBuffer<StubEvent> _ringBuffer;
 
-    public SequenceBarrierTests()
+    protected SequenceBarrierTests(ISequencer sequencer)
     {
-        _ringBuffer = RingBuffer<StubEvent>.CreateMultiProducer(() => new StubEvent(-1), 64);
+        _ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), sequencer);
         _ringBuffer.AddGatingSequences(new NoOpEventProcessor<StubEvent>(_ringBuffer).Sequence);
     }
 
@@ -132,15 +131,15 @@ public class SequenceBarrierTests
     {
         var sequenceBarrier = _ringBuffer.NewBarrier();
         Assert.IsFalse(sequenceBarrier.CancellationToken.IsCancellationRequested);
-        Assert.IsFalse(sequenceBarrier.IsCancellationRequested());
+        Assert.IsFalse(sequenceBarrier.IsCancellationRequested);
 
         sequenceBarrier.CancelProcessing();
         Assert.IsTrue(sequenceBarrier.CancellationToken.IsCancellationRequested);
-        Assert.IsTrue(sequenceBarrier.IsCancellationRequested());
+        Assert.IsTrue(sequenceBarrier.IsCancellationRequested);
 
         sequenceBarrier.ResetProcessing();
         Assert.IsFalse(sequenceBarrier.CancellationToken.IsCancellationRequested);
-        Assert.IsFalse(sequenceBarrier.IsCancellationRequested());
+        Assert.IsFalse(sequenceBarrier.IsCancellationRequested);
     }
 
     private void FillRingBuffer(long expectedNumberEvents)

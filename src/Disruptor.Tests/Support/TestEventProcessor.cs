@@ -9,10 +9,10 @@ namespace Disruptor.Tests.Support;
 public class TestEventProcessor : IEventProcessor
 {
     private readonly ManualResetEventSlim _runEvent = new();
-    private readonly ISequenceBarrier _sequenceBarrier;
+    private readonly SequenceBarrier _sequenceBarrier;
     private volatile int _running;
 
-    public TestEventProcessor(ISequenceBarrier sequenceBarrier)
+    public TestEventProcessor(SequenceBarrier sequenceBarrier)
     {
         _sequenceBarrier = sequenceBarrier;
     }

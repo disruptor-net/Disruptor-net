@@ -218,7 +218,7 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// </summary>
     /// <param name="sequencesToTrack">the additional sequences to track</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    public IAsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
     {
         return _sequencerDispatcher.Sequencer.NewAsyncBarrier(sequencesToTrack);
     }

@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Disruptor.Dsl;
-using Disruptor.Processing;
 using Disruptor.Util;
 
 namespace Disruptor;
@@ -16,7 +15,7 @@ namespace Disruptor;
 /// to <see cref="ISequenced.Next()"/>, to determine the highest available sequence that can be read, then
 /// <see cref="GetHighestPublishedSequence"/> should be used.
 /// </summary>
-public unsafe class MultiProducerSequencer : ISequencer
+public sealed unsafe class MultiProducerSequencer : ISequencer
 {
     private readonly int _bufferSize;
     private readonly IWaitStrategy _waitStrategy;
@@ -69,18 +68,16 @@ public unsafe class MultiProducerSequencer : ISequencer
         _availableBuffer.AsSpan().Fill(-1);
     }
 
-    /// <summary>
-    /// <see cref="ISequencer.NewBarrier"/>
-    /// </summary>
-    public ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
+    /// <inheritdoc cref="ISequencer.NewBarrier"/>
+    public SequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
     {
-        return ProcessingSequenceBarrierFactory.Create(this, _waitStrategy, _cursor, sequencesToTrack);
+        return new SequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
     /// <inheritdoc cref="ISequencer.NewAsyncBarrier"/>
-    public IAsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
     {
-        return ProcessingSequenceBarrierFactory.CreateAsync(this, _waitStrategy, _cursor, sequencesToTrack);
+        return new AsyncSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
     /// <summary>
@@ -375,4 +372,8 @@ public unsafe class MultiProducerSequencer : ISequencer
 
         return new AsyncEventStream<T>(provider, asyncWaitStrategy, this, _cursor, gatingSequences);
     }
+
+    internal Sequence GetCursorSequence() => _cursor;
+
+    internal IWaitStrategy GetWaitStrategy() => _waitStrategy;
 }

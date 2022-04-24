@@ -11,12 +11,12 @@ public class MultiBufferEventProcessor<T> : IEventProcessor
     private readonly ManualResetEventSlim _runEvent = new();
     private volatile int _isRunning;
     private readonly IDataProvider<T>[] _providers;
-    private readonly ISequenceBarrier[] _barriers;
+    private readonly SequenceBarrier[] _barriers;
     private readonly IEventHandler<T> _handler;
     private readonly Sequence[] _sequences;
     private long _count;
 
-    public MultiBufferEventProcessor(IDataProvider<T>[] providers, ISequenceBarrier[] barriers, IEventHandler<T> handler)
+    public MultiBufferEventProcessor(IDataProvider<T>[] providers, SequenceBarrier[] barriers, IEventHandler<T> handler)
     {
         if (providers.Length != barriers.Length)
             throw new ArgumentException();
@@ -83,7 +83,7 @@ public class MultiBufferEventProcessor<T> : IEventProcessor
 
                 Thread.Yield();
             }
-            catch (OperationCanceledException) when (_barriers[0].IsCancellationRequested())
+            catch (OperationCanceledException) when (_barriers[0].IsCancellationRequested)
             {
                 if (_isRunning == 0)
                     break;

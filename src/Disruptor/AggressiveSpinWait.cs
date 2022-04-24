@@ -19,8 +19,12 @@ namespace Disruptor;
 /// </remarks>
 public struct AggressiveSpinWait
 {
+    internal static readonly int SpinCountForSpinBeforeWait = Environment.ProcessorCount == 1 ? 1 : 35;
+
 #if NETCOREAPP
     private SpinWait _spinWait;
+
+    public int Count => _spinWait.Count;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SpinOnce()
@@ -34,6 +38,8 @@ public struct AggressiveSpinWait
     private int _count;
 
     private bool NextSpinWillYield => _count > _yieldThreshold || _isSingleProcessor;
+
+    public int Count => _count;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SpinOnce()

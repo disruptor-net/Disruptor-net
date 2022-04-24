@@ -32,7 +32,7 @@ public sealed class WorkerPool<T> where T : class
     /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
     public WorkerPool(
         RingBuffer<T> ringBuffer,
-        ISequenceBarrier sequenceBarrier,
+        SequenceBarrier sequenceBarrier,
         IExceptionHandler<T> exceptionHandler,
         params IWorkHandler<T>[] workHandlers)
     {

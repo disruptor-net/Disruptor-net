@@ -5,7 +5,7 @@ namespace Disruptor.Benchmarks;
 public class RingBufferPublicationBenchmarks
 {
     private readonly RingBuffer<Event> _ringBuffer;
-    private ISequenceBarrier _sequenceBarrier;
+    private readonly SequenceBarrier _sequenceBarrier;
 
     public RingBufferPublicationBenchmarks()
     {

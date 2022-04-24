@@ -1,6 +1,5 @@
 ﻿using System;
 using BenchmarkDotNet.Attributes;
-using Disruptor.Benchmarks.Reference;
 using Disruptor.Processing;
 
 namespace Disruptor.Benchmarks;
@@ -11,7 +10,6 @@ public class ValueEventProcessorBenchmarks
 
     private readonly ValueRingBuffer<XEvent> _ringBuffer;
     private IValueEventProcessor<XEvent> _processor;
-    private IValueEventProcessor<XEvent> _processorRef;
 
     public ValueEventProcessorBenchmarks()
     {
@@ -28,19 +26,12 @@ public class ValueEventProcessorBenchmarks
     public void Setup()
     {
         _processor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processor.Halt()));
-        _processorRef = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processorRef.Halt()), typeof(ValueBatchEventProcessorRef<,,,>));
     }
 
     [Benchmark(OperationsPerInvoke = _ringBufferSize)]
     public void Run()
     {
         _processor.Run();
-    }
-
-    [Benchmark(OperationsPerInvoke = _ringBufferSize)]
-    public void RunRef()
-    {
-        _processorRef.Run();
     }
 
     public struct XEvent

@@ -41,7 +41,7 @@ public class ThreeToThreeSequencedThroughputTest : IThroughputTest
     private readonly CountdownEvent _cyclicBarrier = new(_numPublishers + 1);
 
     private readonly RingBuffer<long[]>[] _buffers = new RingBuffer<long[]>[_numPublishers];
-    private readonly ISequenceBarrier[] _barriers = new ISequenceBarrier[_numPublishers];
+    private readonly SequenceBarrier[] _barriers = new SequenceBarrier[_numPublishers];
     private readonly LongArrayPublisher[] _valuePublishers = new LongArrayPublisher[_numPublishers];
 
     private readonly LongArrayEventHandler _handler = new();

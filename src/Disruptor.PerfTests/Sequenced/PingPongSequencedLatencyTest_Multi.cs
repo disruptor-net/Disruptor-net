@@ -67,6 +67,8 @@ public class PingPongSequencedLatencyTest_Multi : ILatencyTest
         _pingProcessor.Halt();
         _pongProcessor.Halt();
         Task.WaitAll(processorTask1, processorTask2);
+
+        //Console.WriteLine(MultiProducerSequencer.FailureCount);
     }
 
     private class Pinger : IEventHandler<PerfEvent>

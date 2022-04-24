@@ -9,8 +9,8 @@ namespace Disruptor;
 /// Represents a group a sequences that are the dependencies for a set of event processors.
 /// </summary>
 /// <remarks>
-/// For a given set of event processors S1, the dependencies are the sequences of the processors that must run before S1.
-/// If S1 represents the first processors of the disruptor, then the only dependency is the ring buffer cursor.
+/// For a given set S of event processors, the dependencies are the sequences of the processors that must run before S.
+/// If S represents the first processors of the disruptor, then the only dependency is the ring buffer cursor.
 /// </remarks>
 public class DependentSequenceGroup
 {
@@ -51,6 +51,12 @@ public class DependentSequenceGroup
     }
 
     /// <summary>
+    /// Gets a value indicating whether the ring buffer cursor is the only dependency (i.e.: the event processors
+    /// that use this <see cref="DependentSequenceGroup"/> are the first processors of the disruptor).
+    /// </summary>
+    public bool DependsOnCursor => _dependencies.Length == 1 && _dependencies[0] == _cursor;
+
+    /// <summary>
     /// Gets the value of the ring buffer cursor.
     /// </summary>
     public long CursorValue
@@ -60,7 +66,7 @@ public class DependentSequenceGroup
     }
 
     /// <summary>
-    /// Gets the minimum value of the dependent sequences.
+    /// Gets the minimum value of the dependencies sequences.
     /// </summary>
     public long Value
     {

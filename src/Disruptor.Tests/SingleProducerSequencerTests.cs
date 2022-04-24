@@ -3,7 +3,7 @@
 namespace Disruptor.Tests;
 
 [TestFixture]
-public class SingleProducerSequencerTests
+public class SingleProducerSequencerTests : SequencerTests
 {
     [Test]
     public void ShouldNotUpdateCursorDuringHasAvailableCapacity()
@@ -20,5 +20,10 @@ public class SingleProducerSequencerTests
 
             sequencer.Publish(next);
         }
+    }
+
+    protected override ISequencer NewSequencer(IWaitStrategy waitStrategy, int bufferSize = 16)
+    {
+        return new SingleProducerSequencer(bufferSize, waitStrategy);
     }
 }

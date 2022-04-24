@@ -33,18 +33,18 @@ public interface ISequencer : ISequenced, ICursored
     bool RemoveGatingSequence(ISequence sequence);
 
     /// <summary>
-    /// Create a <see cref="ISequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
+    /// Create a <see cref="SequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
     /// </summary>
     /// <param name="sequencesToTrack">All of the sequences that the newly constructed barrier will wait on.</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack);
+    SequenceBarrier NewBarrier(params ISequence[] sequencesToTrack);
 
     /// <summary>
-    /// Create a <see cref="IAsyncSequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
+    /// Create a <see cref="AsyncSequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
     /// </summary>
     /// <param name="sequencesToTrack">All of the sequences that the newly constructed barrier will wait on.</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    IAsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack);
+    AsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack);
 
     /// <summary>
     /// Get the minimum sequence value from all of the gating sequences

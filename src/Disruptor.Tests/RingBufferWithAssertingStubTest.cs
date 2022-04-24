@@ -1,4 +1,5 @@
 ﻿using System;
+using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
@@ -125,12 +126,12 @@ public class RingBufferWithAssertingStubTest
             return false;
         }
 
-        public ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
+        public SequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
         {
             throw new NotSupportedException();
         }
 
-        public IAsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+        public AsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
         {
             throw new NotSupportedException();
         }

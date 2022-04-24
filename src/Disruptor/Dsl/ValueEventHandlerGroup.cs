@@ -98,6 +98,6 @@ public class ValueEventHandlerGroup<T>
     /// This allows custom event processors to have dependencies on
     /// <see cref="IValueEventProcessor{T}"/>s created by the disruptor.
     /// </summary>
-    /// <returns>a <see cref="ISequenceBarrier"/> including all the processors in this group.</returns>
-    public ISequenceBarrier AsSequenceBarrier() => _disruptor.RingBuffer.NewBarrier(_sequences);
+    /// <returns>a <see cref="SequenceBarrier"/> including all the processors in this group.</returns>
+    public SequenceBarrier AsSequenceBarrier() => _disruptor.RingBuffer.NewBarrier(_sequences);
 }

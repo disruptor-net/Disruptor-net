@@ -165,8 +165,8 @@ public class EventHandlerGroup<T> where T : class
     /// This allows custom event processors to have dependencies on
     /// <see cref="IEventProcessor{T}"/>s created by the disruptor.
     /// </summary>
-    /// <returns>a <see cref="ISequenceBarrier"/> including all the processors in this group.</returns>
-    public ISequenceBarrier AsSequenceBarrier()
+    /// <returns>a <see cref="SequenceBarrier"/> including all the processors in this group.</returns>
+    public SequenceBarrier AsSequenceBarrier()
     {
         return _disruptor.RingBuffer.NewBarrier(_sequences);
     }
@@ -176,8 +176,8 @@ public class EventHandlerGroup<T> where T : class
     /// This allows custom event processors to have dependencies on
     /// <see cref="IEventProcessor{T}"/>s created by the disruptor.
     /// </summary>
-    /// <returns>a <see cref="ISequenceBarrier"/> including all the processors in this group.</returns>
-    public IAsyncSequenceBarrier AsAsyncSequenceBarrier()
+    /// <returns>a <see cref="AsyncSequenceBarrier"/> including all the processors in this group.</returns>
+    public AsyncSequenceBarrier AsAsyncSequenceBarrier()
     {
         return _disruptor.RingBuffer.NewAsyncBarrier(_sequences);
     }

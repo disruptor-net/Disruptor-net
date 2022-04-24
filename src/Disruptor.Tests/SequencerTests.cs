@@ -7,34 +7,20 @@ using NUnit.Framework;
 
 namespace Disruptor.Tests;
 
-[TestFixture(ProducerType.Single)]
-[TestFixture(ProducerType.Multi)]
-public class SequencerTests
+[TestFixture]
+public abstract class SequencerTests
 {
     private const int _bufferSize = 16;
-    private readonly ProducerType _producerType;
-    private readonly ISequencer _sequencer;
-    private readonly Sequence _gatingSequence;
+    protected readonly ISequencer _sequencer;
+    protected readonly Sequence _gatingSequence;
 
-    public SequencerTests(ProducerType producerType)
+    public SequencerTests()
     {
-        _producerType = producerType;
         _gatingSequence = new Sequence();
         _sequencer = NewSequencer(new BlockingWaitStrategy());
     }
 
-    private ISequencer NewSequencer(IWaitStrategy waitStrategy)
-    {
-        switch (_producerType)
-        {
-            case ProducerType.Single:
-                return new SingleProducerSequencer(_bufferSize, waitStrategy);
-            case ProducerType.Multi:
-                return new MultiProducerSequencer(_bufferSize, waitStrategy);
-            default:
-                throw new NotSupportedException($"Unable producer type {_producerType}");
-        }
-    }
+    protected abstract ISequencer NewSequencer(IWaitStrategy waitStrategy, int bufferSize = 16);
 
     [Test]
     public void ShouldStartWithInitialValue()
@@ -134,7 +120,7 @@ public class SequencerTests
     }
 
     [Test]
-    public void ShoundNotBeAvailableUntilPublished()
+    public void ShouldNotBeAvailableUntilPublished()
     {
         var next = _sequencer.Next(6);
 

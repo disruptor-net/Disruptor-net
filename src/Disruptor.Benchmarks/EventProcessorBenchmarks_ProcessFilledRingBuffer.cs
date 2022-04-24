@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using Disruptor.Benchmarks.Reference;
 using Disruptor.Processing;
 
 namespace Disruptor.Benchmarks;
@@ -16,7 +15,6 @@ public class EventProcessorBenchmarks_ProcessFilledRingBuffer
 
     private readonly RingBuffer<XEvent> _ringBuffer;
     private IEventProcessor<XEvent> _processor;
-    private IEventProcessor<XEvent> _processorRef;
     private IEventProcessor<XEvent> _batchProcessor;
 
     public EventProcessorBenchmarks_ProcessFilledRingBuffer()
@@ -34,7 +32,6 @@ public class EventProcessorBenchmarks_ProcessFilledRingBuffer
     public void Setup()
     {
         _processor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processor.Halt()));
-        _processorRef = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processorRef.Halt()), typeof(EventProcessorRef<,,,>));
         _batchProcessor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XBatchEventHandler(() => _batchProcessor.Halt()));
     }
 
@@ -42,12 +39,6 @@ public class EventProcessorBenchmarks_ProcessFilledRingBuffer
     public void Run()
     {
         _processor.Run();
-    }
-
-    //[Benchmark(OperationsPerInvoke = _ringBufferSize)]
-    public void RunRef()
-    {
-        _processorRef.Run();
     }
 
     [Benchmark(OperationsPerInvoke = _ringBufferSize)]

@@ -17,19 +17,19 @@ namespace Disruptor.Processing;
 /// </remarks>
 /// <typeparam name="T">the type of event used.</typeparam>
 /// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
-/// <typeparam name="TSequenceBarrier">the type of the <see cref="ISequenceBarrier"/> used.</typeparam>
+/// <typeparam name="TSequenceBarrierOptions">the type of the <see cref="ISequenceBarrierOptions"/> used.</typeparam>
 /// <typeparam name="TEventHandler">the type of the <see cref="IEventHandler{T}"/> used.</typeparam>
 /// <typeparam name="TOnBatchStartEvaluator">the type of the <see cref="IOnBatchStartEvaluator"/> used.</typeparam>
-public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, TOnBatchStartEvaluator> : IEventProcessor<T>
+public class EventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEventHandler, TOnBatchStartEvaluator> : IEventProcessor<T>
     where T : class
     where TDataProvider : IDataProvider<T>
-    where TSequenceBarrier : ISequenceBarrier
+    where TSequenceBarrierOptions : ISequenceBarrierOptions
     where TEventHandler : IEventHandler<T>
     where TOnBatchStartEvaluator : IOnBatchStartEvaluator
 {
     // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
     private TDataProvider _dataProvider;
-    private TSequenceBarrier _sequenceBarrier;
+    private SequenceBarrier _sequenceBarrier;
     private TEventHandler _eventHandler;
     private TOnBatchStartEvaluator _onBatchStartEvaluator;
     // ReSharper restore FieldCanBeMadeReadOnly.Local
@@ -39,7 +39,7 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, T
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
     private volatile int _runState = ProcessorRunStates.Idle;
 
-    public EventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TOnBatchStartEvaluator onBatchStartEvaluator)
+    public EventProcessor(TDataProvider dataProvider, SequenceBarrier sequenceBarrier, TEventHandler eventHandler, TOnBatchStartEvaluator onBatchStartEvaluator)
     {
         _dataProvider = dataProvider;
         _sequenceBarrier = sequenceBarrier;
@@ -57,7 +57,7 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, T
 
     /// <summary>
     /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
-    /// It will call <see cref="ISequenceBarrier.CancelProcessing"/> to notify the thread to check status.
+    /// It will call <see cref="SequenceBarrier.CancelProcessing"/> to notify the thread to check status.
     /// </summary>
     public void Halt()
     {
@@ -144,7 +144,7 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, T
         {
             try
             {
-                var waitResult = _sequenceBarrier.WaitFor(nextSequence);
+                var waitResult = _sequenceBarrier.WaitFor<TSequenceBarrierOptions>(nextSequence);
                 if (waitResult.IsTimeout)
                 {
                     NotifyTimeout(_sequence.Value);
@@ -165,7 +165,7 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler, T
 
                 _sequence.SetValue(availableSequence);
             }
-            catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
+            catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested)
             {
                 if (_runState != ProcessorRunStates.Running)
                 {

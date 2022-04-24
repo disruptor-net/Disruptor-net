@@ -3,14 +3,13 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Disruptor.Dsl;
-using Disruptor.Processing;
 using Disruptor.Util;
 using static Disruptor.Util.Constants;
 
 namespace Disruptor;
 
 [StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 48)]
-public class SingleProducerSequencer : ISequencer
+public sealed class SingleProducerSequencer : ISequencer
 {
     // padding: DefaultPadding
 
@@ -59,17 +58,16 @@ public class SingleProducerSequencer : ISequencer
         _isBlockingWaitStrategy = waitStrategy.IsBlockingStrategy;
     }
 
-
     /// <inheritdoc cref="ISequencer.NewBarrier"/>
-    public ISequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
+    public SequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
     {
-        return ProcessingSequenceBarrierFactory.Create(this, _waitStrategy, _cursor, sequencesToTrack);
+        return new SequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
     /// <inheritdoc cref="ISequencer.NewAsyncBarrier"/>
-    public IAsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
     {
-        return ProcessingSequenceBarrierFactory.CreateAsync(this, _waitStrategy, _cursor, sequencesToTrack);
+        return new AsyncSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
     /// <inheritdoc cref="ISequenced.BufferSize"/>.

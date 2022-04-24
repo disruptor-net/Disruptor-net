@@ -54,7 +54,7 @@ public class ThreeToOneSequencedThroughputTest : IThroughputTest
     private readonly CountdownEvent _cyclicBarrier = new(_numPublishers + 1);
     private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
     private readonly TaskScheduler _scheduler = RoundRobinThreadAffinedTaskScheduler.IsSupported ? new RoundRobinThreadAffinedTaskScheduler(5) : TaskScheduler.Default;
-    private readonly ISequenceBarrier _sequenceBarrier;
+    private readonly SequenceBarrier _sequenceBarrier;
     private readonly AdditionEventHandler _handler = new();
     private readonly IEventProcessor<PerfEvent> _eventProcessor;
     private readonly ValuePublisher[] _valuePublishers = new ValuePublisher[_numPublishers];

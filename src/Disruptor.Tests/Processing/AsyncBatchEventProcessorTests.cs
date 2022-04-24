@@ -11,7 +11,7 @@ namespace Disruptor.Tests.Processing;
 public class AsyncBatchEventProcessorTests
 {
     private readonly RingBuffer<StubEvent> _ringBuffer;
-    private readonly IAsyncSequenceBarrier _sequenceBarrier;
+    private readonly AsyncSequenceBarrier _sequenceBarrier;
 
     public AsyncBatchEventProcessorTests()
     {
@@ -19,7 +19,7 @@ public class AsyncBatchEventProcessorTests
         _sequenceBarrier = _ringBuffer.NewAsyncBarrier();
     }
 
-    private static IAsyncEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, IAsyncSequenceBarrier sequenceBarrier, IAsyncBatchEventHandler<T> eventHandler)
+    private static IAsyncEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, AsyncSequenceBarrier sequenceBarrier, IAsyncBatchEventHandler<T> eventHandler)
         where T : class
     {
         return EventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
@@ -188,7 +188,7 @@ public class AsyncBatchEventProcessorTests
     {
         var waitStrategy = new AsyncWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
-        var barrier = ProcessingSequenceBarrierFactory.CreateAsync(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
+        var barrier = new AsyncSequenceBarrier(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
         var dp = new ArrayDataProvider<object>(sequencer.BufferSize);
 
         var h1 = new LifeCycleHandler();

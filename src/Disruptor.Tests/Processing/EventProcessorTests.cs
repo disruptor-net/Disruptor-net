@@ -12,7 +12,7 @@ namespace Disruptor.Tests.Processing;
 public class EventProcessorTests
 {
     private readonly RingBuffer<StubEvent> _ringBuffer;
-    private readonly ISequenceBarrier _sequenceBarrier;
+    private readonly SequenceBarrier _sequenceBarrier;
 
     public EventProcessorTests()
     {
@@ -20,7 +20,7 @@ public class EventProcessorTests
         _sequenceBarrier = _ringBuffer.NewBarrier();
     }
 
-    private static IEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, ISequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
+    private static IEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
         where T : class
     {
         return EventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
@@ -251,7 +251,7 @@ public class EventProcessorTests
     {
         var waitStrategy = new BusySpinWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
-        var barrier = ProcessingSequenceBarrierFactory.Create(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
+        var barrier = new SequenceBarrier(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
         var dp = new ArrayDataProvider<object>(sequencer.BufferSize);
 
         var h1 = new LifeCycleHandler();
@@ -323,20 +323,23 @@ public class EventProcessorTests
     [TestCase(typeof(BatchAwareEventHandlerInternal))]
     public void ShouldNotPassZeroSizeToBatchStartAware(Type eventHandlerType)
     {
+        var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new MultiProducerSequencer(16));
+        var sequenceBarrier = ringBuffer.NewBarrier();
+
         var eventHandler = (BatchAwareEventHandler)Activator.CreateInstance(eventHandlerType)!;
 
-        var eventProcessor = CreateEventProcessor(_ringBuffer, new DelegatingSequenceBarrier(_sequenceBarrier), eventHandler);
+        var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
 
-        _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+        ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         var task = eventProcessor.Start();
 
         for (var i = 0; i < 3; i++)
         {
-            var sequence = _ringBuffer.Next();
+            var sequence = ringBuffer.Next();
             Thread.Sleep(100);
 
-            _ringBuffer.Publish(sequence);
+            ringBuffer.Publish(sequence);
         }
 
         eventProcessor.Halt();
@@ -363,38 +366,6 @@ public class EventProcessorTests
 
         Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
         Assert.That(eventHandler.BatchCount, Is.EqualTo(1));
-    }
-
-    private class DelegatingSequenceBarrier : ISequenceBarrier
-    {
-        private readonly ISequenceBarrier _target;
-        private bool _suppress = true;
-
-        public DelegatingSequenceBarrier(ISequenceBarrier target)
-        {
-            _target = target;
-        }
-
-        public SequenceWaitResult WaitFor(long sequence)
-        {
-            var waitResult = _suppress ? new SequenceWaitResult(sequence - 1) : _target.WaitFor(sequence);
-            _suppress = !_suppress;
-            return waitResult;
-        }
-
-        public DependentSequenceGroup DependentSequences => _target.DependentSequences;
-
-        public CancellationToken CancellationToken => _target.CancellationToken;
-
-        public void ResetProcessing()
-        {
-            _target.ResetProcessing();
-        }
-
-        public void CancelProcessing()
-        {
-            _target.CancelProcessing();
-        }
     }
 
     // ReSharper disable once MemberCanBePrivate.Global

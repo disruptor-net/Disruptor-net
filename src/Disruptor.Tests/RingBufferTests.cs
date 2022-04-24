@@ -15,7 +15,7 @@ namespace Disruptor.Tests;
 public class RingBufferTests
 {
     private readonly RingBuffer<StubEvent> _ringBuffer;
-    private readonly ISequenceBarrier _sequenceBarrier;
+    private readonly SequenceBarrier _sequenceBarrier;
 
     public RingBufferTests()
     {
@@ -483,12 +483,12 @@ public class RingBufferTests
     private class TestWaiter
     {
         private readonly Barrier _barrier;
-        private readonly ISequenceBarrier _sequenceBarrier;
+        private readonly SequenceBarrier _sequenceBarrier;
         private readonly long _initialSequence;
         private readonly long _toWaitForSequence;
         private readonly RingBuffer<StubEvent> _ringBuffer;
 
-        public TestWaiter(Barrier barrier, ISequenceBarrier sequenceBarrier, RingBuffer<StubEvent> ringBuffer, long initialSequence, long toWaitForSequence)
+        public TestWaiter(Barrier barrier, SequenceBarrier sequenceBarrier, RingBuffer<StubEvent> ringBuffer, long initialSequence, long toWaitForSequence)
         {
             _barrier = barrier;
             _sequenceBarrier = sequenceBarrier;

@@ -17,17 +17,17 @@ namespace Disruptor.Processing;
 /// </remarks>
 /// <typeparam name="T">the type of event used.</typeparam>
 /// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
-/// <typeparam name="TSequenceBarrier">the type of the <see cref="ISequenceBarrier"/> used.</typeparam>
+/// <typeparam name="TSequenceBarrierOptions">the type of the <see cref="ISequenceBarrierOptions"/> used.</typeparam>
 /// <typeparam name="TEventHandler">the type of the <see cref="IBatchEventHandler{T}"/> used.</typeparam>
-public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEventHandler> : IAsyncEventProcessor<T>
+public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEventHandler> : IAsyncEventProcessor<T>
     where T : class
     where TDataProvider : IDataProvider<T>
-    where TSequenceBarrier : IAsyncSequenceBarrier
+    where TSequenceBarrierOptions : ISequenceBarrierOptions
     where TEventHandler : IAsyncBatchEventHandler<T>
 {
     // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
     private TDataProvider _dataProvider;
-    private TSequenceBarrier _sequenceBarrier;
+    private AsyncSequenceBarrier _sequenceBarrier;
     private TEventHandler _eventHandler;
     // ReSharper restore FieldCanBeMadeReadOnly.Local
 
@@ -36,7 +36,7 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEvent
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
     private volatile int _runState = ProcessorRunStates.Idle;
 
-    public AsyncBatchEventProcessor(TDataProvider dataProvider, TSequenceBarrier sequenceBarrier, TEventHandler eventHandler)
+    public AsyncBatchEventProcessor(TDataProvider dataProvider, AsyncSequenceBarrier sequenceBarrier, TEventHandler eventHandler)
     {
         _dataProvider = dataProvider;
         _sequenceBarrier = sequenceBarrier;
@@ -53,7 +53,7 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEvent
 
     /// <summary>
     /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
-    /// It will call <see cref="ISequenceBarrier.CancelProcessing"/> to notify the thread to check status.
+    /// It will call <see cref="AsyncSequenceBarrier.CancelProcessing"/> to notify the thread to check status.
     /// </summary>
     public void Halt()
     {
@@ -138,7 +138,7 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEvent
         {
             try
             {
-                var waitResult = await _sequenceBarrier.WaitForAsync(nextSequence).ConfigureAwait(false);
+                var waitResult = await _sequenceBarrier.WaitForAsync<TSequenceBarrierOptions>(nextSequence).ConfigureAwait(false);
                 if (waitResult.IsTimeout)
                 {
                     NotifyTimeout(_sequence.Value);
@@ -155,7 +155,7 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrier, TEvent
 
                 _sequence.SetValue(nextSequence - 1);
             }
-            catch (OperationCanceledException) when (_sequenceBarrier.CancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested)
             {
                 if (_runState != ProcessorRunStates.Running)
                 {

@@ -265,7 +265,7 @@ public class Disruptor<T>
     /// <see cref="After(Disruptor.IEventHandler{T}[])"/>
     /// <param name="processors">processors the event processors, previously set up with <see cref="HandleEventsWith(Disruptor.IEventHandler{T}[])"/>,
     /// that will form the barrier for subsequent handlers or processors.</param>
-    /// <returns>an <see cref="EventHandlerGroup{T}"/> that can be used to setup a <see cref="ISequenceBarrier"/> over the specified event processors.</returns>
+    /// <returns>an <see cref="EventHandlerGroup{T}"/> that can be used to setup a <see cref="SequenceBarrier"/> over the specified event processors.</returns>
     public EventHandlerGroup<T> After(params IEventProcessor[] processors)
     {
         return new EventHandlerGroup<T>(this, _consumerRepository, DisruptorUtil.GetSequencesFor(processors));

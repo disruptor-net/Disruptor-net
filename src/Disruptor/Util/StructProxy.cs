@@ -97,7 +97,7 @@ internal static class StructProxy
                 method.DefineGenericParameters(genericArguments.Select((x, i) => $"T{i}").ToArray());
             }
 
-            method.SetImplementationFlags(method.GetMethodImplementationFlags() | MethodImplAttributes.AggressiveInlining);
+            method.SetImplementationFlags(method.GetMethodImplementationFlags() | MethodImplAttributes.AggressiveInlining | (MethodImplAttributes)Constants.AggressiveOptimization);
 
             var methodGenerator = method.GetILGenerator();
 

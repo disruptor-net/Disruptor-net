@@ -17,7 +17,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
 {
     private readonly Sequence _sequence = new();
     private readonly RingBuffer<T> _ringBuffer;
-    private readonly ISequenceBarrier _sequenceBarrier;
+    private readonly SequenceBarrier _sequenceBarrier;
     private readonly IWorkHandler<T> _workHandler;
     private readonly IExceptionHandler<T> _exceptionHandler;
     private readonly Sequence _workSequence;
@@ -33,7 +33,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
     /// <param name="exceptionHandler">exceptionHandler to be called back when an error occurs</param>
     /// <param name="workSequence">workSequence from which to claim the next event to be worked on.  It should always be initialised
     /// as <see cref="Disruptor.Sequence.InitialCursorValue"/></param>
-    public WorkProcessor(RingBuffer<T> ringBuffer, ISequenceBarrier sequenceBarrier, IWorkHandler<T> workHandler, IExceptionHandler<T> exceptionHandler, Sequence workSequence)
+    public WorkProcessor(RingBuffer<T> ringBuffer, SequenceBarrier sequenceBarrier, IWorkHandler<T> workHandler, IExceptionHandler<T> exceptionHandler, Sequence workSequence)
     {
         _ringBuffer = ringBuffer;
         _sequenceBarrier = sequenceBarrier;
@@ -157,7 +157,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
                     cachedAvailableSequence = waitResult.UnsafeAvailableSequence;
                 }
             }
-            catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested())
+            catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested)
             {
                 if (_runState != ProcessorRunStates.Running)
                 {
