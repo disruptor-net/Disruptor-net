@@ -9,7 +9,7 @@ using HdrHistogram;
 
 namespace Disruptor.PerfTests.Sequenced;
 
-public class PingPongSequencedLatencyTest : ILatencyTest
+public class PingPongSequencedLatencyTest_Multi : ILatencyTest
 {
     private const int _bufferSize = 1024;
     private const long _iterations = 100 * 1000 * 30;
@@ -23,10 +23,10 @@ public class PingPongSequencedLatencyTest : ILatencyTest
     private readonly Ponger _ponger;
     private readonly IEventProcessor<PerfEvent> _pongProcessor;
 
-    public PingPongSequencedLatencyTest()
+    public PingPongSequencedLatencyTest_Multi()
     {
-        var pingBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
-        var pongBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+        var pingBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+        var pongBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
 
         var pingBarrier = pingBuffer.NewBarrier();
         var pongBarrier = pongBuffer.NewBarrier();

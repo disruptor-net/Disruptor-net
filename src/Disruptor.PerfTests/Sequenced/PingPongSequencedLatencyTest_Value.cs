@@ -17,33 +17,28 @@ public class PingPongSequencedLatencyTest_Value : ILatencyTest
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    private readonly ValueRingBuffer<PerfValueEvent> _pingBuffer;
-    private readonly ValueRingBuffer<PerfValueEvent> _pongBuffer;
-
-    private readonly ISequenceBarrier _pongBarrier;
     private readonly Pinger _pinger;
     private readonly IValueEventProcessor<PerfValueEvent> _pingProcessor;
 
-    private readonly ISequenceBarrier _pingBarrier;
     private readonly Ponger _ponger;
     private readonly IValueEventProcessor<PerfValueEvent> _pongProcessor;
 
     public PingPongSequencedLatencyTest_Value()
     {
-        _pingBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
-        _pongBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+        var pingBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+        var pongBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
 
-        _pingBarrier = _pingBuffer.NewBarrier();
-        _pongBarrier = _pongBuffer.NewBarrier();
+        var pingBarrier = pingBuffer.NewBarrier();
+        var pongBarrier = pongBuffer.NewBarrier();
 
-        _pinger = new Pinger(_pingBuffer, _iterations, _pauseNanos);
-        _ponger = new Ponger(_pongBuffer);
+        _pinger = new Pinger(pingBuffer, _iterations, _pauseNanos);
+        _ponger = new Ponger(pongBuffer);
 
-        _pingProcessor = EventProcessorFactory.Create(_pongBuffer,_pongBarrier, _pinger);
-        _pongProcessor = EventProcessorFactory.Create(_pingBuffer,_pingBarrier, _ponger);
+        _pingProcessor = EventProcessorFactory.Create(pongBuffer,pongBarrier, _pinger);
+        _pongProcessor = EventProcessorFactory.Create(pingBuffer,pingBarrier, _ponger);
 
-        _pingBuffer.AddGatingSequences(_pongProcessor.Sequence);
-        _pongBuffer.AddGatingSequences(_pingProcessor.Sequence);
+        pingBuffer.AddGatingSequences(_pongProcessor.Sequence);
+        pongBuffer.AddGatingSequences(_pingProcessor.Sequence);
     }
 
     public int RequiredProcessorCount => 2;
