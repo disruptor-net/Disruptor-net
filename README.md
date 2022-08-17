@@ -71,7 +71,7 @@ using (var scope = disruptor.PublishEvent())
 }
 ```
 
-Other event [publication options](https://github.com/disruptor-net/Disruptor-net/wiki/Publication-Options) are described in the Wiki.
+Go to the Wiki for a [more detailed introduction](https://github.com/disruptor-net/Disruptor-net/wiki/Getting-Started).
 
 ## License
 
