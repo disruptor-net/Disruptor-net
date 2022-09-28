@@ -13,13 +13,9 @@ The Disruptor can be succinctly defined as a circular queue with a configurable 
 - Optionally lock-free.
 - Configurable [wait strategies](https://github.com/disruptor-net/Disruptor-net/wiki/Wait-Strategies).
 
-Most of the information from the Java documentation is applicable to the .NET version, especially the [core concepts](https://github.com/LMAX-Exchange/disruptor/wiki/Introduction).
-
-The quickest way to get started with the disruptor is by using the [NuGet package](https://www.nuget.org/packages/Disruptor).
-
 ## Release notes
 
-[Version 5.0.0 RC1](https://github.com/disruptor-net/Disruptor-net/releases/tag/5.0.0-rc1) has been released and is available on NuGet.
+[Version 5.0.0](https://github.com/disruptor-net/Disruptor-net/releases/tag/5.0.0) has been released and is available on [NuGet](https://www.nuget.org/packages/Disruptor).
 
 ## Supported runtimes
 
@@ -71,7 +67,7 @@ using (var scope = disruptor.PublishEvent())
 }
 ```
 
-Go to the Wiki for a [more detailed introduction](https://github.com/disruptor-net/Disruptor-net/wiki/Getting-Started).
+Go to the wiki for a [more detailed introduction](https://github.com/disruptor-net/Disruptor-net/wiki/Getting-Started).
 
 ## License
 
