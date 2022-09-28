@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Disruptor.Dsl;
 
 namespace Disruptor.Samples.Wiki.GettingStarted;
@@ -10,20 +9,22 @@ public class SampleProgram
 {
     public static void Main()
     {
-        // Specify the size of the ring buffer, must be power of 2.
+        // Size of the ring buffer, must be power of 2.
         const int bufferSize = 1024;
 
-        // Construct the Disruptor
-        var disruptor = new Dsl.Disruptor<SampleEvent>(() => new SampleEvent(), bufferSize);
+        // Create the disruptor
+        var disruptor = new Disruptor<SampleEvent>(() => new SampleEvent(), bufferSize);
 
-        // Connect the handler
+        // Configure a simple chain
+        // SampleEventHandler -> OtherSampleEventHandler
         disruptor.HandleEventsWith(new SampleEventHandler());
 
-        // Start the Disruptor, starts all threads running
+        // Start the disruptor (start the consumer threads)
         disruptor.Start();
 
-        // Get the ring buffer from the Disruptor to be used for publishing.
         var ringBuffer = disruptor.RingBuffer;
+
+        // Use the ring buffer to publish events
 
         var producer = new SampleEventProducer(ringBuffer);
         var memory = new Memory<byte>(new byte[12]);
@@ -36,14 +37,5 @@ public class SampleProgram
 
             Thread.Sleep(1000);
         }
-    }
-}
-
-public class SampleConstruct
-{
-    public void Main()
-    {
-        // Construct the Disruptor with a SingleProducerSequencer
-        var disruptor = new Disruptor<SampleEvent>(() => new SampleEvent(), 1024, TaskScheduler.Default, ProducerType.Single, new BlockingWaitStrategy());
     }
 }

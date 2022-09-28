@@ -5,7 +5,7 @@ namespace Disruptor.Samples.Wiki.PublicationOptions;
 
 public class BatchPublication
 {
-    private readonly RingBuffer<SampleEvent> _ringBuffer = new(() => new SampleEvent(), 1024);
+    private readonly RingBuffer<Event> _ringBuffer = new(() => new Event(), 1024);
 
     public void PublishEventBatchUsingScope(ReadOnlySpan<int> ids, double value)
     {
@@ -37,5 +37,11 @@ public class BatchPublication
         {
             _ringBuffer.Publish(lo, hi);
         }
+    }
+
+    private class Event
+    {
+        public int Id { get; set; }
+        public double Value { get; set; }
     }
 }
