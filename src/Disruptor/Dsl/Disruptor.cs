@@ -30,7 +30,7 @@ public class Disruptor<T>
     private volatile int _started;
 
     /// <summary>
-    /// Create a new Disruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
+    /// Create a new Disruptor using <see cref="SequencerFactory.DefaultWaitStrategy"/> and <see cref="SequencerFactory.DefaultProducerType"/>.
     /// </summary>
     /// <param name="eventFactory">the factory to create events in the ring buffer</param>
     /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
@@ -40,13 +40,24 @@ public class Disruptor<T>
     }
 
     /// <summary>
-    /// Create a new Disruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
+    /// Create a new Disruptor using <see cref="SequencerFactory.DefaultWaitStrategy"/> and <see cref="SequencerFactory.DefaultProducerType"/>.
     /// </summary>
     /// <param name="eventFactory">the factory to create events in the ring buffer</param>
     /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
     /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
     public Disruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler)
-        : this(RingBuffer<T>.CreateMultiProducer(eventFactory, ringBufferSize), taskScheduler)
+        : this(eventFactory, ringBufferSize, taskScheduler, SequencerFactory.DefaultProducerType, SequencerFactory.DefaultWaitStrategy())
+    {
+    }
+
+    /// <summary>
+    /// Create a new Disruptor using <see cref="SequencerFactory.DefaultProducerType"/>.
+    /// </summary>
+    /// <param name="eventFactory">the factory to create events in the ring buffer</param>
+    /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
+    /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
+    public Disruptor(Func<T> eventFactory, int ringBufferSize, IWaitStrategy waitStrategy)
+        : this(eventFactory, ringBufferSize, TaskScheduler.Default, SequencerFactory.DefaultProducerType, waitStrategy)
     {
     }
 
@@ -59,13 +70,8 @@ public class Disruptor<T>
     /// <param name="producerType">the claim strategy to use for the ring buffer</param>
     /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
     public Disruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
-        : this(RingBuffer<T>.Create(producerType, eventFactory, ringBufferSize, waitStrategy), taskScheduler)
     {
-    }
-
-    private Disruptor(RingBuffer<T> ringBuffer, TaskScheduler taskScheduler)
-    {
-        _ringBuffer = ringBuffer;
+        _ringBuffer = new RingBuffer<T>(eventFactory, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy));
         _taskScheduler = taskScheduler;
     }
 

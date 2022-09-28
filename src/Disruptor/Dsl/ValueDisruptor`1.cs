@@ -24,12 +24,34 @@ public class ValueDisruptor<T> : ValueDisruptor<T, ValueRingBuffer<T>>
     where T : struct
 {
     /// <summary>
-    /// Create a new ValueDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
+    /// Create a new ValueDisruptor using <see cref="SequencerFactory.DefaultWaitStrategy"/> and <see cref="SequencerFactory.DefaultProducerType"/>.
     /// </summary>
     /// <param name="eventFactory">the factory to create events in the ring buffer</param>
     /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
     public ValueDisruptor(Func<T> eventFactory, int ringBufferSize)
         : this(eventFactory, ringBufferSize, TaskScheduler.Default)
+    {
+    }
+
+    /// <summary>
+    /// Create a new ValueDisruptor using <see cref="SequencerFactory.DefaultProducerType"/>.
+    /// </summary>
+    /// <param name="eventFactory">the factory to create events in the ring buffer</param>
+    /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
+    /// /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
+    public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, IWaitStrategy waitStrategy)
+        : this(eventFactory, ringBufferSize, TaskScheduler.Default, SequencerFactory.DefaultProducerType, waitStrategy)
+    {
+    }
+
+    /// <summary>
+    /// Create a new ValueDisruptor. Will default to <see cref="SequencerFactory.DefaultWaitStrategy"/> and <see cref="SequencerFactory.DefaultProducerType"/>.
+    /// </summary>
+    /// <param name="eventFactory">the factory to create events in the ring buffer</param>
+    /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
+    /// <param name="taskScheduler">an <see cref="TaskScheduler"/> to create threads for processors</param>
+    public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler)
+        : this(eventFactory, ringBufferSize, taskScheduler, SequencerFactory.DefaultProducerType, SequencerFactory.DefaultWaitStrategy())
     {
     }
 
@@ -42,23 +64,7 @@ public class ValueDisruptor<T> : ValueDisruptor<T, ValueRingBuffer<T>>
     /// <param name="producerType">the claim strategy to use for the ring buffer</param>
     /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
     public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
-        : this(new ValueRingBuffer<T>(eventFactory, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy)), taskScheduler)
-    {
-    }
-
-    /// <summary>
-    /// Create a new ValueDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
-    /// </summary>
-    /// <param name="eventFactory">the factory to create events in the ring buffer</param>
-    /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
-    /// <param name="taskScheduler">an <see cref="TaskScheduler"/> to create threads for processors</param>
-    public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler)
-        : this(ValueRingBuffer<T>.CreateMultiProducer(eventFactory, ringBufferSize), taskScheduler)
-    {
-    }
-
-    private ValueDisruptor(ValueRingBuffer<T> ringBuffer, TaskScheduler taskScheduler)
-        : base(ringBuffer, taskScheduler)
+        : base(new ValueRingBuffer<T>(eventFactory, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy)), taskScheduler)
     {
     }
 

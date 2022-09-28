@@ -3,10 +3,15 @@
 namespace Disruptor.Dsl;
 
 /// <summary>
-/// Extension methods for <see cref="ProducerType"/>.
+/// Factory methods for sequencers.
 /// </summary>
 public static class SequencerFactory
 {
+    /// <summary>
+    /// Default <see cref="ProducerType"/> of disruptors.
+    /// </summary>
+    public static readonly ProducerType DefaultProducerType = ProducerType.Multi;
+
     /// <summary>
     /// Creates default <see cref="IWaitStrategy"/>.
     /// </summary>
@@ -17,7 +22,7 @@ public static class SequencerFactory
     }
 
     /// <summary>
-    /// Create a new sequencer with the specified producer type and <see cref="BlockingWaitStrategy"/>.
+    /// Create a new sequencer with the specified producer type and <see cref="DefaultWaitStrategy"/>.
     /// </summary>
     /// <param name="producerType">producer type to use <see cref="ProducerType" /></param>
     /// <param name="bufferSize">number of elements to create within the ring buffer.</param>

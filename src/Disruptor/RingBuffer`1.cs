@@ -88,7 +88,7 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     }
 
     /// <summary>
-    /// Create a new single producer RingBuffer using the default wait strategy <see cref="BlockingWaitStrategy"/>.
+    /// Create a new single producer RingBuffer using <see cref="SequencerFactory.DefaultWaitStrategy"/>.
     /// </summary>
     /// <param name="factory">used to create the events within the ring buffer.</param>
     /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
@@ -96,7 +96,7 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
     public static RingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize)
     {
-        return CreateSingleProducer(factory, bufferSize, new BlockingWaitStrategy());
+        return CreateSingleProducer(factory, bufferSize, SequencerFactory.DefaultWaitStrategy());
     }
 
     /// <summary>

@@ -47,12 +47,12 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     }
 
     /// <summary>
-    /// Construct a ValueRingBuffer with a <see cref="MultiProducerSequencer"/> sequencer.
+    /// Construct a ValueRingBuffer with a <see cref="SequencerFactory.DefaultProducerType"/> sequencer.
     /// </summary>
     /// <param name="eventFactory"> eventFactory to create entries for filling the ring buffer</param>
     /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
     public ValueRingBuffer(Func<T> eventFactory, int bufferSize)
-        : this(eventFactory, new MultiProducerSequencer(bufferSize))
+        : this(eventFactory, SequencerFactory.Create(SequencerFactory.DefaultProducerType, bufferSize))
     {
     }
 
@@ -72,7 +72,7 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     }
 
     /// <summary>
-    /// Create a new multiple producer ValueRingBuffer using the default wait strategy <see cref="BlockingWaitStrategy"/>.
+    /// Create a new multiple producer ValueRingBuffer using <see cref="SequencerFactory.DefaultWaitStrategy"/>.
     /// </summary>
     /// <param name="factory">used to create the events within the ring buffer.</param>
     /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
@@ -80,7 +80,7 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
     public static ValueRingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize)
     {
-        return CreateMultiProducer(factory, bufferSize, new BlockingWaitStrategy());
+        return CreateMultiProducer(factory, bufferSize, SequencerFactory.DefaultWaitStrategy());
     }
 
     /// <summary>
@@ -99,7 +99,7 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     }
 
     /// <summary>
-    /// Create a new single producer ValueRingBuffer using the default wait strategy <see cref="BlockingWaitStrategy"/>.
+    /// Create a new single producer ValueRingBuffer using <see cref="SequencerFactory.DefaultWaitStrategy"/>.
     /// </summary>
     /// <param name="factory">used to create the events within the ring buffer.</param>
     /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
@@ -107,7 +107,7 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
     public static ValueRingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize)
     {
-        return CreateSingleProducer(factory, bufferSize, new BlockingWaitStrategy());
+        return CreateSingleProducer(factory, bufferSize, SequencerFactory.DefaultWaitStrategy());
     }
 
     /// <summary>

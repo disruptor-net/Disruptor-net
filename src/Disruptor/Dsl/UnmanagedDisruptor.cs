@@ -13,7 +13,7 @@ public class UnmanagedDisruptor<T> : ValueDisruptor<T, UnmanagedRingBuffer<T>>
     where T : unmanaged
 {
     /// <summary>
-    /// Create a new UnmanagedDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
+    /// Create a new UnmanagedDisruptor using <see cref="SequencerFactory.DefaultWaitStrategy"/> and <see cref="SequencerFactory.DefaultProducerType"/>.
     /// </summary>
     /// <param name="pointer">pointer to the first event of the buffer</param>
     /// <param name="eventSize">size of each event</param>
@@ -24,14 +24,14 @@ public class UnmanagedDisruptor<T> : ValueDisruptor<T, UnmanagedRingBuffer<T>>
     }
 
     /// <summary>
-    /// Create a new UnmanagedDisruptor. Will default to <see cref="BlockingWaitStrategy"/> and <see cref="ProducerType.Multi"/>.
+    /// Create a new UnmanagedDisruptor using <see cref="SequencerFactory.DefaultWaitStrategy"/> and <see cref="SequencerFactory.DefaultProducerType"/>.
     /// </summary>
     /// <param name="pointer">pointer to the first event of the buffer</param>
     /// <param name="eventSize">size of each event</param>
     /// <param name="ringBufferSize">the number of events of the ring buffer, must be power of 2</param>
     /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
     public UnmanagedDisruptor(IntPtr pointer, int eventSize, int ringBufferSize, TaskScheduler taskScheduler)
-        : this(new UnmanagedRingBuffer<T>(pointer, eventSize, SequencerFactory.Create(ProducerType.Multi, ringBufferSize)), taskScheduler)
+        : this(new UnmanagedRingBuffer<T>(pointer, eventSize, SequencerFactory.Create(SequencerFactory.DefaultProducerType, ringBufferSize)), taskScheduler)
     {
     }
 
