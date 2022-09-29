@@ -34,7 +34,7 @@ namespace Disruptor.PerfTests.Sequenced;
 /// EP1 - EventProcessor 1
 /// </code>
 /// </summary>
-public class OneToOneSequencedThroughputTest_BatchPublisher_BatchHandler : IThroughputTest
+public class OneToOneSequencedThroughputTest_BatchHandler_BatchPublisher : IThroughputTest
 {
     private const int _batchSize = 10;
     private const int _bufferSize = 1024 * 64;
@@ -47,7 +47,7 @@ public class OneToOneSequencedThroughputTest_BatchPublisher_BatchHandler : IThro
     private readonly AdditionBatchEventHandler _handler;
     private readonly IEventProcessor<PerfEvent> _eventProcessor;
 
-    public OneToOneSequencedThroughputTest_BatchPublisher_BatchHandler()
+    public OneToOneSequencedThroughputTest_BatchHandler_BatchPublisher()
     {
         _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
         var sequenceBarrier = _ringBuffer.NewBarrier();

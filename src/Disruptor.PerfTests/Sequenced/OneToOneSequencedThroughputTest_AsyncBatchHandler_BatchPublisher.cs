@@ -7,6 +7,7 @@ namespace Disruptor.PerfTests.Sequenced;
 
 /// <summary>
 /// Unicast a series of items between 1 publisher and 1 event processor.
+/// Use batch publication (<see cref="RingBuffer.Next(int)"/>.
 /// Use <seealso cref="IAsyncBatchEventHandler{T}"/>.
 ///
 /// +----+    +-----+
@@ -32,17 +33,18 @@ namespace Disruptor.PerfTests.Sequenced;
 /// SB  - SequenceBarrier
 /// EP1 - EventProcessor 1
 /// </summary>
-public class OneToOneSequencedThroughputTest_AsyncBatchHandler : IThroughputTest
+public class OneToOneSequencedThroughputTest_AsyncBatchHandler_BatchPublisher : IThroughputTest
 {
+    private const int _batchSize = 10;
     private const int _bufferSize = 1024 * 64;
     private const long _iterations = 1000L * 1000L * 100L;
 
     private readonly RingBuffer<PerfEvent> _ringBuffer;
     private readonly AdditionAsyncBatchEventHandler _eventHandler;
-    private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
+    private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations) * _batchSize;
     private readonly IAsyncEventProcessor<PerfEvent> _eventProcessor;
 
-    public OneToOneSequencedThroughputTest_AsyncBatchHandler()
+    public OneToOneSequencedThroughputTest_AsyncBatchHandler_BatchPublisher()
     {
         _eventHandler = new AdditionAsyncBatchEventHandler();
         _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new AsyncWaitStrategy());
@@ -56,7 +58,7 @@ public class OneToOneSequencedThroughputTest_AsyncBatchHandler : IThroughputTest
     [MethodImpl(512)]
     public long Run(ThroughputSessionContext sessionContext)
     {
-        long expectedCount = _eventProcessor.Sequence.Value + _iterations;
+        var expectedCount = _eventProcessor.Sequence.Value + _iterations * _batchSize;
 
         _eventHandler.Reset(expectedCount);
         var processorTask = _eventProcessor.Start();
@@ -66,12 +68,15 @@ public class OneToOneSequencedThroughputTest_AsyncBatchHandler : IThroughputTest
         sessionContext.Start();
 
         var ringBuffer = _ringBuffer;
-
-        for (long i = 0; i < _iterations; i++)
+        for (var i = 0; i < _iterations; i++)
         {
-            var s = ringBuffer.Next();
-            ringBuffer[s].Value = i;
-            ringBuffer.Publish(s);
+            var hi = ringBuffer.Next(_batchSize);
+            var lo = hi - (_batchSize - 1);
+            for (var l = lo; l <= hi; l++)
+            {
+                ringBuffer[l].Value = (i);
+            }
+            ringBuffer.Publish(lo, hi);
         }
 
         _eventHandler.WaitForSequence();
@@ -82,10 +87,10 @@ public class OneToOneSequencedThroughputTest_AsyncBatchHandler : IThroughputTest
         if (!processorTask.Wait(2000))
             throw new InvalidOperationException("Process task should be completed");
 
-        sessionContext.SetBatchData(_eventHandler.BatchesProcessed, _iterations);
+        sessionContext.SetBatchData(_eventHandler.BatchesProcessed, _iterations * _batchSize);
 
         PerfTestUtil.FailIfNot(_expectedResult, _eventHandler.Value, $"Handler should have processed {_expectedResult} events, but was: {_eventHandler.Value}");
 
-        return _iterations;
+        return _iterations * _batchSize;
     }
 }
