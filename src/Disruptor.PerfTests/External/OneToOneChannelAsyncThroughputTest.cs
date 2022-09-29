@@ -7,7 +7,7 @@ namespace Disruptor.PerfTests.External;
 
 public class OneToOneChannelAsyncThroughputTest : IThroughputTest, IExternalTest
 {
-    private const int _bufferSize = 1024 * 64;
+    private const int _bufferSize = 1024 *  64;
     private const long _iterations = 1000L * 1000L * 100L;
 
     private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
@@ -41,7 +41,8 @@ public class OneToOneChannelAsyncThroughputTest : IThroughputTest, IExternalTest
         {
             producerSignal.Wait();
             await PublishOneByOne();
-            //await PublishBatched();
+            // await PublishBatchedV1();
+            // await PublishBatchedV2();
         });
 
         sessionContext.Start();
@@ -67,21 +68,31 @@ public class OneToOneChannelAsyncThroughputTest : IThroughputTest, IExternalTest
         for (long i = 0; i < _iterations; i++)
         {
             var data = new PerfEvent { Value = i };
-            await _channel.Writer.WriteAsync(data);
+            await _channel.Writer.WriteAsync(data).ConfigureAwait(false);
         }
     }
 
-    private async Task PublishBatched()
+    private async Task PublishBatchedV1()
     {
         var i = 0;
         while (i < _iterations)
         {
-            await _channel.Writer.WaitToWriteAsync();
+            await _channel.Writer.WaitToWriteAsync().ConfigureAwait(false);
 
             while (i < _iterations && _channel.Writer.TryWrite(new PerfEvent { Value = i }))
             {
                 i++;
             }
+        }
+    }
+
+    private async Task PublishBatchedV2()
+    {
+        for (long i = 0; i < _iterations; i++)
+        {
+            var data = new PerfEvent { Value = i };
+            if (!_channel.Writer.TryWrite(data))
+                await _channel.Writer.WriteAsync(data).ConfigureAwait(false);
         }
     }
 
@@ -105,7 +116,7 @@ public class OneToOneChannelAsyncThroughputTest : IThroughputTest, IExternalTest
             {
                 started.Set();
 
-                while (await _channelReader.WaitToReadAsync())
+                while (await _channelReader.WaitToReadAsync().ConfigureAwait(false))
                 {
                     while (_channelReader.TryRead(out var perfEvent))
                     {
