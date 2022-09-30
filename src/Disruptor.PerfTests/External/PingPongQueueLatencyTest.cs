@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Threading;
 using Disruptor.PerfTests.Support;
+using Disruptor.Util;
 using HdrHistogram;
 
 namespace Disruptor.PerfTests.External;
@@ -62,7 +63,7 @@ public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
             _pongQueue = pongQueue;
             _maxEvents = maxEvents;
             _pauseTimeInNano = pauseTimeInNano;
-            _pauseDurationInStopwatchTicks = LatencyTestSession.ConvertNanoToStopwatchTicks(pauseTimeInNano);
+            _pauseDurationInStopwatchTicks = StopwatchUtil.GetTimestampFromNanoseconds(pauseTimeInNano);
         }
 
         public void Run()
@@ -80,7 +81,7 @@ public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
                 counter += _pongQueue.Dequeue();
                 var t1 = Stopwatch.GetTimestamp();
 
-                _histogram.RecordValueWithExpectedInterval(LatencyTestSession.ConvertStopwatchTicksToNano(t1 - t0), _pauseTimeInNano);
+                _histogram.RecordValueWithExpectedInterval(StopwatchUtil.ToNanoseconds(t1 - t0), _pauseTimeInNano);
 
                 while (_pauseDurationInStopwatchTicks > (Stopwatch.GetTimestamp() - t1))
                 {

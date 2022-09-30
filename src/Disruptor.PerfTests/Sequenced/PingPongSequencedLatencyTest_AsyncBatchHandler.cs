@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Processing;
+using Disruptor.Util;
 using HdrHistogram;
 
 namespace Disruptor.PerfTests.Sequenced;
@@ -88,7 +89,7 @@ public class PingPongSequencedLatencyTest_AsyncBatchHandler : ILatencyTest
         {
             _buffer = buffer;
             _pauseTimeNs = pauseTimeNs;
-            _pauseTimeTicks = LatencyTestSession.ConvertNanoToStopwatchTicks(pauseTimeNs);
+            _pauseTimeTicks = StopwatchUtil.GetTimestampFromNanoseconds(pauseTimeNs);
         }
 
         public ValueTask OnBatch(EventBatch<PingPongEvent> batch, long sequence)
@@ -96,7 +97,7 @@ public class PingPongSequencedLatencyTest_AsyncBatchHandler : ILatencyTest
             foreach (var data in batch)
             {
                 var t1 = Stopwatch.GetTimestamp();
-                _histogram.RecordValueWithExpectedInterval(LatencyTestSession.ConvertStopwatchTicksToNano(t1 - _t0), _pauseTimeNs);
+                _histogram.RecordValueWithExpectedInterval(StopwatchUtil.ToNanoseconds(t1 - _t0), _pauseTimeNs);
 
                 if (data.Counter == _iterations)
                 {

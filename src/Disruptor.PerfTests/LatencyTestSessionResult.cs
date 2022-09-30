@@ -61,6 +61,8 @@ public class LatencyTestSessionResult
         if (_exception != null)
             return $"Run: FAILED: {_exception.Message}";
 
-        return $"Run: Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2} - Median: {Histogram.GetValueAtPercentile(50)}";
+        return $"Run: Duration: {Duration.TotalMilliseconds:N0} ms - GC: {Gen0} - {Gen1} - {Gen2} - Median: {P(50)} - P75: {P(75)} - P90: {P(90)} - P95: {P(95)} - P99: {P(99)}";
+
+        string P(int percentile) => $"{Histogram.GetValueAtPercentile(percentile) / 1000.0:0.0} µs";
     }
 }

@@ -3,17 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
 using HdrHistogram;
 
 namespace Disruptor.PerfTests;
 
-public class LatencyTestSession
+public class LatencyTestSession : IDisposable
 {
-    private static readonly double _stopwatchTickNanoSecondsFrequency = 1000000000.0 / Stopwatch.Frequency;
-
     private readonly List<LatencyTestSessionResult> _results = new(10);
     private readonly Type _perfTestType;
     private ILatencyTest _test;
@@ -34,7 +30,7 @@ public class LatencyTestSession
         CheckProcessorsRequirements(_test);
 
         Console.WriteLine("Starting");
-            
+
         for (var i = 0; i < _runCount; i++)
         {
             var histogram = new LongHistogram(10000000000L, 4);
@@ -164,15 +160,9 @@ public class LatencyTestSession
         return sb.ToString();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long ConvertStopwatchTicksToNano(long durationInTicks)
+    public void Dispose()
     {
-        return (long)(durationInTicks * _stopwatchTickNanoSecondsFrequency);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long ConvertNanoToStopwatchTicks(long pauseDurationInNanos)
-    {
-        return (long)(pauseDurationInNanos / _stopwatchTickNanoSecondsFrequency);
+        if (_test is IDisposable disposable)
+            disposable.Dispose();
     }
 }

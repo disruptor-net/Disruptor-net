@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
+using Disruptor.Util;
 using HdrHistogram;
 
 namespace Disruptor.PerfTests.External;
@@ -74,7 +75,7 @@ public class PingPongChannelLatencyTest : ILatencyTest, IExternalTest
             _pongChannel = pongChannel;
             _maxEvents = maxEvents;
             _pauseTimeInNano = pauseTimeInNano;
-            _pauseDurationInStopwatchTicks = LatencyTestSession.ConvertNanoToStopwatchTicks(pauseTimeInNano);
+            _pauseDurationInStopwatchTicks = StopwatchUtil.GetTimestampFromNanoseconds(pauseTimeInNano);
         }
 
         private async Task Run()
@@ -94,7 +95,7 @@ public class PingPongChannelLatencyTest : ILatencyTest, IExternalTest
 
                 counter++;
 
-                _histogram.RecordValueWithExpectedInterval(LatencyTestSession.ConvertStopwatchTicksToNano(t1 - t0), _pauseTimeInNano);
+                _histogram.RecordValueWithExpectedInterval(StopwatchUtil.ToNanoseconds(t1 - t0), _pauseTimeInNano);
 
                 while (_pauseDurationInStopwatchTicks > (Stopwatch.GetTimestamp() - t1))
                 {
