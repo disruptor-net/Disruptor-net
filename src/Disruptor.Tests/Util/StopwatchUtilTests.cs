@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Disruptor.Util;
 using NUnit.Framework;
@@ -15,9 +14,9 @@ public class StopwatchUtilTests
         var timestamp = StopwatchUtil.GetTimestampFromMicroseconds(123);
         var stopwatch = CreateStopwatch(timestamp);
 
-        var expectedTicks = 123 * 10;
-        var elapsed = stopwatch.ElapsedTicks;
-        Assert.AreEqual(expectedTicks, elapsed);
+        var expectedTimeSpanTicks = 123 * 10;
+        var elapsedTimeSpanTicks = stopwatch.Elapsed.Ticks;
+        Assert.AreEqual(expectedTimeSpanTicks, elapsedTimeSpanTicks);
     }
 
     [Test]
@@ -26,9 +25,9 @@ public class StopwatchUtilTests
         var timestamp = StopwatchUtil.GetTimestampFromNanoseconds(1000);
         var stopwatch = CreateStopwatch(timestamp);
 
-        var expectedTicks = 1000 / 100;
-        var elapsed = stopwatch.ElapsedTicks;
-        Assert.AreEqual(expectedTicks, elapsed);
+        var expectedTimeSpanTicks = 1000 / 100;
+        var elapsedTimeSpanTicks = stopwatch.Elapsed.Ticks;
+        Assert.AreEqual(expectedTimeSpanTicks, elapsedTimeSpanTicks);
     }
 
     [Test]
@@ -38,7 +37,7 @@ public class StopwatchUtilTests
         var nanoseconds = StopwatchUtil.ToNanoseconds(timestamp);
         var stopwatch = CreateStopwatch(timestamp);
 
-        var expectedNanoseconds = stopwatch.ElapsedTicks * 100;
+        var expectedNanoseconds = stopwatch.Elapsed.Ticks * 100;
         Assert.AreEqual(expectedNanoseconds, nanoseconds);
     }
 
