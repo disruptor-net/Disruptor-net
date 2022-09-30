@@ -10,26 +10,41 @@ namespace Disruptor.PerfTests;
 
 public class ThroughputTestSession
 {
-    private readonly List<ThroughputTestSessionResult> _results = new(10);
     private readonly Type _perfTestType;
-    private IThroughputTest _test;
-    private int _runCount;
+    private readonly Program.Options _options;
+    private readonly int _runCount;
 
-    public ThroughputTestSession(Type perfTestType)
+    public ThroughputTestSession(Type perfTestType, Program.Options options)
     {
         _perfTestType = perfTestType;
+        _options = options;
+        _runCount = options.RunCount ?? 7;
     }
 
-    public void Run(Program.Options options)
+    public void Execute()
     {
-        _runCount = options.RunCount ?? 7;
+        var test = (IThroughputTest)Activator.CreateInstance(_perfTestType);
 
+        try
+        {
+            CheckProcessorsRequirements(test);
+
+            var results = Run(test);
+            Report(test, results);
+        }
+        finally
+        {
+            if (test is IDisposable disposable)
+                disposable.Dispose();
+        }
+    }
+
+    private List<ThroughputTestSessionResult> Run(IThroughputTest test)
+    {
         Console.WriteLine($"Throughput Test to run => {_perfTestType.FullName}, Runs => {_runCount}");
-
-        _test = (IThroughputTest)Activator.CreateInstance(_perfTestType);
-        CheckProcessorsRequirements(_test);
-
         Console.WriteLine("Starting");
+
+        var results = new List<ThroughputTestSessionResult>();
         var context = new ThroughputSessionContext();
 
         for (var i = 0; i < _runCount; i++)
@@ -43,57 +58,50 @@ public class ThroughputTestSession
             var beforeGen1Count = GC.CollectionCount(1);
             var beforeGen2Count = GC.CollectionCount(2);
 
-            long totalOperationsInRun = 0;
-            Exception exception = null;
             ThroughputTestSessionResult result;
             try
             {
-                totalOperationsInRun = _test.Run(context);
-            }
-            catch (Exception ex)
-            {
-                exception = ex;
-            }
+                var totalOperationsInRun = test.Run(context);
 
-            if (exception != null)
-            {
-                result = new ThroughputTestSessionResult(exception);
-            }
-            else
-            {
                 var gen0Count = GC.CollectionCount(0) - beforeGen0Count;
                 var gen1Count = GC.CollectionCount(1) - beforeGen1Count;
                 var gen2Count = GC.CollectionCount(2) - beforeGen2Count;
 
                 result = new ThroughputTestSessionResult(totalOperationsInRun, context.Stopwatch.Elapsed, gen0Count, gen1Count, gen2Count, context);
             }
+            catch (Exception ex)
+            {
+                result = new ThroughputTestSessionResult(ex);
+            }
 
             Console.WriteLine(result);
-            _results.Add(result);
+            results.Add(result);
         }
+
+        return results;
     }
 
-    public void Report(Program.Options options)
+    private void Report(IThroughputTest test, List<ThroughputTestSessionResult> results)
     {
         var computerSpecifications = new ComputerSpecifications();
 
-        if (options.ShouldPrintComputerSpecifications)
+        if (_options.ShouldPrintComputerSpecifications)
         {
             Console.WriteLine();
             Console.Write(computerSpecifications.ToString());
         }
 
-        if (!options.ShouldGenerateReport)
+        if (!_options.ShouldGenerateReport)
             return;
 
         var path = Path.Combine(Environment.CurrentDirectory, "results", _perfTestType.Name + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
-        File.WriteAllText(path, BuildReport(computerSpecifications));
+        File.WriteAllText(path, BuildReport(test, results, computerSpecifications));
 
         var totalsPath = Path.Combine(Environment.CurrentDirectory, "results", $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
-        var average = _results.Average(x => x.TotalOperationsInRun / x.Duration.TotalSeconds);
+        var average = results.Average(x => x.TotalOperationsInRun / x.Duration.TotalSeconds);
         File.AppendAllText(totalsPath, FormattableString.Invariant($"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{average}\n"));
 
-        if (options.ShouldOpenReport)
+        if (_options.ShouldOpenReport)
             Process.Start(path);
     }
 
@@ -107,7 +115,7 @@ public class ThroughputTestSession
         Console.WriteLine($"Processors required = {test.RequiredProcessorCount}, available = {availableProcessors}");
     }
 
-    private string BuildReport(ComputerSpecifications computerSpecifications)
+    private string BuildReport(IThroughputTest test, List<ThroughputTestSessionResult> results, ComputerSpecifications computerSpecifications)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">")
@@ -126,6 +134,7 @@ public class ThroughputTestSession
         {
             sb.AppendFormat("        <b><font color='red'>Your computer has {0} physical core(s) but most of the tests require at least 4 cores</font></b><br>", computerSpecifications.PhysicalCoreCount);
         }
+
         if (computerSpecifications.IsHyperThreaded)
         {
             sb.AppendLine("        <b><font color='red'>Hyperthreading can degrade performance, you should turn it off.</font></b><br>");
@@ -134,8 +143,8 @@ public class ThroughputTestSession
         sb.AppendLine("        <h2>Test configuration</h2>")
           .AppendLine("        Test: " + _perfTestType.FullName + "<br>")
           .AppendLine("        Runs: " + _runCount + "<br>");
-        if (_test.RequiredProcessorCount > Environment.ProcessorCount)
-            sb.AppendLine("        Warning ! Test requires: " + _test.RequiredProcessorCount + " processors but there is only " + Environment.ProcessorCount + " here <br>");
+        if (test.RequiredProcessorCount > Environment.ProcessorCount)
+            sb.AppendLine("        Warning ! Test requires: " + test.RequiredProcessorCount + " processors but there is only " + Environment.ProcessorCount + " here <br>");
 
         sb.AppendLine("        <h2>Detailed test results</h2>");
         sb.AppendLine("        <table border=\"1\">");
@@ -148,9 +157,9 @@ public class ThroughputTestSession
         sb.AppendLine("                <td>Average Batch Size<td>");
         sb.AppendLine("            </tr>");
 
-        for (var i = 0; i < _results.Count; i++)
+        for (var i = 0; i < results.Count; i++)
         {
-            var result = _results[i];
+            var result = results[i];
             result.AppendDetailedHtmlReport(i, sb);
         }
 

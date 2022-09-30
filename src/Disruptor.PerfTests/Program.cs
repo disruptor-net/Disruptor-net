@@ -58,18 +58,20 @@ public class Program
         var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType);
         if (isThroughputTest)
         {
-            var session = new ThroughputTestSession(perfTestType);
-            session.Run(options);
-            session.Report(options);
+            var session = new ThroughputTestSession(perfTestType, options);
+            session.Execute();
+            return;
         }
 
         var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
         if (isLatencyTest)
         {
-            var session = new LatencyTestSession(perfTestType);
-            session.Run(options);
-            session.Report(options);
+            var session = new LatencyTestSession(perfTestType, options);
+            session.Execute();
+            return;
         }
+
+        throw new NotSupportedException($"Invalid test type: {perfTestType.Name}");
     }
 
     public class Options
@@ -99,23 +101,23 @@ public class Program
             {
                 switch (arg)
                 {
-                    case string s when Regex.Match(s, "--report=(true|false)", RegexOptions.IgnoreCase) is var m && m.Success:
+                    case { } s when Regex.Match(s, "--report=(true|false)", RegexOptions.IgnoreCase) is var m && m.Success:
                         options.ShouldGenerateReport = bool.Parse(m.Groups[1].Value);
                         break;
 
-                    case string s when Regex.Match(s, "--openreport=(true|false)", RegexOptions.IgnoreCase) is var m && m.Success:
+                    case { } s when Regex.Match(s, "--openreport=(true|false)", RegexOptions.IgnoreCase) is var m && m.Success:
                         options.ShouldOpenReport = bool.Parse(m.Groups[1].Value);
                         break;
 
-                    case string s when Regex.Match(s, "--printspec=(true|false)", RegexOptions.IgnoreCase) is var m && m.Success:
+                    case { } s when Regex.Match(s, "--printspec=(true|false)", RegexOptions.IgnoreCase) is var m && m.Success:
                         options.ShouldPrintComputerSpecifications = bool.Parse(m.Groups[1].Value);
                         break;
 
-                    case string s when Regex.Match(s, "--runs=(\\d+)", RegexOptions.IgnoreCase) is var m && m.Success:
+                    case { } s when Regex.Match(s, "--runs=(\\d+)", RegexOptions.IgnoreCase) is var m && m.Success:
                         options.RunCount = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
                         break;
 
-                    case string s when Regex.Match(s, "--from=(\\w+)", RegexOptions.IgnoreCase) is var m && m.Success:
+                    case { } s when Regex.Match(s, "--from=(\\w+)", RegexOptions.IgnoreCase) is var m && m.Success:
                         options.From = m.Groups[1].Value;
                         break;
 

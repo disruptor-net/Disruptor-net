@@ -8,28 +8,44 @@ using HdrHistogram;
 
 namespace Disruptor.PerfTests;
 
-public class LatencyTestSession : IDisposable
+public class LatencyTestSession
 {
-    private readonly List<LatencyTestSessionResult> _results = new(10);
     private readonly Type _perfTestType;
-    private ILatencyTest _test;
-    private int _runCount;
+    private readonly Program.Options _options;
+    private readonly int _runCount;
 
-    public LatencyTestSession(Type perfTestType)
+    public LatencyTestSession(Type perfTestType, Program.Options options)
     {
         _perfTestType = perfTestType;
+        _options = options;
+        _runCount = options.RunCount ?? 3;
     }
 
-    public void Run(Program.Options options)
+    public void Execute()
     {
-        _runCount = options.RunCount ?? 3;
+        var test = (ILatencyTest)Activator.CreateInstance(_perfTestType);
 
+        try
+        {
+            CheckProcessorsRequirements(test);
+
+            var results = Run(test);
+            Report(test, results);
+        }
+        finally
+        {
+            if (test is IDisposable disposable)
+                disposable.Dispose();
+        }
+    }
+
+    public List<LatencyTestSessionResult> Run(ILatencyTest test)
+    {
         Console.WriteLine($"Latency Test to run => {_perfTestType.FullName}, Runs => {_runCount}");
-
-        _test = (ILatencyTest)Activator.CreateInstance(_perfTestType);
-        CheckProcessorsRequirements(_test);
-
         Console.WriteLine("Starting");
+
+        var results = new List<LatencyTestSessionResult>();
+
 
         for (var i = 0; i < _runCount; i++)
         {
@@ -43,56 +59,50 @@ public class LatencyTestSession : IDisposable
             var beforeGen1Count = GC.CollectionCount(1);
             var beforeGen2Count = GC.CollectionCount(2);
 
-            Exception exception = null;
-            LatencyTestSessionResult result = null;
+            LatencyTestSessionResult result;
             try
             {
-                _test.Run(stopwatch, histogram);
-            }
-            catch (Exception ex)
-            {
-                exception = ex;
-            }
+                test.Run(stopwatch, histogram);
 
-            if (exception != null)
-            {
-                result = new LatencyTestSessionResult(exception);
-            }
-            else
-            {
                 var gen0Count = GC.CollectionCount(0) - beforeGen0Count;
                 var gen1Count = GC.CollectionCount(1) - beforeGen1Count;
                 var gen2Count = GC.CollectionCount(2) - beforeGen2Count;
 
                 result = new LatencyTestSessionResult(histogram, stopwatch.Elapsed, gen0Count, gen1Count, gen2Count);
             }
+            catch (Exception ex)
+            {
+                result = new LatencyTestSessionResult(ex);
+            }
 
             Console.WriteLine(result);
-            _results.Add(result);
+            results.Add(result);
         }
+
+        return results;
     }
 
-    public void Report(Program.Options options)
+    public void Report(ILatencyTest test, List<LatencyTestSessionResult> results)
     {
         var computerSpecifications = new ComputerSpecifications();
 
-        if (options.ShouldPrintComputerSpecifications)
+        if (_options.ShouldPrintComputerSpecifications)
         {
             Console.WriteLine();
             Console.Write(computerSpecifications.ToString());
         }
 
-        if (!options.ShouldGenerateReport)
+        if (!_options.ShouldGenerateReport)
             return;
 
         var path = Path.Combine(Environment.CurrentDirectory, _perfTestType.Name + "-" + DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
 
-        File.WriteAllText(path, BuildReport(computerSpecifications));
+        File.WriteAllText(path, BuildReport(test, results, computerSpecifications));
 
         var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
-        File.AppendAllText(totalsPath, $"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{_results.Max(x => x.Histogram.GetValueAtPercentile(99))}\n");
+        File.AppendAllText(totalsPath, $"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{results.Max(x => x.Histogram.GetValueAtPercentile(99))}\n");
 
-        if (options.ShouldOpenReport)
+        if (_options.ShouldOpenReport)
             Process.Start(path);
     }
 
@@ -106,7 +116,7 @@ public class LatencyTestSession : IDisposable
         Console.WriteLine($"Processors required = {test.RequiredProcessorCount}, available = {availableProcessors}");
     }
 
-    private string BuildReport(ComputerSpecifications computerSpecifications)
+    private string BuildReport(ILatencyTest test, List<LatencyTestSessionResult> results, ComputerSpecifications computerSpecifications)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">")
@@ -137,8 +147,8 @@ public class LatencyTestSession : IDisposable
         sb.AppendLine("        <h2>Test configuration</h2>")
           .AppendLine("        Test: " + _perfTestType.FullName + "<br>")
           .AppendLine("        Runs: " + _runCount + "<br>");
-        if (_test.RequiredProcessorCount > Environment.ProcessorCount)
-            sb.AppendLine("        Warning ! Test requires: " + _test.RequiredProcessorCount + " processors but there is only " + Environment.ProcessorCount + " here <br>");
+        if (test.RequiredProcessorCount > Environment.ProcessorCount)
+            sb.AppendLine("        Warning ! Test requires: " + test.RequiredProcessorCount + " processors but there is only " + Environment.ProcessorCount + " here <br>");
 
         sb.AppendLine("        <h2>Detailed test results</h2>");
         sb.AppendLine("        <table border=\"1\">");
@@ -149,20 +159,14 @@ public class LatencyTestSession : IDisposable
         sb.AppendLine("                <td># GC (0-1-2)</td>");
         sb.AppendLine("            </tr>");
 
-        for (var i = 0; i < _results.Count; i++)
+        for (var i = 0; i < results.Count; i++)
         {
-            var result = _results[i];
+            var result = results[i];
             result.AppendDetailedHtmlReport(i, sb);
         }
 
         sb.AppendLine("        </table>");
 
         return sb.ToString();
-    }
-
-    public void Dispose()
-    {
-        if (_test is IDisposable disposable)
-            disposable.Dispose();
     }
 }
