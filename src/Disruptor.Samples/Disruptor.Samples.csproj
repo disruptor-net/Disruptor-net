@@ -5,10 +5,15 @@
     <OutputType>exe</OutputType>
     <StartupObject>Disruptor.Samples.Wiki.GettingStarted.SampleProgram</StartupObject>
     <LangVersion>Latest</LangVersion>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HdrHistogram" Version="2.5.0" />
   </ItemGroup>
 
 </Project>
