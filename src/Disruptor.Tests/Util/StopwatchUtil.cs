@@ -1,11 +1,12 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Disruptor.Util;
 
 public static class StopwatchUtil
 {
-    private static readonly double _tickFrequency = (double)10_000_000 / Stopwatch.Frequency;
+    private static readonly double _tickFrequency = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long GetTimestampFromMicroseconds(long microseconds)
