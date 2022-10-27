@@ -82,6 +82,7 @@ public class Program
         public bool ShouldGenerateReport { get; set; }
         public bool ShouldOpenReport { get; set; }
         public string From { get; set; }
+        public bool PerfCountersEnabled { get; set; }
 
         public static bool TryParse(string[] args, out Options options)
         {
@@ -119,6 +120,10 @@ public class Program
 
                     case { } s when Regex.Match(s, "--from=(\\w+)", RegexOptions.IgnoreCase) is var m && m.Success:
                         options.From = m.Groups[1].Value;
+                        break;
+
+                    case { } s when Regex.Match(s, "--perfcounters=(true|false)", RegexOptions.IgnoreCase) is var m && m.Success:
+                        options.PerfCountersEnabled = bool.Parse(m.Groups[1].Value);
                         break;
 
                     default:

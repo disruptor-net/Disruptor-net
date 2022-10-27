@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using BenchmarkDotNet.Environments;
+using Disruptor.PerfTests.Diagnostics;
 
 namespace Disruptor.PerfTests;
 
@@ -29,7 +30,13 @@ public class ThroughputTestSession
         {
             CheckProcessorsRequirements(test);
 
+            // using var perfSession = new PerfCounterSession();
+            // perfSession.Start();
+
             var results = Run(test);
+
+            // perfSession.Stop();
+
             Report(test, results);
         }
         finally

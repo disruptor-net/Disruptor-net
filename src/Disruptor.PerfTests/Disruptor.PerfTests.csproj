@@ -16,6 +16,7 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
     <PackageReference Include="HdrHistogram" Version="2.5.0" />
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.0.2" />
     <PackageReference Include="ObjectLayoutInspector" Version="0.1.2" />
     <PackageReference Include="System.Threading.Channels" Version="4.7.1" />
   </ItemGroup>
