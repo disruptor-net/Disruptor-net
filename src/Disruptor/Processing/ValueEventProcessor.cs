@@ -148,7 +148,7 @@ public class ValueEventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEve
                 var waitResult = _sequenceBarrier.WaitFor<TSequenceBarrierOptions>(nextSequence);
                 if (waitResult.IsTimeout)
                 {
-                    NotifyTimeout(_sequence.Value);
+                    NotifyTimeout();
                     continue;
                 }
 
@@ -190,15 +190,16 @@ public class ValueEventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEve
         NotifyShutdown();
     }
 
-    private void NotifyTimeout(long availableSequence)
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void NotifyTimeout()
     {
         try
         {
-            _eventHandler.OnTimeout(availableSequence);
+            _eventHandler.OnTimeout(_sequence.Value);
         }
         catch (Exception ex)
         {
-            _exceptionHandler.HandleOnTimeoutException(ex, availableSequence);
+            _exceptionHandler.HandleOnTimeoutException(ex, _sequence.Value);
         }
     }
 
