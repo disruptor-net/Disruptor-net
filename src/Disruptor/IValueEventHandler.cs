@@ -15,6 +15,14 @@ public interface IValueEventHandler<T>
     where T : struct
 {
     /// <summary>
+    /// Limits the size of event batches.
+    /// </summary>
+    /// <remarks>
+    /// The value will be read only once on start, thus dynamically changing the max batch size is not supported.
+    /// </remarks>
+    int? MaxBatchSize => null;
+    
+    /// <summary>
     /// Called when a publisher has committed an event to the <see cref="ValueRingBuffer{T}"/>. The <see cref="IValueEventProcessor{T}"/> will
     /// read messages from the <see cref="ValueRingBuffer{T}"/> in batches, where a batch is all of the events available to be
     /// processed without having to wait for any new event to arrive.  This can be useful for event handlers that need

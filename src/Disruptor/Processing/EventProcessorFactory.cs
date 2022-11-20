@@ -116,7 +116,7 @@ public static class EventProcessorFactory
     public static IValueEventProcessor<T> Create<T>(IValueDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
         where T : struct
     {
-        return Create(dataProvider, sequenceBarrier, eventHandler, typeof(ValueEventProcessor<,,,,>));
+        return Create(dataProvider, sequenceBarrier, eventHandler, typeof(ValueEventProcessor<,,,,,>));
     }
 
     internal static IValueEventProcessor<T> Create<T>(IValueDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler, Type processorType)
@@ -126,9 +126,10 @@ public static class EventProcessorFactory
         var sequencerOptions = sequenceBarrier.GetSequencerOptions();
         var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
         var onBatchStartInvoker = CreateOnBatchStartEvaluator(eventHandler);
+        var batchSizeLimiter = CreateBatchSizeLimiter(eventHandler);
 
-        var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequencerOptions.GetType(), eventHandlerProxy.GetType(), onBatchStartInvoker.GetType());
-        return (IValueEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrier, eventHandlerProxy, onBatchStartInvoker)!;
+        var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequencerOptions.GetType(), eventHandlerProxy.GetType(), onBatchStartInvoker.GetType(), batchSizeLimiter.GetType());
+        return (IValueEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrier, eventHandlerProxy, onBatchStartInvoker, batchSizeLimiter)!;
     }
 
     private static IOnBatchStartEvaluator CreateOnBatchStartEvaluator<T>(IValueEventHandler<T> eventHandler)
@@ -137,6 +138,14 @@ public static class EventProcessorFactory
         return HasNonDefaultImplementation(eventHandler.GetType(), typeof(IValueEventHandler<T>), nameof(IValueEventHandler<T>.OnBatchStart))
             ? new DefaultOnBatchStartEvaluator()
             : new NoopOnBatchStartEvaluator();
+    }
+
+    private static IBatchSizeLimiter CreateBatchSizeLimiter<T>(IValueEventHandler<T> eventHandler)
+        where T : struct
+    {
+        return eventHandler.MaxBatchSize is { } maxBatchSize
+            ? new DefaultBatchSizeLimiter(maxBatchSize)
+            : new NoopBatchSizeLimiter();
     }
 
     internal static bool HasNonDefaultImplementation(Type implementationType, Type interfaceType, string methodName)

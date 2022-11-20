@@ -330,6 +330,58 @@ public class ValueEventProcessorTests
         Assert.That(eventHandler.BatchCount, Is.EqualTo(1));
     }
 
+    [Test]
+    public void ShouldLimitMaxBatchSize()
+    {
+        const int eventCountCount = 15;
+
+        var eventSignal = new CountdownEvent(eventCountCount);
+        var eventHandler = new LimitedBatchSizeEventHandler(6, eventSignal);
+
+        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+
+        for (var i = 0; i < eventCountCount; i++)
+        {
+            _ringBuffer.PublishStubEvent(i);
+        }
+
+        eventProcessor.Start();
+
+        Assert.IsTrue(eventSignal.Wait(TimeSpan.FromSeconds(2)));
+        CollectionAssert.AreEqual(new[] { 6, 6, 3 }, eventHandler.BatchSizes);
+
+        eventProcessor.Halt();
+    }
+
+    public class LimitedBatchSizeEventHandler : IValueEventHandler<StubValueEvent>
+    {
+        private readonly CountdownEvent _countdownEvent;
+        private int _currentBatchSize;
+
+        public LimitedBatchSizeEventHandler(int maxBatchSize, CountdownEvent countdownEvent)
+        {
+            MaxBatchSize = maxBatchSize;
+            _countdownEvent = countdownEvent;
+        }
+
+        public int? MaxBatchSize { get; }
+        public List<long> BatchSizes { get; } = new();
+
+        public void OnEvent(ref StubValueEvent data, long sequence, bool endOfBatch)
+        {
+            _currentBatchSize++;
+
+            if (endOfBatch)
+            {
+                BatchSizes.Add(_currentBatchSize);
+                _currentBatchSize = 0;
+            }
+
+            _countdownEvent.Signal();
+        }
+    }
+
     // ReSharper disable once MemberCanBePrivate.Global
     // Public to enable dynamic code generation
     public class BatchAwareEventHandler : IValueEventHandler<StubValueEvent>
