@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using Disruptor.Tests.Support;
 
 namespace Disruptor.PerfTests.Support;
 

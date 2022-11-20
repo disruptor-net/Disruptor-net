@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Disruptor.Testing\Disruptor.Testing.csproj" />
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
   </ItemGroup>
 

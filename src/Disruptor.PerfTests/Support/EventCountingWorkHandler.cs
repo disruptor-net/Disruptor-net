@@ -1,6 +1,4 @@
-﻿using Disruptor.Tests.Support;
-
-namespace Disruptor.PerfTests.Support;
+﻿namespace Disruptor.PerfTests.Support;
 
 public class EventCountingWorkHandler : IWorkHandler<PerfEvent>
 {
