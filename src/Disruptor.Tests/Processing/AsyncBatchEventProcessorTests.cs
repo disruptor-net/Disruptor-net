@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Processing;
@@ -223,6 +224,53 @@ public class AsyncBatchEventProcessorTests
 
             Assert.IsTrue(h2.WaitStart(TimeSpan.FromSeconds(2)));
             Assert.IsTrue(h2.WaitShutdown(TimeSpan.FromSeconds(2)));
+        }
+    }
+
+    [Test]
+    public void ShouldLimitMaxBatchSize()
+    {
+        const int eventCountCount = 15;
+
+        var eventSignal = new CountdownEvent(eventCountCount);
+        var eventHandler = new LimitedBatchSizeEventHandler(6, eventSignal);
+
+        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+
+        for (var i = 0; i < eventCountCount; i++)
+        {
+            _ringBuffer.PublishStubEvent(i);
+        }
+
+        eventProcessor.Start();
+
+        Assert.IsTrue(eventSignal.Wait(TimeSpan.FromSeconds(2)));
+        CollectionAssert.AreEqual(new[] { 6, 6, 3 }, eventHandler.BatchSizes);
+
+        eventProcessor.Halt();
+    }
+
+    public class LimitedBatchSizeEventHandler : IAsyncBatchEventHandler<StubEvent>
+    {
+        private readonly CountdownEvent _countdownEvent;
+
+        public LimitedBatchSizeEventHandler(int maxBatchSize, CountdownEvent countdownEvent)
+        {
+            MaxBatchSize = maxBatchSize;
+            _countdownEvent = countdownEvent;
+        }
+
+        public int? MaxBatchSize { get; }
+        public List<long> BatchSizes { get; } = new();
+
+        public async ValueTask OnBatch(EventBatch<StubEvent> batch, long sequence)
+        {
+            await Task.Yield();
+
+            BatchSizes.Add(batch.Length);
+
+            _countdownEvent.Signal(batch.Length);
         }
     }
 

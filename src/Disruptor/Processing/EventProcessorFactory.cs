@@ -100,9 +100,18 @@ public static class EventProcessorFactory
         var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
         var sequencerOptions = sequenceBarrier.GetSequencerOptions();
         var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
+        var batchSizeLimiter = CreateBatchSizeLimiter(eventHandler);
 
-        var eventProcessorType = typeof(AsyncBatchEventProcessor<,,,>).MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequencerOptions.GetType(), eventHandlerProxy.GetType());
-        return (IAsyncEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrier, eventHandlerProxy)!;
+        var eventProcessorType = typeof(AsyncBatchEventProcessor<,,,,>).MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequencerOptions.GetType(), eventHandlerProxy.GetType(), batchSizeLimiter.GetType());
+        return (IAsyncEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrier, eventHandlerProxy, batchSizeLimiter)!;
+    }
+
+    private static IBatchSizeLimiter CreateBatchSizeLimiter<T>(IAsyncBatchEventHandler<T> eventHandler)
+        where T : class
+    {
+        return eventHandler.MaxBatchSize is { } maxBatchSize
+            ? new DefaultBatchSizeLimiter(maxBatchSize)
+            : new NoopBatchSizeLimiter();
     }
 
     /// <summary>
