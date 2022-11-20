@@ -63,7 +63,7 @@ public static class EventProcessorFactory
     public static IEventProcessor<T> Create<T>(IDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IBatchEventHandler<T> eventHandler)
         where T : class
     {
-        return Create(dataProvider, sequenceBarrier, eventHandler, typeof(BatchEventProcessor<,,,>));
+        return Create(dataProvider, sequenceBarrier, eventHandler, typeof(BatchEventProcessor<,,,,>));
     }
 
     internal static IEventProcessor<T> Create<T>(IDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IBatchEventHandler<T> eventHandler, Type processorType)
@@ -72,9 +72,18 @@ public static class EventProcessorFactory
         var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
         var sequencerOptions = sequenceBarrier.GetSequencerOptions();
         var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
+        var batchSizeLimiter = CreateBatchSizeLimiter(eventHandler);
 
-        var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequencerOptions.GetType(), eventHandlerProxy.GetType());
-        return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrier, eventHandlerProxy)!;
+        var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequencerOptions.GetType(), eventHandlerProxy.GetType(), batchSizeLimiter.GetType());
+        return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrier, eventHandlerProxy, batchSizeLimiter)!;
+    }
+
+    private static IBatchSizeLimiter CreateBatchSizeLimiter<T>(IBatchEventHandler<T> eventHandler)
+        where T : class
+    {
+        return eventHandler.MaxBatchSize is { } maxBatchSize
+            ? new DefaultBatchSizeLimiter(maxBatchSize)
+            : new NoopBatchSizeLimiter();
     }
 
     /// <summary>
