@@ -345,8 +345,8 @@ public class EventProcessorTests
         eventProcessor.Halt();
         task.Wait();
 
-        Assert.That(eventHandler.BatchSizeToCount.Count, Is.Not.EqualTo(0));
-        Assert.That(eventHandler.BatchSizeToCount.Keys, Has.No.Member(0));
+        Assert.That(eventHandler.BatchSizes.Count, Is.Not.EqualTo(0));
+        Assert.That(eventHandler.BatchSizes, Has.None.EqualTo(0));
     }
 
     [Test]
@@ -368,11 +368,63 @@ public class EventProcessorTests
         Assert.That(eventHandler.BatchCount, Is.EqualTo(1));
     }
 
+    [Test]
+    public void ShouldLimitMaxBatchSize()
+    {
+        const int eventCountCount = 15;
+
+        var eventSignal = new CountdownEvent(eventCountCount);
+        var eventHandler = new LimitedBatchSizeEventHandler(6, eventSignal);
+
+        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
+
+        for (var i = 0; i < eventCountCount; i++)
+        {
+            _ringBuffer.PublishStubEvent(i);
+        }
+
+        eventProcessor.Start();
+
+        Assert.IsTrue(eventSignal.Wait(TimeSpan.FromSeconds(2)));
+        CollectionAssert.AreEqual(new[] { 6, 6, 3 }, eventHandler.BatchSizes);
+
+        eventProcessor.Halt();
+    }
+
+    public class LimitedBatchSizeEventHandler : IEventHandler<StubEvent>
+    {
+        private readonly CountdownEvent _countdownEvent;
+        private int _currentBatchSize;
+
+        public LimitedBatchSizeEventHandler(int maxBatchSize, CountdownEvent countdownEvent)
+        {
+            MaxBatchSize = maxBatchSize;
+            _countdownEvent = countdownEvent;
+        }
+
+        public int? MaxBatchSize { get; }
+        public List<long> BatchSizes { get; } = new();
+
+        public void OnEvent(StubEvent data, long sequence, bool endOfBatch)
+        {
+            _currentBatchSize++;
+
+            if (endOfBatch)
+            {
+                BatchSizes.Add(_currentBatchSize);
+                _currentBatchSize = 0;
+            }
+
+            _countdownEvent.Signal();
+        }
+    }
+
     // ReSharper disable once MemberCanBePrivate.Global
     // Public to enable dynamic code generation
     public class BatchAwareEventHandler : IEventHandler<StubEvent>
     {
-        public Dictionary<long, int> BatchSizeToCount { get; } = new();
+        public List<long> BatchSizes { get; } = new();
 
         public void OnEvent(StubEvent data, long sequence, bool endOfBatch)
         {
@@ -380,7 +432,7 @@ public class EventProcessorTests
 
         public void OnBatchStart(long batchSize)
         {
-            BatchSizeToCount[batchSize] = BatchSizeToCount.TryGetValue(batchSize, out var count) ? count + 1 : 1;
+            BatchSizes.Add(batchSize);
         }
     }
 

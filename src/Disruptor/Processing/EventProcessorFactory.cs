@@ -20,20 +20,20 @@ public static class EventProcessorFactory
     public static IEventProcessor<T> Create<T>(IDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
         where T : class
     {
-        return Create(dataProvider, sequenceBarrier, eventHandler, typeof(EventProcessor<,,,,>));
+        return Create(dataProvider, sequenceBarrier, eventHandler, typeof(EventProcessor<,,,,,>));
     }
 
     internal static IEventProcessor<T> Create<T>(IDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler, Type processorType)
         where T : class
     {
-        var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
+    var dataProviderProxy = StructProxy.CreateProxyInstance(dataProvider);
         var sequencerOptions = sequenceBarrier.GetSequencerOptions();
         var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
         var onBatchStartInvoker = CreateOnBatchStartEvaluator(eventHandler);
+        var batchSizeLimiter = CreateBatchSizeLimiter(eventHandler);
 
-
-        var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequencerOptions.GetType(), eventHandlerProxy.GetType(), onBatchStartInvoker.GetType());
-        return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrier, eventHandlerProxy, onBatchStartInvoker)!;
+        var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), sequencerOptions.GetType(), eventHandlerProxy.GetType(), onBatchStartInvoker.GetType(), batchSizeLimiter.GetType());
+        return (IEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrier, eventHandlerProxy, onBatchStartInvoker, batchSizeLimiter)!;
     }
 
     private static IOnBatchStartEvaluator CreateOnBatchStartEvaluator<T>(IEventHandler<T> eventHandler)
@@ -42,6 +42,14 @@ public static class EventProcessorFactory
         return HasNonDefaultImplementation(eventHandler.GetType(), typeof(IEventHandler<T>), nameof(IEventHandler<T>.OnBatchStart))
             ? new DefaultOnBatchStartEvaluator()
             : new NoopOnBatchStartEvaluator();
+    }
+
+    private static IBatchSizeLimiter CreateBatchSizeLimiter<T>(IEventHandler<T> eventHandler)
+        where T : class
+    {
+        return eventHandler.MaxBatchSize is { } maxBatchSize
+            ? new DefaultBatchSizeLimiter(maxBatchSize)
+            : new NoopBatchSizeLimiter();
     }
 
     /// <summary>
@@ -145,6 +153,29 @@ public static class EventProcessorFactory
         public bool ShouldInvokeOnBatchStart(long availableSequence, long nextSequence)
         {
             return availableSequence >= nextSequence;
+        }
+    }
+
+    internal struct DefaultBatchSizeLimiter : IBatchSizeLimiter
+    {
+        private int _maxBatchOffset;
+
+        public DefaultBatchSizeLimiter(int maxBatchOffset)
+        {
+            _maxBatchOffset = maxBatchOffset - 1;
+        }
+
+        public long ApplyMaxBatchSize(long availableSequence, long nextSequence)
+        {
+            return Math.Min(availableSequence, nextSequence + _maxBatchOffset);
+        }
+    }
+
+    internal struct NoopBatchSizeLimiter : IBatchSizeLimiter
+    {
+        public long ApplyMaxBatchSize(long availableSequence, long nextSequence)
+        {
+            return availableSequence;
         }
     }
 }
