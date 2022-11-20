@@ -1,9 +1,8 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
 
-namespace Disruptor.Benchmarks;
+namespace Disruptor.Benchmarks.Processing;
 
 /// <summary>
 /// Compares event processing loops to identify the cost of <c>if (waitResult.IsTimeout)</c>.

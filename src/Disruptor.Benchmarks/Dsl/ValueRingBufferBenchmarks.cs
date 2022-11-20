@@ -1,6 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 
-namespace Disruptor.Benchmarks;
+namespace Disruptor.Benchmarks.Dsl;
 
 //[DisassemblyDiagnoser]
 public class ValueRingBufferBenchmarks

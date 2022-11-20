@@ -2,10 +2,9 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
-using Disruptor.Processing;
 using Disruptor.Util;
 
-namespace Disruptor.Benchmarks;
+namespace Disruptor.Benchmarks.Processing;
 
 /// <summary>
 /// Use partial copies of the processor types to benchmark the WaitFor invocation.

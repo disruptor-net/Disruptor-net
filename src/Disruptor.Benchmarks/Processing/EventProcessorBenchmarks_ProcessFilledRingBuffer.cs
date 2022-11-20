@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using Disruptor.Processing;
 
-namespace Disruptor.Benchmarks;
+namespace Disruptor.Benchmarks.Processing;
 
 /// <summary>
 /// Runs processors on a filled ring buffer then exits.

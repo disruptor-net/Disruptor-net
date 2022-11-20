@@ -1,9 +1,7 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using Disruptor.Processing;
 
-namespace Disruptor.Benchmarks;
+namespace Disruptor.Benchmarks.Processing;
 
 /// <summary>
 /// Use partial copies of the processor types to benchmark the processing of a few events.

@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using Disruptor.Util;
 
-namespace Disruptor.Benchmarks;
+namespace Disruptor.Benchmarks.Util;
 
 public class StructProxyBenchmarks
 {
