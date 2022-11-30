@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <OutputType>exe</OutputType>
     <StartupObject>Disruptor.Samples.Wiki.GettingStarted.SampleProgram</StartupObject>
     <LangVersion>Latest</LangVersion>
@@ -15,5 +15,5 @@
   <ItemGroup>
     <PackageReference Include="HdrHistogram" Version="2.5.0" />
   </ItemGroup>
-
+  
 </Project>

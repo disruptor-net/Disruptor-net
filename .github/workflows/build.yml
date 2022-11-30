@@ -8,13 +8,14 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: | 
             3.1.x
             6.0.x
+            7.0.x
       - name: Clear NuGet Cache
         run: dotnet nuget locals all --clear
       - name: Restore
@@ -26,7 +27,7 @@ jobs:
       - name: Test
         run: dotnet test --configuration Release --no-build src/Disruptor-net.sln
       - name: Upload NuGet
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: NuGet
           path: build/nuget/*.nupkg
@@ -35,13 +36,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: | 
             3.1.x
             6.0.x
+            7.0.x
       - name: Clear NuGet Cache
         run: dotnet nuget locals all --clear
       - name: Restore
