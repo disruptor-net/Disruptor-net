@@ -14,10 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
     <PackageReference Include="HdrHistogram" Version="2.5.0" />
-    <PackageReference Include="ObjectLayoutInspector" Version="0.1.2" />
-    <PackageReference Include="System.Threading.Channels" Version="4.7.1" />
+    <PackageReference Include="ObjectLayoutInspector" Version="0.1.4" />
+    <PackageReference Include="System.Threading.Channels" Version="7.0.0" />
   </ItemGroup>
 
 </Project>

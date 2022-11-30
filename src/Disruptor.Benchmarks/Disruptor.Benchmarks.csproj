@@ -9,12 +9,12 @@
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
     <ProjectReference Include="..\Disruptor.Testing\Disruptor.Testing.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
-    <PackageReference Include="Fody" Version="6.6.0" PrivateAssets="all" />
-    <PackageReference Include="InlineIL.Fody" Version="1.7.1" PrivateAssets="all" />
-    <PackageReference Include="ObjectLayoutInspector" Version="0.1.2" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
+    <PackageReference Include="Fody" Version="6.6.4" PrivateAssets="all" />
+    <PackageReference Include="InlineIL.Fody" Version="1.7.3" PrivateAssets="all" />
+    <PackageReference Include="ObjectLayoutInspector" Version="0.1.4" />
   </ItemGroup>
 
   <ItemGroup>

@@ -20,7 +20,7 @@ public class Program
 
         Console.WriteLine($"PID: {options.ProcessId}");
 
-        using (var dataTarget = DataTarget.AttachToProcess(options.ProcessId, 5000, AttachFlag.NonInvasive))
+        using (var dataTarget = DataTarget.AttachToProcess(options.ProcessId, false))
         {
             foreach (var runtimeInfo in dataTarget.ClrVersions)
             {
@@ -52,16 +52,16 @@ public class Program
 
         var ringBufferPadding = 2 * 128 / IntPtr.Size;
 
-        for (var segmentIndex = 0; segmentIndex < runtime.Heap.Segments.Count; segmentIndex++)
+        foreach (var (segment, segmentIndex) in runtime.Heap.Segments.Select((x, i) => (x, i)))
         {
-            Console.WriteLine($"Walking the heap... ({segmentIndex} / {runtime.Heap.Segments.Count})");
+            Console.WriteLine($"Walking the heap... ({1 + segmentIndex} / {runtime.Heap.Segments.Length})");
 
             var foundForSegment = false;
-            var segment = runtime.Heap.Segments[segmentIndex];
-            for (var address = segment.FirstObject; address != 0; address = segment.NextObject(address))
+
+            foreach (var clrObject in segment.EnumerateObjects())
             {
-                var type = runtime.Heap.GetObjectType(address);
-                if (type == null)
+                var type = clrObject.Type;
+                if (clrObject.Type == null)
                     continue;
 
                 if (!type.Name.StartsWith("Disruptor.RingBuffer<") || !type.Name.EndsWith(">"))
@@ -72,14 +72,12 @@ public class Program
                     Console.WriteLine();
                     foundForSegment = true;
                 }
+
                 Console.WriteLine($"Found instance of {type.Name}");
 
-                var fieldsField = type.GetFieldByName("_fields");
-                var fieldsAddress = fieldsField.GetAddress(address);
+                var entries = clrObject.ReadObjectField("_entries").AsArray();
 
-                var entriesField = fieldsField.Type.GetFieldByName("Entries");
-                var entriesAddress = (ulong)entriesField.GetValue(fieldsAddress, true);
-                var entriesLength = entriesField.Type.GetArrayLength(entriesAddress);
+                var entriesLength = entries.Length;
 
                 Console.WriteLine($"Ring buffer size: {entriesLength} ({entriesLength - ringBufferPadding} events + {ringBufferPadding} padding)");
 
@@ -87,7 +85,7 @@ public class Program
 
                 for (var index = 0; index < entriesLength; index++)
                 {
-                    var arrayElementValue = (ulong)entriesField.Type.GetArrayElementValue(entriesAddress, index);
+                    var arrayElementValue = entries.GetObjectValue(index).Address;
                     if (arrayElementValue != 0)
                         entriesAddresses.Add(arrayElementValue);
                 }
@@ -98,14 +96,18 @@ public class Program
             }
         }
 
-        Console.WriteLine($"Walking the heap... ({runtime.Heap.Segments.Count} / {runtime.Heap.Segments.Count})");
+        Console.WriteLine($"Walking the heap... Completed");
     }
 
     private static void ScanTypes(ClrRuntime runtime, string scanTypeName)
     {
         Console.WriteLine($"Scanning for type {scanTypeName}");
 
-        var typeInfos = runtime.Heap.EnumerateTypes().Where(x => x.Name.EndsWith(scanTypeName)).ToDictionary(_ => _, _ => new TypeInfo());
+        var typeInfos = runtime.EnumerateModules()
+                               .SelectMany(x => EnumerateTypes(x))
+                               .Where(x => x.Name.EndsWith(scanTypeName))
+                               .Distinct()
+                               .ToDictionary(_ => _, _ => new TypeInfo());
 
         if (typeInfos.Count == 0)
         {
@@ -115,26 +117,25 @@ public class Program
 
         Console.WriteLine($"Found types: {string.Join(", ", typeInfos.Keys.Select(x => x.Name))}");
 
-        for (var segmentIndex = 0; segmentIndex < runtime.Heap.Segments.Count; segmentIndex++)
+        foreach (var (segment, segmentIndex) in runtime.Heap.Segments.Select((x, i) => (x, i)))
         {
-            Console.WriteLine($"Walking the heap... ({segmentIndex} / {runtime.Heap.Segments.Count})");
+            Console.WriteLine($"Walking the heap... ({1 + segmentIndex} / {runtime.Heap.Segments.Length})");
 
-            var segment = runtime.Heap.Segments[segmentIndex];
-            for (var address = segment.FirstObject; address != 0; address = segment.NextObject(address))
+            foreach (var clrObject in segment.EnumerateObjects())
             {
-                var type = runtime.Heap.GetObjectType(address);
+                var type = clrObject.Type;
                 if (type == null)
                     continue;
 
                 if (!typeInfos.TryGetValue(type, out var typeInfo))
                     continue;
 
-                typeInfo.Addresses.Add(address);
-                typeInfo.Generations.Add(segment.GetGeneration(address));
+                typeInfo.Addresses.Add(clrObject.Address);
+                typeInfo.Generations.Add(segment.GetGeneration(clrObject.Address));
             }
         }
 
-        Console.WriteLine($"Walking the heap... ({runtime.Heap.Segments.Count} / {runtime.Heap.Segments.Count})");
+        Console.WriteLine($"Walking the heap... Completed");
 
         foreach (var typeInfo in typeInfos)
         {
@@ -142,6 +143,17 @@ public class Program
             Console.WriteLine($"[{typeInfo.Key}]");
 
             typeInfo.Value.PrintStats(runtime.Heap);
+        }
+    }
+
+    private static IEnumerable<ClrType> EnumerateTypes(ClrModule module)
+    {
+        ClrRuntime runtime = module.AppDomain.Runtime;
+        foreach ((ulong mt, int _) in module.EnumerateTypeDefToMethodTableMap())
+        {
+            ClrType type = runtime.GetTypeByMethodTable(mt);
+            if (type != null)
+                yield return type;
         }
     }
 
