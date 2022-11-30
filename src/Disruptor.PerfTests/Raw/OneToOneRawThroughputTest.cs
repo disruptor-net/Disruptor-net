@@ -85,19 +85,11 @@ public class OneToOneRawThroughputTest : IThroughputTest
 
         producerTask.Wait();
         sessionContext.Stop();
-        WaitForEventProcessorSequence(expectedCount);
+        PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _myRunnable.Sequence);
 
         consumerTask.Wait();
 
         return _iterations;
-    }
-
-    private void WaitForEventProcessorSequence(long expectedCount)
-    {
-        while (_myRunnable.Sequence.Value != expectedCount)
-        {
-            Thread.Sleep(1);
-        }
     }
 
     private class MyRunnable

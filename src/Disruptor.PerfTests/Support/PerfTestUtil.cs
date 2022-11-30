@@ -41,7 +41,12 @@ public class PerfTestUtil
 
     public static void WaitForEventProcessorSequence(long expectedCount, IEventProcessor eventProcessor)
     {
-        while (eventProcessor.Sequence.Value != expectedCount)
+        WaitForEventProcessorSequence(expectedCount, eventProcessor.Sequence);
+    }
+
+    public static void WaitForEventProcessorSequence(long expectedCount, ISequence sequence)
+    {
+        while (sequence.Value != expectedCount)
         {
             Thread.Sleep(1);
         }

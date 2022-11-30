@@ -1,4 +1,5 @@
 using System.Threading;
+using Disruptor.Testing.Support;
 
 namespace Disruptor.PerfTests.Support;
 

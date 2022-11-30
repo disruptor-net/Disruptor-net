@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace Disruptor.PerfTests.Support;
+namespace Disruptor.Testing.Support;
 
 [StructLayout(LayoutKind.Explicit, Size = 72)]
 public struct PaddedLong

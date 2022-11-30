@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
+using Disruptor.Testing.Support;
 
 namespace Disruptor.PerfTests.WorkHandler;
 
