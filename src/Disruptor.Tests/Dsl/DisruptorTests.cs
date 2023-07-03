@@ -327,7 +327,7 @@ public class DisruptorTests : IDisposable
     {
         var rb = _disruptor.RingBuffer;
         var b1 = EventProcessorFactory.Create(rb, rb.NewBarrier(), new SleepingEventHandler());
-        var b2 = new TestEventProcessorFactory<TestEvent>((ringBuffer, barrierSequences) => EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(barrierSequences), new SleepingEventHandler()));
+        var b2 = new TestEventProcessorFactory<TestEvent>((ringBuffer, sequenceBarrier) => EventProcessorFactory.Create(ringBuffer, sequenceBarrier, new SleepingEventHandler()));
 
         _disruptor.HandleEventsWith(b1).Then(b2);
 
@@ -862,10 +862,10 @@ public class DisruptorTests : IDisposable
         var countDownLatch = new CountdownEvent(2);
         var eventHandler = new CountDownEventHandler<TestEvent>(countDownLatch);
 
-        _disruptor.HandleEventsWith(new TestEventProcessorFactory<TestEvent>((ringBuffer, barrierSequences) =>
+        _disruptor.HandleEventsWith(new TestEventProcessorFactory<TestEvent>((ringBuffer, sequenceBarrier) =>
         {
-            Assert.AreEqual(0, barrierSequences.Length, "Should not have had any barrier sequences");
-            return EventProcessorFactory.Create(_disruptor.RingBuffer, ringBuffer.NewBarrier(barrierSequences), eventHandler);
+            Assert.IsTrue(sequenceBarrier.DependentSequences.DependsOnCursor, "Should depend on cursor");
+            return EventProcessorFactory.Create(ringBuffer, sequenceBarrier, eventHandler);
         }));
 
         EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch);
@@ -878,10 +878,11 @@ public class DisruptorTests : IDisposable
         var eventHandler = new CountDownEventHandler<TestEvent>(countDownLatch);
         var delayedEventHandler = CreateDelayedEventHandler();
 
-        _disruptor.HandleEventsWith(delayedEventHandler).Then(new TestEventProcessorFactory<TestEvent>((ringBuffer, barrierSequences) =>
+        _disruptor.HandleEventsWith(delayedEventHandler).Then(new TestEventProcessorFactory<TestEvent>((ringBuffer, sequenceBarrier) =>
         {
-            Assert.AreEqual(1, barrierSequences.Length, "Should have had a barrier sequence");
-            return EventProcessorFactory.Create(_disruptor.RingBuffer, ringBuffer.NewBarrier(barrierSequences), eventHandler);
+            Assert.IsFalse(sequenceBarrier.DependentSequences.DependsOnCursor, "Should not depend on cursor");
+            Assert.AreEqual(1, sequenceBarrier.DependentSequences.DependentSequenceCount, "Should have had a barrier sequence");
+            return EventProcessorFactory.Create(ringBuffer, sequenceBarrier, eventHandler);
         }));
 
         EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);

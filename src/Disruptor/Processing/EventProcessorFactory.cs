@@ -121,7 +121,6 @@ public static class EventProcessorFactory
     /// <param name="dataProvider">dataProvider to which events are published</param>
     /// <param name="sequenceBarrier">SequenceBarrier on which it is waiting.</param>
     /// <param name="eventHandler">eventHandler is the delegate to which events are dispatched.</param>
-    /// <returns></returns>
     public static IValueEventProcessor<T> Create<T>(IValueDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
         where T : struct
     {

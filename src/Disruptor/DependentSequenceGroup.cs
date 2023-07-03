@@ -57,6 +57,11 @@ public class DependentSequenceGroup
     public bool DependsOnCursor => _dependencies.Length == 1 && _dependencies[0] == _cursor;
 
     /// <summary>
+    /// Gets the count of dependencies.
+    /// </summary>
+    public int DependentSequenceCount => _dependencies.Length + _untypedDependencies.Length;
+
+    /// <summary>
     /// Gets the value of the ring buffer cursor.
     /// </summary>
     public long CursorValue

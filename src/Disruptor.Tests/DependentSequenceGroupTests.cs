@@ -30,11 +30,11 @@ public class DependentSequenceGroupTests
     }
 
     [Test, Repeat(10)]
-    public void ShouldGetMinimumValueFromSequences([Range(1, 4)] int dependentSequenceCount)
+    public void ShouldGetMinimumValueFromSequences([Range(1, 4)] int dependencyCount)
     {
         var cursor = new Sequence();
         var random = new Random();
-        var sequences = Enumerable.Range(0, dependentSequenceCount)
+        var sequences = Enumerable.Range(0, dependencyCount)
                                   .Select(_ => new Sequence(random.Next(1000)))
                                   .Cast<ISequence>()
                                   .ToArray();
@@ -48,11 +48,11 @@ public class DependentSequenceGroupTests
     }
 
     [Test, Repeat(10)]
-    public void ShouldGetMinimumValueFromCustomSequences([Range(1, 4)] int dependentSequenceCount)
+    public void ShouldGetMinimumValueFromCustomSequences([Range(1, 4)] int dependencyCount)
     {
         var cursor = new Sequence();
         var random = new Random();
-        var sequences = Enumerable.Range(0, dependentSequenceCount)
+        var sequences = Enumerable.Range(0, dependencyCount)
                                   .Select(_ => new ConstantSequence(random.Next(1000)))
                                   .Cast<ISequence>()
                                   .ToArray();
@@ -63,6 +63,22 @@ public class DependentSequenceGroupTests
 
         var expectedValue = sequences.Select(x => x.Value).Min();
         Assert.AreEqual(expectedValue, value);
+    }
+
+    [TestCase(0, 1)]
+    [TestCase(1, 1)]
+    [TestCase(5, 5)]
+    public void ShouldGetDependentSequenceCount(int dependencyCount, int expectedDependentSequenceCount)
+    {
+        var cursor = new Sequence();
+        var sequences = Enumerable.Range(0, dependencyCount)
+                                  .Select(_ => new Sequence())
+                                  .Cast<ISequence>()
+                                  .ToArray();
+
+        var dependentSequences = new DependentSequenceGroup(cursor, sequences);
+
+        Assert.AreEqual(expectedDependentSequenceCount, dependentSequences.DependentSequenceCount);
     }
 
     private class ConstantSequence : ISequence

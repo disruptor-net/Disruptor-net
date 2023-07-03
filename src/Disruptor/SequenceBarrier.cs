@@ -4,6 +4,10 @@ using Disruptor.Util;
 
 namespace Disruptor;
 
+/// <summary>
+/// Coordination barrier used by event processors for tracking the ring buffer cursor and the sequences of
+/// dependent event processors.
+/// </summary>
 public sealed class SequenceBarrier
 {
     private readonly ISequencer _sequencer;

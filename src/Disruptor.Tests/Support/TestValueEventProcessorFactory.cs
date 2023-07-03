@@ -7,15 +7,15 @@ namespace Disruptor.Tests.Support;
 public class TestValueEventProcessorFactory<T> : IValueEventProcessorFactory<T>
     where T : struct
 {
-    private readonly Func<IValueRingBuffer<T>, ISequence[], IEventProcessor> _factory;
+    private readonly Func<IValueRingBuffer<T>, SequenceBarrier, IEventProcessor> _factory;
 
-    public TestValueEventProcessorFactory(Func<IValueRingBuffer<T>, ISequence[], IEventProcessor> factory)
+    public TestValueEventProcessorFactory(Func<IValueRingBuffer<T>, SequenceBarrier, IEventProcessor> factory)
     {
         _factory = factory;
     }
 
-    public IEventProcessor CreateEventProcessor(IValueRingBuffer<T> ringBuffer, ISequence[] barrierSequences)
+    public IEventProcessor CreateEventProcessor(IValueRingBuffer<T> ringBuffer, SequenceBarrier sequenceBarrier)
     {
-        return _factory.Invoke(ringBuffer, barrierSequences);
+        return _factory.Invoke(ringBuffer, sequenceBarrier);
     }
 }
