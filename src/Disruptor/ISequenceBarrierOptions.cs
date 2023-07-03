@@ -14,7 +14,7 @@ public interface ISequenceBarrierOptions
     {
         if (sequencer is SingleProducerSequencer)
         {
-            // The SingleProducerSequencer increments the cursor sequence on publication so the cursor/ sequence
+            // The SingleProducerSequencer increments the cursor sequence on publication so the cursor sequence
             // is always published.
             return new IsDependentSequencePublished();
         }

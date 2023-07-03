@@ -30,8 +30,8 @@ public class DependentSequenceGroup
         // The API exposes ISequence but the Disruptor code always uses the Sequence type for dependent sequences.
         // So, dependencies are expected to be instances of Sequence in the fast path.
 
-        // To simply the implementation, either all sequences are Sequence and _sequences is used,
-        // or _untypedSequences is used.
+        // To simplify the implementation, either all sequences are Sequence and _dependencies is used,
+        // or _untypedDependencies is used.
 
         if (dependencies.Length == 0)
         {
