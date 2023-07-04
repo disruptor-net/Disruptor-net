@@ -16,14 +16,13 @@ public class DependentSequenceGroup
 {
     private readonly Sequence _cursor;
     private readonly Sequence[] _dependencies;
-    private readonly ISequence[] _untypedDependencies;
 
     /// <summary>
     /// Creates a new dependent sequence group.
     /// </summary>
     /// <param name="cursor">The ring buffer cursor</param>
     /// <param name="dependencies">The sequences of the processors that must run before</param>
-    public DependentSequenceGroup(Sequence cursor, params ISequence[] dependencies)
+    public DependentSequenceGroup(Sequence cursor, params Sequence[] dependencies)
     {
         _cursor = cursor;
 
@@ -36,17 +35,10 @@ public class DependentSequenceGroup
         if (dependencies.Length == 0)
         {
             _dependencies = new[] { cursor };
-            _untypedDependencies = Array.Empty<ISequence>();
-        }
-        else if (dependencies.All(x => x is Sequence))
-        {
-            _dependencies = dependencies.Cast<Sequence>().ToArray();
-            _untypedDependencies = Array.Empty<ISequence>();
         }
         else
         {
-            _dependencies = Array.Empty<Sequence>();
-            _untypedDependencies = dependencies.ToArray();
+            _dependencies = dependencies;
         }
     }
 
@@ -59,7 +51,7 @@ public class DependentSequenceGroup
     /// <summary>
     /// Gets the count of dependencies.
     /// </summary>
-    public int DependentSequenceCount => _dependencies.Length + _untypedDependencies.Length;
+    public int DependentSequenceCount => _dependencies.Length;
 
     /// <summary>
     /// Gets the value of the ring buffer cursor.
@@ -78,35 +70,17 @@ public class DependentSequenceGroup
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
-            if (_dependencies.Length != 0)
+            var minimum = long.MaxValue;
+            foreach (var sequence in _dependencies)
             {
-                var minimum = long.MaxValue;
-                foreach (var sequence in _dependencies)
-                {
-                    var sequenceValue = sequence.Value;
-                    if (sequenceValue < minimum)
-                        minimum = sequenceValue;
-                }
-
-                return minimum;
+                var sequenceValue = sequence.Value;
+                if (sequenceValue < minimum)
+                    minimum = sequenceValue;
             }
 
-            return GetValueFromUntypedSequences();
-        }
-    }
+            return minimum;
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private long GetValueFromUntypedSequences()
-    {
-        var minimum = long.MaxValue;
-        foreach (var sequence in _untypedDependencies)
-        {
-            var sequenceValue = sequence.Value;
-            if (sequenceValue < minimum)
-                minimum = sequenceValue;
         }
-
-        return minimum;
     }
 
     /// <summary>

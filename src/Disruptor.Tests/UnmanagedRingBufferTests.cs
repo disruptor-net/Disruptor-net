@@ -23,12 +23,14 @@ public class UnmanagedRingBufferTests : ValueRingBufferFixture<StubUnmanagedEven
         _memoryList = memoryList;
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
         foreach (var memory in _memoryList)
         {
             memory.Dispose();
         }
+
+        base.Dispose();
     }
 
     private static IValueRingBuffer<StubUnmanagedEvent> CreateRingBuffer(int size, ProducerType producerType, List<UnmanagedRingBufferMemory> memoryList)

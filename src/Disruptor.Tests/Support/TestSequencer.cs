@@ -10,7 +10,7 @@ public class TestSequencer : ISequencer
     private readonly object _lock = new();
     private readonly Sequence _cursor = new();
     private readonly HashSet<long> _published = new();
-    private ISequence[] _gatingSequences = Array.Empty<ISequence>();
+    private Sequence[] _gatingSequences = Array.Empty<Sequence>();
     private long _next = Sequence.InitialCursorValue;
 
     public TestSequencer(int bufferSize, IWaitStrategy waitStrategy)
@@ -138,7 +138,7 @@ public class TestSequencer : ISequencer
         }
     }
 
-    public void AddGatingSequences(params ISequence[] gatingSequences)
+    public void AddGatingSequences(params Sequence[] gatingSequences)
     {
         lock (_lock)
         {
@@ -146,7 +146,7 @@ public class TestSequencer : ISequencer
         }
     }
 
-    public bool RemoveGatingSequence(ISequence sequence)
+    public bool RemoveGatingSequence(Sequence sequence)
     {
         lock (_lock)
         {
@@ -154,12 +154,12 @@ public class TestSequencer : ISequencer
         }
     }
 
-    public SequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
+    public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
     {
         return new SequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
-    public AsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
     {
         return new AsyncSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
@@ -177,19 +177,19 @@ public class TestSequencer : ISequencer
         return availableSequence;
     }
 
-    public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
+    public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
         where T : class
     {
         return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
     }
 
-    public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params ISequence[] gatingSequences)
+    public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params Sequence[] gatingSequences)
         where T : struct
     {
         return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
     }
 
-    public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, ISequence[] gatingSequences)
+    public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, Sequence[] gatingSequences)
         where T : class
     {
         if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)

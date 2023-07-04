@@ -198,7 +198,7 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// Creates an event poller for this ring buffer gated on the supplied sequences.
     /// </summary>
     /// <param name="gatingSequences">gatingSequences to be gated on.</param>
-    public EventPoller<T> NewPoller(params ISequence[] gatingSequences)
+    public EventPoller<T> NewPoller(params Sequence[] gatingSequences)
     {
         return _sequencerDispatcher.Sequencer.NewPoller(this, gatingSequences);
     }
@@ -207,7 +207,7 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// Creates an event stream for this ring buffer gated on the supplied sequences.
     /// </summary>
     /// <param name="gatingSequences">gatingSequences to be gated on.</param>
-    public AsyncEventStream<T> NewAsyncEventStream(params ISequence[] gatingSequences)
+    public AsyncEventStream<T> NewAsyncEventStream(params Sequence[] gatingSequences)
     {
         return _sequencerDispatcher.Sequencer.NewAsyncEventStream(this, gatingSequences);
     }
@@ -218,7 +218,7 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// </summary>
     /// <param name="sequencesToTrack">the additional sequences to track</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    public AsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
     {
         return _sequencerDispatcher.Sequencer.NewAsyncBarrier(sequencesToTrack);
     }

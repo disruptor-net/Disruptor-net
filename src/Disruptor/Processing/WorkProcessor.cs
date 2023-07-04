@@ -49,7 +49,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
     /// <summary>
     /// <see cref="IEventProcessor.Sequence"/>.
     /// </summary>
-    public ISequence Sequence => _sequence;
+    public Sequence Sequence => _sequence;
 
     /// <summary>
     /// <see cref="IEventProcessor.Halt"/>.

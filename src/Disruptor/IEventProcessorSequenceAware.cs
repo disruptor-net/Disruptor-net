@@ -22,5 +22,5 @@ public interface IEventProcessorSequenceAware
     /// Call by the <see cref="IEventProcessor"/> to setup the callback.
     /// </summary>
     /// <param name="sequenceCallback">callback on which to notify the <see cref="IEventProcessor"/> that the sequence has progressed.</param>
-    void SetSequenceCallback(ISequence sequenceCallback);
+    void SetSequenceCallback(Sequence sequenceCallback);
 }

@@ -17,7 +17,7 @@ public class TestEventProcessor : IEventProcessor
         _sequenceBarrier = sequenceBarrier;
     }
 
-    public ISequence Sequence { get; } = new Sequence();
+    public Sequence Sequence { get; } = new();
 
     public void WaitUntilStarted(TimeSpan timeout)
     {

@@ -16,12 +16,12 @@ public class DummyEventProcessor : IEventProcessor
     {
     }
 
-    public DummyEventProcessor(ISequence sequence)
+    public DummyEventProcessor(Sequence sequence)
     {
         Sequence = sequence;
     }
 
-    public ISequence Sequence { get; }
+    public Sequence Sequence { get; }
 
     public void Halt()
     {

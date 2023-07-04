@@ -12,19 +12,26 @@ using NUnit.Framework;
 namespace Disruptor.Tests;
 
 [TestFixture]
-public abstract class ValueRingBufferFixture<T>
+public abstract class ValueRingBufferFixture<T> : IDisposable
     where T : struct, IStubEvent
 {
     private readonly Func<(int size, ProducerType producerType), IValueRingBuffer<T>> _ringBufferFactory;
     private readonly IValueRingBuffer<T> _ringBuffer;
     private readonly SequenceBarrier _sequenceBarrier;
+    private readonly CursorFollower _cursorFollower;
 
     protected ValueRingBufferFixture(Func<(int size, ProducerType producerType), IValueRingBuffer<T>> ringBufferFactory)
     {
         _ringBufferFactory = ringBufferFactory;
         _ringBuffer = ringBufferFactory.Invoke((32, ProducerType.Multi));
         _sequenceBarrier = _ringBuffer.NewBarrier();
-        _ringBuffer.AddGatingSequences(new NoOpEventProcessor<T>(_ringBuffer).Sequence);
+        _cursorFollower = CursorFollower.StartNew(_ringBuffer);
+        _ringBuffer.AddGatingSequences(_cursorFollower.Sequence);
+    }
+
+    public virtual void Dispose()
+    {
+        _cursorFollower.Dispose();
     }
 
     private IValueRingBuffer<T> CreateRingBuffer(int size, ProducerType producerType)

@@ -14,7 +14,7 @@ namespace Disruptor;
 /// sharing by adding padding around the volatile field.</para>
 /// </summary>
 [StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 8)]
-public class Sequence : ISequence
+public class Sequence
 {
     /// <summary>
     /// Set to -1 as sequence starting point

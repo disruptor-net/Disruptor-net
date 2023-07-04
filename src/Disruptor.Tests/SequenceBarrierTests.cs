@@ -8,14 +8,21 @@ using NUnit.Framework;
 namespace Disruptor.Tests;
 
 [TestFixture]
-public abstract class SequenceBarrierTests
+public abstract class SequenceBarrierTests : IDisposable
 {
     private readonly RingBuffer<StubEvent> _ringBuffer;
+    private readonly CursorFollower _cursorFollower;
 
     protected SequenceBarrierTests(ISequencer sequencer)
     {
         _ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), sequencer);
-        _ringBuffer.AddGatingSequences(new NoOpEventProcessor<StubEvent>(_ringBuffer).Sequence);
+        _cursorFollower = CursorFollower.StartNew(_ringBuffer);
+        _ringBuffer.AddGatingSequences(_cursorFollower.Sequence);
+    }
+
+    public void Dispose()
+    {
+        _cursorFollower.Dispose();
     }
 
     [Test]
@@ -72,16 +79,17 @@ public abstract class SequenceBarrierTests
         const long expectedNumberMessages = 10;
         FillRingBuffer(expectedNumberMessages);
 
-        var signal = new CountdownEvent(3);
-        var sequence1 = new CountDownEventSequence(8L, signal);
-        var sequence2 = new CountDownEventSequence(8L, signal);
-        var sequence3 = new CountDownEventSequence(8L, signal);
+        var sequence1 = new Sequence(8L);
+        var sequence2 = new Sequence(8L);
+        var sequence3 = new Sequence(8L);
 
         var sequenceBarrier = _ringBuffer.NewBarrier(sequence1, sequence2, sequence3);
+        var startedSignal = new ManualResetEventSlim();
 
         var alerted = false;
-        var t = Task.Run(() =>
+        var task = Task.Run(() =>
         {
+            startedSignal.Set();
             try
             {
                 sequenceBarrier.WaitFor(expectedNumberMessages - 1);
@@ -92,9 +100,12 @@ public abstract class SequenceBarrierTests
             }
         });
 
-        signal.Wait(TimeSpan.FromSeconds(3));
+        startedSignal.Wait();
+
+        Thread.Sleep(200);
+
         sequenceBarrier.CancelProcessing();
-        t.Wait();
+        task.Wait();
 
         Assert.That(alerted, Is.True, "Thread was not interrupted");
     }
@@ -184,40 +195,12 @@ public abstract class SequenceBarrierTests
 
         public bool IsRunning => _running == 1;
 
-        public ISequence Sequence => _sequence;
+        public Sequence Sequence => _sequence;
 
         public void Halt()
         {
             _running = 0;
             _runEvent.Reset();
-        }
-    }
-
-    private class CountDownEventSequence : ISequence
-    {
-        private readonly CountdownEvent _signal;
-        private readonly ISequence _sequenceImplementation;
-
-        public CountDownEventSequence(long initialValue, CountdownEvent signal)
-        {
-            _sequenceImplementation = new Sequence(initialValue);
-            _signal = signal;
-        }
-
-        public long Value
-        {
-            get
-            {
-                if (_signal.CurrentCount > 0)
-                    _signal.Signal();
-
-                return _sequenceImplementation.Value;
-            }
-        }
-
-        public void SetValue(long value)
-        {
-            _sequenceImplementation.SetValue(value);
         }
     }
 }

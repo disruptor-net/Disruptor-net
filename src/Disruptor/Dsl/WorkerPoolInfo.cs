@@ -14,7 +14,7 @@ internal class WorkerPoolInfo<T> : IConsumerInfo where T : class
         IsEndOfChain = true;
     }
 
-    public ISequence[] Sequences => _workerPool.GetWorkerSequences();
+    public Sequence[] Sequences => _workerPool.GetWorkerSequences();
 
     public DependentSequenceGroup DependentSequences { get; }
 

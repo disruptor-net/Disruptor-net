@@ -8,16 +8,16 @@ namespace Disruptor.Benchmarks.Util;
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 public class GetMinimumSequenceBenchmarks
 {
-    private readonly ISequence[] _sequencesSize1;
-    private readonly ISequence[] _sequencesSize3;
+    private readonly Sequence[] _sequencesSize1;
+    private readonly Sequence[] _sequencesSize3;
 
     public GetMinimumSequenceBenchmarks()
     {
-        _sequencesSize1 = new ISequence[]
+        _sequencesSize1 = new Sequence[]
         {
             new Sequence(1),
         };
-        _sequencesSize3 = new ISequence[]
+        _sequencesSize3 = new Sequence[]
         {
             new Sequence(100),
             new Sequence(1),
@@ -50,7 +50,7 @@ public class GetMinimumSequenceBenchmarks
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long UtilGetMinimumSequence(ISequence[] sequences, long minimum = long.MaxValue)
+    public static long UtilGetMinimumSequence(Sequence[] sequences, long minimum = long.MaxValue)
     {
         for (var i = 0; i < sequences.Length; i++)
         {
@@ -63,7 +63,7 @@ public class GetMinimumSequenceBenchmarks
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long UtilGetMinimumSequenceRef(ISequence[] sequences, long minimum = long.MaxValue)
+    public static long UtilGetMinimumSequenceRef(Sequence[] sequences, long minimum = long.MaxValue)
     {
         for (var i = 0; i < sequences.Length; i++)
         {

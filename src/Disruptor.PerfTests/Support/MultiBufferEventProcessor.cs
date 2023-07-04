@@ -5,7 +5,7 @@ using Disruptor.Processing;
 
 namespace Disruptor.PerfTests.Support;
 
-public class MultiBufferEventProcessor<T> : IEventProcessor
+public class MultiBufferEventProcessor<T>
     where T : class
 {
     private readonly ManualResetEventSlim _runEvent = new();
@@ -95,10 +95,6 @@ public class MultiBufferEventProcessor<T> : IEventProcessor
             }
         }
     }
-
-
-
-    public ISequence Sequence { get { throw new NotSupportedException(); } }
 
     public long Count => _count;
 

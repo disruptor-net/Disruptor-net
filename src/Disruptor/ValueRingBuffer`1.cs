@@ -187,7 +187,7 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     /// </summary>
     /// <param name="gatingSequences">gatingSequences to be gated on.</param>
     /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
-    public ValueEventPoller<T> NewPoller(params ISequence[] gatingSequences)
+    public ValueEventPoller<T> NewPoller(params Sequence[] gatingSequences)
     {
         return _sequencerDispatcher.Sequencer.NewPoller(this, gatingSequences);
     }

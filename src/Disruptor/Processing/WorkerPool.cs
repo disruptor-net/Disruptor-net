@@ -89,9 +89,9 @@ public sealed class WorkerPool<T> where T : class
     /// <summary>
     /// Get an array of <see cref="Sequence"/>s representing the progress of the workers.
     /// </summary>
-    public ISequence[] GetWorkerSequences()
+    public Sequence[] GetWorkerSequences()
     {
-        var sequences = new ISequence[_workProcessors.Length + 1];
+        var sequences = new Sequence[_workProcessors.Length + 1];
         for (var i = 0; i < _workProcessors.Length; i++)
         {
             sequences[i] = _workProcessors[i].Sequence;

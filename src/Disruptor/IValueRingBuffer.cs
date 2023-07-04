@@ -3,11 +3,11 @@ namespace Disruptor;
 public interface IValueRingBuffer<T> : ICursored, ISequenced, IValueDataProvider<T>
     where T : struct
 {
-    void AddGatingSequences(params ISequence[] gatingSequences);
-    bool RemoveGatingSequence(ISequence sequence);
+    void AddGatingSequences(params Sequence[] gatingSequences);
+    bool RemoveGatingSequence(Sequence sequence);
     long GetMinimumGatingSequence();
 
-    SequenceBarrier NewBarrier(params ISequence[] sequencesToTrack);
+    SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack);
 
     void ResetTo(long sequence);
 }

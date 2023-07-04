@@ -4,20 +4,20 @@ using System.Threading;
 namespace Disruptor;
 
 /// <summary>
-/// Provides static methods for managing groups of <see cref="ISequence"/>.
+/// Provides static methods for managing groups of <see cref="Sequence"/>.
 /// </summary>
 internal static class SequenceGroups
 {
-    public static void AddSequences(ref ISequence[] sequences, ICursored cursor, params ISequence[] sequencesToAdd)
+    public static void AddSequences(ref Sequence[] sequences, ICursored cursor, params Sequence[] sequencesToAdd)
     {
         long cursorSequence;
-        ISequence[] updatedSequences;
-        ISequence[] currentSequences;
+        Sequence[] updatedSequences;
+        Sequence[] currentSequences;
 
         do
         {
             currentSequences = Volatile.Read(ref sequences);
-            updatedSequences = new ISequence[currentSequences.Length + sequencesToAdd.Length];
+            updatedSequences = new Sequence[currentSequences.Length + sequencesToAdd.Length];
             Array.Copy(currentSequences, updatedSequences, currentSequences.Length);
             cursorSequence = cursor.Cursor;
 
@@ -37,11 +37,11 @@ internal static class SequenceGroups
         }
     }
 
-    public static bool RemoveSequence(ref ISequence[] sequences, ISequence sequence)
+    public static bool RemoveSequence(ref Sequence[] sequences, Sequence sequence)
     {
         int numToRemove;
-        ISequence[] oldSequences;
-        ISequence[] newSequences;
+        Sequence[] oldSequences;
+        Sequence[] newSequences;
 
         do
         {
@@ -53,7 +53,7 @@ internal static class SequenceGroups
                 break;
 
             var oldSize = oldSequences.Length;
-            newSequences = new ISequence[oldSize - numToRemove];
+            newSequences = new Sequence[oldSize - numToRemove];
 
             for (int i = 0, pos = 0; i < oldSize; i++)
             {
@@ -69,7 +69,7 @@ internal static class SequenceGroups
         return numToRemove != 0;
     }
 
-    private static int CountMatching(ISequence[] values, ISequence toMatch)
+    private static int CountMatching(Sequence[] values, Sequence toMatch)
     {
         var numToRemove = 0;
         foreach (var value in values)

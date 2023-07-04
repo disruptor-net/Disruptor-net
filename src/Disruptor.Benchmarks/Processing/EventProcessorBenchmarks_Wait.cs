@@ -21,7 +21,7 @@ public class EventProcessorBenchmarks_Wait
         var waitStrategy = new YieldingWaitStrategy();
         var sequencer = new SingleProducerSequencer(64, waitStrategy);
         var cursorSequence = new Sequence();
-        var dependentSequences = new ISequence[0];
+        var dependentSequences = new Sequence[0];
         var sequenceBarrier = new SequenceBarrier(sequencer, waitStrategy, cursorSequence, dependentSequences);
         var sequenceBarrierClass = new SequenceBarrierClass(sequencer, waitStrategy, cursorSequence, dependentSequences);
         var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrierClass);
@@ -136,7 +136,7 @@ public class EventProcessorBenchmarks_Wait
         private readonly DependentSequenceGroup _dependentSequences;
         private CancellationTokenSource _cancellationTokenSource;
 
-        public SequenceBarrierClass(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
+        public SequenceBarrierClass(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, Sequence[] dependentSequences)
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
@@ -172,7 +172,7 @@ public class EventProcessorBenchmarks_Wait
         private readonly DependentSequenceGroup _dependentSequences;
         private CancellationTokenSource _cancellationTokenSource;
 
-        public SequenceBarrierStruct(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
+        public SequenceBarrierStruct(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, Sequence[] dependentSequences)
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;

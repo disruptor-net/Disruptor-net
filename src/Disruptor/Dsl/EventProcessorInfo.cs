@@ -20,7 +20,7 @@ internal class EventProcessorInfo : IConsumerInfo
 
     public IEventProcessor EventProcessor { get; }
 
-    public ISequence[] Sequences => new[] { EventProcessor.Sequence };
+    public Sequence[] Sequences => new[] { EventProcessor.Sequence };
 
     public object? Handler { get; }
 

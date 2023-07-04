@@ -255,7 +255,7 @@ public abstract class RingBuffer : ICursored
     /// safely and atomically added to the list of gating sequences.
     /// </summary>
     /// <param name="gatingSequences">the sequences to add.</param>
-    public void AddGatingSequences(params ISequence[] gatingSequences)
+    public void AddGatingSequences(params Sequence[] gatingSequences)
     {
         _sequencerDispatcher.Sequencer.AddGatingSequences(gatingSequences);
     }
@@ -276,7 +276,7 @@ public abstract class RingBuffer : ICursored
     /// </summary>
     /// <param name="sequence">sequence to be removed.</param>
     /// <returns><c>true</c> if this sequence was found, <c>false</c> otherwise.</returns>
-    public bool RemoveGatingSequence(ISequence sequence)
+    public bool RemoveGatingSequence(Sequence sequence)
     {
         return _sequencerDispatcher.Sequencer.RemoveGatingSequence(sequence);
     }
@@ -287,7 +287,7 @@ public abstract class RingBuffer : ICursored
     /// </summary>
     /// <param name="sequencesToTrack">the additional sequences to track</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    public SequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
+    public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
     {
         return _sequencerDispatcher.Sequencer.NewBarrier(sequencesToTrack);
     }

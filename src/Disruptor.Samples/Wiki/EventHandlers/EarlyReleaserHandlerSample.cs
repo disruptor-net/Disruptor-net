@@ -8,9 +8,9 @@ public class EarlyReleaserHandlerSample
 
 public class Handler : IEventHandler<Event>, IEventProcessorSequenceAware
 {
-    private ISequence _sequenceCallback;
+    private Sequence _sequenceCallback;
 
-    public void SetSequenceCallback(ISequence sequenceCallback)
+    public void SetSequenceCallback(Sequence sequenceCallback)
     {
         _sequenceCallback = sequenceCallback;
     }

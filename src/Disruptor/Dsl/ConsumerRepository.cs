@@ -9,13 +9,13 @@ namespace Disruptor.Dsl;
 internal class ConsumerRepository : IEnumerable<IConsumerInfo>
 {
     private readonly Dictionary<object, EventProcessorInfo> _eventProcessorInfoByEventHandler;
-    private readonly Dictionary<ISequence, IConsumerInfo> _eventProcessorInfoBySequence;
+    private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence;
     private readonly List<IConsumerInfo> _consumerInfos = new();
 
     public ConsumerRepository()
     {
         _eventProcessorInfoByEventHandler = new Dictionary<object, EventProcessorInfo>(new IdentityComparer<object>());
-        _eventProcessorInfoBySequence = new Dictionary<ISequence, IConsumerInfo>(new IdentityComparer<ISequence>());
+        _eventProcessorInfoBySequence = new Dictionary<Sequence, IConsumerInfo>(new IdentityComparer<Sequence>());
     }
 
     public void Add(IEventProcessor eventProcessor, object eventHandler, DependentSequenceGroup dependentSequences)
@@ -63,9 +63,9 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         return false;
     }
 
-    public ISequence[] GetLastSequenceInChain(bool includeStopped)
+    public Sequence[] GetLastSequenceInChain(bool includeStopped)
     {
-        var lastSequence = new List<ISequence>();
+        var lastSequence = new List<Sequence>();
         foreach (var consumerInfo in _consumerInfos)
         {
             if ((includeStopped || consumerInfo.IsRunning) && consumerInfo.IsEndOfChain)
@@ -89,12 +89,12 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         return eventProcessorInfo!.EventProcessor;
     }
 
-    public ISequence GetSequenceFor(object eventHandler)
+    public Sequence GetSequenceFor(object eventHandler)
     {
         return GetEventProcessorFor(eventHandler).Sequence;
     }
 
-    public void UnMarkEventProcessorsAsEndOfChain(params ISequence[] barrierEventProcessors)
+    public void UnMarkEventProcessorsAsEndOfChain(params Sequence[] barrierEventProcessors)
     {
         foreach (var barrierEventProcessor in barrierEventProcessors)
         {

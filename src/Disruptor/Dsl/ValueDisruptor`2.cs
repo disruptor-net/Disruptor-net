@@ -43,7 +43,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public ValueEventHandlerGroup<T> HandleEventsWith(params IValueEventHandler<T>[] handlers)
     {
-        return CreateEventProcessors(Array.Empty<ISequence>(), handlers);
+        return CreateEventProcessors(Array.Empty<Sequence>(), handlers);
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
             _consumerRepository.Add(processor);
         }
 
-        var sequences = new ISequence[processors.Length];
+        var sequences = new Sequence[processors.Length];
         for (int i = 0; i < processors.Length; i++)
         {
             sequences[i] = processors[i].Sequence;
@@ -128,7 +128,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public ValueEventHandlerGroup<T> HandleEventsWith(params IValueEventProcessorFactory<T>[] eventProcessorFactories)
     {
-        return CreateEventProcessors(Array.Empty<ISequence>(), eventProcessorFactories);
+        return CreateEventProcessors(Array.Empty<Sequence>(), eventProcessorFactories);
     }
 
     /// <summary>
@@ -246,16 +246,16 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <value>true when start has been called on this instance; otherwise false</value>
     public bool HasStarted => _started == 1;
 
-    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(ISequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
+    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
     {
         return CreateEventProcessors(barrierSequences, eventHandlers);
     }
 
-    private ValueEventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
+    private ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
     {
         CheckNotStarted();
 
-        var processorSequences = new ISequence[eventHandlers.Length];
+        var processorSequences = new Sequence[eventHandlers.Length];
         var barrier = _ringBuffer.NewBarrier(barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
@@ -275,7 +275,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
         return new ValueEventHandlerGroup<T>(this, _consumerRepository, processorSequences);
     }
 
-    private void UpdateGatingSequencesForNextInChain(ISequence[] barrierSequences, ISequence[] processorSequences)
+    private void UpdateGatingSequencesForNextInChain(Sequence[] barrierSequences, Sequence[] processorSequences)
     {
         if (processorSequences.Length > 0)
         {
@@ -289,12 +289,12 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
         }
     }
 
-    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(ISequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
+    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(Sequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
     {
         return CreateEventProcessors(barrierSequences, processorFactories);
     }
 
-    private ValueEventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
+    private ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
     {
         var barrier = _ringBuffer.NewBarrier(barrierSequences);
         var eventProcessors = processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, barrier)).ToArray();

@@ -13,9 +13,9 @@ public class ValueEventHandlerGroup<T>
 {
     private readonly IValueDisruptor<T> _disruptor;
     private readonly ConsumerRepository _consumerRepository;
-    private readonly ISequence[] _sequences;
+    private readonly Sequence[] _sequences;
 
-    internal ValueEventHandlerGroup(IValueDisruptor<T> disruptor, ConsumerRepository consumerRepository, IEnumerable<ISequence> sequences)
+    internal ValueEventHandlerGroup(IValueDisruptor<T> disruptor, ConsumerRepository consumerRepository, IEnumerable<Sequence> sequences)
     {
         _disruptor = disruptor;
         _consumerRepository = consumerRepository;

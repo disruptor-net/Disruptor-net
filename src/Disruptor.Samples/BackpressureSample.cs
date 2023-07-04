@@ -81,7 +81,7 @@ public static class BackpressureSample
     /// </summary>
     private class EarlyReleaserSlowHandler : IEventHandler<Event>, IEventProcessorSequenceAware
     {
-        private ISequence _sequenceCallback;
+        private Sequence _sequenceCallback;
 
         public void OnEvent(Event data, long sequence, bool endOfBatch)
         {
@@ -94,7 +94,7 @@ public static class BackpressureSample
             _sequenceCallback.SetValue(sequence);
         }
 
-        public void SetSequenceCallback(ISequence sequenceCallback)
+        public void SetSequenceCallback(Sequence sequenceCallback)
         {
             _sequenceCallback = sequenceCallback;
         }

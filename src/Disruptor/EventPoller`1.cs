@@ -16,10 +16,10 @@ public class EventPoller<T>
 {
     private readonly IDataProvider<T> _dataProvider;
     private readonly ISequencer _sequencer;
-    private readonly ISequence _sequence;
+    private readonly Sequence _sequence;
     private readonly DependentSequenceGroup _dependentSequences;
 
-    public EventPoller(IDataProvider<T> dataProvider, ISequencer sequencer, ISequence sequence, DependentSequenceGroup dependentSequences)
+    public EventPoller(IDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, DependentSequenceGroup dependentSequences)
     {
         _dataProvider = dataProvider;
         _sequencer = sequencer;
@@ -126,5 +126,5 @@ public class EventPoller<T>
     /// <summary>
     /// Gets the sequence being used by this event poller
     /// </summary>
-    public ISequence Sequence => _sequence;
+    public Sequence Sequence => _sequence;
 }

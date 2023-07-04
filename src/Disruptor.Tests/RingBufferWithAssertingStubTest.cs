@@ -117,21 +117,21 @@ public class RingBufferWithAssertingStubTest
             return false;
         }
 
-        public void AddGatingSequences(params ISequence[] gatingSequences)
+        public void AddGatingSequences(params Sequence[] gatingSequences)
         {
         }
 
-        public bool RemoveGatingSequence(ISequence sequence)
+        public bool RemoveGatingSequence(Sequence sequence)
         {
             return false;
         }
 
-        public SequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
+        public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
         {
             throw new NotSupportedException();
         }
 
-        public AsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+        public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
         {
             throw new NotSupportedException();
         }
@@ -146,19 +146,19 @@ public class RingBufferWithAssertingStubTest
             return 0;
         }
 
-        public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
+        public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
             where T : class
         {
             throw new NotSupportedException();
         }
 
-        public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params ISequence[] gatingSequences)
+        public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params Sequence[] gatingSequences)
             where T : struct
         {
             throw new NotSupportedException();
         }
 
-        public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, ISequence[] gatingSequences)
+        public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, Sequence[] gatingSequences)
             where T : class
         {
             throw new NotSupportedException();

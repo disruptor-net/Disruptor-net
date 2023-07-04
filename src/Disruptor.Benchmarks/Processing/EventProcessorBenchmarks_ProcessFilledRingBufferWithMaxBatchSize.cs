@@ -77,9 +77,9 @@ public class EventProcessorBenchmarks_ProcessFilledRingBufferWithMaxBatchSize
                 _shutdown.Invoke();
         }
 
-        public ISequence SequenceCallback { get; private set; }
+        public Sequence SequenceCallback { get; private set; }
 
-        public void SetSequenceCallback(ISequence sequenceCallback)
+        public void SetSequenceCallback(Sequence sequenceCallback)
         {
             SequenceCallback = sequenceCallback;
         }

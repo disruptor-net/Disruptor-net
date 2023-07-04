@@ -60,12 +60,12 @@ public class SequenceReportingCallbackTests
 
     private class TestSequenceReportingEventHandler : IEventHandler<StubEvent>, IValueEventHandler<StubValueEvent>, IEventProcessorSequenceAware
     {
-        private ISequence? _sequenceCallback;
+        private Sequence? _sequenceCallback;
 
         public ManualResetEvent CallbackSignal { get; } = new(false);
         public ManualResetEvent OnEndOfBatchSignal { get; } = new(false);
 
-        public void SetSequenceCallback(ISequence sequenceTrackerCallback)
+        public void SetSequenceCallback(Sequence sequenceTrackerCallback)
         {
             _sequenceCallback = sequenceTrackerCallback;
         }

@@ -60,7 +60,7 @@ public static class DisruptorUtil
     /// <param name="minimum">an initial default minimum.  If the array is empty this value will returned.</param>
     /// <returns>the minimum sequence found or lon.MaxValue if the array is empty.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long GetMinimumSequence(ISequence[] sequences, long minimum = long.MaxValue)
+    public static long GetMinimumSequence(Sequence[] sequences, long minimum = long.MaxValue)
     {
         for (var i = 0; i < sequences.Length; i++)
         {
@@ -76,9 +76,9 @@ public static class DisruptorUtil
     /// </summary>
     /// <param name="processors">processors for which to get the sequences</param>
     /// <returns>the array of <see cref="Sequence"/>s</returns>
-    public static ISequence[] GetSequencesFor(params IEventProcessor[] processors)
+    public static Sequence[] GetSequencesFor(params IEventProcessor[] processors)
     {
-        var sequences = new ISequence[processors.Length];
+        var sequences = new Sequence[processors.Length];
         for (int i = 0; i < sequences.Length; i++)
         {
             sequences[i] = processors[i].Sequence;

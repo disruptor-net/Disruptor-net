@@ -53,7 +53,7 @@ public class BatchEventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEve
     /// <summary>
     /// <see cref="IEventProcessor.Sequence"/>
     /// </summary>
-    public ISequence Sequence => _sequence;
+    public Sequence Sequence => _sequence;
 
     /// <summary>
     /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.

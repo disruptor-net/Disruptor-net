@@ -13,9 +13,9 @@ public class EventHandlerGroup<T> where T : class
 {
     private readonly Disruptor<T> _disruptor;
     private readonly ConsumerRepository _consumerRepository;
-    private readonly ISequence[] _sequences;
+    private readonly Sequence[] _sequences;
 
-    internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository consumerRepository, IEnumerable<ISequence> sequences)
+    internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository consumerRepository, IEnumerable<Sequence> sequences)
     {
         _disruptor = disruptor;
         _consumerRepository = consumerRepository;

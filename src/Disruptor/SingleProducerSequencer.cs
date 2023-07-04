@@ -21,7 +21,7 @@ public sealed class SingleProducerSequencer : ISequencer
 
     [FieldOffset(DefaultPadding + 16)]
     // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
-    private ISequence[] _gatingSequences = Array.Empty<ISequence>();
+    private Sequence[] _gatingSequences = Array.Empty<Sequence>();
 
     [FieldOffset(DefaultPadding + 24)]
     private readonly int _bufferSize;
@@ -59,13 +59,13 @@ public sealed class SingleProducerSequencer : ISequencer
     }
 
     /// <inheritdoc cref="ISequencer.NewBarrier"/>
-    public SequenceBarrier NewBarrier(params ISequence[] sequencesToTrack)
+    public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
     {
         return new SequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
     /// <inheritdoc cref="ISequencer.NewAsyncBarrier"/>
-    public AsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
     {
         return new AsyncSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
@@ -249,13 +249,13 @@ public sealed class SingleProducerSequencer : ISequencer
     }
 
     /// <inheritdoc cref="ISequencer.AddGatingSequences"/>.
-    public void AddGatingSequences(params ISequence[] gatingSequences)
+    public void AddGatingSequences(params Sequence[] gatingSequences)
     {
         SequenceGroups.AddSequences(ref _gatingSequences, this, gatingSequences);
     }
 
     /// <inheritdoc cref="ISequencer.RemoveGatingSequence"/>.
-    public bool RemoveGatingSequence(ISequence sequence)
+    public bool RemoveGatingSequence(Sequence sequence)
     {
         return SequenceGroups.RemoveSequence(ref _gatingSequences, sequence);
     }
@@ -266,22 +266,22 @@ public sealed class SingleProducerSequencer : ISequencer
         return DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
     }
 
-    /// <inheritdoc cref="ISequencer.NewPoller{T}(IDataProvider{T}, ISequence[])"/>.
-    public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
+    /// <inheritdoc cref="ISequencer.NewPoller{T}(IDataProvider{T}, Sequence[])"/>.
+    public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
         where T : class
     {
         return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
     }
 
-    /// <inheritdoc cref="ISequencer.NewPoller{T}(IValueDataProvider{T}, ISequence[])"/>.
-    public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params ISequence[] gatingSequences)
+    /// <inheritdoc cref="ISequencer.NewPoller{T}(IValueDataProvider{T}, Sequence[])"/>.
+    public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params Sequence[] gatingSequences)
         where T : struct
     {
         return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
     }
 
-    /// <inheritdoc cref="ISequencer.NewAsyncEventStream{T}(IDataProvider{T}, ISequence[])"/>.
-    public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, ISequence[] gatingSequences)
+    /// <inheritdoc cref="ISequencer.NewAsyncEventStream{T}(IDataProvider{T}, Sequence[])"/>.
+    public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, Sequence[] gatingSequences)
         where T : class
     {
         if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)

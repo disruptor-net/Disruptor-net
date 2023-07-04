@@ -4,7 +4,7 @@ namespace Disruptor.Dsl;
 
 internal interface IConsumerInfo
 {
-    ISequence[] Sequences { get; }
+    Sequence[] Sequences { get; }
 
     DependentSequenceGroup? DependentSequences { get; }
 

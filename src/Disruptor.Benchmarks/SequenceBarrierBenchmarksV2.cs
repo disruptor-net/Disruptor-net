@@ -16,8 +16,8 @@ public class SequenceBarrierBenchmarksV2 : SequenceBarrierBenchmarks, IDisposabl
 
     public SequenceBarrierBenchmarksV2()
     {
-        _requesterSequenceBarrier = new CustomSequenceBarrier(_requesterSequencer, _requesterSequencer.GetWaitStrategy(), _requesterSequencer.GetCursorSequence(), Array.Empty<ISequence>());
-        _replierSequenceBarrier = new CustomSequenceBarrier(_replierSequencer, _replierSequencer.GetWaitStrategy(), _replierSequencer.GetCursorSequence(), Array.Empty<ISequence>());
+        _requesterSequenceBarrier = new CustomSequenceBarrier(_requesterSequencer, _requesterSequencer.GetWaitStrategy(), _requesterSequencer.GetCursorSequence(), Array.Empty<Sequence>());
+        _replierSequenceBarrier = new CustomSequenceBarrier(_replierSequencer, _replierSequencer.GetWaitStrategy(), _replierSequencer.GetCursorSequence(), Array.Empty<Sequence>());
 
         _replierTask = Task.Run(RunReplier);
         _replierStarted.Wait();
@@ -88,7 +88,7 @@ public class SequenceBarrierBenchmarksV2 : SequenceBarrierBenchmarks, IDisposabl
         private readonly DependentSequenceGroup _dependentSequences;
         private CancellationTokenSource _cancellationTokenSource;
 
-        public CustomSequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
+        public CustomSequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, Sequence[] dependentSequences)
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;

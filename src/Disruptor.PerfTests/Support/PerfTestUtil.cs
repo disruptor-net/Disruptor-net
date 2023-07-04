@@ -44,7 +44,7 @@ public class PerfTestUtil
         WaitForEventProcessorSequence(expectedCount, eventProcessor.Sequence);
     }
 
-    public static void WaitForEventProcessorSequence(long expectedCount, ISequence sequence)
+    public static void WaitForEventProcessorSequence(long expectedCount, Sequence sequence)
     {
         while (sequence.Value != expectedCount)
         {

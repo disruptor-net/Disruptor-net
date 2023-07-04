@@ -12,16 +12,23 @@ using static Disruptor.Tests.RingBufferEqualsConstraint;
 namespace Disruptor.Tests;
 
 [TestFixture]
-public class RingBufferTests
+public class RingBufferTests : IDisposable
 {
     private readonly RingBuffer<StubEvent> _ringBuffer;
     private readonly SequenceBarrier _sequenceBarrier;
+    private readonly CursorFollower _cursorFollower;
 
     public RingBufferTests()
     {
         _ringBuffer = RingBuffer<StubEvent>.CreateMultiProducer(() => new StubEvent(-1), 32);
         _sequenceBarrier = _ringBuffer.NewBarrier();
-        _ringBuffer.AddGatingSequences(new NoOpEventProcessor<StubEvent>(_ringBuffer).Sequence);
+        _cursorFollower = CursorFollower.StartNew(_ringBuffer);
+        _ringBuffer.AddGatingSequences(_cursorFollower.Sequence);
+    }
+
+    public void Dispose()
+    {
+        _cursorFollower.Dispose();
     }
 
     [Test]

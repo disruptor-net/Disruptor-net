@@ -87,7 +87,7 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWith(params IEventHandler<T>[] handlers)
     {
-        return CreateEventProcessors(Array.Empty<ISequence>(), handlers);
+        return CreateEventProcessors(Array.Empty<Sequence>(), handlers);
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWith(params IBatchEventHandler<T>[] handlers)
     {
-        return CreateEventProcessors(Array.Empty<ISequence>(), handlers);
+        return CreateEventProcessors(Array.Empty<Sequence>(), handlers);
     }
 
     /// <summary>
@@ -117,7 +117,7 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWith(params IAsyncBatchEventHandler<T>[] handlers)
     {
-        return CreateEventProcessors(Array.Empty<ISequence>(), handlers);
+        return CreateEventProcessors(Array.Empty<Sequence>(), handlers);
     }
 
     /// <summary>
@@ -139,7 +139,7 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWith(params IEventProcessorFactory<T>[] eventProcessorFactories)
     {
-        return CreateEventProcessors(Array.Empty<ISequence>(), eventProcessorFactories);
+        return CreateEventProcessors(Array.Empty<Sequence>(), eventProcessorFactories);
     }
 
     /// <summary>
@@ -159,7 +159,7 @@ public class Disruptor<T>
             _consumerRepository.Add(processor);
         }
 
-        var sequences = new ISequence[processors.Length];
+        var sequences = new Sequence[processors.Length];
         for (int i = 0; i < processors.Length; i++)
         {
             sequences[i] = processors[i].Sequence;
@@ -179,7 +179,7 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWithWorkerPool(params IWorkHandler<T>[] workHandlers)
     {
-        return CreateWorkerPool(Array.Empty<ISequence>(), workHandlers);
+        return CreateWorkerPool(Array.Empty<Sequence>(), workHandlers);
     }
 
     /// <summary>
@@ -412,11 +412,11 @@ public class Disruptor<T>
     /// <value>true when start has been called on this instance; otherwise false</value>
     public bool HasStarted => _started == 1;
 
-    internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IEventHandler<T>[] eventHandlers)
+    internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IEventHandler<T>[] eventHandlers)
     {
         CheckNotStarted();
 
-        var processorSequences = new ISequence[eventHandlers.Length];
+        var processorSequences = new Sequence[eventHandlers.Length];
         var barrier = _ringBuffer.NewBarrier(barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
@@ -436,11 +436,11 @@ public class Disruptor<T>
         return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
     }
 
-    internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IBatchEventHandler<T>[] eventHandlers)
+    internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IBatchEventHandler<T>[] eventHandlers)
     {
         CheckNotStarted();
 
-        var processorSequences = new ISequence[eventHandlers.Length];
+        var processorSequences = new Sequence[eventHandlers.Length];
         var barrier = _ringBuffer.NewBarrier(barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
@@ -460,11 +460,11 @@ public class Disruptor<T>
         return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
     }
 
-    internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IAsyncBatchEventHandler<T>[] eventHandlers)
+    internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IAsyncBatchEventHandler<T>[] eventHandlers)
     {
         CheckNotStarted();
 
-        var processorSequences = new ISequence[eventHandlers.Length];
+        var processorSequences = new Sequence[eventHandlers.Length];
 
         for (int i = 0; i < eventHandlers.Length; i++)
         {
@@ -484,7 +484,7 @@ public class Disruptor<T>
         return new EventHandlerGroup<T>(this, _consumerRepository, processorSequences);
     }
 
-    private void UpdateGatingSequencesForNextInChain(ISequence[] barrierSequences, ISequence[] processorSequences)
+    private void UpdateGatingSequencesForNextInChain(Sequence[] barrierSequences, Sequence[] processorSequences)
     {
         if (processorSequences.Length > 0)
         {
@@ -498,7 +498,7 @@ public class Disruptor<T>
         }
     }
 
-    internal EventHandlerGroup<T> CreateEventProcessors(ISequence[] barrierSequences, IEventProcessorFactory<T>[] processorFactories)
+    internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IEventProcessorFactory<T>[] processorFactories)
     {
         var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
         var eventProcessors = processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, sequenceBarrier)).ToArray();
@@ -506,7 +506,7 @@ public class Disruptor<T>
         return HandleEventsWith(eventProcessors);
     }
 
-    internal EventHandlerGroup<T> CreateWorkerPool(ISequence[] barrierSequences, IWorkHandler<T>[] workHandlers)
+    internal EventHandlerGroup<T> CreateWorkerPool(Sequence[] barrierSequences, IWorkHandler<T>[] workHandlers)
     {
         var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
         var workerPool = new WorkerPool<T>(_ringBuffer, sequenceBarrier, _exceptionHandler, workHandlers);

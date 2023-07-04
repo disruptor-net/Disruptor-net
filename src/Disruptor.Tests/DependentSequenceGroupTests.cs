@@ -36,25 +36,6 @@ public class DependentSequenceGroupTests
         var random = new Random();
         var sequences = Enumerable.Range(0, dependencyCount)
                                   .Select(_ => new Sequence(random.Next(1000)))
-                                  .Cast<ISequence>()
-                                  .ToArray();
-
-        var dependentSequences = new DependentSequenceGroup(cursor, sequences);
-
-        var value = dependentSequences.Value;
-
-        var expectedValue = sequences.Select(x => x.Value).Min();
-        Assert.AreEqual(expectedValue, value);
-    }
-
-    [Test, Repeat(10)]
-    public void ShouldGetMinimumValueFromCustomSequences([Range(1, 4)] int dependencyCount)
-    {
-        var cursor = new Sequence();
-        var random = new Random();
-        var sequences = Enumerable.Range(0, dependencyCount)
-                                  .Select(_ => new ConstantSequence(random.Next(1000)))
-                                  .Cast<ISequence>()
                                   .ToArray();
 
         var dependentSequences = new DependentSequenceGroup(cursor, sequences);
@@ -73,26 +54,10 @@ public class DependentSequenceGroupTests
         var cursor = new Sequence();
         var sequences = Enumerable.Range(0, dependencyCount)
                                   .Select(_ => new Sequence())
-                                  .Cast<ISequence>()
                                   .ToArray();
 
         var dependentSequences = new DependentSequenceGroup(cursor, sequences);
 
         Assert.AreEqual(expectedDependentSequenceCount, dependentSequences.DependentSequenceCount);
-    }
-
-    private class ConstantSequence : ISequence
-    {
-        public ConstantSequence(long value)
-        {
-            Value = value;
-        }
-
-        public long Value { get; }
-
-        public void SetValue(long value)
-        {
-            throw new NotSupportedException();
-        }
     }
 }

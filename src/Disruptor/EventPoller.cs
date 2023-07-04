@@ -40,7 +40,7 @@ public static class EventPoller
     public delegate bool ValueHandler<T>(ref T data, long sequence, bool endOfBatch)
         where T : struct;
 
-    public static EventPoller<T> Create<T>(IDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
+    public static EventPoller<T> Create<T>(IDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params Sequence[] gatingSequences)
         where T : class
     {
         var dependentSequences = new DependentSequenceGroup(cursorSequence, gatingSequences);
@@ -48,7 +48,7 @@ public static class EventPoller
         return new EventPoller<T>(dataProvider, sequencer, sequence, dependentSequences);
     }
 
-    public static ValueEventPoller<T> Create<T>(IValueDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params ISequence[] gatingSequences)
+    public static ValueEventPoller<T> Create<T>(IValueDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, Sequence cursorSequence, params Sequence[] gatingSequences)
         where T : struct
     {
         var dependentSequences = new DependentSequenceGroup(cursorSequence, gatingSequences);

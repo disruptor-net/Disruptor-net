@@ -34,11 +34,11 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
     private readonly IDataProvider<T> _dataProvider;
     private readonly IAsyncWaitStrategy _waitStrategy;
     private readonly ISequencer _sequencer;
-    private DependentSequenceGroup _dependentSequences;
+    private readonly DependentSequenceGroup _dependentSequences;
     private Sequence? _nextEnumeratorSequence;
     private bool _disposed;
 
-    public AsyncEventStream(IDataProvider<T> dataProvider, IAsyncWaitStrategy waitStrategy, ISequencer sequencer, Sequence cursorSequence, params ISequence[] gatingSequences)
+    public AsyncEventStream(IDataProvider<T> dataProvider, IAsyncWaitStrategy waitStrategy, ISequencer sequencer, Sequence cursorSequence, params Sequence[] gatingSequences)
     {
         _dataProvider = dataProvider;
         _sequencer = sequencer;

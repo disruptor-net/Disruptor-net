@@ -17,8 +17,8 @@ public class SequenceBarrierBenchmarksV5 : SequenceBarrierBenchmarks, IDisposabl
 
     public SequenceBarrierBenchmarksV5()
     {
-        _requesterSequenceBarrier = new CustomSequenceBarrier(_requesterSequencer, _requesterSequencer.GetWaitStrategy(), _requesterSequencer.GetCursorSequence(), Array.Empty<ISequence>());
-        _replierSequenceBarrier = new CustomSequenceBarrier(_replierSequencer, _replierSequencer.GetWaitStrategy(), _replierSequencer.GetCursorSequence(), Array.Empty<ISequence>());
+        _requesterSequenceBarrier = new CustomSequenceBarrier(_requesterSequencer, _requesterSequencer.GetWaitStrategy(), _requesterSequencer.GetCursorSequence(), Array.Empty<Sequence>());
+        _replierSequenceBarrier = new CustomSequenceBarrier(_replierSequencer, _replierSequencer.GetWaitStrategy(), _replierSequencer.GetCursorSequence(), Array.Empty<Sequence>());
 
         _replierTask = Task.Run(RunReplier);
         _replierStarted.Wait();
@@ -96,7 +96,7 @@ public class SequenceBarrierBenchmarksV5 : SequenceBarrierBenchmarks, IDisposabl
         [FieldOffset(24)]
         private CancellationTokenSource _cancellationTokenSource;
 
-        public CustomSequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, ISequence[] dependentSequences)
+        public CustomSequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, Sequence[] dependentSequences)
         {
             _multiProducerSequencer = null!;
             _sequencer = sequencer;

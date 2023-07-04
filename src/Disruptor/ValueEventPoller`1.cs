@@ -16,10 +16,10 @@ public class ValueEventPoller<T>
 {
     private readonly IValueDataProvider<T> _dataProvider;
     private readonly ISequencer _sequencer;
-    private readonly ISequence _sequence;
+    private readonly Sequence _sequence;
     private readonly DependentSequenceGroup _dependentSequences;
 
-    public ValueEventPoller(IValueDataProvider<T> dataProvider, ISequencer sequencer, ISequence sequence, DependentSequenceGroup dependentSequences)
+    public ValueEventPoller(IValueDataProvider<T> dataProvider, ISequencer sequencer, Sequence sequence, DependentSequenceGroup dependentSequences)
     {
         _dataProvider = dataProvider;
         _sequencer = sequencer;
@@ -81,5 +81,5 @@ public class ValueEventPoller<T>
     /// <summary>
     /// Gets the sequence being used by this event poller
     /// </summary>
-    public ISequence Sequence => _sequence;
+    public Sequence Sequence => _sequence;
 }

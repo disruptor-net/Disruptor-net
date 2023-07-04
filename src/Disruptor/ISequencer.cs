@@ -23,28 +23,28 @@ public interface ISequencer : ISequenced, ICursored
     /// safely and atomically added to the list of gating sequences.
     /// </summary>
     /// <param name="gatingSequences">The sequences to add.</param>
-    void AddGatingSequences(params ISequence[] gatingSequences);
+    void AddGatingSequences(params Sequence[] gatingSequences);
 
     /// <summary>
     /// Remove the specified sequence from this sequencer.
     /// </summary>
     /// <param name="sequence">to be removed.</param>
     /// <returns>true if this sequence was found, false otherwise.</returns>
-    bool RemoveGatingSequence(ISequence sequence);
+    bool RemoveGatingSequence(Sequence sequence);
 
     /// <summary>
     /// Create a <see cref="SequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
     /// </summary>
     /// <param name="sequencesToTrack">All of the sequences that the newly constructed barrier will wait on.</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    SequenceBarrier NewBarrier(params ISequence[] sequencesToTrack);
+    SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack);
 
     /// <summary>
     /// Create a <see cref="AsyncSequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
     /// </summary>
     /// <param name="sequencesToTrack">All of the sequences that the newly constructed barrier will wait on.</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    AsyncSequenceBarrier NewAsyncBarrier(params ISequence[] sequencesToTrack);
+    AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack);
 
     /// <summary>
     /// Get the minimum sequence value from all of the gating sequences
@@ -70,20 +70,20 @@ public interface ISequencer : ISequenced, ICursored
     /// Creates an event poller for this sequence that will use the supplied data provider and
     /// gating sequences.
     /// </summary>
-    EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params ISequence[] gatingSequences)
+    EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
         where T : class;
 
     /// <summary>
     /// Creates an event poller for this sequence that will use the supplied data provider and
     /// gating sequences.
     /// </summary>
-    ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params ISequence[] gatingSequences)
+    ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params Sequence[] gatingSequences)
         where T : struct;
 
     /// <summary>
     /// Creates an event stream for this sequence that will use the supplied data provider and
     /// gating sequences.
     /// </summary>
-    AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, ISequence[] gatingSequences)
+    AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, Sequence[] gatingSequences)
         where T : class;
 }
