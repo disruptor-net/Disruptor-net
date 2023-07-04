@@ -33,19 +33,6 @@ public class ConsumerRepositoryTests
     }
 
     [Test]
-    public void ShouldGetLastEventProcessorsInChain()
-    {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
-        _consumerRepository.Add(_eventProcessor2, _handler2, _dependentSequenceGroup2);
-
-        _consumerRepository.UnMarkEventProcessorsAsEndOfChain(_eventProcessor2.Sequence);
-
-        var lastEventProcessorsInChain = _consumerRepository.GetLastSequenceInChain(true);
-        Assert.That(lastEventProcessorsInChain.Length, Is.EqualTo(1));
-        Assert.That(lastEventProcessorsInChain[0], Is.SameAs(_eventProcessor1.Sequence));
-    }
-
-    [Test]
     public void ShouldRetrieveEventProcessorForHandler()
     {
         _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);

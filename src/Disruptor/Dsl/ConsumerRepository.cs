@@ -63,21 +63,6 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         return false;
     }
 
-    public Sequence[] GetLastSequenceInChain(bool includeStopped)
-    {
-        var lastSequence = new List<Sequence>();
-        foreach (var consumerInfo in _consumerInfos)
-        {
-            if ((includeStopped || consumerInfo.IsRunning) && consumerInfo.IsEndOfChain)
-            {
-                var sequences = consumerInfo.Sequences;
-                lastSequence.AddRange(sequences);
-            }
-        }
-
-        return lastSequence.ToArray();
-    }
-
     public IEventProcessor GetEventProcessorFor(object eventHandler)
     {
         var found = _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo);
