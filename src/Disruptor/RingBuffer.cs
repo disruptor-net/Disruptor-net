@@ -237,20 +237,6 @@ public abstract class RingBuffer : ICursored
     }
 
     /// <summary>
-    /// Resets the cursor to a specific value.  This can be applied at any time, but it is worth noting
-    /// that it can cause a data race and should only be used in controlled circumstances.  E.g. during
-    /// initialisation.
-    /// </summary>
-    /// <param name="sequence">the sequence to reset too.</param>
-    [Obsolete]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ResetTo(long sequence)
-    {
-        _sequencerDispatcher.Sequencer.Claim(sequence);
-        _sequencerDispatcher.Sequencer.Publish(sequence);
-    }
-
-    /// <summary>
     /// Add the specified gating sequences to this instance of the Disruptor.  They will
     /// safely and atomically added to the list of gating sequences.
     /// </summary>

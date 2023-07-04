@@ -8,6 +8,4 @@ public interface IValueRingBuffer<T> : ICursored, ISequenced, IValueDataProvider
     long GetMinimumGatingSequence();
 
     SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack);
-
-    void ResetTo(long sequence);
 }

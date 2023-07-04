@@ -7,8 +7,6 @@ using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
-#pragma warning disable 618,612
-
 namespace Disruptor.Tests;
 
 [TestFixture]
@@ -226,42 +224,6 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         Assert.That(ringBuffer.GetMinimumGatingSequence(), Is.EqualTo(3L));
         Assert.IsTrue(ringBuffer.RemoveGatingSequence(sequenceThree));
         Assert.That(ringBuffer.GetMinimumGatingSequence(), Is.EqualTo(7L));
-    }
-
-    [Test]
-    public void ShouldHandleResetToAndNotWrapUnnecessarilySingleProducer()
-    {
-        AssertHandleResetAndNotWrap(CreateRingBuffer(4, ProducerType.Single));
-    }
-
-    [Test]
-    public void ShouldHandleResetToAndNotWrapUnnecessarilyMultiProducer()
-    {
-        AssertHandleResetAndNotWrap(CreateRingBuffer(4, ProducerType.Multi));
-    }
-
-    private static void AssertHandleResetAndNotWrap(IValueRingBuffer<T> rb)
-    {
-        var sequence = new Sequence();
-        rb.AddGatingSequences(sequence);
-
-        for (var i = 0; i < 128; i++)
-        {
-            rb.Publish(rb.Next());
-            sequence.IncrementAndGet();
-        }
-
-        Assert.That(rb.Cursor, Is.EqualTo(127L));
-
-        rb.ResetTo(31);
-        sequence.SetValue(31);
-
-        for (var i = 0; i < 4; i++)
-        {
-            rb.Publish(rb.Next());
-        }
-
-        Assert.That(rb.HasAvailableCapacity(1), Is.EqualTo(false));
     }
 
     protected static void AssertEmptyRingBuffer(IValueRingBuffer<long> ringBuffer)
