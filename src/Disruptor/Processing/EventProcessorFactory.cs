@@ -5,7 +5,7 @@ using Disruptor.Util;
 namespace Disruptor.Processing;
 
 /// <summary>
-/// Factory that creates optimized instance of <see cref="IEventProcessor"/>.
+/// Factory that creates optimized instances of <see cref="IEventProcessor"/>.
 /// </summary>
 public static class EventProcessorFactory
 {

@@ -15,8 +15,8 @@ public interface IAsyncEventProcessor<T> : IEventProcessor
     Task RunAsync();
 
     /// <summary>
-    /// Set a new <see cref="IExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IEventHandler{T}"/>
+    /// Set a new <see cref="IExceptionHandler{T}"/> for handling exceptions propagated out of the event handler.
     /// </summary>
-    /// <param name="exceptionHandler">exceptionHandler to replace the existing exceptionHandler.</param>
+    /// <param name="exceptionHandler">the new exception handle to use</param>
     void SetExceptionHandler(IExceptionHandler<T> exceptionHandler);
 }

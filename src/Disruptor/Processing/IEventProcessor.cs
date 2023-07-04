@@ -31,7 +31,7 @@ public interface IEventProcessor
     Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions);
 
     /// <summary>
-    /// Waits before the event processor enters the <see cref="IEventProcessor.IsRunning"/> state.
+    /// Waits before the event processor enters the running state.
     /// </summary>
     /// <param name="timeout">Maximum wait duration</param>
     void WaitUntilStarted(TimeSpan timeout);

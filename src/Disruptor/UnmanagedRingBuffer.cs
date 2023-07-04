@@ -8,9 +8,8 @@ namespace Disruptor;
 
 /// <summary>
 /// Base type for unmanaged-memory-backed ring buffers.
-///
-/// <see cref="UnmanagedRingBuffer{T}"/>.
 /// </summary>
+/// <seealso cref="UnmanagedRingBuffer{T}"/>.
 [StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 40)]
 public abstract class UnmanagedRingBuffer : ICursored
 {

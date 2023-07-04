@@ -54,55 +54,41 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEventHan
             sequenceAware.SetSequenceCallback(_sequence);
     }
 
-    /// <summary>
-    /// <see cref="IEventProcessor.Sequence"/>
-    /// </summary>
+    /// <inheritdoc/>
     public Sequence Sequence => _sequence;
 
-    /// <summary>
-    /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
-    /// It will call <see cref="SequenceBarrier.CancelProcessing"/> to notify the thread to check status.
-    /// </summary>
+    /// <inheritdoc/>
     public void Halt()
     {
         _runState = ProcessorRunStates.Halted;
         _sequenceBarrier.CancelProcessing();
     }
 
-    /// <summary>
-    /// <see cref="IEventProcessor.IsRunning"/>
-    /// </summary>
+    /// <inheritdoc/>
     public bool IsRunning => _runState != ProcessorRunStates.Idle;
 
-    /// <summary>
-    /// Set a new <see cref="IExceptionHandler{T}"/> for handling exceptions propagated out of the <see cref="IEventHandler{T}"/>
-    /// </summary>
-    /// <param name="exceptionHandler">exceptionHandler to replace the existing exceptionHandler.</param>
+    /// <inheritdoc/>
     public void SetExceptionHandler(IExceptionHandler<T> exceptionHandler)
     {
         _exceptionHandler = exceptionHandler ?? throw new ArgumentNullException(nameof(exceptionHandler));
     }
 
-    /// <summary>
-    /// Waits before the event processor enters the <see cref="IsRunning"/> state.
-    /// </summary>
-    /// <param name="timeout">maximum wait duration</param>
+    /// <inheritdoc/>
     public void WaitUntilStarted(TimeSpan timeout)
     {
         _started.Wait(timeout);
     }
 
-    /// <summary>
-    /// <inheritdoc cref="IEventProcessor.Start"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
     {
         return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
     }
 
-    /// <summary>
+    /// <inheritdoc/>
+    /// <remarks>
     /// It is ok to have another thread rerun this method after a halt().
-    /// </summary>
+    /// </remarks>
     /// <exception cref="InvalidOperationException">if this object instance is already running in a thread</exception>
     public void Run()
     {

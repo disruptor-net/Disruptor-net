@@ -31,8 +31,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
     /// <param name="sequenceBarrier">sequenceBarrier on which it is waiting.</param>
     /// <param name="workHandler">workHandler is the delegate to which events are dispatched.</param>
     /// <param name="exceptionHandler">exceptionHandler to be called back when an error occurs</param>
-    /// <param name="workSequence">workSequence from which to claim the next event to be worked on.  It should always be initialised
-    /// as <see cref="Disruptor.Sequence.InitialCursorValue"/></param>
+    /// <param name="workSequence">workSequence from which to claim the next event to be worked on</param>
     public WorkProcessor(RingBuffer<T> ringBuffer, SequenceBarrier sequenceBarrier, IWorkHandler<T> workHandler, IExceptionHandler<T> exceptionHandler, Sequence workSequence)
     {
         _ringBuffer = ringBuffer;
@@ -46,14 +45,10 @@ public sealed class WorkProcessor<T> : IEventProcessor
             eventReleaseAware.SetEventReleaser(new EventReleaser(this));
     }
 
-    /// <summary>
-    /// <see cref="IEventProcessor.Sequence"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public Sequence Sequence => _sequence;
 
-    /// <summary>
-    /// <see cref="IEventProcessor.Halt"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public void Halt()
     {
         _runState = ProcessorRunStates.Halted;
@@ -68,23 +63,16 @@ public sealed class WorkProcessor<T> : IEventProcessor
         _runState = ProcessorRunStates.Halted;
     }
 
-    /// <summary>
-    /// <see cref="IEventProcessor.IsRunning"/>
-    /// </summary>
+    /// <inheritdoc/>
     public bool IsRunning => _runState == ProcessorRunStates.Running;
 
-    /// <summary>
-    /// Waits before the event processor enters the <see cref="IsRunning"/> state.
-    /// </summary>
-    /// <param name="timeout">maximum wait duration</param>
+    /// <inheritdoc/>
     public void WaitUntilStarted(TimeSpan timeout)
     {
         _started.Wait(timeout);
     }
 
-    /// <summary>
-    /// <inheritdoc cref="IEventProcessor.Start"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
     {
         return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);

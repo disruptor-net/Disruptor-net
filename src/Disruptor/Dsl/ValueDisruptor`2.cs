@@ -8,11 +8,11 @@ namespace Disruptor.Dsl;
 
 /// <summary>
 /// Base class for disruptors of value type events.
-///
-/// <see cref="ValueDisruptor{T}"/> and <see cref="UnmanagedDisruptor{T}"/>.
 /// </summary>
 /// <typeparam name="T">the type of event used.</typeparam>
 /// <typeparam name="TRingBuffer">the type of the underlying ring buffer.</typeparam>
+/// <seealso cref="ValueDisruptor{T}"/>
+/// <seealso cref="UnmanagedDisruptor{T}"/>.
 public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     where T : struct
     where TRingBuffer : IValueRingBuffer<T>
@@ -134,10 +134,10 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <summary>
     /// Create a group of event processors to be used as a dependency.
     /// </summary>
-    /// <see cref="After(IValueEventHandler{T}[])"/>
     /// <param name="processors">processors the event processors, previously set up with <see cref="HandleEventsWith(IValueEventHandler{T}[])"/>,
     /// that will form the barrier for subsequent handlers or processors.</param>
     /// <returns>an <see cref="ValueEventHandlerGroup{T}"/> that can be used to setup a <see cref="SequenceBarrier"/> over the specified event processors.</returns>
+    /// <seealso cref="After(IValueEventHandler{T}[])"/>
     public ValueEventHandlerGroup<T> After(params IEventProcessor[] processors)
     {
         return new ValueEventHandlerGroup<T>(this, _consumerRepository, DisruptorUtil.GetSequencesFor(processors));

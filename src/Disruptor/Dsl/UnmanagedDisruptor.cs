@@ -103,13 +103,9 @@ public class UnmanagedDisruptor<T> : ValueDisruptor<T, UnmanagedRingBuffer<T>>
     /// <returns>event for the sequence</returns>
     public ref T this[long sequence] => ref _ringBuffer[sequence];
 
-    /// <summary>
-    /// <see cref="UnmanagedRingBuffer{T}.PublishEvent"/>
-    /// </summary>
+    /// <inheritdoc cref="UnmanagedRingBuffer{T}.PublishEvent"/>.
     public UnmanagedRingBuffer<T>.UnpublishedEventScope PublishEvent() => _ringBuffer.PublishEvent();
 
-    /// <summary>
-    /// <see cref="UnmanagedRingBuffer{T}.PublishEvents"/>
-    /// </summary>
+    /// <inheritdoc cref="UnmanagedRingBuffer{T}.PublishEvents"/>.
     public UnmanagedRingBuffer<T>.UnpublishedEventBatchScope PublishEvents(int count) => _ringBuffer.PublishEvents(count);
 }

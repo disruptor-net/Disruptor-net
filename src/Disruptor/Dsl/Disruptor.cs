@@ -268,7 +268,7 @@ public class Disruptor<T>
     /// <summary>
     /// Create a group of event processors to be used as a dependency.
     /// </summary>
-    /// <see cref="After(Disruptor.IEventHandler{T}[])"/>
+    /// <seealso cref="After(Disruptor.IEventHandler{T}[])"/>
     /// <param name="processors">processors the event processors, previously set up with <see cref="HandleEventsWith(Disruptor.IEventHandler{T}[])"/>,
     /// that will form the barrier for subsequent handlers or processors.</param>
     /// <returns>an <see cref="EventHandlerGroup{T}"/> that can be used to setup a <see cref="SequenceBarrier"/> over the specified event processors.</returns>
@@ -277,14 +277,10 @@ public class Disruptor<T>
         return new EventHandlerGroup<T>(this, _consumerRepository, DisruptorUtil.GetSequencesFor(processors));
     }
 
-    /// <summary>
-    /// <see cref="RingBuffer{T}.PublishEvent()"/>
-    /// </summary>
+    /// <inheritdoc cref="RingBuffer{T}.PublishEvent()"/>.
     public RingBuffer<T>.UnpublishedEventScope PublishEvent() => _ringBuffer.PublishEvent();
 
-    /// <summary>
-    /// <see cref="RingBuffer{T}.PublishEvents(int)"/>
-    /// </summary>
+    /// <inheritdoc cref="RingBuffer{T}.PublishEvents(int)"/>.
     public RingBuffer<T>.UnpublishedEventBatchScope PublishEvents(int count) => _ringBuffer.PublishEvents(count);
 
     /// <summary>

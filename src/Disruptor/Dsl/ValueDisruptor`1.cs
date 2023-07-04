@@ -91,13 +91,9 @@ public class ValueDisruptor<T> : ValueDisruptor<T, ValueRingBuffer<T>>
     /// <returns>event for the sequence</returns>
     public ref T this[long sequence] => ref _ringBuffer[sequence];
 
-    /// <summary>
-    /// <see cref="ValueRingBuffer{T}.PublishEvent"/>
-    /// </summary>
+    /// <inheritdoc cref="ValueRingBuffer{T}.PublishEvent"/>
     public ValueRingBuffer<T>.UnpublishedEventScope PublishEvent() => _ringBuffer.PublishEvent();
 
-    /// <summary>
-    /// <see cref="ValueRingBuffer{T}.PublishEvents"/>
-    /// </summary>
+    /// <inheritdoc cref="ValueRingBuffer{T}.PublishEvents"/>
     public ValueRingBuffer<T>.UnpublishedEventBatchScope PublishEvents(int count) => _ringBuffer.PublishEvents(count);
 }

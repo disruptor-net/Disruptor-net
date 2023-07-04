@@ -86,31 +86,25 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
         _availableBuffer.AsSpan().Fill(-1);
     }
 
-    /// <inheritdoc cref="ISequencer.NewBarrier"/>
+    /// <inheritdoc/>
     public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
     {
         return new SequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
-    /// <inheritdoc cref="ISequencer.NewAsyncBarrier"/>
+    /// <inheritdoc/>
     public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
     {
         return new AsyncSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
-    /// <summary>
-    /// <see cref="ISequenced.BufferSize"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public int BufferSize => _bufferSize;
 
-    /// <summary>
-    /// <see cref="ICursored.Cursor"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public long Cursor => _cursor.Value;
 
-    /// <summary>
-    /// <see cref="ISequenced.HasAvailableCapacity"/>.
-    /// </summary>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool HasAvailableCapacity(int requiredCapacity)
     {
@@ -136,27 +130,21 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
         return true;
     }
 
-    /// <summary>
-    /// <see cref="ISequencer.Claim"/>.
-    /// </summary>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Claim(long sequence)
     {
         _cursor.SetValue(sequence);
     }
 
-    /// <summary>
-    /// <see cref="ISequenced.Next()"/>.
-    /// </summary>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Next()
     {
         return NextInternal(1);
     }
 
-    /// <summary>
-    /// <see cref="ISequenced.Next(int)"/>.
-    /// </summary>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Next(int n)
     {
@@ -197,18 +185,14 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
         _gatingSequenceCache.SetValue(minSequence);
     }
 
-    /// <summary>
-    /// <see cref="ISequenced.TryNext(out long)"/>.
-    /// </summary>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryNext(out long sequence)
     {
         return TryNextInternal(1, out sequence);
     }
 
-    /// <summary>
-    /// <see cref="ISequenced.TryNext(int, out long)"/>.
-    /// </summary>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryNext(int n, out long sequence)
     {
@@ -242,9 +226,7 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
         return true;
     }
 
-    /// <summary>
-    /// <see cref="ISequenced.GetRemainingCapacity"/>.
-    /// </summary>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetRemainingCapacity()
     {
@@ -253,9 +235,7 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
         return BufferSize - (produced - consumed);
     }
 
-    /// <summary>
-    /// <see cref="ISequenced.Publish(long)"/>.
-    /// </summary>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long sequence)
     {
@@ -267,9 +247,7 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
         }
     }
 
-    /// <summary>
-    /// <see cref="ISequenced.Publish(long, long)"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public void Publish(long lo, long hi)
     {
         for (var l = lo; l <= hi; l++)
@@ -293,9 +271,7 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
 #endif
     }
 
-    /// <summary>
-    /// <see cref="ISequencer.IsAvailable"/>.
-    /// </summary>
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsAvailable(long sequence)
     {
@@ -309,9 +285,7 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
 #endif
     }
 
-    /// <summary>
-    /// <see cref="ISequencer.GetHighestPublishedSequence"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public long GetHighestPublishedSequence(long lowerBound, long availableSequence)
     {
         for (var sequence = lowerBound; sequence <= availableSequence; sequence++)
@@ -337,51 +311,39 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
         return (int)sequence & _indexMask;
     }
 
-    /// <summary>
-    /// <see cref="ISequencer.AddGatingSequences"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public void AddGatingSequences(params Sequence[] gatingSequences)
     {
         SequenceGroups.AddSequences(ref _gatingSequences, this, gatingSequences);
     }
 
-    /// <summary>
-    /// <see cref="ISequencer.RemoveGatingSequence"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public bool RemoveGatingSequence(Sequence sequence)
     {
         return SequenceGroups.RemoveSequence(ref _gatingSequences, sequence);
     }
 
-    /// <summary>
-    /// <see cref="ISequencer.GetMinimumSequence"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public long GetMinimumSequence()
     {
         return DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
     }
 
-    /// <summary>
-    /// <see cref="ISequencer.NewPoller{T}(IDataProvider{T}, Sequence[])"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
         where T : class
     {
         return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
     }
 
-    /// <summary>
-    /// <see cref="ISequencer.NewPoller{T}(IValueDataProvider{T}, Sequence[])"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params Sequence[] gatingSequences)
         where T : struct
     {
         return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
     }
 
-    /// <summary>
-    /// <see cref="ISequencer.NewAsyncEventStream{T}(IDataProvider{T}, Sequence[])"/>.
-    /// </summary>
+    /// <inheritdoc/>
     public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, Sequence[] gatingSequences)
         where T : class
     {

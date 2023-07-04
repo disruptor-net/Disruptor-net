@@ -30,11 +30,7 @@ public sealed class WorkerPool<T> where T : class
     /// <param name="sequenceBarrier">sequenceBarrier on which the workers will depend.</param>
     /// <param name="exceptionHandler">exceptionHandler to callback when an error occurs which is not handled by the <see cref="IWorkHandler{T}"/>s.</param>
     /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
-    public WorkerPool(
-        RingBuffer<T> ringBuffer,
-        SequenceBarrier sequenceBarrier,
-        IExceptionHandler<T> exceptionHandler,
-        params IWorkHandler<T>[] workHandlers)
+    public WorkerPool(RingBuffer<T> ringBuffer, SequenceBarrier sequenceBarrier, IExceptionHandler<T> exceptionHandler, params IWorkHandler<T>[] workHandlers)
     {
         _ringBuffer = ringBuffer;
         _workProcessors = new WorkProcessor<T>[workHandlers.Length];
@@ -58,10 +54,7 @@ public sealed class WorkerPool<T> where T : class
     /// <param name="eventFactory">eventFactory for filling the <see cref="RingBuffer{T}"/></param>
     /// <param name="exceptionHandler">exceptionHandler to callback when an error occurs which is not handled by the <see cref="IWorkHandler{T}"/>s.</param>
     /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
-    public WorkerPool(
-        Func<T> eventFactory,
-        IExceptionHandler<T> exceptionHandler,
-        params IWorkHandler<T>[] workHandlers)
+    public WorkerPool(Func<T> eventFactory, IExceptionHandler<T> exceptionHandler, params IWorkHandler<T>[] workHandlers)
 
     {
         _ringBuffer = RingBuffer<T>.CreateMultiProducer(eventFactory, 1024, new BlockingWaitStrategy());

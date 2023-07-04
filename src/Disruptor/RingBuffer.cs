@@ -9,9 +9,9 @@ namespace Disruptor;
 
 /// <summary>
 /// Base type for array-backed ring buffers.
-///
-/// <see cref="RingBuffer{T}"/> and <see cref="ValueRingBuffer{T}"/>.
 /// </summary>
+/// <seealso cref="RingBuffer{T}"/>
+/// <seealso cref="ValueRingBuffer{T}"/>.
 [StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 40)]
 public abstract class RingBuffer : ICursored
 {
