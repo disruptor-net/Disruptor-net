@@ -159,6 +159,53 @@ public class ValueDisruptorTests : IDisposable
         Assert.That(_disruptor.GetSequenceValueFor(b3), Is.EqualTo(5L));
     }
 
+
+    [Test]
+    public void ShouldGetGetDependentSequencesForHandler()
+    {
+        var rb = _disruptor.RingBuffer;
+        var handler = new TestValueEventHandler<TestValueEvent>();
+
+        _disruptor.HandleEventsWith(handler);
+        _disruptor.Start();
+
+        rb.Publish(rb.Next());
+        rb.Publish(rb.Next());
+        rb.Publish(rb.Next());
+        rb.Publish(rb.Next());
+        rb.Publish(rb.Next());
+        rb.Publish(rb.Next());
+
+        var sequenceGroup = _disruptor.GetDependentSequencesFor(handler);
+        Assert.That(sequenceGroup, Is.Not.Null);
+        Assert.That(sequenceGroup!.CursorValue, Is.EqualTo(5L));
+        Assert.That(sequenceGroup!.DependsOnCursor, Is.True);
+        Assert.That(sequenceGroup!.DependentSequenceCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ShouldGetDependentSequencesForHandlerIfAddedAfterPublish()
+    {
+        var rb = _disruptor.RingBuffer;
+        var handler = new TestValueEventHandler<TestValueEvent>();
+
+        rb.Publish(rb.Next());
+        rb.Publish(rb.Next());
+        rb.Publish(rb.Next());
+        rb.Publish(rb.Next());
+        rb.Publish(rb.Next());
+        rb.Publish(rb.Next());
+
+        _disruptor.HandleEventsWith(handler);
+        _disruptor.Start();
+
+        var sequenceGroup = _disruptor.GetDependentSequencesFor(handler);
+        Assert.That(sequenceGroup, Is.Not.Null);
+        Assert.That(sequenceGroup!.CursorValue, Is.EqualTo(5L));
+        Assert.That(sequenceGroup!.DependsOnCursor, Is.True);
+        Assert.That(sequenceGroup!.DependentSequenceCount, Is.EqualTo(1));
+    }
+
     [Test]
     public void ShouldCreateEventProcessorGroupForFirstEventProcessors()
     {
