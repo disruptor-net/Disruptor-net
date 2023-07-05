@@ -43,7 +43,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public ValueEventHandlerGroup<T> HandleEventsWith(params IValueEventHandler<T>[] handlers)
     {
-        return CreateEventProcessors(Array.Empty<Sequence>(), handlers);
+        return CreateEventProcessors(0, Array.Empty<Sequence>(), handlers);
     }
 
     /// <summary>
@@ -63,15 +63,12 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
             _consumerRepository.Add(processor);
         }
 
-        var sequences = new Sequence[processors.Length];
-        for (int i = 0; i < processors.Length; i++)
-        {
-            sequences[i] = processors[i].Sequence;
-        }
+        var eventHandlerGroupPosition = 1 + DisruptorUtil.GetMaximumEventHandlerGroupPositionFor(processors);
+        var sequences = DisruptorUtil.GetSequencesFor(processors);
 
         _ringBuffer.AddGatingSequences(sequences);
 
-        return new ValueEventHandlerGroup<T>(this, _consumerRepository, DisruptorUtil.GetSequencesFor(processors));
+        return new ValueEventHandlerGroup<T>(this, _consumerRepository, eventHandlerGroupPosition, sequences);
     }
 
     /// <summary>
@@ -106,7 +103,10 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <returns>an <see cref="ValueEventHandlerGroup{T}"/> that can be used to setup a dependency barrier over the specified event handlers.</returns>
     public ValueEventHandlerGroup<T> After(params IValueEventHandler<T>[] handlers)
     {
-        return new ValueEventHandlerGroup<T>(this, _consumerRepository, handlers.Select(h => _consumerRepository.GetSequenceFor(h)));
+        var eventHandlerGroupPosition = 1 + handlers.Select(x => _consumerRepository.GetEventHandlerGroupPosition(x)).Max();
+        var sequences = handlers.Select(x => _consumerRepository.GetSequence(x));
+
+        return new ValueEventHandlerGroup<T>(this, _consumerRepository, eventHandlerGroupPosition, sequences);
     }
 
     /// <summary>
@@ -128,7 +128,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public ValueEventHandlerGroup<T> HandleEventsWith(params IValueEventProcessorFactory<T>[] eventProcessorFactories)
     {
-        return CreateEventProcessors(Array.Empty<Sequence>(), eventProcessorFactories);
+        return CreateEventProcessors(0, Array.Empty<Sequence>(), eventProcessorFactories);
     }
 
     /// <summary>
@@ -140,7 +140,10 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <seealso cref="After(IValueEventHandler{T}[])"/>
     public ValueEventHandlerGroup<T> After(params IEventProcessor[] processors)
     {
-        return new ValueEventHandlerGroup<T>(this, _consumerRepository, DisruptorUtil.GetSequencesFor(processors));
+        var eventHandlerGroupPosition = 1 + DisruptorUtil.GetMaximumEventHandlerGroupPositionFor(processors);
+        var sequences = DisruptorUtil.GetSequencesFor(processors);
+
+        return new ValueEventHandlerGroup<T>(this, _consumerRepository, eventHandlerGroupPosition, sequences);
     }
 
     /// <summary>
@@ -221,14 +224,14 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// </summary>
     /// <param name="handler">the handler to get the barrier for</param>
     /// <returns>the SequenceBarrier used by the given handler</returns>
-    public DependentSequenceGroup? GetDependentSequencesFor(IValueEventHandler<T> handler) => _consumerRepository.GetDependentSequencesFor(handler);
+    public DependentSequenceGroup? GetDependentSequencesFor(IValueEventHandler<T> handler) => _consumerRepository.GetDependentSequencesOrNull(handler);
 
     /// <summary>
     /// Gets the sequence value for the specified event handlers.
     /// </summary>
     /// <param name="handler">eventHandler to get the sequence for</param>
     /// <returns>eventHandler's sequence</returns>
-    public long GetSequenceValueFor(IValueEventHandler<T> handler) => _consumerRepository.GetSequenceFor(handler).Value;
+    public long GetSequenceValueFor(IValueEventHandler<T> handler) => _consumerRepository.GetSequence(handler).Value;
 
     /// <summary>
     /// Confirms if all messages have been consumed by all event processors.
@@ -246,17 +249,17 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <value>true when start has been called on this instance; otherwise false</value>
     public bool HasStarted => _started == 1;
 
-    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
+    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(int eventHandlerGroupPosition, Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
     {
-        return CreateEventProcessors(barrierSequences, eventHandlers);
+        return CreateEventProcessors(eventHandlerGroupPosition, barrierSequences, eventHandlers);
     }
 
-    private ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
+    private ValueEventHandlerGroup<T> CreateEventProcessors(int eventHandlerGroupPosition, Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
     {
         CheckNotStarted();
 
         var processorSequences = new Sequence[eventHandlers.Length];
-        var barrier = _ringBuffer.NewBarrier(barrierSequences);
+        var barrier = _ringBuffer.NewBarrier(eventHandlerGroupPosition, barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
         {
@@ -266,13 +269,14 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
 
             eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-            _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
+            _consumerRepository.Add(eventProcessor, eventHandler);
             processorSequences[i] = eventProcessor.Sequence;
         }
 
         UpdateGatingSequencesForNextInChain(barrierSequences, processorSequences);
 
-        return new ValueEventHandlerGroup<T>(this, _consumerRepository, processorSequences);
+        var nextEventHandlerGroupPosition = 1 + eventHandlerGroupPosition;
+        return new ValueEventHandlerGroup<T>(this, _consumerRepository, nextEventHandlerGroupPosition, processorSequences);
     }
 
     private void UpdateGatingSequencesForNextInChain(Sequence[] barrierSequences, Sequence[] processorSequences)
@@ -289,14 +293,14 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
         }
     }
 
-    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(Sequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
+    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(int eventHandlerGroupPosition, Sequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
     {
-        return CreateEventProcessors(barrierSequences, processorFactories);
+        return CreateEventProcessors(eventHandlerGroupPosition, barrierSequences, processorFactories);
     }
 
-    private ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
+    private ValueEventHandlerGroup<T> CreateEventProcessors(int eventHandlerGroupPosition, Sequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
     {
-        var barrier = _ringBuffer.NewBarrier(barrierSequences);
+        var barrier = _ringBuffer.NewBarrier(eventHandlerGroupPosition, barrierSequences);
         var eventProcessors = processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, barrier)).ToArray();
 
         return HandleEventsWith(eventProcessors);

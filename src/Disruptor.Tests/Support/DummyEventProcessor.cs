@@ -10,18 +10,13 @@ public class DummyEventProcessor : IEventProcessor
     private readonly ManualResetEventSlim _runEvent = new();
     private int _running;
 
-
-    public DummyEventProcessor()
-        : this(new Sequence())
+    public DummyEventProcessor(DependentSequenceGroup dependentSequences)
     {
+        DependentSequences = dependentSequences;
     }
 
-    public DummyEventProcessor(Sequence sequence)
-    {
-        Sequence = sequence;
-    }
-
-    public Sequence Sequence { get; }
+    public Sequence Sequence { get; } = new();
+    public DependentSequenceGroup DependentSequences { get; }
 
     public void Halt()
     {

@@ -15,9 +15,14 @@ namespace Disruptor.Processing;
 public interface IEventProcessor
 {
     /// <summary>
-    /// Return a reference to the <see cref="Sequence"/> being used by this <see cref="IEventProcessor"/>
+    /// Gets the <see cref="Sequence"/> of the event processor.
     /// </summary>
     Sequence Sequence { get; }
+
+    /// <summary>
+    /// Gets the <see cref="DependentSequenceGroup"/> that contains the dependencies of the event processor.
+    /// </summary>
+    DependentSequenceGroup DependentSequences { get; }
 
     /// <summary>
     /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.

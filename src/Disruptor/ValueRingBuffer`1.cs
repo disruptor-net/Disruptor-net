@@ -183,13 +183,20 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     }
 
     /// <summary>
+    /// Creates an event poller for this ring buffer.
+    /// </summary>
+    /// <returns>A poller that will gate on this ring buffer</returns>
+    public ValueEventPoller<T> NewPoller() => NewPoller(0);
+
+    /// <summary>
     /// Creates an event poller for this ring buffer gated on the supplied sequences.
     /// </summary>
+    /// <param name="eventHandlerGroupPosition">Position of the event handler group within the event handler chain</param>
     /// <param name="gatingSequences">gatingSequences to be gated on.</param>
     /// <returns>A poller that will gate on this ring buffer and the supplied sequences.</returns>
-    public ValueEventPoller<T> NewPoller(params Sequence[] gatingSequences)
+    public ValueEventPoller<T> NewPoller(int eventHandlerGroupPosition, params Sequence[] gatingSequences)
     {
-        return _sequencerDispatcher.Sequencer.NewPoller(this, gatingSequences);
+        return _sequencerDispatcher.Sequencer.NewPoller(this, eventHandlerGroupPosition, gatingSequences);
     }
 
     /// <summary>

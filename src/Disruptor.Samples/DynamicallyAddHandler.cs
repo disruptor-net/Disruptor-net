@@ -17,7 +17,7 @@ public class DynamicallyAddHandler
         var processor1 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), handler1);
 
         var handler2 = new DynamicHandler();
-        var processor2 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(processor1.Sequence), handler2);
+        var processor2 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(1, processor1.Sequence), handler2);
 
         // Dynamically add both sequences to the ring buffer
         ringBuffer.AddGatingSequences(processor1.Sequence, processor2.Sequence);
@@ -35,7 +35,7 @@ public class DynamicallyAddHandler
 
         // Wait for shutdown the complete
         handler2.WaitShutdown(); // Or simply t2.Wait()
-        
+
         // Remove the gating sequence from the ring buffer
         ringBuffer.RemoveGatingSequence(processor2.Sequence);
     }

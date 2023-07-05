@@ -22,7 +22,7 @@ public class EventProcessorBenchmarks_Wait
         var sequencer = new SingleProducerSequencer(64, waitStrategy);
         var cursorSequence = new Sequence();
         var dependentSequences = new Sequence[0];
-        var sequenceBarrier = new SequenceBarrier(sequencer, waitStrategy, cursorSequence, dependentSequences);
+        var sequenceBarrier = new SequenceBarrier(sequencer, waitStrategy, cursorSequence, 0, dependentSequences);
         var sequenceBarrierClass = new SequenceBarrierClass(sequencer, waitStrategy, cursorSequence, dependentSequences);
         var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrierClass);
         var eventProcessorType = typeof(PartialEventProcessor<,>).MakeGenericType(typeof(ISequenceBarrierOptions.IsDependentSequencePublished), sequenceBarrierProxy.GetType());
@@ -140,7 +140,7 @@ public class EventProcessorBenchmarks_Wait
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
-            _dependentSequences = new DependentSequenceGroup(cursorSequence, dependentSequences);
+            _dependentSequences = new DependentSequenceGroup(cursorSequence, 0, dependentSequences);
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -176,7 +176,7 @@ public class EventProcessorBenchmarks_Wait
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
-            _dependentSequences = new DependentSequenceGroup(cursorSequence, dependentSequences);
+            _dependentSequences = new DependentSequenceGroup(cursorSequence, 0, dependentSequences);
             _cancellationTokenSource = new CancellationTokenSource();
         }
 

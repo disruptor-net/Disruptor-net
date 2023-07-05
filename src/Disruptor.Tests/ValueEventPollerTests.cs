@@ -18,7 +18,7 @@ public class ValueEventPollerTests
         var provider = new ArrayValueDataProvider<decimal>(new decimal[16]);
         provider.Data[0] = 42m;
 
-        var poller = sequencer.NewPoller(provider, gatingSequence);
+        var poller = sequencer.NewPoller(provider, 1, gatingSequence);
 
         Assert.That(poller.Poll(Handler), Is.EqualTo(EventPoller.PollState.Idle));
 

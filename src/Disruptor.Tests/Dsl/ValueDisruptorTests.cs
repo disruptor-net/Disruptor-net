@@ -115,9 +115,9 @@ public class ValueDisruptorTests : IDisposable
     public void ShouldAddEventProcessorsAfterPublishing()
     {
         var rb = _disruptor.RingBuffer;
-        var b1 = EventProcessorFactory.Create(rb, rb.NewBarrier(), new SleepingEventHandler());
-        var b2 = EventProcessorFactory.Create(rb, rb.NewBarrier(b1.Sequence), new SleepingEventHandler());
-        var b3 = EventProcessorFactory.Create(rb, rb.NewBarrier(b2.Sequence), new SleepingEventHandler());
+        var b1 = EventProcessorFactory.Create(rb, rb.NewBarrier(0), new SleepingEventHandler());
+        var b2 = EventProcessorFactory.Create(rb, rb.NewBarrier(1, b1.Sequence), new SleepingEventHandler());
+        var b3 = EventProcessorFactory.Create(rb, rb.NewBarrier(2, b2.Sequence), new SleepingEventHandler());
 
         Assert.That(b1.Sequence.Value, Is.EqualTo(-1L));
         Assert.That(b2.Sequence.Value, Is.EqualTo(-1L));
@@ -249,7 +249,7 @@ public class ValueDisruptorTests : IDisposable
     public void ShouldSupportAddingCustomEventProcessorWithFactory()
     {
         var rb = _disruptor.RingBuffer;
-        var b1 = EventProcessorFactory.Create(rb, rb.NewBarrier(), new SleepingEventHandler());
+        var b1 = EventProcessorFactory.Create(rb, rb.NewBarrier(0), new SleepingEventHandler());
         var b2 = new TestValueEventProcessorFactory<TestValueEvent>((ringBuffer, sequenceBarrier) =>
         {
             return EventProcessorFactory.Create(ringBuffer, sequenceBarrier, new SleepingEventHandler());
@@ -425,7 +425,7 @@ public class ValueDisruptorTests : IDisposable
         var countDownLatch = new CountdownEvent(2);
         var handlerWithBarrier = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
 
-        var processor = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), delayedEventHandler);
+        var processor = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(0), delayedEventHandler);
         _disruptor.HandleEventsWith(processor).Then(handlerWithBarrier);
 
         EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
@@ -479,10 +479,10 @@ public class ValueDisruptorTests : IDisposable
         var handlerWithBarrier = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
 
         var delayedEventHandler1 = CreateDelayedEventHandler();
-        var processor1 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), delayedEventHandler1);
+        var processor1 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(0), delayedEventHandler1);
 
         var delayedEventHandler2 = CreateDelayedEventHandler();
-        var processor2 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), delayedEventHandler2);
+        var processor2 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(0), delayedEventHandler2);
 
         _disruptor.HandleEventsWith(processor1, processor2);
         _disruptor.After(processor1, processor2).HandleEventsWith(handlerWithBarrier);
@@ -578,6 +578,72 @@ public class ValueDisruptorTests : IDisposable
         }));
 
         EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
+    }
+
+    [Test]
+    public void ShouldAssignEventHandlerGroupPositions()
+    {
+        var h1 = new TestValueEventHandler<TestValueEvent>();
+        var h2 = new TestValueEventHandler<TestValueEvent>();
+        var h3 = new TestValueEventHandler<TestValueEvent>();
+        var h4 = new TestValueEventHandler<TestValueEvent>();
+        var h5 = new TestValueEventHandler<TestValueEvent>();
+        var h6 = new TestValueEventHandler<TestValueEvent>();
+
+        _disruptor.HandleEventsWith(h1).Then(h2, h3).Then(h4);
+
+        _disruptor.After(h1).Then(h5);
+        _disruptor.After(h4, h5).Then(h6);
+
+        Assert.AreEqual(0, _disruptor.GetDependentSequencesFor(h1)?.EventHandlerGroupPosition);
+        Assert.AreEqual(1, _disruptor.GetDependentSequencesFor(h2)?.EventHandlerGroupPosition);
+        Assert.AreEqual(1, _disruptor.GetDependentSequencesFor(h3)?.EventHandlerGroupPosition);
+        Assert.AreEqual(2, _disruptor.GetDependentSequencesFor(h4)?.EventHandlerGroupPosition);
+        Assert.AreEqual(1, _disruptor.GetDependentSequencesFor(h5)?.EventHandlerGroupPosition);
+        Assert.AreEqual(3, _disruptor.GetDependentSequencesFor(h6)?.EventHandlerGroupPosition);
+    }
+
+    [Test]
+    public void ShouldAssignEventHandlerGroupPositionsWithDiamondPattern()
+    {
+        var h1 = new TestValueEventHandler<TestValueEvent>();
+        var h2 = new TestValueEventHandler<TestValueEvent>();
+        var h3 = new TestValueEventHandler<TestValueEvent>();
+        var h4 = new TestValueEventHandler<TestValueEvent>();
+        var h5 = new TestValueEventHandler<TestValueEvent>();
+        var h6 = new TestValueEventHandler<TestValueEvent>();
+        var h7 = new TestValueEventHandler<TestValueEvent>();
+
+        _disruptor.HandleEventsWith(h1).Then(h2, h3).Then(h4).Then(h5, h6).Then(h7);
+
+        Assert.AreEqual(0, _disruptor.GetDependentSequencesFor(h1)?.EventHandlerGroupPosition);
+        Assert.AreEqual(1, _disruptor.GetDependentSequencesFor(h2)?.EventHandlerGroupPosition);
+        Assert.AreEqual(1, _disruptor.GetDependentSequencesFor(h3)?.EventHandlerGroupPosition);
+        Assert.AreEqual(2, _disruptor.GetDependentSequencesFor(h4)?.EventHandlerGroupPosition);
+        Assert.AreEqual(3, _disruptor.GetDependentSequencesFor(h5)?.EventHandlerGroupPosition);
+        Assert.AreEqual(3, _disruptor.GetDependentSequencesFor(h6)?.EventHandlerGroupPosition);
+        Assert.AreEqual(4, _disruptor.GetDependentSequencesFor(h7)?.EventHandlerGroupPosition);
+    }
+
+    [Test]
+    public void ShouldAssignEventHandlerGroupPositionsWithFactory()
+    {
+        var h1 = new TestValueEventHandler<TestValueEvent>();
+        var factory1 = new TestValueEventProcessorFactory<TestValueEvent>((rb, barrier) => EventProcessorFactory.Create(rb, barrier, h1));
+        var h2 = new TestValueEventHandler<TestValueEvent>();
+        var factory2 = new TestValueEventProcessorFactory<TestValueEvent>((rb, barrier) => EventProcessorFactory.Create(rb, barrier, h1));
+        var h3 = new TestValueEventHandler<TestValueEvent>();
+        var factory3 = new TestValueEventProcessorFactory<TestValueEvent>((rb, barrier) => EventProcessorFactory.Create(rb, barrier, h1));
+
+        _disruptor.HandleEventsWith(factory1).Then(factory2).Then(factory3);
+
+        Assert.NotNull(factory1.LastSequenceBarrier);
+        Assert.NotNull(factory2.LastSequenceBarrier);
+        Assert.NotNull(factory3.LastSequenceBarrier);
+
+        Assert.AreEqual(0, factory1.LastSequenceBarrier!.DependentSequences.EventHandlerGroupPosition);
+        Assert.AreEqual(1, factory2.LastSequenceBarrier!.DependentSequences.EventHandlerGroupPosition);
+        Assert.AreEqual(2, factory3.LastSequenceBarrier!.DependentSequences.EventHandlerGroupPosition);
     }
 
     private void EnsureTwoEventsProcessedAccordingToDependencies(CountdownEvent countDownLatch, params DelayedEventHandler[] dependencies)

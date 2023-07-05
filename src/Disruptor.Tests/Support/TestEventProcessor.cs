@@ -18,6 +18,7 @@ public class TestEventProcessor : IEventProcessor
     }
 
     public Sequence Sequence { get; } = new();
+    public DependentSequenceGroup DependentSequences => _sequenceBarrier.DependentSequences;
 
     public void WaitUntilStarted(TimeSpan timeout)
     {

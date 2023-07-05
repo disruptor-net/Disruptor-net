@@ -58,6 +58,9 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEventHan
     public Sequence Sequence => _sequence;
 
     /// <inheritdoc/>
+    public DependentSequenceGroup DependentSequences => _sequenceBarrier.DependentSequences;
+
+    /// <inheritdoc/>
     public void Halt()
     {
         _runState = ProcessorRunStates.Halted;

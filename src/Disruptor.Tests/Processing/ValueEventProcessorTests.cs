@@ -16,7 +16,7 @@ public class ValueEventProcessorTests
     public ValueEventProcessorTests()
     {
         _ringBuffer = new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), 16);
-        _sequenceBarrier = _ringBuffer.NewBarrier();
+        _sequenceBarrier = _ringBuffer.NewBarrier(0);
     }
 
     private static IValueEventProcessor<T> CreateEventProcessor<T>(IValueDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
@@ -61,7 +61,7 @@ public class ValueEventProcessorTests
     {
         var waitStrategy = new TimeoutBlockingWaitStrategy(TimeSpan.FromMilliseconds(1));
         var ringBuffer = new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), new SingleProducerSequencer(16, waitStrategy));
-        var sequenceBarrier = ringBuffer.NewBarrier();
+        var sequenceBarrier = ringBuffer.NewBarrier(0);
 
         var onTimeoutSignal = new ManualResetEvent(false);
         var eventHandler = new TestValueEventHandler<StubValueEvent> { OnTimeoutAction = () => onTimeoutSignal.Set() };
@@ -82,7 +82,7 @@ public class ValueEventProcessorTests
     {
         var waitStrategy = new TimeoutBlockingWaitStrategy(TimeSpan.FromMilliseconds(1));
         var ringBuffer = new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), new SingleProducerSequencer(16, waitStrategy));
-        var sequenceBarrier = ringBuffer.NewBarrier();
+        var sequenceBarrier = ringBuffer.NewBarrier(0);
 
         var exceptionSignal = new CountdownEvent(1);
         var exceptionHandler = new TestValueExceptionHandler<StubValueEvent>(x => exceptionSignal.Signal());
@@ -213,7 +213,7 @@ public class ValueEventProcessorTests
     {
         var waitStrategy = new BusySpinWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
-        var barrier = new SequenceBarrier(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
+        var barrier = new SequenceBarrier(sequencer, waitStrategy, new Sequence(-1), 0, new Sequence[0]);
         var dp = new ArrayValueDataProvider<long>(sequencer.BufferSize);
 
         var h1 = new LifeCycleHandler();
@@ -286,7 +286,7 @@ public class ValueEventProcessorTests
     public void ShouldNotPassZeroSizeToBatchStartAware(Type eventHandlerType)
     {
         var ringBuffer = new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(-1), new MultiProducerSequencer(16));
-        var sequenceBarrier = ringBuffer.NewBarrier();
+        var sequenceBarrier = ringBuffer.NewBarrier(0);
 
         var eventHandler = (BatchAwareEventHandler)Activator.CreateInstance(eventHandlerType)!;
 

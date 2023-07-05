@@ -13,7 +13,7 @@ namespace Disruptor;
 /// This type generates heap allocations. You can use <see cref="EventPoller{T}"/> if you need to poll the ring buffer without allocations.
 /// </para>
 /// <para>
-/// Consider using <see cref="RingBuffer{T}.NewAsyncEventStream"/> to get an instance of this type.
+/// Consider using <see cref="RingBuffer{T}.NewAsyncEventStream()"/> to get an instance of this type.
 /// </para>
 /// <para>
 /// The first enumerator sequence is added as a gating sequence to the ring buffer when the steam is created.
@@ -38,11 +38,11 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
     private Sequence? _nextEnumeratorSequence;
     private bool _disposed;
 
-    public AsyncEventStream(IDataProvider<T> dataProvider, IAsyncWaitStrategy waitStrategy, ISequencer sequencer, Sequence cursorSequence, params Sequence[] gatingSequences)
+    public AsyncEventStream(IDataProvider<T> dataProvider, IAsyncWaitStrategy waitStrategy, ISequencer sequencer, DependentSequenceGroup dependentSequences)
     {
         _dataProvider = dataProvider;
         _sequencer = sequencer;
-        _dependentSequences = new DependentSequenceGroup(cursorSequence, gatingSequences);
+        _dependentSequences = dependentSequences;
         _waitStrategy = waitStrategy;
 
         SetNextEnumeratorSequence();

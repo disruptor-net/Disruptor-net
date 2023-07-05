@@ -19,7 +19,7 @@ public class EventPollerTests
         var provider = new ArrayDataProvider<object>(new object[16]);
         provider.Data[0] = new object();
 
-        var poller = sequencer.NewPoller(provider, gatingSequence);
+        var poller = sequencer.NewPoller(provider, 1, gatingSequence);
 
         Assert.That(poller.Poll(Handler), Is.EqualTo(EventPoller.PollState.Idle));
 
@@ -45,7 +45,7 @@ public class EventPollerTests
         var provider = new ArrayDataProvider<object>(new object[16]);
         provider.Data[0] = new object();
 
-        var poller = sequencer.NewPoller(provider, gatingSequence);
+        var poller = sequencer.NewPoller(provider, 1, gatingSequence);
 
         Assert.That(poller.Poll(Handler), Is.EqualTo(EventPoller.PollState.Idle));
 

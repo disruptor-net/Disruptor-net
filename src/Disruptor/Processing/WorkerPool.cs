@@ -17,6 +17,7 @@ public sealed class WorkerPool<T> where T : class
     private volatile int _runState = ProcessorRunStates.Idle;
     private readonly Sequence _workSequence = new();
     private readonly RingBuffer<T> _ringBuffer;
+    private readonly SequenceBarrier _sequenceBarrier;
     // WorkProcessors are created to wrap each of the provided WorkHandlers
     private readonly WorkProcessor<T>[] _workProcessors;
 
@@ -33,6 +34,7 @@ public sealed class WorkerPool<T> where T : class
     public WorkerPool(RingBuffer<T> ringBuffer, SequenceBarrier sequenceBarrier, IExceptionHandler<T> exceptionHandler, params IWorkHandler<T>[] workHandlers)
     {
         _ringBuffer = ringBuffer;
+        _sequenceBarrier = sequenceBarrier;
         _workProcessors = new WorkProcessor<T>[workHandlers.Length];
 
         for (var i = 0; i < workHandlers.Length; i++)
@@ -58,14 +60,14 @@ public sealed class WorkerPool<T> where T : class
 
     {
         _ringBuffer = RingBuffer<T>.CreateMultiProducer(eventFactory, 1024, new BlockingWaitStrategy());
-        var barrier = _ringBuffer.NewBarrier();
+        _sequenceBarrier = _ringBuffer.NewBarrier();
         _workProcessors = new WorkProcessor<T>[workHandlers.Length];
 
         for (var i = 0; i < workHandlers.Length; i++)
         {
             _workProcessors[i] = new WorkProcessor<T>(
                 _ringBuffer,
-                barrier,
+                _sequenceBarrier,
                 workHandlers[i],
                 exceptionHandler,
                 _workSequence);
@@ -75,9 +77,14 @@ public sealed class WorkerPool<T> where T : class
     }
 
     /// <summary>
-    /// The <see cref="RingBuffer{T}"/> used by this worker pool.
+    /// The <see cref="RingBuffer{T}"/> used by the worker pool.
     /// </summary>
     public RingBuffer<T> RingBuffer => _ringBuffer;
+
+    /// <summary>
+    /// Gets the <see cref="DependentSequenceGroup"/> that contains the dependencies of the worker pool.
+    /// </summary>
+    public DependentSequenceGroup DependentSequences => _sequenceBarrier.DependentSequences;
 
     /// <summary>
     /// Get an array of <see cref="Sequence"/>s representing the progress of the workers.

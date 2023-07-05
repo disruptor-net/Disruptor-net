@@ -1,30 +1,41 @@
-using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Disruptor.Dsl;
 
 namespace Disruptor;
 
 /// <summary>
-/// Represents a group a sequences that are the dependencies for a set of event processors.
+/// Represents a group a sequences that are the dependencies for a set of event handlers.
 /// </summary>
 /// <remarks>
-/// For a given set S of event processors, the dependencies are the sequences of the processors that must run before S.
-/// If S represents the first processors of the disruptor, then the only dependency is the ring buffer cursor.
+/// For a given set S of event handlers, the dependencies are the sequences of the handlers that must run before S.
+/// If S represents the first handlers of the disruptor, then the only dependency is the ring buffer cursor.
 /// </remarks>
 public class DependentSequenceGroup
 {
     private readonly Sequence _cursor;
+    private readonly int _eventHandlerGroupPosition;
     private readonly Sequence[] _dependencies;
 
     /// <summary>
     /// Creates a new dependent sequence group.
     /// </summary>
     /// <param name="cursor">The ring buffer cursor</param>
+    public DependentSequenceGroup(Sequence cursor)
+        : this(cursor, 0)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new dependent sequence group.
+    /// </summary>
+    /// <param name="cursor">The ring buffer cursor</param>
+    /// <param name="eventHandlerGroupPosition">the position of the related event handler group within the disruptor</param>
     /// <param name="dependencies">The sequences of the processors that must run before</param>
-    public DependentSequenceGroup(Sequence cursor, params Sequence[] dependencies)
+    public DependentSequenceGroup(Sequence cursor, int eventHandlerGroupPosition, params Sequence[] dependencies)
     {
         _cursor = cursor;
+        _eventHandlerGroupPosition = eventHandlerGroupPosition;
 
         // The API exposes ISequence but the Disruptor code always uses the Sequence type for dependent sequences.
         // So, dependencies are expected to be instances of Sequence in the fast path.
@@ -41,6 +52,12 @@ public class DependentSequenceGroup
             _dependencies = dependencies;
         }
     }
+
+    /// <summary>
+    /// Gets the position of related event handler group within the disruptor.
+    /// </summary>
+    /// <inheritdoc cref="EventHandlerGroup{T}.EventHandlerGroupPosition"/>
+    public int EventHandlerGroupPosition => _eventHandlerGroupPosition;
 
     /// <summary>
     /// Gets a value indicating whether the ring buffer cursor is the only dependency (i.e.: the event processors

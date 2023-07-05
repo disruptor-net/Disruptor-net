@@ -58,16 +58,16 @@ public sealed class SingleProducerSequencer : ISequencer
         _isBlockingWaitStrategy = waitStrategy.IsBlockingStrategy;
     }
 
-    /// <inheritdoc cref="ISequencer.NewBarrier"/>
-    public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
+    /// <inheritdoc />
+    public SequenceBarrier NewBarrier(int eventHandlerGroupPosition, params Sequence[] sequencesToTrack)
     {
-        return new SequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
+        return new SequenceBarrier(this, _waitStrategy, _cursor, eventHandlerGroupPosition, sequencesToTrack);
     }
 
-    /// <inheritdoc cref="ISequencer.NewAsyncBarrier"/>
-    public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
+    /// <inheritdoc />
+    public AsyncSequenceBarrier NewAsyncBarrier(int eventHandlerGroupPosition, params Sequence[] sequencesToTrack)
     {
-        return new AsyncSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
+        return new AsyncSequenceBarrier(this, _waitStrategy, _cursor, eventHandlerGroupPosition, sequencesToTrack);
     }
 
     /// <inheritdoc cref="ISequenced.BufferSize"/>.
@@ -266,27 +266,33 @@ public sealed class SingleProducerSequencer : ISequencer
         return DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
     }
 
-    /// <inheritdoc cref="ISequencer.NewPoller{T}(IDataProvider{T}, Sequence[])"/>.
-    public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
+    /// <inheritdoc />.
+    public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, int eventHandlerGroupPosition, params Sequence[] gatingSequences)
         where T : class
     {
-        return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
+        var dependentSequences = new DependentSequenceGroup(_cursor, eventHandlerGroupPosition, gatingSequences);
+
+        return EventPoller.Create(provider, this, new Sequence(), dependentSequences);
     }
 
-    /// <inheritdoc cref="ISequencer.NewPoller{T}(IValueDataProvider{T}, Sequence[])"/>.
-    public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params Sequence[] gatingSequences)
+    /// <inheritdoc />.
+    public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, int eventHandlerGroupPosition, params Sequence[] gatingSequences)
         where T : struct
     {
-        return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
+        var dependentSequences = new DependentSequenceGroup(_cursor, eventHandlerGroupPosition, gatingSequences);
+
+        return EventPoller.Create(provider, this, new Sequence(), dependentSequences);
     }
 
-    /// <inheritdoc cref="ISequencer.NewAsyncEventStream{T}(IDataProvider{T}, Sequence[])"/>.
-    public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, Sequence[] gatingSequences)
+    /// <inheritdoc />.
+    public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, int eventHandlerGroupPosition, Sequence[] gatingSequences)
         where T : class
     {
         if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
             throw new InvalidOperationException($"Unable to create an async event stream: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
 
-        return new AsyncEventStream<T>(provider, asyncWaitStrategy, this, _cursor, gatingSequences);
+        var dependentSequences = new DependentSequenceGroup(_cursor, eventHandlerGroupPosition, gatingSequences);
+
+        return new AsyncEventStream<T>(provider, asyncWaitStrategy, this, dependentSequences);
     }
 }

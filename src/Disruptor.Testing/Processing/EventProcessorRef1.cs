@@ -57,6 +57,8 @@ public class EventProcessorRef1<T, TDataProvider, TSequenceBarrierOptions, TEven
     /// </summary>
     public Sequence Sequence => _sequence;
 
+    public DependentSequenceGroup DependentSequences => _sequenceBarrier.DependentSequences;
+
     /// <summary>
     /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
     /// It will call <see cref="SequenceBarrier.CancelProcessing"/> to notify the thread to check status.

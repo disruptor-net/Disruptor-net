@@ -264,13 +264,20 @@ public abstract class UnmanagedRingBuffer : ICursored
 
     /// <summary>
     /// Create a new SequenceBarrier to be used by an EventProcessor to track which messages
+    /// are available to be read from the ring buffer.
+    /// </summary>
+    public SequenceBarrier NewBarrier() => NewBarrier(0);
+
+    /// <summary>
+    /// Create a new SequenceBarrier to be used by an EventProcessor to track which messages
     /// are available to be read from the ring buffer given a list of sequences to track.
     /// </summary>
+    /// <param name="eventHandlerGroupPosition">Position of the event handler group within the event handler chain</param>
     /// <param name="sequencesToTrack">the additional sequences to track</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
+    public SequenceBarrier NewBarrier(int eventHandlerGroupPosition, params Sequence[] sequencesToTrack)
     {
-        return _sequencerDispatcher.Sequencer.NewBarrier(sequencesToTrack);
+        return _sequencerDispatcher.Sequencer.NewBarrier(eventHandlerGroupPosition, sequencesToTrack);
     }
 
     /// <summary>

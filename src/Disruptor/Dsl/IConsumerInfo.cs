@@ -6,7 +6,7 @@ internal interface IConsumerInfo
 {
     Sequence[] Sequences { get; }
 
-    DependentSequenceGroup? DependentSequences { get; }
+    DependentSequenceGroup DependentSequences { get; }
 
     bool IsEndOfChain { get; }
 

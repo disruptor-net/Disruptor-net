@@ -195,32 +195,51 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     }
 
     /// <summary>
+    /// Creates an event poller for this ring buffer.
+    /// </summary>
+    public EventPoller<T> NewPoller() => NewPoller(0);
+
+    /// <summary>
     /// Creates an event poller for this ring buffer gated on the supplied sequences.
     /// </summary>
+    /// <param name="eventHandlerGroupPosition">Position of the event handler group within the event handler chain</param>
     /// <param name="gatingSequences">gatingSequences to be gated on.</param>
-    public EventPoller<T> NewPoller(params Sequence[] gatingSequences)
+    public EventPoller<T> NewPoller(int eventHandlerGroupPosition, params Sequence[] gatingSequences)
     {
-        return _sequencerDispatcher.Sequencer.NewPoller(this, gatingSequences);
+        return _sequencerDispatcher.Sequencer.NewPoller(this, eventHandlerGroupPosition, gatingSequences);
     }
+
+    /// <summary>
+    /// Creates an event stream for this ring buffer.
+    /// </summary>
+    public AsyncEventStream<T> NewAsyncEventStream() => NewAsyncEventStream(0);
 
     /// <summary>
     /// Creates an event stream for this ring buffer gated on the supplied sequences.
     /// </summary>
+    /// <param name="eventHandlerGroupPosition">Position of the event handler group within the event handler chain</param>
     /// <param name="gatingSequences">gatingSequences to be gated on.</param>
-    public AsyncEventStream<T> NewAsyncEventStream(params Sequence[] gatingSequences)
+    public AsyncEventStream<T> NewAsyncEventStream(int eventHandlerGroupPosition, params Sequence[] gatingSequences)
     {
-        return _sequencerDispatcher.Sequencer.NewAsyncEventStream(this, gatingSequences);
+        return _sequencerDispatcher.Sequencer.NewAsyncEventStream(this, eventHandlerGroupPosition, gatingSequences);
     }
+
+    /// <summary>
+    /// Create a new sequence barrier to be used by an event processor to track which messages
+    /// are available to be read from the ring buffer.
+    /// </summary>
+    public AsyncSequenceBarrier NewAsyncBarrier() => NewAsyncBarrier(0);
 
     /// <summary>
     /// Create a new sequence barrier to be used by an event processor to track which messages
     /// are available to be read from the ring buffer given a list of sequences to track.
     /// </summary>
+    /// <param name="eventHandlerGroupPosition">Position of the event handler group within the event handler chain</param>
     /// <param name="sequencesToTrack">the additional sequences to track</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(int eventHandlerGroupPosition, params Sequence[] sequencesToTrack)
     {
-        return _sequencerDispatcher.Sequencer.NewAsyncBarrier(sequencesToTrack);
+        return _sequencerDispatcher.Sequencer.NewAsyncBarrier(eventHandlerGroupPosition, sequencesToTrack);
     }
 
     /// <summary>

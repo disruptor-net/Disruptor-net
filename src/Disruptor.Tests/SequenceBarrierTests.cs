@@ -36,7 +36,7 @@ public abstract class SequenceBarrierTests : IDisposable
         var sequence2 = new Sequence(expectedWorkSequence);
         var sequence3 = new Sequence(expectedNumberMessages);
 
-        var sequenceBarrier = _ringBuffer.NewBarrier(sequence1, sequence2, sequence3);
+        var sequenceBarrier = _ringBuffer.NewBarrier(0, sequence1, sequence2, sequence3);
 
         var completedWorkSequence = sequenceBarrier.WaitFor(expectedWorkSequence).UnsafeAvailableSequence;
         Assert.IsTrue(completedWorkSequence >= expectedWorkSequence);
@@ -54,7 +54,7 @@ public abstract class SequenceBarrierTests : IDisposable
             workers[i] = new StubEventProcessor(expectedNumberMessages - 1);
         }
 
-        var dependencyBarrier = _ringBuffer.NewBarrier(DisruptorUtil.GetSequencesFor(workers));
+        var dependencyBarrier = _ringBuffer.NewBarrier(0, DisruptorUtil.GetSequencesFor(workers));
 
         Task.Run(() =>
         {
@@ -83,7 +83,7 @@ public abstract class SequenceBarrierTests : IDisposable
         var sequence2 = new Sequence(8L);
         var sequence3 = new Sequence(8L);
 
-        var sequenceBarrier = _ringBuffer.NewBarrier(sequence1, sequence2, sequence3);
+        var sequenceBarrier = _ringBuffer.NewBarrier(0, sequence1, sequence2, sequence3);
         var startedSignal = new ManualResetEventSlim();
 
         var alerted = false;
@@ -122,7 +122,7 @@ public abstract class SequenceBarrierTests : IDisposable
             eventProcessors[i] = new StubEventProcessor(expectedNumberMessages - 2);
         }
 
-        var eventProcessorBarrier = _ringBuffer.NewBarrier(DisruptorUtil.GetSequencesFor(eventProcessors));
+        var eventProcessorBarrier = _ringBuffer.NewBarrier(0, DisruptorUtil.GetSequencesFor(eventProcessors));
 
         Task.Factory.StartNew(() =>
         {
@@ -140,7 +140,7 @@ public abstract class SequenceBarrierTests : IDisposable
     [Test]
     public void ShouldSetAndClearAlertStatus()
     {
-        var sequenceBarrier = _ringBuffer.NewBarrier();
+        var sequenceBarrier = _ringBuffer.NewBarrier(0);
         Assert.IsFalse(sequenceBarrier.CancellationToken.IsCancellationRequested);
         Assert.IsFalse(sequenceBarrier.IsCancellationRequested);
 
@@ -166,14 +166,17 @@ public abstract class SequenceBarrierTests : IDisposable
 
     private class StubEventProcessor : IEventProcessor
     {
-        private readonly Sequence _sequence = new();
         private readonly ManualResetEventSlim _runEvent = new();
         private volatile int _running;
 
         public StubEventProcessor(long sequence)
         {
-            _sequence.SetValue(sequence);
+            Sequence.SetValue(sequence);
+            DependentSequences = new DependentSequenceGroup(new Sequence());
         }
+
+        public Sequence Sequence { get; } = new();
+        public DependentSequenceGroup DependentSequences { get; }
 
         public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
         {
@@ -194,8 +197,6 @@ public abstract class SequenceBarrierTests : IDisposable
         }
 
         public bool IsRunning => _running == 1;
-
-        public Sequence Sequence => _sequence;
 
         public void Halt()
         {

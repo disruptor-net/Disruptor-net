@@ -59,13 +59,13 @@ public class OneToThreePipelineSequencedThroughputTest : IThroughputTest
         var stepTwoFunctionHandler = new FunctionEventHandler(FunctionStep.Two);
         _stepThreeFunctionHandler = new FunctionEventHandler(FunctionStep.Three);
 
-        var stepOneSequenceBarrier = _ringBuffer.NewBarrier();
+        var stepOneSequenceBarrier = _ringBuffer.NewBarrier(0);
         _stepOneEventProcessor = EventProcessorFactory.Create(_ringBuffer, stepOneSequenceBarrier, stepOneFunctionHandler);
 
-        var stepTwoSequenceBarrier = _ringBuffer.NewBarrier(_stepOneEventProcessor.Sequence);
+        var stepTwoSequenceBarrier = _ringBuffer.NewBarrier(1, _stepOneEventProcessor.Sequence);
         _stepTwoEventProcessor = EventProcessorFactory.Create(_ringBuffer, stepTwoSequenceBarrier, stepTwoFunctionHandler);
 
-        var stepThreeSequenceBarrier = _ringBuffer.NewBarrier(_stepTwoEventProcessor.Sequence);
+        var stepThreeSequenceBarrier = _ringBuffer.NewBarrier(2, _stepTwoEventProcessor.Sequence);
         _stepThreeEventProcessor = EventProcessorFactory.Create(_ringBuffer, stepThreeSequenceBarrier, _stepThreeFunctionHandler);
 
         var temp = 0L;

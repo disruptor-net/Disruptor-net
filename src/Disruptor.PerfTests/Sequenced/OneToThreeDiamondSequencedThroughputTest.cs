@@ -61,7 +61,7 @@ public class OneToThreeDiamondSequencedThroughputTest : IThroughputTest
 
     public OneToThreeDiamondSequencedThroughputTest()
     {
-        var sequenceBarrier = _ringBuffer.NewBarrier();
+        var sequenceBarrier = _ringBuffer.NewBarrier(0);
 
         var fizzHandler = new FizzBuzzEventHandler(FizzBuzzStep.Fizz);
         _eventProcessorFizz = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, fizzHandler);
@@ -69,7 +69,7 @@ public class OneToThreeDiamondSequencedThroughputTest : IThroughputTest
         var buzzHandler = new FizzBuzzEventHandler(FizzBuzzStep.Buzz);
         _eventProcessorBuzz = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, buzzHandler);
 
-        var sequenceBarrierFizzBuzz = _ringBuffer.NewBarrier(_eventProcessorFizz.Sequence, _eventProcessorBuzz.Sequence);
+        var sequenceBarrierFizzBuzz = _ringBuffer.NewBarrier(1, _eventProcessorFizz.Sequence, _eventProcessorBuzz.Sequence);
 
         _fizzBuzzHandler = new FizzBuzzEventHandler(FizzBuzzStep.FizzBuzz);
         _eventProcessorFizzBuzz = EventProcessorFactory.Create(_ringBuffer, sequenceBarrierFizzBuzz, _fizzBuzzHandler);

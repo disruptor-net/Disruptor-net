@@ -13,14 +13,27 @@ public class EventHandlerGroup<T> where T : class
 {
     private readonly Disruptor<T> _disruptor;
     private readonly ConsumerRepository _consumerRepository;
+    private readonly int _eventHandlerGroupPosition;
     private readonly Sequence[] _sequences;
 
-    internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository consumerRepository, IEnumerable<Sequence> sequences)
+    internal EventHandlerGroup(Disruptor<T> disruptor, ConsumerRepository consumerRepository, int eventHandlerGroupPosition, IEnumerable<Sequence> sequences)
     {
         _disruptor = disruptor;
         _consumerRepository = consumerRepository;
+        _eventHandlerGroupPosition = eventHandlerGroupPosition;
         _sequences = sequences.ToArray();
     }
+
+    /// <summary>
+    /// Gets the position of event handler group within the disruptor.
+    /// </summary>
+    /// <remarks>
+    /// This is the position of the event handler group in the event handler chain.
+    /// The value is computed with the following pseudocode: <code>GetMaximumEventHandlerGroupPositionFor(previousEventHandlerGroups) + 1</code>.
+    /// Because the disruptor supports graphs of event handlers, the position is not guaranteed to
+    /// be unique within the disruptor.
+    /// </remarks>
+    public int EventHandlerGroupPosition => _eventHandlerGroupPosition;
 
     /// <summary>
     /// Create a new event handler group that combines the consumers in this group with <paramref name="otherHandlerGroup"/>
@@ -29,7 +42,10 @@ public class EventHandlerGroup<T> where T : class
     /// <returns>a new EventHandlerGroup combining the existing and new consumers into a single dependency group</returns>
     public EventHandlerGroup<T> And(EventHandlerGroup<T> otherHandlerGroup)
     {
-        return new EventHandlerGroup<T>(_disruptor, _consumerRepository, _sequences.Concat(otherHandlerGroup._sequences));
+        var eventHandlerGroupPosition = Math.Max(_eventHandlerGroupPosition, otherHandlerGroup._eventHandlerGroupPosition);
+        var sequences = _sequences.Concat(otherHandlerGroup._sequences);
+
+        return new EventHandlerGroup<T>(_disruptor, _consumerRepository, eventHandlerGroupPosition, sequences);
     }
 
     /// <summary>
@@ -43,7 +59,10 @@ public class EventHandlerGroup<T> where T : class
         {
             _consumerRepository.Add(eventProcessor);
         }
-        return new EventHandlerGroup<T>(_disruptor, _consumerRepository, processors.Select(p => p.Sequence).Concat(_sequences));
+
+        var eventHandlerGroupPosition = Math.Max(_eventHandlerGroupPosition, DisruptorUtil.GetMaximumEventHandlerGroupPositionFor(processors));
+
+        return new EventHandlerGroup<T>(_disruptor, _consumerRepository, eventHandlerGroupPosition, processors.Select(p => p.Sequence).Concat(_sequences));
     }
 
     /// <summary>
@@ -112,7 +131,7 @@ public class EventHandlerGroup<T> where T : class
     /// </summary>
     /// <param name="handlers">the batch handlers that will process events.</param>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to set up a event processor barrier over the created event processors.</returns>
-    public EventHandlerGroup<T> HandleEventsWith(params IEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_sequences, handlers);
+    public EventHandlerGroup<T> HandleEventsWith(params IEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_eventHandlerGroupPosition, _sequences, handlers);
 
     /// <summary>
     /// Set up batch handlers to handle events from the ring buffer. These handlers will only process events
@@ -123,7 +142,7 @@ public class EventHandlerGroup<T> where T : class
     /// </summary>
     /// <param name="handlers">the batch handlers that will process events.</param>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to set up a event processor barrier over the created event processors.</returns>
-    public EventHandlerGroup<T> HandleEventsWith(params IBatchEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_sequences, handlers);
+    public EventHandlerGroup<T> HandleEventsWith(params IBatchEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_eventHandlerGroupPosition, _sequences, handlers);
 
     /// <summary>
     /// Set up batch handlers to handle events from the ring buffer. These handlers will only process events
@@ -134,7 +153,7 @@ public class EventHandlerGroup<T> where T : class
     /// </summary>
     /// <param name="handlers">the batch handlers that will process events.</param>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to set up a event processor barrier over the created event processors.</returns>
-    public EventHandlerGroup<T> HandleEventsWith(params IAsyncBatchEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_sequences, handlers);
+    public EventHandlerGroup<T> HandleEventsWith(params IAsyncBatchEventHandler<T>[] handlers) => _disruptor.CreateEventProcessors(_eventHandlerGroupPosition, _sequences, handlers);
 
     /// <summary>
     /// Set up custom event processors to handle events from the ring buffer. The Disruptor will
@@ -145,7 +164,7 @@ public class EventHandlerGroup<T> where T : class
     /// </summary>
     /// <param name="eventProcessorFactories">eventProcessorFactories the event processor factories to use to create the event processors that will process events.</param>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
-    public EventHandlerGroup<T> HandleEventsWith(params IEventProcessorFactory<T>[] eventProcessorFactories) => _disruptor.CreateEventProcessors(_sequences, eventProcessorFactories);
+    public EventHandlerGroup<T> HandleEventsWith(params IEventProcessorFactory<T>[] eventProcessorFactories) => _disruptor.CreateEventProcessors(_eventHandlerGroupPosition, _sequences, eventProcessorFactories);
 
     /// <summary>
     /// Set up a worker pool to handle events from the ring buffer. The worker pool will only process events
@@ -158,7 +177,7 @@ public class EventHandlerGroup<T> where T : class
     /// </summary>
     /// <param name="handlers">handlers the work handlers that will process events. Each work handler instance will provide an extra thread in the worker pool.</param>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to set up a event processor barrier over the created event processors.</returns>
-    public EventHandlerGroup<T> HandleEventsWithWorkerPool(IWorkHandler<T>[] handlers) => _disruptor.CreateWorkerPool(_sequences, handlers);
+    public EventHandlerGroup<T> HandleEventsWithWorkerPool(IWorkHandler<T>[] handlers) => _disruptor.CreateWorkerPool(_eventHandlerGroupPosition, _sequences, handlers);
 
     /// <summary>
     /// Create a sequence barrier for the processors in this group.
@@ -168,7 +187,7 @@ public class EventHandlerGroup<T> where T : class
     /// <returns>a <see cref="SequenceBarrier"/> including all the processors in this group.</returns>
     public SequenceBarrier AsSequenceBarrier()
     {
-        return _disruptor.RingBuffer.NewBarrier(_sequences);
+        return _disruptor.RingBuffer.NewBarrier(_eventHandlerGroupPosition, _sequences);
     }
 
     /// <summary>
@@ -179,6 +198,6 @@ public class EventHandlerGroup<T> where T : class
     /// <returns>a <see cref="AsyncSequenceBarrier"/> including all the processors in this group.</returns>
     public AsyncSequenceBarrier AsAsyncSequenceBarrier()
     {
-        return _disruptor.RingBuffer.NewAsyncBarrier(_sequences);
+        return _disruptor.RingBuffer.NewAsyncBarrier(_eventHandlerGroupPosition, _sequences);
     }
 }

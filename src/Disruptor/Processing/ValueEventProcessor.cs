@@ -59,6 +59,9 @@ public class ValueEventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEve
     public Sequence Sequence => _sequence;
 
     /// <inheritdoc/>
+    public DependentSequenceGroup DependentSequences => _sequenceBarrier.DependentSequences;
+
+    /// <inheritdoc/>
     public void Halt()
     {
         _running = ProcessorRunStates.Halted;

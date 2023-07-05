@@ -33,18 +33,30 @@ public interface ISequencer : ISequenced, ICursored
     bool RemoveGatingSequence(Sequence sequence);
 
     /// <summary>
-    /// Create a <see cref="SequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
+    /// Create a <see cref="SequenceBarrier"/> that gates on the the cursor.
     /// </summary>
-    /// <param name="sequencesToTrack">All of the sequences that the newly constructed barrier will wait on.</param>
-    /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack);
+    SequenceBarrier NewBarrier() => NewBarrier(0);
 
     /// <summary>
-    /// Create a <see cref="AsyncSequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
+    /// Create a <see cref="SequenceBarrier"/> that gates on the the cursor and a list of sequences.
     /// </summary>
+    /// <param name="eventHandlerGroupPosition">Position of the event handler group within the event handler chain</param>
+    /// <param name="sequencesToTrack">The sequences that the newly constructed barrier will wait on</param>
+    /// <returns>A sequence barrier that will track the specified sequences.</returns>
+    SequenceBarrier NewBarrier(int eventHandlerGroupPosition, params Sequence[] sequencesToTrack);
+
+    /// <summary>
+    /// Create a <see cref="AsyncSequenceBarrier"/> that gates on the the cursor.
+    /// </summary>
+    AsyncSequenceBarrier NewAsyncBarrier() => NewAsyncBarrier(0);
+
+    /// <summary>
+    /// Create a <see cref="AsyncSequenceBarrier"/> that gates on the the cursor and a list of sequences.
+    /// </summary>
+    /// <param name="eventHandlerGroupPosition">Position of the event handler group within the event handler chain</param>
     /// <param name="sequencesToTrack">All of the sequences that the newly constructed barrier will wait on.</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack);
+    AsyncSequenceBarrier NewAsyncBarrier(int eventHandlerGroupPosition, params Sequence[] sequencesToTrack);
 
     /// <summary>
     /// Get the minimum sequence value from all of the gating sequences
@@ -70,20 +82,20 @@ public interface ISequencer : ISequenced, ICursored
     /// Creates an event poller for this sequence that will use the supplied data provider and
     /// gating sequences.
     /// </summary>
-    EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
+    EventPoller<T> NewPoller<T>(IDataProvider<T> provider, int eventHandlerGroupPosition, params Sequence[] gatingSequences)
         where T : class;
 
     /// <summary>
     /// Creates an event poller for this sequence that will use the supplied data provider and
     /// gating sequences.
     /// </summary>
-    ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params Sequence[] gatingSequences)
+    ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, int eventHandlerGroupPosition, params Sequence[] gatingSequences)
         where T : struct;
 
     /// <summary>
     /// Creates an event stream for this sequence that will use the supplied data provider and
     /// gating sequences.
     /// </summary>
-    AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, Sequence[] gatingSequences)
+    AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, int eventHandlerGroupPosition, Sequence[] gatingSequences)
         where T : class;
 }

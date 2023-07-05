@@ -11,45 +11,51 @@ namespace Disruptor.Tests.Dsl;
 public class ConsumerRepositoryTests
 {
     private readonly ConsumerRepository _consumerRepository = new();
-    private readonly DummyEventProcessor _eventProcessor1 = new();
-    private readonly DummyEventProcessor _eventProcessor2 = new();
+    private readonly DummyEventProcessor _eventProcessor1;
+    private readonly DummyEventProcessor _eventProcessor2;
     private readonly DummyEventHandler<TestEvent> _handler1 = new();
     private readonly DummyEventHandler<TestEvent> _handler2 = new();
     private readonly DependentSequenceGroup _dependentSequenceGroup1 = new(new Sequence());
     private readonly DependentSequenceGroup _dependentSequenceGroup2 = new(new Sequence());
 
+    public ConsumerRepositoryTests()
+    {
+        _eventProcessor1 = new(_dependentSequenceGroup1);
+        _eventProcessor2 = new(_dependentSequenceGroup2);
+    }
+
     [Test]
     public void ShouldGetDependentSequenceGroupByHandler()
     {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
+        _consumerRepository.Add(_eventProcessor1, _handler1);
 
-        Assert.That(_consumerRepository.GetDependentSequencesFor(_handler1), Is.SameAs(_dependentSequenceGroup1));
+        Assert.That(_consumerRepository.GetDependentSequencesOrNull(_handler1), Is.SameAs(_dependentSequenceGroup1));
     }
 
     [Test]
     public void ShouldReturnNullForDependentSequenceGroupWhenHandlerIsNotRegistered()
     {
-        Assert.That(_consumerRepository.GetDependentSequencesFor(_handler1), Is.Null);
+        Assert.That(_consumerRepository.GetDependentSequencesOrNull(_handler1), Is.Null);
     }
 
     [Test]
     public void ShouldRetrieveEventProcessorForHandler()
     {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
-        Assert.That(_consumerRepository.GetEventProcessorFor(_handler1), Is.SameAs(_eventProcessor1));
+        _consumerRepository.Add(_eventProcessor1, _handler1);
+        Assert.That(_consumerRepository.GetEventProcessor(_handler1), Is.SameAs(_eventProcessor1));
     }
 
     [Test]
     public void ShouldThrowExceptionWhenHandlerIsNotRegistered()
     {
-        Assert.Throws<ArgumentException>(() => _consumerRepository.GetEventProcessorFor(new SleepingEventHandler()));
+        Assert.Throws<ArgumentException>(() => _consumerRepository.GetEventProcessor(new SleepingEventHandler()));
     }
 
     [Test]
     public void ShouldIterateAllEventProcessors()
     {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
-        _consumerRepository.Add(_eventProcessor2, _handler2, _dependentSequenceGroup2);
+        _consumerRepository.Add(_eventProcessor1, _handler1);
+        _consumerRepository.Add(_eventProcessor2, _handler2);
 
         var seen1 = false;
         var seen2 = false;

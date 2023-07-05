@@ -14,8 +14,12 @@ public class TestValueEventProcessorFactory<T> : IValueEventProcessorFactory<T>
         _factory = factory;
     }
 
+    public SequenceBarrier? LastSequenceBarrier { get; private set; }
+
     public IEventProcessor CreateEventProcessor(IValueRingBuffer<T> ringBuffer, SequenceBarrier sequenceBarrier)
     {
+        LastSequenceBarrier = sequenceBarrier;
+
         return _factory.Invoke(ringBuffer, sequenceBarrier);
     }
 }

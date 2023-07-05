@@ -18,9 +18,9 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         _eventProcessorInfoBySequence = new Dictionary<Sequence, IConsumerInfo>(new IdentityComparer<Sequence>());
     }
 
-    public void Add(IEventProcessor eventProcessor, object eventHandler, DependentSequenceGroup dependentSequences)
+    public void Add(IEventProcessor eventProcessor, object eventHandler)
     {
-        var consumerInfo = new EventProcessorInfo(eventProcessor, eventHandler, dependentSequences);
+        var consumerInfo = new EventProcessorInfo(eventProcessor, eventHandler);
         _eventProcessorInfoByEventHandler[eventHandler] = consumerInfo;
         _eventProcessorInfoBySequence[eventProcessor.Sequence] = consumerInfo;
         _consumerInfos.Add(consumerInfo);
@@ -28,15 +28,15 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
 
     public void Add(IEventProcessor processor)
     {
-        var consumerInfo = new EventProcessorInfo(processor, null, null);
+        var consumerInfo = new EventProcessorInfo(processor, null);
         _eventProcessorInfoBySequence [processor.Sequence] = consumerInfo;
         _consumerInfos.Add(consumerInfo);
     }
 
-    public void Add<T>(WorkerPool<T> workerPool, DependentSequenceGroup dependentSequences)
+    public void Add<T>(WorkerPool<T> workerPool)
         where T : class
     {
-        var workerPoolInfo = new WorkerPoolInfo<T>(workerPool, dependentSequences);
+        var workerPoolInfo = new WorkerPoolInfo<T>(workerPool);
         _consumerInfos.Add(workerPoolInfo);
         foreach (var sequence in workerPool.GetWorkerSequences())
         {
@@ -63,20 +63,19 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         return false;
     }
 
-    public IEventProcessor GetEventProcessorFor(object eventHandler)
+    public IEventProcessor GetEventProcessor(object eventHandler)
     {
-        var found = _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo);
-        if(!found)
-        {
-            throw new ArgumentException("The event handler " + eventHandler + " is not processing events.");
-        }
-
-        return eventProcessorInfo!.EventProcessor;
+        return GetEventProcessorInfo(eventHandler).EventProcessor;
     }
 
-    public Sequence GetSequenceFor(object eventHandler)
+    public Sequence GetSequence(object eventHandler)
     {
-        return GetEventProcessorFor(eventHandler).Sequence;
+        return GetEventProcessor(eventHandler).Sequence;
+    }
+
+    public int GetEventHandlerGroupPosition(object eventHandler)
+    {
+        return GetEventProcessorInfo(eventHandler).DependentSequences.EventHandlerGroupPosition;
     }
 
     public void UnMarkEventProcessorsAsEndOfChain(params Sequence[] barrierEventProcessors)
@@ -90,9 +89,11 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         }
     }
 
-    public DependentSequenceGroup? GetDependentSequencesFor(object eventHandler)
+    public DependentSequenceGroup? GetDependentSequencesOrNull(object eventHandler)
     {
-        return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo) ? eventProcessorInfo.DependentSequences : null;
+        return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo)
+            ? eventProcessorInfo.DependentSequences
+            : null;
     }
 
     public IEnumerator<IConsumerInfo> GetEnumerator() => _consumerInfos.GetEnumerator();
@@ -100,6 +101,13 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+
+    private EventProcessorInfo GetEventProcessorInfo(object eventHandler)
+    {
+        return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo)
+            ? eventProcessorInfo
+            : throw new ArgumentException("The event handler is not registered.");
     }
 
     private class IdentityComparer<TKey> : IEqualityComparer<TKey>

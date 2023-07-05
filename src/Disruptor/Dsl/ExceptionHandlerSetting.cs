@@ -25,7 +25,7 @@ public class ExceptionHandlerSetting<T> where T : class
     /// <param name="exceptionHandler">exceptionHandler the exception handler to use.</param>
     public void With(IExceptionHandler<T> exceptionHandler)
     {
-        var eventProcessor = _consumerRepository.GetEventProcessorFor(_eventHandler);
+        var eventProcessor = _consumerRepository.GetEventProcessor(_eventHandler);
         if (eventProcessor is IAsyncEventProcessor<T> asyncEventProcessor)
             asyncEventProcessor.SetExceptionHandler(exceptionHandler);
         else

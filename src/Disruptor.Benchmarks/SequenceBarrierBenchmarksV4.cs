@@ -101,7 +101,7 @@ public class SequenceBarrierBenchmarksV4 : SequenceBarrierBenchmarks, IDisposabl
             _multiProducerSequencer = null!;
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
-            _dependentSequences = new DependentSequenceGroup(cursorSequence, dependentSequences);
+            _dependentSequences = new DependentSequenceGroup(cursorSequence, 0, dependentSequences);
             _cancellationTokenSource = new CancellationTokenSource();
         }
 

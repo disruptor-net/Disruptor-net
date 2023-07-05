@@ -38,7 +38,7 @@ public class DependentSequenceGroupTests
                                   .Select(_ => new Sequence(random.Next(1000)))
                                   .ToArray();
 
-        var dependentSequences = new DependentSequenceGroup(cursor, sequences);
+        var dependentSequences = new DependentSequenceGroup(cursor, 1, sequences);
 
         var value = dependentSequences.Value;
 
@@ -56,7 +56,7 @@ public class DependentSequenceGroupTests
                                   .Select(_ => new Sequence())
                                   .ToArray();
 
-        var dependentSequences = new DependentSequenceGroup(cursor, sequences);
+        var dependentSequences = new DependentSequenceGroup(cursor, 1, sequences);
 
         Assert.AreEqual(expectedDependentSequenceCount, dependentSequences.DependentSequenceCount);
     }

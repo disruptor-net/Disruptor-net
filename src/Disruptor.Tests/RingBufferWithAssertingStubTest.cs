@@ -126,12 +126,12 @@ public class RingBufferWithAssertingStubTest
             return false;
         }
 
-        public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
+        public SequenceBarrier NewBarrier(int eventHandlerGroupPosition, params Sequence[] sequencesToTrack)
         {
             throw new NotSupportedException();
         }
 
-        public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
+        public AsyncSequenceBarrier NewAsyncBarrier(int eventHandlerGroupPosition, params Sequence[] sequencesToTrack)
         {
             throw new NotSupportedException();
         }
@@ -146,19 +146,19 @@ public class RingBufferWithAssertingStubTest
             return 0;
         }
 
-        public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
+        public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, int eventHandlerGroupPosition, params Sequence[] gatingSequences)
             where T : class
         {
             throw new NotSupportedException();
         }
 
-        public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params Sequence[] gatingSequences)
+        public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, int eventHandlerGroupPosition, params Sequence[] gatingSequences)
             where T : struct
         {
             throw new NotSupportedException();
         }
 
-        public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, Sequence[] gatingSequences)
+        public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, int eventHandlerGroupPosition, Sequence[] gatingSequences)
             where T : class
         {
             throw new NotSupportedException();

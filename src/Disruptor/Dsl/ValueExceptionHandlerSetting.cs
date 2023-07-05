@@ -25,6 +25,6 @@ public class ValueExceptionHandlerSetting<T> where T : struct
     /// <param name="exceptionHandler">exceptionHandler the exception handler to use.</param>
     public void With(IValueExceptionHandler<T> exceptionHandler)
     {
-        ((IValueEventProcessor<T>)_consumerRepository.GetEventProcessorFor(_eventHandler)).SetExceptionHandler(exceptionHandler);
+        ((IValueEventProcessor<T>)_consumerRepository.GetEventProcessor(_eventHandler)).SetExceptionHandler(exceptionHandler);
     }
 }

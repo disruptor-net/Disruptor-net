@@ -7,16 +7,15 @@ internal class WorkerPoolInfo<T> : IConsumerInfo where T : class
 {
     private readonly WorkerPool<T> _workerPool;
 
-    public WorkerPoolInfo(WorkerPool<T> workerPool, DependentSequenceGroup dependentSequences)
+    public WorkerPoolInfo(WorkerPool<T> workerPool)
     {
         _workerPool = workerPool;
-        DependentSequences = dependentSequences;
         IsEndOfChain = true;
     }
 
     public Sequence[] Sequences => _workerPool.GetWorkerSequences();
 
-    public DependentSequenceGroup DependentSequences { get; }
+    public DependentSequenceGroup DependentSequences => _workerPool.DependentSequences;
 
     public bool IsEndOfChain { get; private set; }
 

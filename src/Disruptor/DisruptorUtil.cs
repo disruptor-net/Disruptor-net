@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Disruptor.Processing;
 
@@ -76,14 +77,19 @@ public static class DisruptorUtil
     /// </summary>
     /// <param name="processors">processors for which to get the sequences</param>
     /// <returns>the array of <see cref="Sequence"/>s</returns>
-    public static Sequence[] GetSequencesFor(params IEventProcessor[] processors)
+    public static Sequence[] GetSequencesFor<T>(params T[] processors)
+        where T : IEventProcessor
     {
-        var sequences = new Sequence[processors.Length];
-        for (int i = 0; i < sequences.Length; i++)
-        {
-            sequences[i] = processors[i].Sequence;
+        return processors.Select(x => x.Sequence).ToArray();
         }
 
-        return sequences;
+    /// <summary>
+    /// Get the maximum dependent sequence group index for the passed event processors
+    /// See <see cref="DependentSequenceGroup.EventHandlerGroupPosition"/>.
+    /// </summary>
+    /// <param name="processors">the target event processors</param>
+    public static int GetMaximumEventHandlerGroupPositionFor(params IEventProcessor[] processors)
+    {
+        return processors.Length == 0 ? 0 : processors.Select(x => x.DependentSequences.EventHandlerGroupPosition).Max();
     }
 }

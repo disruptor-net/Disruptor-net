@@ -9,7 +9,7 @@ namespace Disruptor;
 /// disruptor DSL.
 /// </summary>
 /// <remarks>
-/// Consider using <see cref="ValueRingBuffer{T}.NewPoller"/> to get an instance of this type.
+/// Consider using <see cref="ValueRingBuffer{T}.NewPoller()"/> to get an instance of this type.
 /// </remarks>
 public class ValueEventPoller<T>
     where T : struct
