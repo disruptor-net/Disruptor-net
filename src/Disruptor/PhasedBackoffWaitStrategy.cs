@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Runtime.InteropServices;
+using System.Diagnostics;
 using System.Threading;
 
 namespace Disruptor;
@@ -13,39 +13,21 @@ namespace Disruptor;
 /// </remarks>
 public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
 {
-#if NETCOREAPP
-    [SuppressGCTransition]
-#endif
-    [DllImport("Kernel32.dll", CallingConvention = CallingConvention.Winapi)]
-    private static extern void GetSystemTimePreciseAsFileTime(out long fileTime);
-
-    private static readonly bool _isSystemTimePreciseAsFileTimeAvailable;
-
     private const int _spinTries = 10000;
     private readonly IWaitStrategy _fallbackStrategy;
-    private readonly long _spinTimeoutTicks;
-    private readonly long _yieldTimeoutTicks;
-
-    static PhasedBackoffWaitStrategy()
-    {
-        try
-        {
-            GetSystemTimePreciseAsFileTime(out _);
-            _isSystemTimePreciseAsFileTimeAvailable = true;
-        }
-        catch (TypeLoadException)
-        {
-        }
-    }
+    private readonly long _spinTimeout;
+    private readonly long _yieldTimeout;
 
     public PhasedBackoffWaitStrategy(TimeSpan spinTimeout, TimeSpan yieldTimeout, IWaitStrategy fallbackStrategy)
     {
-        _spinTimeoutTicks = spinTimeout.Ticks;
-        _yieldTimeoutTicks = yieldTimeout.Ticks;
+        _spinTimeout = ToStopwatchTimeout(spinTimeout);
+        _yieldTimeout = ToStopwatchTimeout(yieldTimeout);
         _fallbackStrategy = fallbackStrategy;
     }
 
     public bool IsBlockingStrategy => _fallbackStrategy.IsBlockingStrategy;
+    public long SpinTimeout => _spinTimeout;
+    public long YieldTimeout => _yieldTimeout;
 
     /// <summary>
     /// Construct <see cref="PhasedBackoffWaitStrategy"/> with fallback to <see cref="BlockingWaitStrategy"/>
@@ -84,17 +66,17 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
             {
                 if (0 == startTime)
                 {
-                    startTime = GetSystemTimeTicks();
+                    startTime = Stopwatch.GetTimestamp();
                 }
                 else
                 {
-                    var timeDelta = GetSystemTimeTicks() - startTime;
-                    if (timeDelta > _yieldTimeoutTicks)
+                    var timeDelta = Stopwatch.GetTimestamp() - startTime;
+                    if (timeDelta > _yieldTimeout)
                     {
                         return _fallbackStrategy.WaitFor(sequence, dependentSequences, cancellationToken);
                     }
 
-                    if (timeDelta > _spinTimeoutTicks)
+                    if (timeDelta > _spinTimeout)
                     {
                         Thread.Yield();
                     }
@@ -111,18 +93,8 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
         _fallbackStrategy.SignalAllWhenBlocking();
     }
 
-    private static long GetSystemTimeTicks()
+    private static long ToStopwatchTimeout(TimeSpan timeout)
     {
-        long ticks;
-        if (_isSystemTimePreciseAsFileTimeAvailable)
-        {
-            GetSystemTimePreciseAsFileTime(out ticks);
-        }
-        else
-        {
-            ticks = DateTime.UtcNow.Ticks;
-        }
-
-        return ticks;
+        return (long)(timeout.Ticks * (double)Stopwatch.Frequency / TimeSpan.TicksPerSecond);
     }
 }
