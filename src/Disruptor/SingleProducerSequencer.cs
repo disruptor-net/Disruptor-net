@@ -70,13 +70,13 @@ public sealed class SingleProducerSequencer : ISequencer
         return new AsyncSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
     }
 
-    /// <inheritdoc cref="ISequenced.BufferSize"/>.
+    /// <inheritdoc/>
     public int BufferSize => _bufferSize;
 
-    /// <inheritdoc cref="ICursored.Cursor"/>.
+    /// <inheritdoc/>
     public long Cursor => _cursor.Value;
 
-    /// <inheritdoc cref="ISequenced.HasAvailableCapacity"/>.
+    /// <inheritdoc/>
     public bool HasAvailableCapacity(int requiredCapacity)
     {
         return HasAvailableCapacity(requiredCapacity, false);
@@ -108,14 +108,14 @@ public sealed class SingleProducerSequencer : ISequencer
         return true;
     }
 
-    /// <inheritdoc cref="ISequenced.Next()"/>.
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Next()
     {
         return NextInternal(1);
     }
 
-    /// <inheritdoc cref="ISequenced.Next(int)"/>.
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Next(int n)
     {
@@ -161,14 +161,14 @@ public sealed class SingleProducerSequencer : ISequencer
         _cachedValue = minSequence;
     }
 
-    /// <inheritdoc cref="ISequenced.TryNext(out long)"/>.
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryNext(out long sequence)
     {
         return TryNextInternal(1, out sequence);
     }
 
-    /// <inheritdoc cref="ISequenced.TryNext(int, out long)"/>.
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryNext(int n, out long sequence)
     {
@@ -196,7 +196,7 @@ public sealed class SingleProducerSequencer : ISequencer
         return true;
     }
 
-    /// <inheritdoc cref="ISequenced.GetRemainingCapacity"/>.
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetRemainingCapacity()
     {
@@ -207,14 +207,14 @@ public sealed class SingleProducerSequencer : ISequencer
         return BufferSize - (produced - consumed);
     }
 
-    /// <inheritdoc cref="ISequencer.Claim"/>.
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Claim(long sequence)
     {
         _nextValue = sequence;
     }
 
-    /// <inheritdoc cref="ISequenced.Publish(long)"/>.
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long sequence)
     {
@@ -226,14 +226,14 @@ public sealed class SingleProducerSequencer : ISequencer
         }
     }
 
-    /// <inheritdoc cref="ISequenced.Publish(long, long)"/>.
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long lo, long hi)
     {
         Publish(hi);
     }
 
-    /// <inheritdoc cref="ISequencer.IsAvailable"/>.
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsAvailable(long sequence)
     {
@@ -241,26 +241,26 @@ public sealed class SingleProducerSequencer : ISequencer
         return sequence <= currentSequence && sequence > currentSequence - _bufferSize;
     }
 
-    /// <inheritdoc cref="ISequencer.GetHighestPublishedSequence"/>.
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetHighestPublishedSequence(long nextSequence, long availableSequence)
     {
         return availableSequence;
     }
 
-    /// <inheritdoc cref="ISequencer.AddGatingSequences"/>.
+    /// <inheritdoc/>
     public void AddGatingSequences(params Sequence[] gatingSequences)
     {
         SequenceGroups.AddSequences(ref _gatingSequences, this, gatingSequences);
     }
 
-    /// <inheritdoc cref="ISequencer.RemoveGatingSequence"/>.
+    /// <inheritdoc/>
     public bool RemoveGatingSequence(Sequence sequence)
     {
         return SequenceGroups.RemoveSequence(ref _gatingSequences, sequence);
     }
 
-    /// <inheritdoc cref="ISequencer.GetMinimumSequence"/>.
+    /// <inheritdoc/>
     public long GetMinimumSequence()
     {
         return DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
