@@ -24,7 +24,6 @@ public class Sequence
     // padding: DefaultPadding
 
     [FieldOffset(DefaultPadding)]
-    // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
     private long _value;
 
     // padding: DefaultPadding
@@ -56,8 +55,7 @@ public class Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetValue(long value)
     {
-        // no synchronization required, the CLR memory model prevents Store/Store re-ordering
-        _value = value;
+        Volatile.Write(ref _value, value);
     }
 
     /// <summary>
@@ -68,7 +66,7 @@ public class Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetValueVolatile(long value)
     {
-        Volatile.Write(ref _value, value);
+        Interlocked.Exchange(ref _value, value);
     }
 
     /// <summary>
@@ -89,7 +87,7 @@ public class Sequence
     /// <returns>String representation of the sequence.</returns>
     public override string ToString()
     {
-        return _value.ToString();
+        return Value.ToString();
     }
 
     ///<summary>
