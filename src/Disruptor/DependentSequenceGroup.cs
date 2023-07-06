@@ -14,6 +14,7 @@ public class DependentSequenceGroup
 {
     private readonly Sequence _cursor;
     private readonly Sequence[] _dependencies;
+    private object? _tag;
 
     /// <summary>
     /// Creates a new dependent sequence group.
@@ -63,8 +64,19 @@ public class DependentSequenceGroup
             }
 
             return minimum;
-
         }
+    }
+
+    /// <summary>
+    /// Gets or sets a user-defined tag object attached to the <see cref="DependentSequenceGroup"/>.
+    /// </summary>
+    /// <remarks>
+    /// The tag can be used to apply custom logic in wait strategies.
+    /// </remarks>
+    public object? Tag
+    {
+        get => _tag;
+        set => _tag = value;
     }
 
     /// <summary>

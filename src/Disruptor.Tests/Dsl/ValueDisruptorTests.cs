@@ -161,7 +161,7 @@ public class ValueDisruptorTests : IDisposable
 
 
     [Test]
-    public void ShouldGetGetDependentSequencesForHandler()
+    public void ShouldGetDependentSequencesForHandler()
     {
         var rb = _disruptor.RingBuffer;
         var handler = new TestValueEventHandler<TestValueEvent>();
@@ -204,6 +204,42 @@ public class ValueDisruptorTests : IDisposable
         Assert.That(sequenceGroup!.CursorValue, Is.EqualTo(5L));
         Assert.That(sequenceGroup!.DependsOnCursor, Is.True);
         Assert.That(sequenceGroup!.DependentSequenceCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ShouldGetDependentSequencesForMultipleHandlers()
+    {
+        var h1 = new TestValueEventHandler<TestValueEvent>();
+        var h2 = new TestValueEventHandler<TestValueEvent>();
+        var h3 = new TestValueEventHandler<TestValueEvent>();
+
+        _disruptor.HandleEventsWith(h1).Then(h2, h3);
+
+        var sequenceGroup1 = _disruptor.GetDependentSequencesFor(h1)!;
+        var sequenceGroup2 = _disruptor.GetDependentSequencesFor(h2)!;
+        var sequenceGroup3 = _disruptor.GetDependentSequencesFor(h3)!;
+
+        Assert.That(sequenceGroup1, Is.Not.SameAs(sequenceGroup2));
+        Assert.That(sequenceGroup1.DependsOnCursor, Is.True);
+        Assert.That(sequenceGroup2, Is.SameAs(sequenceGroup3));
+        Assert.That(sequenceGroup2.DependsOnCursor, Is.False);
+    }
+
+    [Test]
+    public void ShouldConfigureDependentSequencesTags()
+    {
+        var h1 = new TestValueEventHandler<TestValueEvent>();
+        var h2 = new TestValueEventHandler<TestValueEvent>();
+        var h3 = new TestValueEventHandler<TestValueEvent>();
+
+        _disruptor.HandleEventsWith(h1).Then(h2, h3);
+
+        _disruptor.GetDependentSequencesFor(h1)!.Tag = "1";
+        _disruptor.GetDependentSequencesFor(h2)!.Tag = "2";
+
+        Assert.That(_disruptor.GetDependentSequencesFor(h1)!.Tag, Is.EqualTo("1"));
+        Assert.That(_disruptor.GetDependentSequencesFor(h2)!.Tag, Is.EqualTo("2"));
+        Assert.That(_disruptor.GetDependentSequencesFor(h3)!.Tag, Is.EqualTo("2"));
     }
 
     [Test]
