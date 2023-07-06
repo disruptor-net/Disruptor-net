@@ -15,11 +15,11 @@ public sealed class SequenceBarrier
     private readonly DependentSequenceGroup _dependentSequences;
     private CancellationTokenSource _cancellationTokenSource;
 
-    public SequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, Sequence[] dependentSequences)
+    public SequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
     {
         _sequencer = sequencer;
         _waitStrategy = waitStrategy;
-        _dependentSequences = new DependentSequenceGroup(cursorSequence, dependentSequences);
+        _dependentSequences = dependentSequences;
         _cancellationTokenSource = new CancellationTokenSource();
     }
 

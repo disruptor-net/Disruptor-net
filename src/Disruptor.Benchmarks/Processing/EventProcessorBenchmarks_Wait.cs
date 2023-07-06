@@ -21,14 +21,13 @@ public class EventProcessorBenchmarks_Wait
         var waitStrategy = new YieldingWaitStrategy();
         var sequencer = new SingleProducerSequencer(64, waitStrategy);
         var cursorSequence = new Sequence();
-        var dependentSequences = new Sequence[0];
-        var sequenceBarrier = new SequenceBarrier(sequencer, waitStrategy, cursorSequence, dependentSequences);
-        var sequenceBarrierClass = new SequenceBarrierClass(sequencer, waitStrategy, cursorSequence, dependentSequences);
+        var sequenceBarrier = new SequenceBarrier(sequencer, waitStrategy, new DependentSequenceGroup(cursorSequence));
+        var sequenceBarrierClass = new SequenceBarrierClass(sequencer, waitStrategy, new DependentSequenceGroup(cursorSequence));
         var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrierClass);
         var eventProcessorType = typeof(PartialEventProcessor<,>).MakeGenericType(typeof(ISequenceBarrierOptions.IsDependentSequencePublished), sequenceBarrierProxy.GetType());
         _processor1 = (IPartialEventProcessor)Activator.CreateInstance(eventProcessorType, sequenceBarrier, sequenceBarrierProxy);
 
-        _processor2 = new PartialEventProcessor<ISequenceBarrierOptions.IsDependentSequencePublished, SequenceBarrierStruct>(sequenceBarrier, new SequenceBarrierStruct(sequencer, waitStrategy, cursorSequence, dependentSequences));
+        _processor2 = new PartialEventProcessor<ISequenceBarrierOptions.IsDependentSequencePublished, SequenceBarrierStruct>(sequenceBarrier, new SequenceBarrierStruct(sequencer, waitStrategy, new DependentSequenceGroup(cursorSequence)));
 
         sequencer.Publish(42);
         cursorSequence.SetValue(42);
@@ -136,11 +135,11 @@ public class EventProcessorBenchmarks_Wait
         private readonly DependentSequenceGroup _dependentSequences;
         private CancellationTokenSource _cancellationTokenSource;
 
-        public SequenceBarrierClass(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, Sequence[] dependentSequences)
+        public SequenceBarrierClass(ISequencer sequencer, IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
-            _dependentSequences = new DependentSequenceGroup(cursorSequence, dependentSequences);
+            _dependentSequences = dependentSequences;
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -172,11 +171,11 @@ public class EventProcessorBenchmarks_Wait
         private readonly DependentSequenceGroup _dependentSequences;
         private CancellationTokenSource _cancellationTokenSource;
 
-        public SequenceBarrierStruct(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, Sequence[] dependentSequences)
+        public SequenceBarrierStruct(ISequencer sequencer, IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
-            _dependentSequences = new DependentSequenceGroup(cursorSequence, dependentSequences);
+            _dependentSequences = dependentSequences;
             _cancellationTokenSource = new CancellationTokenSource();
         }
 

@@ -89,13 +89,13 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
     /// <inheritdoc/>
     public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
     {
-        return new SequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
+        return new SequenceBarrier(this, _waitStrategy, new DependentSequenceGroup(_cursor, sequencesToTrack));
     }
 
     /// <inheritdoc/>
     public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
     {
-        return new AsyncSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
+        return new AsyncSequenceBarrier(this, _waitStrategy, new DependentSequenceGroup(_cursor, sequencesToTrack));
     }
 
     /// <inheritdoc/>

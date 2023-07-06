@@ -189,7 +189,7 @@ public class AsyncBatchEventProcessorTests
     {
         var waitStrategy = new AsyncWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
-        var barrier = new AsyncSequenceBarrier(sequencer, waitStrategy, new Sequence(-1), new Sequence[0]);
+        var barrier = new AsyncSequenceBarrier(sequencer, waitStrategy, new DependentSequenceGroup(new Sequence()));
         var dp = new ArrayDataProvider<object>(sequencer.BufferSize);
 
         var h1 = new LifeCycleHandler();

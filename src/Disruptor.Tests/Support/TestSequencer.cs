@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Disruptor.Processing;
 
 namespace Disruptor.Tests.Support;
 
@@ -156,12 +155,12 @@ public class TestSequencer : ISequencer
 
     public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
     {
-        return new SequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
+        return new SequenceBarrier(this, _waitStrategy, new DependentSequenceGroup(_cursor, sequencesToTrack));
     }
 
     public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
     {
-        return new AsyncSequenceBarrier(this, _waitStrategy, _cursor, sequencesToTrack);
+        return new AsyncSequenceBarrier(this, _waitStrategy, new DependentSequenceGroup(_cursor, sequencesToTrack));
     }
 
     public long GetMinimumSequence()

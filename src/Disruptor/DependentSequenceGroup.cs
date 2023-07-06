@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -25,21 +23,7 @@ public class DependentSequenceGroup
     public DependentSequenceGroup(Sequence cursor, params Sequence[] dependencies)
     {
         _cursor = cursor;
-
-        // The API exposes ISequence but the Disruptor code always uses the Sequence type for dependent sequences.
-        // So, dependencies are expected to be instances of Sequence in the fast path.
-
-        // To simplify the implementation, either all sequences are Sequence and _dependencies is used,
-        // or _untypedDependencies is used.
-
-        if (dependencies.Length == 0)
-        {
-            _dependencies = new[] { cursor };
-        }
-        else
-        {
-            _dependencies = dependencies;
-        }
+        _dependencies = dependencies.Length == 0 ? new[] { cursor } : dependencies;
     }
 
     /// <summary>

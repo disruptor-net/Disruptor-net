@@ -14,14 +14,14 @@ public sealed class AsyncSequenceBarrier
     private readonly DependentSequenceGroup _dependentSequences;
     private CancellationTokenSource _cancellationTokenSource;
 
-    public AsyncSequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, Sequence[] dependentSequences)
+    public AsyncSequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
     {
         if (waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
             throw new InvalidOperationException($"The disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
 
         _sequencer = sequencer;
         _waitStrategy = asyncWaitStrategy;
-        _dependentSequences = new DependentSequenceGroup(cursorSequence, dependentSequences);
+        _dependentSequences = dependentSequences;
         _cancellationTokenSource = new CancellationTokenSource();
     }
 
