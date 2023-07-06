@@ -286,10 +286,7 @@ public class ValueDisruptorTests : IDisposable
     {
         var rb = _disruptor.RingBuffer;
         var b1 = EventProcessorFactory.Create(rb, rb.NewBarrier(), new SleepingEventHandler());
-        var b2 = new TestValueEventProcessorFactory<TestValueEvent>((ringBuffer, sequenceBarrier) =>
-        {
-            return EventProcessorFactory.Create(ringBuffer, sequenceBarrier, new SleepingEventHandler());
-        });
+        var b2 = new ValueEventProcessorCreator<TestValueEvent>((ringBuffer, sequenceBarrier) => EventProcessorFactory.Create(ringBuffer, sequenceBarrier, new SleepingEventHandler()));
 
         _disruptor.HandleEventsWith(b1).Then(b2);
 
@@ -590,11 +587,11 @@ public class ValueDisruptorTests : IDisposable
         var countDownLatch = new CountdownEvent(2);
         var eventHandler = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
 
-        _disruptor.HandleEventsWith(new TestValueEventProcessorFactory<TestValueEvent>((ringBuffer, sequenceBarrier) =>
+        _disruptor.HandleEventsWith((ringBuffer, sequenceBarrier) =>
         {
             Assert.IsTrue(sequenceBarrier.DependentSequences.DependsOnCursor, "Should depend on cursor");
             return EventProcessorFactory.Create(ringBuffer, sequenceBarrier, eventHandler);
-        }));
+        });
 
         EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch);
     }
@@ -606,12 +603,12 @@ public class ValueDisruptorTests : IDisposable
         var eventHandler = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
         var delayedEventHandler = CreateDelayedEventHandler();
 
-        _disruptor.HandleEventsWith(delayedEventHandler).Then(new TestValueEventProcessorFactory<TestValueEvent>((ringBuffer, sequenceBarrier) =>
+        _disruptor.HandleEventsWith(delayedEventHandler).Then((ringBuffer, sequenceBarrier) =>
         {
             Assert.IsFalse(sequenceBarrier.DependentSequences.DependsOnCursor, "Should not depend on cursor");
             Assert.AreEqual(1, sequenceBarrier.DependentSequences.DependentSequenceCount, "Should have had a barrier sequence");
             return EventProcessorFactory.Create(ringBuffer, sequenceBarrier, eventHandler);
-        }));
+        });
 
         EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
     }

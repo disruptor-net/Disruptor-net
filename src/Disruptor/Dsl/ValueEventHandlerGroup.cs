@@ -67,7 +67,7 @@ public class ValueEventHandlerGroup<T>
     /// </summary>
     /// <param name="eventProcessorFactories">the event processor factories to use to create the event processors that will process events.</param>
     /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
-    public ValueEventHandlerGroup<T> Then(params IValueEventProcessorFactory<T>[] eventProcessorFactories) => HandleEventsWith(eventProcessorFactories);
+    public ValueEventHandlerGroup<T> Then(params ValueEventProcessorCreator<T>[] eventProcessorFactories) => HandleEventsWith(eventProcessorFactories);
 
     /// <summary>
     /// Set up batch handlers to handle events from the ring buffer. These handlers will only process events
@@ -91,7 +91,7 @@ public class ValueEventHandlerGroup<T>
     /// </summary>
     /// <param name="eventProcessorFactories">eventProcessorFactories the event processor factories to use to create the event processors that will process events.</param>
     /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
-    public ValueEventHandlerGroup<T> HandleEventsWith(params IValueEventProcessorFactory<T>[] eventProcessorFactories) => _disruptor.CreateEventProcessors(_sequences, eventProcessorFactories);
+    public ValueEventHandlerGroup<T> HandleEventsWith(params ValueEventProcessorCreator<T>[] eventProcessorFactories) => _disruptor.CreateEventProcessors(_sequences, eventProcessorFactories);
 
     /// <summary>
     /// Create a dependency barrier for the processors in this group.

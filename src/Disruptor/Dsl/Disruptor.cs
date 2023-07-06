@@ -130,14 +130,14 @@ public class Disruptor<T>
     ///
     /// Since this is the start of the chain, the processor factories will always be passed an empty <code>Sequence</code>
     /// array, so the factory isn't necessary in this case. This method is provided for consistency with
-    /// <see cref="EventHandlerGroup{T}.HandleEventsWith(IEventProcessorFactory{T}[])"/> and <see cref="EventHandlerGroup{T}.Then(IEventProcessorFactory{T}[])"/>
+    /// <see cref="EventHandlerGroup{T}.HandleEventsWith(EventProcessorCreator{T}[])"/> and <see cref="EventHandlerGroup{T}.Then(EventProcessorCreator{T}[])"/>
     /// which do have barrier sequences to provide.
     ///
     /// This call is additive, but generally should only be called once when setting up the disruptor instance.
     /// </summary>
     /// <param name="eventProcessorFactories">eventProcessorFactories the event processor factories to use to create the event processors that will process events.</param>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
-    public EventHandlerGroup<T> HandleEventsWith(params IEventProcessorFactory<T>[] eventProcessorFactories)
+    public EventHandlerGroup<T> HandleEventsWith(params EventProcessorCreator<T>[] eventProcessorFactories)
     {
         return CreateEventProcessors(Array.Empty<Sequence>(), eventProcessorFactories);
     }
@@ -494,10 +494,10 @@ public class Disruptor<T>
         }
     }
 
-    internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IEventProcessorFactory<T>[] processorFactories)
+    internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, EventProcessorCreator<T>[] processorFactories)
     {
         var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
-        var eventProcessors = processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, sequenceBarrier)).ToArray();
+        var eventProcessors = processorFactories.Select(p => p.Invoke(_ringBuffer, sequenceBarrier)).ToArray();
 
         return HandleEventsWith(eventProcessors);
     }

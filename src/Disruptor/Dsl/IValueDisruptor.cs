@@ -6,5 +6,5 @@ internal interface IValueDisruptor<T>
     IValueRingBuffer<T> RingBuffer { get; }
 
     ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers);
-    ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories);
+    ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, ValueEventProcessorCreator<T>[] processorFactories);
 }

@@ -88,7 +88,7 @@ public class EventHandlerGroup<T> where T : class
     /// </summary>
     /// <param name="eventProcessorFactories">the event processor factories to use to create the event processors that will process events.</param>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
-    public EventHandlerGroup<T> Then(params IEventProcessorFactory<T>[] eventProcessorFactories) => HandleEventsWith(eventProcessorFactories);
+    public EventHandlerGroup<T> Then(params EventProcessorCreator<T>[] eventProcessorFactories) => HandleEventsWith(eventProcessorFactories);
 
     /// <summary>
     /// Set up a worker pool to handle events from the ring buffer. The worker pool will only process events
@@ -143,9 +143,9 @@ public class EventHandlerGroup<T> where T : class
     /// This method is generally used as part of a chain. For example if <code>A</code> must
     /// process events before<code> B</code>:  <code>dw.After(A).HandleEventsWith(B);</code>
     /// </summary>
-    /// <param name="eventProcessorFactories">eventProcessorFactories the event processor factories to use to create the event processors that will process events.</param>
+    /// <param name="eventProcessorFactories">the event processor factories to use to create the event processors that will process events.</param>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
-    public EventHandlerGroup<T> HandleEventsWith(params IEventProcessorFactory<T>[] eventProcessorFactories) => _disruptor.CreateEventProcessors(_sequences, eventProcessorFactories);
+    public EventHandlerGroup<T> HandleEventsWith(params EventProcessorCreator<T>[] eventProcessorFactories) => _disruptor.CreateEventProcessors(_sequences, eventProcessorFactories);
 
     /// <summary>
     /// Set up a worker pool to handle events from the ring buffer. The worker pool will only process events

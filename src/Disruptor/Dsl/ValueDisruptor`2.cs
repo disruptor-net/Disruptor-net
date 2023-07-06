@@ -119,14 +119,14 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     ///
     /// Since this is the start of the chain, the processor factories will always be passed an empty <code>Sequence</code>
     /// array, so the factory isn't necessary in this case. This method is provided for consistency with
-    /// <see cref="ValueEventHandlerGroup{T}.HandleEventsWith(IValueEventProcessorFactory{T}[])"/> and <see cref="ValueEventHandlerGroup{T}.Then(IValueEventProcessorFactory{T}[])"/>
+    /// <see cref="ValueEventHandlerGroup{T}.HandleEventsWith(ValueEventProcessorCreator{T}[])"/> and <see cref="ValueEventHandlerGroup{T}.Then(ValueEventProcessorCreator{T}[])"/>
     /// which do have barrier sequences to provide.
     ///
     /// This call is additive, but generally should only be called once when setting up the disruptor instance.
     /// </summary>
     /// <param name="eventProcessorFactories">eventProcessorFactories the event processor factories to use to create the event processors that will process events.</param>
     /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
-    public ValueEventHandlerGroup<T> HandleEventsWith(params IValueEventProcessorFactory<T>[] eventProcessorFactories)
+    public ValueEventHandlerGroup<T> HandleEventsWith(params ValueEventProcessorCreator<T>[] eventProcessorFactories)
     {
         return CreateEventProcessors(Array.Empty<Sequence>(), eventProcessorFactories);
     }
@@ -289,15 +289,15 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
         }
     }
 
-    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(Sequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
+    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(Sequence[] barrierSequences, ValueEventProcessorCreator<T>[] processorFactories)
     {
         return CreateEventProcessors(barrierSequences, processorFactories);
     }
 
-    private ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventProcessorFactory<T>[] processorFactories)
+    private ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, ValueEventProcessorCreator<T>[] processorFactories)
     {
         var barrier = _ringBuffer.NewBarrier(barrierSequences);
-        var eventProcessors = processorFactories.Select(p => p.CreateEventProcessor(_ringBuffer, barrier)).ToArray();
+        var eventProcessors = processorFactories.Select(p => p.Invoke(_ringBuffer, barrier)).ToArray();
 
         return HandleEventsWith(eventProcessors);
     }
