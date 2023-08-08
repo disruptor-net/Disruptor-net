@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Disruptor.PerfTests.External;
@@ -55,10 +56,14 @@ public class Program
 
     private static void RunTestForType(Type perfTestType, Options options)
     {
+        var outputDirectoryPath = Path.Combine(AppContext.BaseDirectory, "results");
+        if (options.ShouldGenerateReport)
+            Directory.CreateDirectory(outputDirectoryPath);
+
         var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType);
         if (isThroughputTest)
         {
-            var session = new ThroughputTestSession(perfTestType, options);
+            var session = new ThroughputTestSession(perfTestType, options, outputDirectoryPath);
             session.Execute();
             return;
         }
@@ -66,7 +71,7 @@ public class Program
         var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
         if (isLatencyTest)
         {
-            var session = new LatencyTestSession(perfTestType, options);
+            var session = new LatencyTestSession(perfTestType, options, outputDirectoryPath);
             session.Execute();
             return;
         }

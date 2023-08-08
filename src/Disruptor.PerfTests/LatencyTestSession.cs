@@ -12,12 +12,14 @@ public class LatencyTestSession
 {
     private readonly Type _perfTestType;
     private readonly Program.Options _options;
+    private readonly string _resultDirectoryPath;
     private readonly int _runCount;
 
-    public LatencyTestSession(Type perfTestType, Program.Options options)
+    public LatencyTestSession(Type perfTestType, Program.Options options, string resultDirectoryPath)
     {
         _perfTestType = perfTestType;
         _options = options;
+        _resultDirectoryPath = resultDirectoryPath;
         _runCount = options.RunCount ?? 3;
     }
 
@@ -95,12 +97,15 @@ public class LatencyTestSession
         if (!_options.ShouldGenerateReport)
             return;
 
-        var path = Path.Combine(Environment.CurrentDirectory, _perfTestType.Name + "-" + DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
+        var path = Path.Combine(_resultDirectoryPath, $"{_perfTestType.Name}-{DateTime.Now:yyyy-MM-dd hh-mm-ss}.html");
 
         File.WriteAllText(path, BuildReport(test, results, computerSpecifications));
 
-        var totalsPath = Path.Combine(Environment.CurrentDirectory, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
-        File.AppendAllText(totalsPath, $"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{results.Max(x => x.Histogram.GetValueAtPercentile(99))}\n");
+        var totalsPath = Path.Combine(_resultDirectoryPath, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
+        foreach (var result in results)
+        {
+            File.AppendAllText(totalsPath, FormattableString.Invariant($"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{result.P(50)},{result.P(90)},{result.P(99)}{Environment.NewLine}"));
+        }
 
         if (_options.ShouldOpenReport)
             Process.Start(path);

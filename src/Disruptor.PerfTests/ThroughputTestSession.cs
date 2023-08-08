@@ -12,12 +12,14 @@ public class ThroughputTestSession
 {
     private readonly Type _perfTestType;
     private readonly Program.Options _options;
+    private readonly string _resultDirectoryPath;
     private readonly int _runCount;
 
-    public ThroughputTestSession(Type perfTestType, Program.Options options)
+    public ThroughputTestSession(Type perfTestType, Program.Options options, string resultDirectoryPath)
     {
         _perfTestType = perfTestType;
         _options = options;
+        _resultDirectoryPath = resultDirectoryPath;
         _runCount = options.RunCount ?? 7;
     }
 
@@ -94,12 +96,12 @@ public class ThroughputTestSession
         if (!_options.ShouldGenerateReport)
             return;
 
-        var path = Path.Combine(Environment.CurrentDirectory, "results", _perfTestType.Name + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss") + ".html");
+        var path = Path.Combine(_resultDirectoryPath, $"{_perfTestType.Name}-{DateTime.UtcNow:yyyy-MM-dd hh-mm-ss}.html");
         File.WriteAllText(path, BuildReport(test, results, computerSpecifications));
 
-        var totalsPath = Path.Combine(Environment.CurrentDirectory, "results", $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
+        var totalsPath = Path.Combine(_resultDirectoryPath, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
         var average = results.Average(x => x.TotalOperationsInRun / x.Duration.TotalSeconds);
-        File.AppendAllText(totalsPath, FormattableString.Invariant($"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{average}\n"));
+        File.AppendAllText(totalsPath, FormattableString.Invariant($"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{average}{Environment.NewLine}"));
 
         if (_options.ShouldOpenReport)
             Process.Start(path);
