@@ -18,7 +18,7 @@ public class ThreadAffinityUtil
     {
         Thread.BeginThreadAffinity();
 
-        var affinity = (1u << processorIndex);
+        var affinity = (1ul << processorIndex);
         SetProcessorAffinity(affinity);
 
         return new Scope();
@@ -26,13 +26,13 @@ public class ThreadAffinityUtil
 
     private static void RemoveThreadAffinity()
     {
-        var affinity = (1u << Environment.ProcessorCount) - 1;
+        var affinity = (1ul << Environment.ProcessorCount) - 1;
         SetProcessorAffinity(affinity);
 
         Thread.EndThreadAffinity();
     }
 
-    private static void SetProcessorAffinity(uint mask)
+    private static void SetProcessorAffinity(ulong mask)
     {
 #if NETFRAMEWORK
         SetProcessorAffinityWindows(mask);
@@ -49,17 +49,16 @@ public class ThreadAffinityUtil
 #if NETCOREAPP
     [SupportedOSPlatform("windows")]
 #endif
-    private static void SetProcessorAffinityWindows(uint mask)
+    private static void SetProcessorAffinityWindows(ulong mask)
     {
         var processThread = GetCurrentProcessThread();
-        processThread.ProcessorAffinity = new IntPtr(mask);
+        processThread.ProcessorAffinity = new IntPtr((long)mask);
     }
 
 #if NETCOREAPP
     [SupportedOSPlatform("linux")]
-    private static void SetProcessorAffinityLinux(uint mask)
+    private static void SetProcessorAffinityLinux(ulong cpuset)
     {
-        var cpuset = (ulong)mask;
         sched_setaffinity(0, new IntPtr(sizeof(ulong)), ref cpuset);
     }
 #endif
