@@ -14,9 +14,7 @@ public class EventProcessorBenchmarks_ProcessFilledRingBufferWithMaxBatchSize
     private const int _maxBatchSize = 50;
 
     private readonly RingBuffer<XEvent> _ringBuffer;
-    private IEventProcessor<XEvent> _processorRef1;
     private IEventProcessor<XEvent> _processor;
-    private XEventHandler _eventHandlerRef1;
     private XEventHandler _eventHandler;
 
     public EventProcessorBenchmarks_ProcessFilledRingBufferWithMaxBatchSize()
@@ -29,17 +27,8 @@ public class EventProcessorBenchmarks_ProcessFilledRingBufferWithMaxBatchSize
             scope.Event().Data = 1;
         }
 
-        _eventHandlerRef1 = new XEventHandler(() => _processorRef1.Halt());
-        _processorRef1 = EventProcessorRef1.Create(_ringBuffer, _ringBuffer.NewBarrier(), _eventHandlerRef1);
         _eventHandler = new XEventHandler(() => _processor.Halt());
         _processor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), _eventHandler);
-    }
-
-    [Benchmark(OperationsPerInvoke = _ringBufferSize / _maxBatchSize)]
-    public void RunRef2()
-    {
-        _processorRef1.Run();
-        _eventHandlerRef1.SequenceCallback.SetValue(-1); // Reset processor
     }
 
     [Benchmark(OperationsPerInvoke = _ringBufferSize / _maxBatchSize)]
