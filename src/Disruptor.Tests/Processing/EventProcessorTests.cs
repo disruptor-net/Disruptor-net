@@ -252,7 +252,7 @@ public class EventProcessorTests
         var waitStrategy = new BusySpinWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
         var barrier = new SequenceBarrier(sequencer, waitStrategy, new DependentSequenceGroup(new Sequence()));
-        var dp = new ArrayDataProvider<object>(sequencer.BufferSize);
+        var dp = new ArrayDataProvider<StubEvent>(sequencer.BufferSize);
 
         var h1 = new LifeCycleHandler();
         var p1 = CreateEventProcessor(dp, barrier, h1);
@@ -289,12 +289,35 @@ public class EventProcessorTests
         }
     }
 
-    private class LifeCycleHandler : IEventHandler<object>
+    [Test]
+    public void ShouldInvokeOnStartAndOnShutdown()
+    {
+        var handler = new LifeCycleHandler();
+        var processor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, handler);
+
+        var task = processor.Start();
+
+        var wasStarted = handler.WaitStart(TimeSpan.FromMilliseconds(500));
+        Assert.IsTrue(wasStarted);
+
+        var wasShutdownAfterStart = handler.WaitShutdown(TimeSpan.FromMilliseconds(10));
+        Assert.IsFalse(wasShutdownAfterStart);
+
+        processor.Halt();
+
+        var stopped = task.Wait(TimeSpan.FromMilliseconds(500));
+        Assert.IsTrue(stopped);
+
+        var wasShutdownAfterStop = handler.WaitShutdown(TimeSpan.FromMilliseconds(10));
+        Assert.IsTrue(wasShutdownAfterStop);
+    }
+
+    private class LifeCycleHandler : IEventHandler<StubEvent>
     {
         private readonly ManualResetEvent _startedSignal = new(false);
         private readonly ManualResetEvent _shutdownSignal = new(false);
 
-        public void OnEvent(object data, long sequence, bool endOfBatch)
+        public void OnEvent(StubEvent data, long sequence, bool endOfBatch)
         {
         }
 
