@@ -58,17 +58,13 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
     {
         while (dependentSequences.CursorValue < sequence)
         {
-            var waitSucceeded = await WaitForAsyncImpl(sequence, dependentSequences, cancellationToken).ConfigureAwait(false);
-            if (!waitSucceeded)
-            {
-                return SequenceWaitResult.Timeout;
-            }
+            await WaitForAsyncImpl(sequence, dependentSequences, cancellationToken).ConfigureAwait(false);
         }
 
         return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
     }
 
-    private async ValueTask<bool> WaitForAsyncImpl(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    private async ValueTask WaitForAsyncImpl(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         TaskCompletionSource<bool> tcs;
 
@@ -76,7 +72,7 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
         {
             if (dependentSequences.CursorValue >= sequence)
             {
-                return true;
+                return;
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -89,7 +85,5 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
         // the sequencer barrier after cancellation.
 
         await tcs.Task.ConfigureAwait(false);
-
-        return tcs.Task.IsCompleted;
     }
 }
