@@ -3,7 +3,7 @@
 namespace Disruptor;
 
 /// <summary>
-/// Blocking strategy that uses <c>Monitor.Wait</c> for event processors waiting on a barrier.
+/// Blocking wait strategy that uses <c>Monitor.Wait</c> and <c>Monitor.PulseAll</c>.
 /// </summary>
 /// <remarks>
 /// This strategy can be used when throughput and low-latency are not as important as CPU resources.

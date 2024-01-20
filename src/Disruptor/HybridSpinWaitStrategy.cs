@@ -3,7 +3,7 @@
 namespace Disruptor;
 
 /// <summary>
-/// Non-blocking strategy that uses either <see cref="AggressiveSpinWait"/> or <see cref="SpinWait"/> depending
+/// Non-blocking wait strategy that uses either <see cref="AggressiveSpinWait"/> or <see cref="SpinWait"/> depending
 /// on the target <see cref="DependentSequenceGroup"/>.
 /// </summary>
 /// <remarks>

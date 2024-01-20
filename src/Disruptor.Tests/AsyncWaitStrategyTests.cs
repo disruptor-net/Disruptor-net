@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace Disruptor.Tests;
 
-public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<AsyncWaitStrategy>
+public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<IAsyncWaitStrategy>
 {
     [Test]
     public void ShouldWaitFromMultipleThreadsAsync()

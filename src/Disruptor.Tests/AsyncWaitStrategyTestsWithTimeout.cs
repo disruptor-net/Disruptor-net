@@ -8,9 +8,9 @@ namespace Disruptor.Tests;
 
 public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
 {
-    protected override AsyncWaitStrategy CreateWaitStrategy()
+    protected override IAsyncWaitStrategy CreateWaitStrategy()
     {
-        return new AsyncWaitStrategy(TimeSpan.FromSeconds(30));
+        return new TimeoutAsyncWaitStrategy(TimeSpan.FromSeconds(30));
     }
 
     [Test]
@@ -18,7 +18,7 @@ public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
     {
         // Arrange
         var timeout = TimeSpan.FromMilliseconds(400);
-        var waitStrategy = new AsyncWaitStrategy(timeout);
+        var waitStrategy = new TimeoutAsyncWaitStrategy(timeout);
         var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
@@ -57,7 +57,7 @@ public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
     {
         // Arrange
         var timeout = TimeSpan.FromMilliseconds(400);
-        var waitStrategy = new AsyncWaitStrategy(timeout);
+        var waitStrategy = new TimeoutAsyncWaitStrategy(timeout);
         var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 

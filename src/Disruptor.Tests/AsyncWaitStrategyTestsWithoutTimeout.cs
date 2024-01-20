@@ -2,7 +2,7 @@ namespace Disruptor.Tests;
 
 public class AsyncWaitStrategyTestsWithoutTimeout : AsyncWaitStrategyTests
 {
-    protected override AsyncWaitStrategy CreateWaitStrategy()
+    protected override IAsyncWaitStrategy CreateWaitStrategy()
     {
         return new AsyncWaitStrategy();
     }

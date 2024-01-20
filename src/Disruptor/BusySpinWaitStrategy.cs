@@ -3,7 +3,7 @@
 namespace Disruptor;
 
 /// <summary>
-/// Non-blocking strategy that uses a busy spin loop.
+/// Non-blocking wait strategy that uses a busy spin loop.
 /// </summary>
 /// <remarks>
 /// This strategy will use CPU resources to avoid system calls which can introduce latency jitter. It is best

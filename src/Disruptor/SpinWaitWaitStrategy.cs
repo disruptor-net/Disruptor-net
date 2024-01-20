@@ -3,7 +3,7 @@
 namespace Disruptor;
 
 /// <summary>
-/// Spin strategy that uses a <see cref="SpinWait"/> for event processors waiting on a barrier.
+/// Non-blocking wait strategy that uses a <see cref="SpinWait"/>.
 /// </summary>
 /// <remarks>
 /// This strategy is a good compromise between performance and CPU resources.

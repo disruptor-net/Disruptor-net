@@ -3,7 +3,7 @@
 namespace Disruptor;
 
 /// <summary>
-/// Sleeping strategy that initially spins, then uses <c>Thread.Yield()</c>, and
+/// Non-blocking wait strategy that initially spins, then uses <c>Thread.Yield()</c>, and
 /// eventually <c>Thread.Sleep(0)</c> while the event processors
 /// are waiting on a barrier.
 /// </summary>

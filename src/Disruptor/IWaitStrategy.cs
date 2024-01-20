@@ -4,8 +4,12 @@ using Disruptor.Processing;
 namespace Disruptor;
 
 /// <summary>
-/// Strategy employed for making <see cref="IEventProcessor"/> wait on a cursor <see cref="Sequence"/>.
+/// Strategy used by the event processors to wait until sequence values are available for processing.
 /// </summary>
+/// <remarks>
+/// The wait strategy is used to wait until events are published (publisher / processor synchronization)
+/// but also until events are processed by the previous processors (processor / processor synchronization).
+/// </remarks>
 public interface IWaitStrategy
 {
     /// <summary>
@@ -20,7 +24,7 @@ public interface IWaitStrategy
 
     /// <summary>
     /// Wait for the given sequence to be available. It is possible for this method to return a value
-    /// less than the sequence number supplied depending on the implementation of the WaitStrategy. A common
+    /// less than the sequence number supplied depending on the implementation of the wait strategy. A common
     /// use for this is to signal a timeout. Any event process that is using a wait strategy to get notifications
     /// about message becoming available should remember to handle this case. The <see cref="IEventProcessor"/> explicitly
     /// handles this case and will signal a timeout if required.

@@ -3,8 +3,7 @@
 namespace Disruptor;
 
 /// <summary>
-/// Yielding strategy that uses <c>Thread.Yield()</c> for event processors waiting on a barrier
-/// after an initially spinning.
+/// Non-blocking wait strategy that uses <c>Thread.Yield()</c>.
 /// </summary>
 /// <remarks>
 /// This strategy is a good compromise between performance and CPU resources without incurring significant latency spikes.

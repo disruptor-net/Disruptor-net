@@ -60,7 +60,7 @@ public class AsyncBatchEventProcessorTests
     [Test]
     public void ShouldCallOnTimeout()
     {
-        var waitStrategy = new AsyncWaitStrategy(TimeSpan.FromMilliseconds(1));
+        var waitStrategy = new TimeoutAsyncWaitStrategy(TimeSpan.FromMilliseconds(1));
         var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new SingleProducerSequencer(16, waitStrategy));
         var sequenceBarrier = ringBuffer.NewAsyncBarrier();
 
@@ -81,7 +81,7 @@ public class AsyncBatchEventProcessorTests
     [Test]
     public void ShouldCallExceptionHandlerOnTimeoutException()
     {
-        var waitStrategy = new AsyncWaitStrategy(TimeSpan.FromMilliseconds(1));
+        var waitStrategy = new TimeoutAsyncWaitStrategy(TimeSpan.FromMilliseconds(1));
         var ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), new SingleProducerSequencer(16, waitStrategy));
         var sequenceBarrier = ringBuffer.NewAsyncBarrier();
 
