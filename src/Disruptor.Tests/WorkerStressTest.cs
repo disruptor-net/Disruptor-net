@@ -16,11 +16,9 @@ public class WorkerStressTest
         var ringBuffer = disruptor.RingBuffer;
         disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler<TestEvent>());
 
-        var threads = Math.Max(1, Environment.ProcessorCount / 2);
-
         const int iterations = 20_000_000;
-        var publisherCount = threads;
-        var handlerCount = threads;
+        var publisherCount = Math.Clamp(Environment.ProcessorCount / 2, 1, 8);
+        var handlerCount = Math.Clamp(Environment.ProcessorCount / 2, 1, 8);
 
         var end = new CountdownEvent(publisherCount);
         var start = new CountdownEvent(publisherCount);

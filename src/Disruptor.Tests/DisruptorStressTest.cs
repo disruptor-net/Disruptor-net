@@ -33,8 +33,8 @@ public class DisruptorStressTest
         var ringBuffer = disruptor.RingBuffer;
         disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler<TestEvent>());
 
-        var publisherCount = Math.Max(1, Environment.ProcessorCount / 2);
-        var handlerCount = Math.Max(1, Environment.ProcessorCount / 2);
+        var publisherCount = Math.Clamp(Environment.ProcessorCount / 2, 1, 8);
+        var handlerCount = Math.Clamp(Environment.ProcessorCount / 2, 1, 8);
 
         var end = new CountdownEvent(publisherCount);
         var start = new CountdownEvent(publisherCount);
