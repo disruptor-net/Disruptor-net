@@ -104,8 +104,8 @@ public class DisruptorTests : IDisposable
         var eventCounter = new CountdownEvent(2);
         var values = new List<int>();
 
-        _disruptor.HandleEventsWith(new TestBatchEventHandler<TestEvent>(e => values.Add(e.Value)))
-                  .Then(new TestBatchEventHandler<TestEvent>(e => eventCounter.Signal()));
+        _disruptor.HandleEventsWith(new TestAsyncBatchEventHandler<TestEvent>(e => values.Add(e.Value)))
+                  .Then(new TestAsyncBatchEventHandler<TestEvent>(e => eventCounter.Signal()));
 
         _disruptor.Start();
 

@@ -13,6 +13,7 @@ public sealed class AsyncSequenceBarrier
     private readonly IAsyncWaitStrategy _waitStrategy;
     private readonly DependentSequenceGroup _dependentSequences;
     private CancellationTokenSource _cancellationTokenSource;
+    private AsyncWaitState _asyncWaitState;
 
     public AsyncSequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
     {
@@ -23,6 +24,7 @@ public sealed class AsyncSequenceBarrier
         _waitStrategy = asyncWaitStrategy;
         _dependentSequences = dependentSequences;
         _cancellationTokenSource = new CancellationTokenSource();
+        _asyncWaitState = new AsyncWaitState(dependentSequences, _cancellationTokenSource.Token, _sequencer);
     }
 
     public DependentSequenceGroup DependentSequences => _dependentSequences;
@@ -65,26 +67,13 @@ public sealed class AsyncSequenceBarrier
             return new ValueTask<SequenceWaitResult>(_sequencer.GetHighestPublishedSequence(sequence, availableSequence));
         }
 
-        if (typeof(TSequenceBarrierOptions) == typeof(ISequenceBarrierOptions.IsDependentSequencePublished))
-        {
-            return InvokeWaitStrategy(sequence);
-        }
-
-        return InvokeWaitStrategyAndWaitForPublishedSequence(sequence);
+        return InvokeWaitStrategy(sequence);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private ValueTask<SequenceWaitResult> InvokeWaitStrategy(long sequence)
     {
-        return _waitStrategy.WaitForAsync(sequence, _dependentSequences, _cancellationTokenSource.Token);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private async ValueTask<SequenceWaitResult> InvokeWaitStrategyAndWaitForPublishedSequence(long sequence)
-    {
-        var waitResult = await _waitStrategy.WaitForAsync(sequence, _dependentSequences, _cancellationTokenSource.Token).ConfigureAwait(false);
-
-        return waitResult.UnsafeAvailableSequence >= sequence ? _sequencer.GetHighestPublishedSequence(sequence, waitResult.UnsafeAvailableSequence) : waitResult;
+        return _waitStrategy.WaitForAsync(sequence, _asyncWaitState);
     }
 
     public void ResetProcessing()
@@ -93,6 +82,7 @@ public sealed class AsyncSequenceBarrier
         // has no finalizer and no unmanaged resources to release.
 
         _cancellationTokenSource = new CancellationTokenSource();
+        _asyncWaitState = new AsyncWaitState(_dependentSequences, _cancellationTokenSource.Token, _sequencer);
     }
 
     public void CancelProcessing()

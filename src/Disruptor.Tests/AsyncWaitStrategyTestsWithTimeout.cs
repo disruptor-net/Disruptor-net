@@ -66,12 +66,12 @@ public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
 
         var waitTask1 = Task.Run(async () =>
         {
-            waitResult1.SetResult(await waitStrategy.WaitForAsync(10, new DependentSequenceGroup(Cursor), CancellationToken));
+            waitResult1.SetResult(await waitStrategy.WaitForAsync(10, new AsyncWaitState(new DependentSequenceGroup(Cursor), CancellationToken)));
             Thread.Sleep(1);
             sequence1.SetValue(10);
         });
 
-        var waitTask2 = Task.Run(async () => waitResult2.SetResult(await waitStrategy.WaitForAsync(10, new DependentSequenceGroup(Cursor, sequence1), CancellationToken)));
+        var waitTask2 = Task.Run(async () => waitResult2.SetResult(await waitStrategy.WaitForAsync(10, new AsyncWaitState(new DependentSequenceGroup(Cursor, sequence1), CancellationToken))));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitResult1.Task);

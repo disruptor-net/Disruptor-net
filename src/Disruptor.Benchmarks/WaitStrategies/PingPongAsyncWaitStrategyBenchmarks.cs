@@ -13,14 +13,14 @@ public class PingPongAsyncWaitStrategyBenchmarks : IDisposable
     private readonly AsyncWaitStrategy _pongWaitStrategy = new();
     private readonly Sequence _pingCursor = new();
     private readonly Sequence _pongCursor = new();
+    private readonly AsyncWaitState _pingAsyncWaitState;
+    private readonly AsyncWaitState _pongAsyncWaitState;
     private readonly Task _pongTask;
-    private readonly DependentSequenceGroup _pingDependentSequences;
-    private readonly DependentSequenceGroup _pongDependentSequences;
 
     public PingPongAsyncWaitStrategyBenchmarks()
     {
-        _pingDependentSequences = new DependentSequenceGroup(_pingCursor);
-        _pongDependentSequences = new DependentSequenceGroup(_pongCursor);
+        _pingAsyncWaitState = new AsyncWaitState(new DependentSequenceGroup(_pingCursor), _cancellationTokenSource.Token);
+        _pongAsyncWaitState = new AsyncWaitState(new DependentSequenceGroup(_pongCursor), _cancellationTokenSource.Token);
         _pongTask = Task.Run(RunPong);
     }
 
@@ -40,8 +40,10 @@ public class PingPongAsyncWaitStrategyBenchmarks : IDisposable
             {
                 sequence++;
 
-                await _pingWaitStrategy.WaitForAsync(sequence, _pingDependentSequences, _cancellationTokenSource.Token).ConfigureAwait(false);
+                // Wait for ping
+                await _pingWaitStrategy.WaitForAsync(sequence, _pingAsyncWaitState).ConfigureAwait(false);
 
+                // Publish pong
                 _pongCursor.SetValue(sequence);
                 _pongWaitStrategy.SignalAllWhenBlocking();
             }
@@ -62,10 +64,12 @@ public class PingPongAsyncWaitStrategyBenchmarks : IDisposable
 
         for (var s = start; s < end; s++)
         {
+            // Publish ping
             _pingCursor.SetValue(s);
             _pingWaitStrategy.SignalAllWhenBlocking();
 
-            await _pongWaitStrategy.WaitForAsync(s, _pongDependentSequences, _cancellationTokenSource.Token).ConfigureAwait(false);
+            // Wait for pong
+            await _pongWaitStrategy.WaitForAsync(s, _pongAsyncWaitState).ConfigureAwait(false);
         }
     }
 }

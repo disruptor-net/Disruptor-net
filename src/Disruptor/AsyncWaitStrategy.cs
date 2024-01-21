@@ -13,7 +13,7 @@ namespace Disruptor;
 /// </remarks>
 public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
 {
-    private readonly List<TaskCompletionSource<bool>> _taskCompletionSources = new();
+    private readonly List<AsyncWaitState> _asyncWaitStates = new();
     private readonly object _gate = new();
     private bool _hasSyncWaiter;
 
@@ -46,44 +46,33 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
                 Monitor.PulseAll(_gate);
             }
 
-            foreach (var completionSource in _taskCompletionSources)
+            foreach (var completionSource in _asyncWaitStates)
             {
-                completionSource.TrySetResult(true);
+                completionSource.Signal();
             }
-            _taskCompletionSources.Clear();
+            _asyncWaitStates.Clear();
         }
     }
 
-    public async ValueTask<SequenceWaitResult> WaitForAsync(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ValueTask<SequenceWaitResult> WaitForAsync(long sequence, AsyncWaitState asyncWaitState)
     {
-        while (dependentSequences.CursorValue < sequence)
+        if (asyncWaitState.CursorValue < sequence)
         {
-            await WaitForAsyncImpl(sequence, dependentSequences, cancellationToken).ConfigureAwait(false);
-        }
-
-        return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
-    }
-
-    private async ValueTask WaitForAsyncImpl(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
-    {
-        TaskCompletionSource<bool> tcs;
-
-        lock (_gate)
-        {
-            if (dependentSequences.CursorValue >= sequence)
+            lock (_gate)
             {
-                return;
+                if (asyncWaitState.CursorValue < sequence)
+                {
+                    asyncWaitState.ThrowIfCancellationRequested();
+
+                    _asyncWaitStates.Add(asyncWaitState);
+
+                    return asyncWaitState.Wait(sequence);
+                }
             }
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            _taskCompletionSources.Add(tcs);
         }
 
-        // Using cancellationToken in the await is not required because SignalAllWhenBlocking is always invoked by
-        // the sequencer barrier after cancellation.
+        var availableSequence = asyncWaitState.GetAvailableSequence(sequence);
 
-        await tcs.Task.ConfigureAwait(false);
+        return new ValueTask<SequenceWaitResult>(availableSequence);
     }
 }

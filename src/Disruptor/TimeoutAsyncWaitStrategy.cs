@@ -75,43 +75,53 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncWaitStrategy
         }
     }
 
-    public async ValueTask<SequenceWaitResult> WaitForAsync(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public async ValueTask<SequenceWaitResult> WaitForAsync(long sequence, AsyncWaitState asyncWaitState)
     {
-        while (dependentSequences.CursorValue < sequence)
+        while (asyncWaitState.CursorValue < sequence)
         {
-            var waitSucceeded = await WaitForAsyncImpl(sequence, dependentSequences, cancellationToken).ConfigureAwait(false);
+            var waitSucceeded = await WaitForAsyncImpl(sequence, asyncWaitState).ConfigureAwait(false);
             if (!waitSucceeded)
             {
                 return SequenceWaitResult.Timeout;
             }
         }
 
-        return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
+        return asyncWaitState.AggressiveSpinWaitFor(sequence);
     }
 
-    private async ValueTask<bool> WaitForAsyncImpl(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    private async ValueTask<bool> WaitForAsyncImpl(long sequence, AsyncWaitState asyncWaitState)
     {
         TaskCompletionSource<bool> tcs;
 
         lock (_gate)
         {
-            if (dependentSequences.CursorValue >= sequence)
+            if (asyncWaitState.CursorValue >= sequence)
             {
                 return true;
             }
 
-            cancellationToken.ThrowIfCancellationRequested();
+            asyncWaitState.ThrowIfCancellationRequested();
 
             tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             _taskCompletionSources.Add(tcs);
         }
 
-        // Using cancellationToken in the await is not required because SignalAllWhenBlocking is always invoked by
-        // the sequencer barrier after cancellation.
+        using (var cts = new CancellationTokenSource())
+        {
+            var delayTask = Task.Delay(_timeoutMilliseconds, cts.Token);
 
-        // ReSharper disable once MethodSupportsCancellation
-        await Task.WhenAny(tcs.Task, Task.Delay(_timeoutMilliseconds)).ConfigureAwait(false);
+            var resultTask = await Task.WhenAny(tcs.Task, delayTask).ConfigureAwait(false);
+            if (resultTask == delayTask)
+            {
+                return false;
+            }
 
-        return tcs.Task.IsCompleted;
+            // Cancel the timer task so that it does not fire
+            cts.Cancel();
+
+            // tcs.Task is not awaited because it cannot possibly throw
+
+            return true;
+        }
     }
 }

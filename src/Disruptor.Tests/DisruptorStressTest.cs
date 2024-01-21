@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
@@ -27,7 +28,7 @@ public class DisruptorStressTest
         ShouldHandleLotsOfThreads<TestAsyncBatchEventHandler>(new AsyncWaitStrategy(), 2_000_000);
     }
 
-    private static void ShouldHandleLotsOfThreads<T>(IWaitStrategy waitStrategy, int iterations) where T : IHandler, new()
+    private static void ShouldHandleLotsOfThreads<T>(IWaitStrategy waitStrategy, int iterations) where T : ITestHandler, new()
     {
         var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, waitStrategy);
         var ringBuffer = disruptor.RingBuffer;
@@ -36,7 +37,6 @@ public class DisruptorStressTest
         var publisherCount = Math.Clamp(Environment.ProcessorCount / 2, 1, 8);
         var handlerCount = Math.Clamp(Environment.ProcessorCount / 2, 1, 8);
 
-        var end = new CountdownEvent(publisherCount);
         var start = new CountdownEvent(publisherCount);
 
         var handlers = new T[handlerCount];
@@ -50,26 +50,15 @@ public class DisruptorStressTest
         var publishers = new Publisher[publisherCount];
         for (var i = 0; i < publishers.Length; i++)
         {
-            publishers[i] = new Publisher(ringBuffer, iterations, start, end);
+            publishers[i] = new Publisher(ringBuffer, iterations, start);
         }
 
         disruptor.Start();
 
-        foreach (var publisher in publishers)
-        {
-            Task.Run(publisher.Run);
-        }
+        var publisherTasks = publishers.Select(x => Task.Run(x.Run)).ToArray();
+        Task.WaitAll(publisherTasks);
 
-        end.Wait();
-
-        var spinWait = new SpinWait();
-
-        while (ringBuffer.Cursor < (iterations - 1))
-        {
-            spinWait.SpinOnce();
-        }
-
-        disruptor.Shutdown();
+        disruptor.Shutdown(TimeSpan.FromSeconds(10));
 
         foreach (var publisher in publishers)
         {
@@ -78,12 +67,12 @@ public class DisruptorStressTest
 
         foreach (var handler in handlers)
         {
-            Assert.That(handler.MessagesSeen, Is.Not.EqualTo(0));
+            Assert.That(handler.MessagesSeen, Is.EqualTo(iterations * publishers.Length));
             Assert.That(handler.FailureCount, Is.EqualTo(0));
         }
     }
 
-    private interface IHandler
+    private interface ITestHandler
     {
         int FailureCount { get; }
         int MessagesSeen { get; }
@@ -91,7 +80,7 @@ public class DisruptorStressTest
         void Register(Disruptor<TestEvent> disruptor);
     }
 
-    private class TestEventHandler : IEventHandler<TestEvent>, IHandler
+    private class TestEventHandler : IEventHandler<TestEvent>, ITestHandler
     {
         public int FailureCount { get; private set; }
         public int MessagesSeen { get; private set; }
@@ -112,7 +101,7 @@ public class DisruptorStressTest
         }
     }
 
-    private class TestBatchEventHandler : IBatchEventHandler<TestEvent>, IHandler
+    private class TestBatchEventHandler : IBatchEventHandler<TestEvent>, ITestHandler
     {
         public int FailureCount { get; private set; }
         public int MessagesSeen { get; private set; }
@@ -139,7 +128,7 @@ public class DisruptorStressTest
         }
     }
 
-    private class TestAsyncBatchEventHandler : IAsyncBatchEventHandler<TestEvent>, IHandler
+    private class TestAsyncBatchEventHandler : IAsyncBatchEventHandler<TestEvent>, ITestHandler
     {
         public int FailureCount { get; private set; }
         public int MessagesSeen { get; private set; }
@@ -171,16 +160,14 @@ public class DisruptorStressTest
     private class Publisher
     {
         private readonly RingBuffer<TestEvent> _ringBuffer;
-        private readonly CountdownEvent _end;
         private readonly CountdownEvent _start;
         private readonly int _iterations;
 
         public bool Failed;
 
-        public Publisher(RingBuffer<TestEvent> ringBuffer, int iterations, CountdownEvent start, CountdownEvent end)
+        public Publisher(RingBuffer<TestEvent> ringBuffer, int iterations, CountdownEvent start)
         {
             _ringBuffer = ringBuffer;
-            _end = end;
             _start = start;
             _iterations = iterations;
         }
@@ -195,21 +182,17 @@ public class DisruptorStressTest
                 var i = _iterations;
                 while (--i != -1)
                 {
-                    var next = _ringBuffer.Next();
-                    var testEvent = _ringBuffer[next];
-                    testEvent.Sequence = next;
-                    testEvent.A = next + 13;
-                    testEvent.B = next - 7;
-                    _ringBuffer.Publish(next);
+                    var sequence = _ringBuffer.Next();
+                    var testEvent = _ringBuffer[sequence];
+                    testEvent.Sequence = sequence;
+                    testEvent.A = sequence + 13;
+                    testEvent.B = sequence - 7;
+                    _ringBuffer.Publish(sequence);
                 }
             }
             catch (Exception)
             {
                 Failed = true;
-            }
-            finally
-            {
-                _end.Signal();
             }
         }
     }
