@@ -9,7 +9,7 @@ using HdrHistogram;
 
 namespace Disruptor.PerfTests.Latency.OneWay;
 
-public class OneWaySequencedLatencyTest_Channel : ILatencyTest, IDisposable
+public class OneWaySequencedLatencyTest_Channel : ILatencyTest, IExternalTest, IDisposable
 {
     private const int _bufferSize = 1024;
     private const long _iterations = 100 * 1000 * 30;
