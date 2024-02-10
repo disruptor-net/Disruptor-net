@@ -11,16 +11,16 @@ namespace Disruptor.PerfTests;
 public class ThroughputTestSession
 {
     private readonly Type _perfTestType;
-    private readonly Program.Options _options;
+    private readonly ProgramOptions _options;
     private readonly string _resultDirectoryPath;
     private readonly int _runCount;
 
-    public ThroughputTestSession(Type perfTestType, Program.Options options, string resultDirectoryPath)
+    public ThroughputTestSession(Type perfTestType, ProgramOptions options, string resultDirectoryPath)
     {
         _perfTestType = perfTestType;
         _options = options;
         _resultDirectoryPath = resultDirectoryPath;
-        _runCount = options.RunCount ?? 7;
+        _runCount = options.RunCountForThroughputTest;
     }
 
     public void Execute()
@@ -87,13 +87,13 @@ public class ThroughputTestSession
     {
         var computerSpecifications = new ComputerSpecifications();
 
-        if (_options.ShouldPrintComputerSpecifications)
+        if (_options.PrintComputerSpecifications)
         {
             Console.WriteLine();
             Console.Write(computerSpecifications.ToString());
         }
 
-        if (!_options.ShouldGenerateReport)
+        if (!_options.GenerateReport)
             return;
 
         var path = Path.Combine(_resultDirectoryPath, $"{_perfTestType.Name}-{DateTime.UtcNow:yyyy-MM-dd hh-mm-ss}.html");
@@ -103,7 +103,7 @@ public class ThroughputTestSession
         var average = results.Average(x => x.TotalOperationsInRun / x.Duration.TotalSeconds);
         File.AppendAllText(totalsPath, FormattableString.Invariant($"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{average}{Environment.NewLine}"));
 
-        if (_options.ShouldOpenReport)
+        if (_options.OpenReport)
             Process.Start(path);
     }
 

@@ -11,16 +11,16 @@ namespace Disruptor.PerfTests;
 public class LatencyTestSession
 {
     private readonly Type _perfTestType;
-    private readonly Program.Options _options;
+    private readonly ProgramOptions _options;
     private readonly string _resultDirectoryPath;
     private readonly int _runCount;
 
-    public LatencyTestSession(Type perfTestType, Program.Options options, string resultDirectoryPath)
+    public LatencyTestSession(Type perfTestType, ProgramOptions options, string resultDirectoryPath)
     {
         _perfTestType = perfTestType;
         _options = options;
         _resultDirectoryPath = resultDirectoryPath;
-        _runCount = options.RunCount ?? 3;
+        _runCount = options.RunCountForLatencyTest;
     }
 
     public void Execute()
@@ -88,13 +88,13 @@ public class LatencyTestSession
     {
         var computerSpecifications = new ComputerSpecifications();
 
-        if (_options.ShouldPrintComputerSpecifications)
+        if (_options.PrintComputerSpecifications)
         {
             Console.WriteLine();
             Console.Write(computerSpecifications.ToString());
         }
 
-        if (!_options.ShouldGenerateReport)
+        if (!_options.GenerateReport)
             return;
 
         var path = Path.Combine(_resultDirectoryPath, $"{_perfTestType.Name}-{DateTime.Now:yyyy-MM-dd hh-mm-ss}.html");
@@ -107,7 +107,7 @@ public class LatencyTestSession
             File.AppendAllText(totalsPath, FormattableString.Invariant($"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{result.P(50)},{result.P(90)},{result.P(99)}{Environment.NewLine}"));
         }
 
-        if (_options.ShouldOpenReport)
+        if (_options.OpenReport)
             Process.Start(path);
     }
 
