@@ -23,7 +23,7 @@ public class PerfTestTypeSelector
         if (_options.Target.Equals("all", StringComparison.OrdinalIgnoreCase))
             return GetAllTestTypes();
 
-        return GetMatchingTestTypes(_options.Target);
+        return GetMatchingTestTypes(_options.Target, LoadValidTestTypes());
     }
 
     private List<Type> PrintAndSelectTestTypes()
@@ -52,7 +52,7 @@ public class PerfTestTypeSelector
             return new() { printableTypes[index].Type };
         }
 
-        return GetMatchingTestTypes(target);
+        return GetMatchingTestTypes(target, testTypes);
     }
 
     private static void PrintGroup(int level, List<PrintableType> types)
@@ -66,7 +66,7 @@ public class PerfTestTypeSelector
 
         foreach (var type in types.Where(x => x.Namespace.Length == level))
         {
-            Console.WriteLine($"{padding}- {type.Index}: {type.Name}");
+            Console.WriteLine($"{padding}{type.Index}: {type.Name}");
         }
     }
 
@@ -98,11 +98,11 @@ public class PerfTestTypeSelector
         }
     }
 
-    private static List<Type> GetMatchingTestTypes(string target)
+    private static List<Type> GetMatchingTestTypes(string target, List<Type> testTypes)
     {
         var regex = CreateTargetRegex(target);
 
-        return LoadValidTestTypes().Where(x => regex.IsMatch(x.Name)).ToList();
+        return testTypes.Where(x => regex.IsMatch(x.Name)).ToList();
 
         static Regex CreateTargetRegex(string target)
         {
