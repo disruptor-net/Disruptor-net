@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading;
 using Disruptor.PerfTests.Support;
 using Disruptor.Util;
@@ -12,8 +13,8 @@ public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
     private const long _iterations = 100 * 1000 * 30;
     private const long _pauseDurationInNano = 1000;
 
-    private readonly ArrayConcurrentQueue<long> _pingQueue = new(_bufferSize);
-    private readonly ArrayConcurrentQueue<long> _pongQueue = new(_bufferSize);
+    private readonly BlockingCollection<long> _pingQueue = new(_bufferSize);
+    private readonly BlockingCollection<long> _pongQueue = new(_bufferSize);
     private readonly QueuePinger _pinger;
     private readonly QueuePonger _ponger;
 
@@ -47,8 +48,8 @@ public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
 
     private class QueuePinger
     {
-        private readonly ArrayConcurrentQueue<long> _pingQueue;
-        private readonly ArrayConcurrentQueue<long> _pongQueue;
+        private readonly BlockingCollection<long> _pingQueue;
+        private readonly BlockingCollection<long> _pongQueue;
         private readonly long _maxEvents;
         private readonly long _pauseTimeInNano;
         private readonly double _pauseDurationInStopwatchTicks;
@@ -57,7 +58,7 @@ public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
         private ManualResetEvent _signal;
         private CountdownEvent _globalSignal;
 
-        public QueuePinger(ArrayConcurrentQueue<long> pingQueue, ArrayConcurrentQueue<long> pongQueue, long maxEvents, long pauseTimeInNano)
+        public QueuePinger(BlockingCollection<long> pingQueue, BlockingCollection<long> pongQueue, long maxEvents, long pauseTimeInNano)
         {
             _pingQueue = pingQueue;
             _pongQueue = pongQueue;
@@ -77,8 +78,8 @@ public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
             while (counter < _maxEvents)
             {
                 var t0 = Stopwatch.GetTimestamp();
-                _pingQueue.Enqueue(1L);
-                counter += _pongQueue.Dequeue();
+                _pingQueue.Add(1L);
+                counter += _pongQueue.Take();
                 var t1 = Stopwatch.GetTimestamp();
 
                 _histogram.RecordValueWithExpectedInterval(StopwatchUtil.ToNanoseconds(t1 - t0), _pauseTimeInNano);
@@ -107,12 +108,12 @@ public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
 
     public class QueuePonger
     {
-        private readonly ArrayConcurrentQueue<long> _pingQueue;
-        private readonly ArrayConcurrentQueue<long> _pongQueue;
+        private readonly BlockingCollection<long> _pingQueue;
+        private readonly BlockingCollection<long> _pongQueue;
         private CancellationToken _cancellationToken;
         private CountdownEvent _globalSignal;
 
-        public QueuePonger(ArrayConcurrentQueue<long> pingQueue, ArrayConcurrentQueue<long> pongQueue)
+        public QueuePonger(BlockingCollection<long> pingQueue, BlockingCollection<long> pongQueue)
         {
             _pingQueue = pingQueue;
             _pongQueue = pongQueue;
@@ -125,11 +126,8 @@ public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
 
             while (!_cancellationToken.IsCancellationRequested)
             {
-                long value;
-                if (_pingQueue.TryDequeue(out value))
-                    _pongQueue.Enqueue(value);
-                else
-                    Thread.Yield();
+                var value = _pingQueue.Take();
+                _pongQueue.Add(value);
             }
         }
 

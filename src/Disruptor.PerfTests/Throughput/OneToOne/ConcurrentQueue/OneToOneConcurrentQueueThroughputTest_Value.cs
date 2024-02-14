@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,20 +5,20 @@ using Disruptor.PerfTests.Support;
 
 namespace Disruptor.PerfTests.Throughput.OneToOne.ConcurrentQueue;
 
-public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExternalTest
+public class OneToOneConcurrentQueueThroughputTest_Value : IThroughputTest, IExternalTest
 {
     private const int _bufferSize = 1024 * 64;
     private const long _iterations = 1000L * 1000L * 10L;
 
     private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
 
-    private readonly BlockingCollection<PerfEvent> _queue;
+    private readonly ConcurrentQueue<PerfValueEvent> _queue;
     private readonly AdditionEventHandler _eventHandler;
     private readonly EventProcessor _eventProcessor;
 
-    public OneToOneBlockingCollectionThroughputTest()
+    public OneToOneConcurrentQueueThroughputTest_Value()
     {
-        _queue = new BlockingCollection<PerfEvent>(_bufferSize);
+        _queue = new ConcurrentQueue<PerfValueEvent>();
         _eventHandler = new AdditionEventHandler();
         _eventProcessor = new EventProcessor(_queue, _eventHandler);
     }
@@ -33,10 +32,16 @@ public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExtern
 
         sessionContext.Start();
 
+        var spinWait = new SpinWait();
         for (long i = 0; i < _iterations; i++)
         {
-            var data = new PerfEvent { Value = i };
-            _queue.Add(data);
+            var data = new PerfValueEvent { Value = i };
+            while (_queue.Count == _bufferSize)
+            {
+                spinWait.SpinOnce(-1);
+            }
+            _queue.Enqueue(data);
+            spinWait.Reset();
         }
 
         _eventHandler.WaitForSequence();
@@ -52,12 +57,12 @@ public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExtern
 
     private class EventProcessor
     {
-        private readonly BlockingCollection<PerfEvent> _queue;
+        private readonly ConcurrentQueue<PerfValueEvent> _queue;
         private readonly AdditionEventHandler _eventHandler;
+        private volatile bool _running;
         private Task _task;
-        private CancellationTokenSource _cancellationTokenSource;
 
-        public EventProcessor(BlockingCollection<PerfEvent> queue, AdditionEventHandler eventHandler)
+        public EventProcessor(ConcurrentQueue<PerfValueEvent> queue, AdditionEventHandler eventHandler)
         {
             _queue = queue;
             _eventHandler = eventHandler;
@@ -67,21 +72,28 @@ public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExtern
         {
             var started = new ManualResetEventSlim();
 
-            _cancellationTokenSource = new CancellationTokenSource();
+            _running = true;
             _task = Task.Run(() =>
             {
                 started.Set();
 
-                try
+                var spinWait = new SpinWait();
+                while (true)
                 {
-                    foreach (var perfEvent in _queue.GetConsumingEnumerable(_cancellationTokenSource.Token))
+                    PerfValueEvent perfEvent;
+
+                    while (!_queue.TryDequeue(out perfEvent))
                     {
-                        _eventHandler.OnBatchStart(1);
-                        _eventHandler.OnEvent(perfEvent, perfEvent.Value, true);
+                        if (!_running)
+                            return;
+
+                        spinWait.SpinOnce();
                     }
-                }
-                catch (OperationCanceledException)
-                {
+
+                    spinWait.Reset();
+
+                    _eventHandler.OnBatchStart(1);
+                    _eventHandler.OnEvent(ref perfEvent, perfEvent.Value, true);
                 }
             });
 
@@ -90,7 +102,7 @@ public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExtern
 
         public void Stop()
         {
-            _cancellationTokenSource.Cancel();
+            _running = false;
             _task.Wait();
         }
     }

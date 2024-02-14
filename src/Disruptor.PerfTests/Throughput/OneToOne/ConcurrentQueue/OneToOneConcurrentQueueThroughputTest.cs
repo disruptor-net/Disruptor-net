@@ -8,19 +8,19 @@ namespace Disruptor.PerfTests.Throughput.OneToOne.ConcurrentQueue;
 public class OneToOneConcurrentQueueThroughputTest : IThroughputTest, IExternalTest
 {
     private const int _bufferSize = 1024 * 64;
-    private const long _iterations = 1000L * 1000L * 100L;
+    private const long _iterations = 1000L * 1000L * 10L;
 
     private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
 
     private readonly ConcurrentQueue<PerfEvent> _queue;
     private readonly AdditionEventHandler _eventHandler;
-    private readonly Consumer _consumer;
+    private readonly EventProcessor _eventProcessor;
 
     public OneToOneConcurrentQueueThroughputTest()
     {
         _queue = new ConcurrentQueue<PerfEvent>();
         _eventHandler = new AdditionEventHandler();
-        _consumer = new Consumer(_queue, _eventHandler);
+        _eventProcessor = new EventProcessor(_queue, _eventHandler);
     }
 
     public int RequiredProcessorCount => 2;
@@ -28,7 +28,7 @@ public class OneToOneConcurrentQueueThroughputTest : IThroughputTest, IExternalT
     public long Run(ThroughputSessionContext sessionContext)
     {
         _eventHandler.Reset(_iterations - 1);
-        _consumer.Start();
+        _eventProcessor.Start();
 
         sessionContext.Start();
 
@@ -38,7 +38,7 @@ public class OneToOneConcurrentQueueThroughputTest : IThroughputTest, IExternalT
             var data = new PerfEvent { Value = i };
             while (_queue.Count == _bufferSize)
             {
-                spinWait.SpinOnce();
+                spinWait.SpinOnce(-1);
             }
             _queue.Enqueue(data);
             spinWait.Reset();
@@ -46,7 +46,7 @@ public class OneToOneConcurrentQueueThroughputTest : IThroughputTest, IExternalT
 
         _eventHandler.WaitForSequence();
         sessionContext.Stop();
-        _consumer.Stop();
+        _eventProcessor.Stop();
 
         sessionContext.SetBatchData(_eventHandler.BatchesProcessed, _iterations);
 
@@ -55,14 +55,14 @@ public class OneToOneConcurrentQueueThroughputTest : IThroughputTest, IExternalT
         return _iterations;
     }
 
-    private class Consumer
+    private class EventProcessor
     {
         private readonly ConcurrentQueue<PerfEvent> _queue;
         private readonly AdditionEventHandler _eventHandler;
         private volatile bool _running;
         private Task _task;
 
-        public Consumer(ConcurrentQueue<PerfEvent> queue, AdditionEventHandler eventHandler)
+        public EventProcessor(ConcurrentQueue<PerfEvent> queue, AdditionEventHandler eventHandler)
         {
             _queue = queue;
             _eventHandler = eventHandler;

@@ -6,20 +6,20 @@ using Disruptor.PerfTests.Support;
 
 namespace Disruptor.PerfTests.Throughput.OneToOne.ConcurrentQueue;
 
-public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExternalTest
+public class OneToOneBlockingCollectionThroughputTest_Value : IThroughputTest, IExternalTest
 {
     private const int _bufferSize = 1024 * 64;
     private const long _iterations = 1000L * 1000L * 10L;
 
     private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
 
-    private readonly BlockingCollection<PerfEvent> _queue;
+    private readonly BlockingCollection<PerfValueEvent> _queue;
     private readonly AdditionEventHandler _eventHandler;
     private readonly EventProcessor _eventProcessor;
 
-    public OneToOneBlockingCollectionThroughputTest()
+    public OneToOneBlockingCollectionThroughputTest_Value()
     {
-        _queue = new BlockingCollection<PerfEvent>(_bufferSize);
+        _queue = new BlockingCollection<PerfValueEvent>(_bufferSize);
         _eventHandler = new AdditionEventHandler();
         _eventProcessor = new EventProcessor(_queue, _eventHandler);
     }
@@ -35,7 +35,7 @@ public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExtern
 
         for (long i = 0; i < _iterations; i++)
         {
-            var data = new PerfEvent { Value = i };
+            var data = new PerfValueEvent { Value = i };
             _queue.Add(data);
         }
 
@@ -52,12 +52,12 @@ public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExtern
 
     private class EventProcessor
     {
-        private readonly BlockingCollection<PerfEvent> _queue;
+        private readonly BlockingCollection<PerfValueEvent> _queue;
         private readonly AdditionEventHandler _eventHandler;
         private Task _task;
         private CancellationTokenSource _cancellationTokenSource;
 
-        public EventProcessor(BlockingCollection<PerfEvent> queue, AdditionEventHandler eventHandler)
+        public EventProcessor(BlockingCollection<PerfValueEvent> queue, AdditionEventHandler eventHandler)
         {
             _queue = queue;
             _eventHandler = eventHandler;
@@ -77,7 +77,9 @@ public class OneToOneBlockingCollectionThroughputTest : IThroughputTest, IExtern
                     foreach (var perfEvent in _queue.GetConsumingEnumerable(_cancellationTokenSource.Token))
                     {
                         _eventHandler.OnBatchStart(1);
-                        _eventHandler.OnEvent(perfEvent, perfEvent.Value, true);
+
+                        var localPerfEvent = perfEvent;
+                        _eventHandler.OnEvent(ref localPerfEvent, perfEvent.Value, true);
                     }
                 }
                 catch (OperationCanceledException)
