@@ -60,6 +60,8 @@ public class OneWaySequencedLatencyTest_BatchHandler : ILatencyTest, IDisposable
         ringBuffer[lastS].Value = -1;
         ringBuffer.Publish(lastS);
 
+        _handler.Completed.Wait();
+
         stopwatch.Stop();
     }
 

@@ -59,6 +59,8 @@ public class OneWaySequencedLatencyTest : ILatencyTest, IDisposable
         ringBuffer[lastS].Value = -1;
         ringBuffer.Publish(lastS);
 
+        _handler.Completed.Wait();
+
         stopwatch.Stop();
     }
 
