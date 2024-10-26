@@ -11,17 +11,9 @@ namespace Disruptor;
 /// See <see cref="Dsl.ValueDisruptor{T,TRingBuffer}.SetDefaultExceptionHandler"/> or <see cref="ValueDisruptor{T,TRingBuffer}.HandleExceptionsFor"/>
 /// if you want to handle exceptions propagated out of the handler.
 /// </remarks>
-public interface IValueEventHandler<T>
+public interface IValueEventHandler<T> : IEventHandler
     where T : struct
 {
-    /// <summary>
-    /// Limits the size of event batches.
-    /// </summary>
-    /// <remarks>
-    /// The value will be read only once on start, thus dynamically changing the max batch size is not supported.
-    /// </remarks>
-    int? MaxBatchSize => null;
-    
     /// <summary>
     /// Called when a publisher has committed an event to the <see cref="ValueRingBuffer{T}"/>. The <see cref="IValueEventProcessor{T}"/> will
     /// read messages from the <see cref="ValueRingBuffer{T}"/> in batches, where a batch is all of the events available to be
@@ -40,34 +32,6 @@ public interface IValueEventHandler<T>
     /// </summary>
     /// <param name="batchSize">the batch size.</param>
     void OnBatchStart(long batchSize)
-    {
-    }
-
-    ///<summary>
-    /// Called once on thread start before first event is available.
-    ///</summary>
-    void OnStart()
-    {
-    }
-
-    /// <summary>
-    /// Called once just before the thread is shutdown.
-    /// </summary>
-    /// <remarks>
-    /// Sequence event processing will already have stopped before this method is called. No events will
-    /// be processed after this message.
-    /// </remarks>
-    void OnShutdown()
-    {
-    }
-
-    /// <summary>
-    /// Invoked when the wait strategy timeouts.
-    /// </summary>
-    /// <remarks>
-    /// This only happens if the current wait strategy can return timeouts (e.g.: <see cref="TimeoutBlockingWaitStrategy"/>).
-    /// </remarks>
-    void OnTimeout(long sequence)
     {
     }
 }

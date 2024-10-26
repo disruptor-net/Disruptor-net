@@ -10,7 +10,7 @@ namespace Disruptor.Dsl;
 /// </summary>
 internal class EventProcessorInfo : IConsumerInfo
 {
-    public EventProcessorInfo(IEventProcessor eventProcessor, object? eventHandler, DependentSequenceGroup? dependentSequences)
+    public EventProcessorInfo(IEventProcessor eventProcessor, IEventHandler? eventHandler, DependentSequenceGroup? dependentSequences)
     {
         EventProcessor = eventProcessor;
         Handler = eventHandler;
@@ -22,7 +22,7 @@ internal class EventProcessorInfo : IConsumerInfo
 
     public Sequence[] Sequences => new[] { EventProcessor.Sequence };
 
-    public object? Handler { get; }
+    public IEventHandler? Handler { get; }
 
     public DependentSequenceGroup? DependentSequences { get; }
 

@@ -9,8 +9,7 @@ namespace Disruptor;
 /// If the awaited sequence is not available after the configured timeout, the strategy returns <see cref="SequenceWaitResult.Timeout"/>.
 /// </summary>
 /// <remarks>
-/// Using a timeout wait strategy is only useful if your event handler handles timeouts (<see cref="IEventHandler{T}.OnTimeout"/>,
-/// <see cref="IValueEventHandler{T}.OnTimeout"/>, <see cref="IBatchEventHandler{T}.OnTimeout"/> or <see cref="IAsyncBatchEventHandler{T}.OnTimeout"/>).
+/// Using a timeout wait strategy is only useful if your event handler handles timeouts (<see cref="IEventHandler.OnTimeout"/>).
 ///
 /// This strategy can be used when throughput and low-latency are not as important as CPU resources.
 /// </remarks>

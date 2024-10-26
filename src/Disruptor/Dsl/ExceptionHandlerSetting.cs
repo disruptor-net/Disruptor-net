@@ -10,10 +10,10 @@ namespace Disruptor.Dsl;
 /// <typeparam name="T">the type of event being handled.</typeparam>
 public class ExceptionHandlerSetting<T> where T : class
 {
-    private readonly object _eventHandler;
+    private readonly IEventHandler _eventHandler;
     private readonly ConsumerRepository _consumerRepository;
 
-    internal ExceptionHandlerSetting(object eventHandler, ConsumerRepository consumerRepository)
+    internal ExceptionHandlerSetting(IEventHandler eventHandler, ConsumerRepository consumerRepository)
     {
         _eventHandler = eventHandler;
         _consumerRepository = consumerRepository;
