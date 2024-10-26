@@ -8,17 +8,11 @@ namespace Disruptor.Dsl;
 
 internal class ConsumerRepository : IEnumerable<IConsumerInfo>
 {
-    private readonly Dictionary<object, EventProcessorInfo> _eventProcessorInfoByEventHandler;
-    private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence;
+    private readonly Dictionary<IEventHandler, EventProcessorInfo> _eventProcessorInfoByEventHandler = new(new IdentityComparer<IEventHandler>());
+    private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence = new(new IdentityComparer<Sequence>());
     private readonly List<IConsumerInfo> _consumerInfos = new();
 
-    public ConsumerRepository()
-    {
-        _eventProcessorInfoByEventHandler = new Dictionary<object, EventProcessorInfo>(new IdentityComparer<object>());
-        _eventProcessorInfoBySequence = new Dictionary<Sequence, IConsumerInfo>(new IdentityComparer<Sequence>());
-    }
-
-    public void Add(IEventProcessor eventProcessor, object eventHandler, DependentSequenceGroup dependentSequences)
+    public void Add(IEventProcessor eventProcessor, IEventHandler eventHandler, DependentSequenceGroup dependentSequences)
     {
         var consumerInfo = new EventProcessorInfo(eventProcessor, eventHandler, dependentSequences);
         _eventProcessorInfoByEventHandler[eventHandler] = consumerInfo;
@@ -63,7 +57,7 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         return false;
     }
 
-    public IEventProcessor GetEventProcessorFor(object eventHandler)
+    public IEventProcessor GetEventProcessorFor(IEventHandler eventHandler)
     {
         var found = _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo);
         if(!found)
@@ -74,7 +68,7 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         return eventProcessorInfo!.EventProcessor;
     }
 
-    public Sequence GetSequenceFor(object eventHandler)
+    public Sequence GetSequenceFor(IEventHandler eventHandler)
     {
         return GetEventProcessorFor(eventHandler).Sequence;
     }
@@ -90,7 +84,7 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
         }
     }
 
-    public DependentSequenceGroup? GetDependentSequencesFor(object eventHandler)
+    public DependentSequenceGroup? GetDependentSequencesFor(IEventHandler eventHandler)
     {
         return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo) ? eventProcessorInfo.DependentSequences : null;
     }
