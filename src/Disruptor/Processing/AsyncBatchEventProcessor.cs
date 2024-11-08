@@ -17,19 +17,20 @@ namespace Disruptor.Processing;
 /// </remarks>
 /// <typeparam name="T">the type of event used.</typeparam>
 /// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
-/// <typeparam name="TSequenceBarrierOptions">the type of the <see cref="ISequenceBarrierOptions"/> used.</typeparam>
+/// <typeparam name="TPublishedSequenceReader">the type of the <see cref="IPublishedSequenceReader"/> used.</typeparam>
 /// <typeparam name="TEventHandler">the type of the <see cref="IBatchEventHandler{T}"/> used.</typeparam>
 /// <typeparam name="TBatchSizeLimiter">the type of the <see cref="IBatchSizeLimiter"/> used.</typeparam>
-public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEventHandler, TBatchSizeLimiter> : IAsyncEventProcessor<T>
+public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHandler, TBatchSizeLimiter> : IAsyncEventProcessor<T>
     where T : class
     where TDataProvider : IDataProvider<T>
-    where TSequenceBarrierOptions : ISequenceBarrierOptions
+    where TPublishedSequenceReader : IPublishedSequenceReader
     where TEventHandler : IAsyncBatchEventHandler<T>
     where TBatchSizeLimiter : IBatchSizeLimiter
 {
     // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
     private TDataProvider _dataProvider;
     private AsyncSequenceBarrier _sequenceBarrier;
+    private TPublishedSequenceReader _publishedSequenceReader;
     private TEventHandler _eventHandler;
     private TBatchSizeLimiter _batchSizeLimiter;
     // ReSharper restore FieldCanBeMadeReadOnly.Local
@@ -39,10 +40,11 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrierOptions,
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
     private volatile int _runState = ProcessorRunStates.Idle;
 
-    public AsyncBatchEventProcessor(TDataProvider dataProvider, AsyncSequenceBarrier sequenceBarrier, TEventHandler eventHandler, TBatchSizeLimiter batchSizeLimiter)
+    public AsyncBatchEventProcessor(TDataProvider dataProvider, AsyncSequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TBatchSizeLimiter batchSizeLimiter)
     {
         _dataProvider = dataProvider;
         _sequenceBarrier = sequenceBarrier;
+        _publishedSequenceReader = publishedSequenceReader;
         _eventHandler = eventHandler;
         _batchSizeLimiter = batchSizeLimiter;
 
@@ -131,14 +133,16 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TSequenceBarrierOptions,
         {
             try
             {
-                var waitResult = await _sequenceBarrier.WaitForAsync<TSequenceBarrierOptions>(nextSequence).ConfigureAwait(false);
+                var waitResult = await _sequenceBarrier.WaitForAsync(nextSequence).ConfigureAwait(false);
                 if (waitResult.IsTimeout)
                 {
                     NotifyTimeout();
                     continue;
                 }
 
-                availableSequence = _batchSizeLimiter.ApplyMaxBatchSize(waitResult.UnsafeAvailableSequence, nextSequence);
+                var publishedSequence = _publishedSequenceReader.GetHighestPublishedSequence(nextSequence, waitResult.UnsafeAvailableSequence);
+                availableSequence = _batchSizeLimiter.ApplyMaxBatchSize(publishedSequence, nextSequence);
+
                 if (availableSequence >= nextSequence)
                 {
                     var batch = _dataProvider.GetBatch(nextSequence, availableSequence);

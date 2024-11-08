@@ -32,18 +32,16 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
 {
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly IDataProvider<T> _dataProvider;
-    private readonly IAsyncWaitStrategy _waitStrategy;
+    private readonly IAsyncSequenceWaiter _sequenceWaiter;
     private readonly ISequencer _sequencer;
-    private readonly DependentSequenceGroup _dependentSequences;
     private Sequence? _nextEnumeratorSequence;
     private bool _disposed;
 
-    public AsyncEventStream(IDataProvider<T> dataProvider, IAsyncWaitStrategy waitStrategy, ISequencer sequencer, Sequence cursorSequence, params Sequence[] gatingSequences)
+    public AsyncEventStream(IDataProvider<T> dataProvider, IAsyncSequenceWaiter sequenceWaiter, ISequencer sequencer)
     {
         _dataProvider = dataProvider;
+        _sequenceWaiter = sequenceWaiter;
         _sequencer = sequencer;
-        _dependentSequences = new DependentSequenceGroup(cursorSequence, gatingSequences);
-        _waitStrategy = waitStrategy;
 
         SetNextEnumeratorSequence();
     }
@@ -126,7 +124,7 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
             _sequence = sequence;
             _linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(streamCancellationToken, enumeratorCancellationToken);
 
-            _cancellationTokenRegistration = _linkedTokenSource.Token.Register(x => ((IAsyncWaitStrategy)x!).SignalAllWhenBlocking(), asyncEventStream._waitStrategy);
+            _cancellationTokenRegistration = _linkedTokenSource.Token.Register(x => ((IAsyncSequenceWaiter)x!).Cancel(), asyncEventStream._sequenceWaiter);
         }
 
         public EventBatch<T> Current { get; private set; }
@@ -151,7 +149,7 @@ public class AsyncEventStream<T> : IAsyncEnumerable<EventBatch<T>>, IDisposable
 
                 _linkedTokenSource.Token.ThrowIfCancellationRequested();
 
-                var waitResult = await _asyncEventStream._waitStrategy.WaitForAsync(nextSequence, _asyncEventStream._dependentSequences, _linkedTokenSource.Token).ConfigureAwait(false);
+                var waitResult = await _asyncEventStream._sequenceWaiter.WaitForAsync(nextSequence, _linkedTokenSource.Token).ConfigureAwait(false);
                 if (waitResult.UnsafeAvailableSequence < nextSequence)
                     continue;
 

@@ -56,7 +56,7 @@ public class Disruptor<T>
     /// <param name="eventFactory">the factory to create events in the ring buffer</param>
     /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
     /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
-    public Disruptor(Func<T> eventFactory, int ringBufferSize, IWaitStrategy waitStrategy)
+    public Disruptor(Func<T> eventFactory, int ringBufferSize, ISequenceWaitStrategy waitStrategy)
         : this(eventFactory, ringBufferSize, TaskScheduler.Default, SequencerFactory.DefaultProducerType, waitStrategy)
     {
     }
@@ -69,7 +69,7 @@ public class Disruptor<T>
     /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
     /// <param name="producerType">the claim strategy to use for the ring buffer</param>
     /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
-    public Disruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
+    public Disruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, ISequenceWaitStrategy waitStrategy)
     {
         _ringBuffer = new RingBuffer<T>(eventFactory, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy));
         _taskScheduler = taskScheduler;
@@ -413,11 +413,11 @@ public class Disruptor<T>
         CheckNotStarted();
 
         var processorSequences = new Sequence[eventHandlers.Length];
-        var barrier = _ringBuffer.NewBarrier(barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
         {
             var eventHandler = eventHandlers[i];
+            var barrier = _ringBuffer.NewBarrier(eventHandler, barrierSequences);
 
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
@@ -437,11 +437,11 @@ public class Disruptor<T>
         CheckNotStarted();
 
         var processorSequences = new Sequence[eventHandlers.Length];
-        var barrier = _ringBuffer.NewBarrier(barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
         {
             var eventHandler = eventHandlers[i];
+            var barrier = _ringBuffer.NewBarrier(eventHandler, barrierSequences);
 
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
@@ -466,7 +466,7 @@ public class Disruptor<T>
         {
             var eventHandler = eventHandlers[i];
 
-            var barrier = _ringBuffer.NewAsyncBarrier(barrierSequences);
+            var barrier = _ringBuffer.NewAsyncBarrier(eventHandler, barrierSequences);
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
             eventProcessor.SetExceptionHandler(_exceptionHandler);

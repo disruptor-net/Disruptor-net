@@ -64,9 +64,9 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
     /// <returns>a constructed ring buffer.</returns>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-    public static ValueRingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
+    public static ValueRingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize, ISequenceWaitStrategy waitStrategy)
     {
-        MultiProducerSequencer sequencer = new MultiProducerSequencer(bufferSize, waitStrategy);
+        var sequencer = new MultiProducerSequencer(bufferSize, waitStrategy);
 
         return new ValueRingBuffer<T>(factory, sequencer);
     }
@@ -91,9 +91,9 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
     /// <returns>a constructed ring buffer.</returns>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-    public static ValueRingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
+    public static ValueRingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize, ISequenceWaitStrategy waitStrategy)
     {
-        SingleProducerSequencer sequencer = new SingleProducerSequencer(bufferSize, waitStrategy);
+        var sequencer = new SingleProducerSequencer(bufferSize, waitStrategy);
 
         return new ValueRingBuffer<T>(factory, sequencer);
     }
@@ -120,7 +120,7 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     /// <returns>a constructed ring buffer.</returns>
     /// <exception cref="ArgumentOutOfRangeException">if the producer type is invalid</exception>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-    public static ValueRingBuffer<T> Create(ProducerType producerType, Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
+    public static ValueRingBuffer<T> Create(ProducerType producerType, Func<T> factory, int bufferSize, ISequenceWaitStrategy waitStrategy)
     {
         switch (producerType)
         {

@@ -6,6 +6,7 @@
     <StartupObject>Disruptor.Samples.Wiki.GettingStarted.SampleProgram</StartupObject>
     <LangVersion>Latest</LangVersion>
     <SignAssembly>false</SignAssembly>
+    <NoWarn>NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,5 +16,5 @@
   <ItemGroup>
     <PackageReference Include="HdrHistogram" Version="2.5.0" />
   </ItemGroup>
-  
+
 </Project>

@@ -11,17 +11,19 @@ namespace Disruptor;
 public sealed class SequenceBarrier
 {
     private readonly ISequencer _sequencer;
-    private readonly IWaitStrategy _waitStrategy;
+    private readonly ISequenceWaiter _sequenceWaiter;
     private readonly DependentSequenceGroup _dependentSequences;
     private CancellationTokenSource _cancellationTokenSource;
 
-    public SequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
+    public SequenceBarrier(ISequencer sequencer, ISequenceWaiter sequenceWaiter)
     {
         _sequencer = sequencer;
-        _waitStrategy = waitStrategy;
-        _dependentSequences = dependentSequences;
+        _sequenceWaiter = sequenceWaiter;
+        _dependentSequences = sequenceWaiter.DependentSequences;
         _cancellationTokenSource = new CancellationTokenSource();
     }
+
+    internal ISequencer Sequencer => _sequencer;
 
     public DependentSequenceGroup DependentSequences => _dependentSequences;
 
@@ -35,57 +37,50 @@ public sealed class SequenceBarrier
 
     public void ThrowIfCancellationRequested() => _cancellationTokenSource.Token.ThrowIfCancellationRequested();
 
-    public ISequenceBarrierOptions GetSequencerOptions()
+    /// <summary>
+    /// Waits until the requested sequence is available using the <see cref="ISequenceWaiter"/>.
+    /// Returns the last available and published sequence, which might be greater than the requested sequence.
+    /// </summary>
+    /// <remarks>
+    /// <p>
+    /// The returned value can be timeout (see <see cref="SequenceWaitResult.IsTimeout"/>
+    /// </p>
+    /// </remarks>
+    public SequenceWaitResult WaitForPublishedSequence(long sequence)
     {
-        return ISequenceBarrierOptions.Get(_sequencer, _dependentSequences);
+        var waitResult = WaitFor(sequence);
+        return waitResult.IsTimeout ? waitResult : _sequencer.GetHighestPublishedSequence(sequence, waitResult.UnsafeAvailableSequence);
     }
 
+    /// <summary>
+    /// Waits until the requested sequence is available using the <see cref="ISequenceWaiter"/>.
+    /// Returns the last available sequence, which might be greater than the requested sequence.
+    /// </summary>
+    /// <remarks>
+    /// <p>
+    /// The returned value can be timeout (see <see cref="SequenceWaitResult.IsTimeout"/>
+    /// </p>
+    /// <p>
+    /// The return sequence might not be published yet. Use either <see cref="WaitForPublishedSequence"/>
+    /// or a <see cref="IPublishedSequenceReader"/> to ensure the sequence is published.
+    /// </p>
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
     public SequenceWaitResult WaitFor(long sequence)
-    {
-        return WaitFor<ISequenceBarrierOptions.None>(sequence);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
-    public SequenceWaitResult WaitFor<TSequenceBarrierOptions>(long sequence)
-        where TSequenceBarrierOptions : ISequenceBarrierOptions
     {
         _cancellationTokenSource.Token.ThrowIfCancellationRequested();
 
         var availableSequence = _dependentSequences.Value;
         if (availableSequence >= sequence)
-        {
-            if (typeof(TSequenceBarrierOptions) == typeof(ISequenceBarrierOptions.IsDependentSequencePublished))
-                return availableSequence;
+            return availableSequence;
 
-            return _sequencer.GetHighestPublishedSequence(sequence, availableSequence);
-        }
-
-        if (typeof(TSequenceBarrierOptions) == typeof(ISequenceBarrierOptions.IsDependentSequencePublished))
-        {
-            return InvokeWaitStrategy(sequence);
-        }
-
-        return InvokeWaitStrategyAndWaitForPublishedSequence(sequence);
+        return InvokeWaitStrategy(sequence);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private SequenceWaitResult InvokeWaitStrategy(long sequence)
     {
-        return _waitStrategy.WaitFor(sequence, _dependentSequences, _cancellationTokenSource.Token);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private SequenceWaitResult InvokeWaitStrategyAndWaitForPublishedSequence(long sequence)
-    {
-        var waitResult = _waitStrategy.WaitFor(sequence, _dependentSequences, _cancellationTokenSource.Token);
-
-        if (waitResult.UnsafeAvailableSequence >= sequence)
-        {
-            return _sequencer.GetHighestPublishedSequence(sequence, waitResult.UnsafeAvailableSequence);
-        }
-
-        return waitResult;
+        return _sequenceWaiter.WaitFor(sequence, _cancellationTokenSource.Token);
     }
 
     public void ResetProcessing()
@@ -99,6 +94,6 @@ public sealed class SequenceBarrier
     public void CancelProcessing()
     {
         _cancellationTokenSource.Cancel();
-        _waitStrategy.SignalAllWhenBlocking();
+        _sequenceWaiter.Cancel();
     }
 }

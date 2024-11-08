@@ -27,7 +27,7 @@ public class DisruptorStressTest
         ShouldHandleLotsOfThreads<TestAsyncBatchEventHandler>(new AsyncWaitStrategy(), 2_000_000);
     }
 
-    private static void ShouldHandleLotsOfThreads<T>(IWaitStrategy waitStrategy, int iterations) where T : IHandler, new()
+    private static void ShouldHandleLotsOfThreads<T>(ISequenceWaitStrategy waitStrategy, int iterations) where T : IHandler, new()
     {
         var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, waitStrategy);
         var ringBuffer = disruptor.RingBuffer;

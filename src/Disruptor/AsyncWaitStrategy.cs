@@ -11,7 +11,7 @@ namespace Disruptor;
 /// <remarks>
 /// This strategy can be used when throughput and low-latency are not as important as CPU resources.
 /// </remarks>
-public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
+public sealed class AsyncWaitStrategy : IAsyncSequenceWaitStrategy
 {
     private readonly List<TaskCompletionSource<bool>> _taskCompletionSources = new();
     private readonly object _gate = new();
@@ -19,23 +19,11 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
-    {
-        if (dependentSequences.CursorValue < sequence)
-        {
-            lock (_gate)
-            {
-                _hasSyncWaiter = true;
-                while (dependentSequences.CursorValue < sequence)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    Monitor.Wait(_gate);
-                }
-            }
-        }
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+        => new SequenceWaiter(this, dependentSequences);
 
-        return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
-    }
+    public IAsyncSequenceWaiter NewAsyncSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+        => new SequenceWaiter(this, dependentSequences);
 
     public void SignalAllWhenBlocking()
     {
@@ -54,7 +42,25 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
         }
     }
 
-    public async ValueTask<SequenceWaitResult> WaitForAsync(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    private SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    {
+        if (dependentSequences.CursorValue < sequence)
+        {
+            lock (_gate)
+            {
+                _hasSyncWaiter = true;
+                while (dependentSequences.CursorValue < sequence)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    Monitor.Wait(_gate);
+                }
+            }
+        }
+
+        return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
+    }
+
+    private async ValueTask<SequenceWaitResult> WaitForAsync(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         while (dependentSequences.CursorValue < sequence)
         {
@@ -85,5 +91,19 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
         // the sequencer barrier after cancellation.
 
         await tcs.Task.ConfigureAwait(false);
+    }
+
+    private class SequenceWaiter(AsyncWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences) : ISequenceWaiter, IAsyncSequenceWaiter
+    {
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+            => waitStrategy.WaitFor(sequence, dependentSequences, cancellationToken);
+
+        public ValueTask<SequenceWaitResult> WaitForAsync(long sequence, CancellationToken cancellationToken)
+            => waitStrategy.WaitForAsync(sequence, dependentSequences, cancellationToken);
+
+        public void Cancel()
+            => waitStrategy.SignalAllWhenBlocking();
     }
 }

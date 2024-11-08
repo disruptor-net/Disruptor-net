@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -6,8 +7,12 @@ namespace Disruptor;
 /// <summary>
 /// <see cref="IWaitStrategy"/> that supports asynchronous event processors.
 /// </summary>
-public interface IAsyncWaitStrategy : IWaitStrategy
+[Obsolete("Please use " + nameof(IAsyncSequenceWaitStrategy) + " instead.")]
+public interface IAsyncWaitStrategy : IWaitStrategy, IAsyncSequenceWaitStrategy
 {
+    IAsyncSequenceWaiter IAsyncSequenceWaitStrategy.NewAsyncSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+        => DisruptorUtil.NewAsyncSequenceWaiter(this, dependentSequences);
+
     /// <summary>
     /// Wait for the given sequence to be available.
     /// </summary>

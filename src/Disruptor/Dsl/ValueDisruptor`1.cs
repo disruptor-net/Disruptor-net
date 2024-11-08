@@ -39,7 +39,7 @@ public class ValueDisruptor<T> : ValueDisruptor<T, ValueRingBuffer<T>>
     /// <param name="eventFactory">the factory to create events in the ring buffer</param>
     /// <param name="ringBufferSize">the size of the ring buffer, must be power of 2</param>
     /// /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
-    public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, IWaitStrategy waitStrategy)
+    public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, ISequenceWaitStrategy waitStrategy)
         : this(eventFactory, ringBufferSize, TaskScheduler.Default, SequencerFactory.DefaultProducerType, waitStrategy)
     {
     }
@@ -63,7 +63,7 @@ public class ValueDisruptor<T> : ValueDisruptor<T, ValueRingBuffer<T>>
     /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
     /// <param name="producerType">the claim strategy to use for the ring buffer</param>
     /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
-    public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
+    public ValueDisruptor(Func<T> eventFactory, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, ISequenceWaitStrategy waitStrategy)
         : base(new ValueRingBuffer<T>(eventFactory, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy)), taskScheduler)
     {
     }

@@ -11,16 +11,14 @@ internal class EventProcessorBenchmarks_WaitRaw
 {
     private const int _operationsPerInvoke = 500;
 
-    private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly Sequence _sequence = new();
-    private readonly Sequence _cursor = new();
-    private readonly YieldingWaitStrategy _waitStrategy = new();
-    private readonly DependentSequenceGroup _dependentSequences;
+    private readonly SequenceBarrier _sequenceBarrier;
 
     public EventProcessorBenchmarks_WaitRaw()
     {
-        _dependentSequences = new DependentSequenceGroup(_cursor);
-        _cursor.SetValue(42);
+        var sequencer = new SingleProducerSequencer(1024, new YieldingWaitStrategy());
+        _sequenceBarrier = sequencer.NewBarrier(null);
+        sequencer.Publish(42);
     }
 
     public int NextSequence { get; set; } = 42;
@@ -30,7 +28,7 @@ internal class EventProcessorBenchmarks_WaitRaw
     {
         for (var i = 0; i < _operationsPerInvoke; i++)
         {
-            var waitResult = _waitStrategy.WaitFor(NextSequence, _dependentSequences, _cancellationTokenSource.Token);
+            var waitResult = _sequenceBarrier.WaitFor(NextSequence);
             if (waitResult.IsTimeout)
             {
                 HandleTimeout(_sequence.Value);
@@ -49,7 +47,7 @@ internal class EventProcessorBenchmarks_WaitRaw
     {
         for (var i = 0; i < _operationsPerInvoke; i++)
         {
-            var waitResult = _waitStrategy.WaitFor(NextSequence, _dependentSequences, _cancellationTokenSource.Token);
+            var waitResult = _sequenceBarrier.WaitFor(NextSequence);
 
             var availableSequence = waitResult.UnsafeAvailableSequence;
             Process(availableSequence);
