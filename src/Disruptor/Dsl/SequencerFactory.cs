@@ -13,10 +13,10 @@ public static class SequencerFactory
     public static readonly ProducerType DefaultProducerType = ProducerType.Multi;
 
     /// <summary>
-    /// Creates default <see cref="IWaitStrategy"/>.
+    /// Creates default <see cref="ISequenceWaitStrategy"/>.
     /// </summary>
     /// <returns></returns>
-    public static IWaitStrategy DefaultWaitStrategy()
+    public static ISequenceWaitStrategy DefaultWaitStrategy()
     {
         return new BlockingWaitStrategy();
     }
@@ -43,7 +43,7 @@ public static class SequencerFactory
     /// <returns>a constructed ring buffer.</returns>
     /// <exception cref="ArgumentOutOfRangeException">if the producer type is invalid</exception>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-    public static ISequencer Create(ProducerType producerType, int bufferSize, IWaitStrategy waitStrategy)
+    public static ISequencer Create(ProducerType producerType, int bufferSize, ISequenceWaitStrategy waitStrategy)
     {
         switch (producerType)
         {

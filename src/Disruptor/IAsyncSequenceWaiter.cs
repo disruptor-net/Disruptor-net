@@ -1,5 +1,5 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Processing;
 
 namespace Disruptor;
@@ -11,11 +11,9 @@ namespace Disruptor;
 /// The wait strategy is used to wait until events are published (publisher / processor synchronization)
 /// but also until events are processed by the previous processors (processor / processor synchronization).
 /// </remarks>
-[Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " instead.")]
-public interface IWaitStrategy : ISequenceWaitStrategy
+public interface IAsyncSequenceWaiter
 {
-    ISequenceWaiter ISequenceWaitStrategy.NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
-        => DisruptorUtil.NewSequenceWaiter(this, dependentSequences);
+    DependentSequenceGroup DependentSequences { get; }
 
     /// <summary>
     /// Wait for the given sequence to be available. It is possible for this method to return a value
@@ -25,8 +23,15 @@ public interface IWaitStrategy : ISequenceWaitStrategy
     /// handles this case and will signal a timeout if required.
     /// </summary>
     /// <param name="sequence">sequence to be waited on</param>
-    /// <param name="dependentSequences">sequences on which to wait</param>
     /// <param name="cancellationToken">processing cancellation token</param>
     /// <returns>either the sequence that is available (which may be greater than the requested sequence), or a timeout</returns>
-    SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken);
+    ValueTask<SequenceWaitResult> WaitForAsync(long sequence, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Requests cancellation for all active waits.
+    /// </summary>
+    /// <remarks>
+    /// Useful for sequence wait strategies that do not rely on the <see cref="CancellationToken"/>.
+    /// </remarks>
+    void Cancel();
 }

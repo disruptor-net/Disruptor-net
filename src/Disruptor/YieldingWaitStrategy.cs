@@ -8,42 +8,57 @@ namespace Disruptor;
 /// <remarks>
 /// This strategy is a good compromise between performance and CPU resources without incurring significant latency spikes.
 /// </remarks>
-public sealed class YieldingWaitStrategy : IWaitStrategy
+public sealed class YieldingWaitStrategy : ISequenceWaitStrategy
 {
-    private const int _spinTries = 100;
+    private readonly int _yieldIndex;
+
+    public YieldingWaitStrategy()
+        : this(100)
+    {
+    }
+
+    public YieldingWaitStrategy(int busySpinCount)
+    {
+        _yieldIndex = busySpinCount;
+    }
 
     public bool IsBlockingStrategy => false;
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
     {
-        long availableSequence;
-        var counter = _spinTries;
-
-        while ((availableSequence = dependentSequences.Value) < sequence)
-        {
-            counter = ApplyWaitMethod(cancellationToken, counter);
-        }
-
-        return availableSequence;
+        return new SequenceWaiter(dependentSequences, _yieldIndex);
     }
 
     public void SignalAllWhenBlocking()
     {
     }
 
-    private static int ApplyWaitMethod(CancellationToken cancellationToken, int counter)
+    private class SequenceWaiter(DependentSequenceGroup dependentSequences, int yieldIndex) : ISequenceWaiter
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        public DependentSequenceGroup DependentSequences => dependentSequences;
 
-        if(counter == 0)
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
-            Thread.Yield();
-        }
-        else
-        {
-            --counter;
+            long availableSequence;
+            var counter = 0;
+
+            while ((availableSequence = dependentSequences.Value) < sequence)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (counter >= yieldIndex)
+                {
+                    Thread.Yield();
+                }
+
+                counter++;
+            }
+
+            return availableSequence;
         }
 
-        return counter;
+        public void Cancel()
+        {
+        }
     }
 }

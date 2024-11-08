@@ -7,6 +7,7 @@
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <TieredCompilation>False</TieredCompilation>
+    <NoWarn>NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageReference Include="HdrHistogram" Version="2.5.0" />
     <PackageReference Include="ObjectLayoutInspector" Version="0.1.4" />
     <PackageReference Include="System.Net.Http" Version="4.3.4"/>

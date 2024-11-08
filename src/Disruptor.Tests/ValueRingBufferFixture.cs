@@ -48,7 +48,7 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         _ringBuffer[claimSequence] = expectedEvent;
         _ringBuffer.Publish(claimSequence);
 
-        var waitResult = _sequenceBarrier.WaitFor(0);
+        var waitResult = _sequenceBarrier.WaitForPublishedSequence(0);
         Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(0)));
 
         var evt = _ringBuffer[waitResult.UnsafeAvailableSequence];
@@ -90,7 +90,7 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         }
 
         var expectedSequence = numEvents - 1;
-        var waitResult = _sequenceBarrier.WaitFor(expectedSequence);
+        var waitResult = _sequenceBarrier.WaitForPublishedSequence(expectedSequence);
         Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedSequence)));
 
         for (var i = 0; i < numEvents; i++)
@@ -112,7 +112,7 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         }
 
         var expectedSequence = numEvents + offset - 1;
-        var waitResult = _sequenceBarrier.WaitFor(expectedSequence);
+        var waitResult = _sequenceBarrier.WaitForPublishedSequence(expectedSequence);
         Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedSequence)));
 
         for (var i = offset; i < numEvents + offset; i++)
@@ -254,7 +254,7 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         public List<T> Call()
         {
             _barrier.SignalAndWait();
-            _sequenceBarrier.WaitFor(_toWaitForSequence);
+            _sequenceBarrier.WaitForPublishedSequence(_toWaitForSequence);
 
             var events = new List<T>();
             for (var l = _initialSequence; l <= _toWaitForSequence; l++)

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Disruptor.Tests.Support;
 using NUnit.Framework;

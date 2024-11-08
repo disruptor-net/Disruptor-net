@@ -13,7 +13,7 @@ namespace Disruptor;
 ///
 /// This strategy can be used when throughput and low-latency are not as important as CPU resources.
 /// </remarks>
-public sealed class TimeoutBlockingWaitStrategy : IWaitStrategy
+public sealed class TimeoutBlockingWaitStrategy : ISequenceWaitStrategy
 {
     private readonly object _gate = new();
     private readonly int _timeoutMilliseconds;
@@ -31,7 +31,20 @@ public sealed class TimeoutBlockingWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    {
+        return new SequenceWaiter(this, dependentSequences);
+    }
+
+    public void SignalAllWhenBlocking()
+    {
+        lock (_gate)
+        {
+            Monitor.PulseAll(_gate);
+        }
+    }
+
+    private SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         var timeout = _timeoutMilliseconds;
         if (dependentSequences.CursorValue < sequence)
@@ -52,11 +65,18 @@ public sealed class TimeoutBlockingWaitStrategy : IWaitStrategy
         return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
     }
 
-    public void SignalAllWhenBlocking()
+    private class SequenceWaiter(TimeoutBlockingWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences) : ISequenceWaiter
     {
-        lock (_gate)
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
-            Monitor.PulseAll(_gate);
+            return waitStrategy.WaitFor(sequence, dependentSequences, cancellationToken);
+        }
+
+        public void Cancel()
+        {
+            waitStrategy.SignalAllWhenBlocking();
         }
     }
 }

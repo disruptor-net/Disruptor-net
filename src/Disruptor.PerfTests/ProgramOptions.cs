@@ -12,7 +12,7 @@ public class ProgramOptions
     public static int DefaultRunCountForThroughputTest { get; } = 7;
     public static int[] DefaultCpuSet { get; } = Enumerable.Range(0, Environment.ProcessorCount).ToArray();
 
-    public static IReadOnlyDictionary<string, Func<IWaitStrategy>> ConfigurableWaitStrategies { get; } = new Dictionary<string, Func<IWaitStrategy>>(StringComparer.OrdinalIgnoreCase)
+    public static IReadOnlyDictionary<string, Func<ISequenceWaitStrategy>> ConfigurableWaitStrategies { get; } = new Dictionary<string, Func<ISequenceWaitStrategy>>(StringComparer.OrdinalIgnoreCase)
 
     {
         ["yielding"] = () => new YieldingWaitStrategy(),
@@ -44,7 +44,7 @@ public class ProgramOptions
 
     public bool HasCustomCpuSet { get; private set; }
 
-    public Func<IWaitStrategy> WaitStrategySource { get; set; }
+    public Func<ISequenceWaitStrategy> WaitStrategySource { get; set; }
 
     public int RunCountForLatencyTest => RunCount ?? DefaultRunCountForLatencyTest;
     public int RunCountForThroughputTest => RunCount ?? DefaultRunCountForThroughputTest;
@@ -52,11 +52,11 @@ public class ProgramOptions
     public int? GetCustomCpu(int index)
         => HasCustomCpuSet ? CpuSet[index] : null;
 
-    public IWaitStrategy GetWaitStrategy()
+    public ISequenceWaitStrategy GetWaitStrategy()
         => GetWaitStrategy<YieldingWaitStrategy>();
 
-    public IWaitStrategy GetWaitStrategy<TDefault>()
-        where TDefault : IWaitStrategy, new()
+    public ISequenceWaitStrategy GetWaitStrategy<TDefault>()
+        where TDefault : ISequenceWaitStrategy, new()
         => WaitStrategySource != null ? WaitStrategySource.Invoke() : new TDefault();
 
     public static bool TryParse(string[] args, out ProgramOptions options)

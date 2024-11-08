@@ -40,7 +40,7 @@ public class MultiProducerSequencerTest : SequencerTests
         Assert.That(sequencer.GetHighestPublishedSequence(3, 7), Is.EqualTo(publishedSequence));
     }
 
-    protected override ISequencer NewSequencer(IWaitStrategy waitStrategy, int bufferSize = 16)
+    protected override ISequencer NewSequencer(ISequenceWaitStrategy waitStrategy, int bufferSize = 16)
     {
         return new MultiProducerSequencer(bufferSize, waitStrategy);
     }
