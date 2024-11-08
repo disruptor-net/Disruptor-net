@@ -38,7 +38,7 @@ public abstract class SequenceBarrierTests : IDisposable
 
         var sequenceBarrier = _ringBuffer.NewBarrier(sequence1, sequence2, sequence3);
 
-        var completedWorkSequence = sequenceBarrier.WaitFor(expectedWorkSequence).UnsafeAvailableSequence;
+        var completedWorkSequence = sequenceBarrier.WaitForPublishedSequence(expectedWorkSequence).UnsafeAvailableSequence;
         Assert.That(completedWorkSequence >= expectedWorkSequence);
     }
 
@@ -69,7 +69,7 @@ public abstract class SequenceBarrierTests : IDisposable
         });
 
         const long expectedWorkSequence = expectedNumberMessages;
-        var completedWorkSequence = dependencyBarrier.WaitFor(expectedNumberMessages).UnsafeAvailableSequence;
+        var completedWorkSequence = dependencyBarrier.WaitForPublishedSequence(expectedNumberMessages).UnsafeAvailableSequence;
         Assert.That(completedWorkSequence >= expectedWorkSequence);
     }
 
@@ -92,7 +92,7 @@ public abstract class SequenceBarrierTests : IDisposable
             startedSignal.Set();
             try
             {
-                sequenceBarrier.WaitFor(expectedNumberMessages - 1);
+                sequenceBarrier.WaitForPublishedSequence(expectedNumberMessages - 1);
             }
             catch (OperationCanceledException)
             {
@@ -133,7 +133,7 @@ public abstract class SequenceBarrierTests : IDisposable
         }).Wait();
 
         const long expectedWorkSequence = expectedNumberMessages - 1;
-        var completedWorkSequence = eventProcessorBarrier.WaitFor(expectedWorkSequence).UnsafeAvailableSequence;
+        var completedWorkSequence = eventProcessorBarrier.WaitForPublishedSequence(expectedWorkSequence).UnsafeAvailableSequence;
         Assert.That(completedWorkSequence >= expectedWorkSequence);
     }
 

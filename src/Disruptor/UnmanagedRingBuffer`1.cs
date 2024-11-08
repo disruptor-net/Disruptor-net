@@ -36,7 +36,22 @@ public sealed class UnmanagedRingBuffer<T> : UnmanagedRingBuffer, IValueRingBuff
     /// <param name="producerType">producer type to use <see cref="ProducerType" /></param>
     /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public UnmanagedRingBuffer(UnmanagedRingBufferMemory memory, ProducerType producerType, IWaitStrategy waitStrategy)
+        : base(SequencerFactory.Create(producerType, memory.EventCount, waitStrategy.ToSequenceWaitStrategy()), memory.PointerToFirstEvent, memory.EventSize)
+    {
+    }
+
+    /// <summary>
+    /// Construct an UnmanagedRingBuffer with the full option set.
+    /// The <see cref="UnmanagedRingBufferMemory"/> is not owned by the ring buffer and should be disposed after shutdown.
+    /// </summary>
+    /// <param name="memory">block of memory that will store the events</param>
+    /// <param name="producerType">producer type to use <see cref="ProducerType" /></param>
+    /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
+    /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [OverloadResolutionPriority(1)]
+    public UnmanagedRingBuffer(UnmanagedRingBufferMemory memory, ProducerType producerType, ISequenceWaitStrategy waitStrategy)
         : base(SequencerFactory.Create(producerType, memory.EventCount, waitStrategy), memory.PointerToFirstEvent, memory.EventSize)
     {
     }

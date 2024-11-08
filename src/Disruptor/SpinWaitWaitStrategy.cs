@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 
 namespace Disruptor;
 
@@ -9,16 +10,35 @@ namespace Disruptor;
 /// This strategy is a good compromise between performance and CPU resources.
 /// Latency spikes can occur after quiet periods.
 /// </remarks>
-public sealed class SpinWaitWaitStrategy : IWaitStrategy
+#pragma warning disable CS0618 // Type or member is obsolete
+public sealed class SpinWaitWaitStrategy : ISequenceWaitStrategy, IWaitStrategy
+#pragma warning restore CS0618 // Type or member is obsolete
 {
     public bool IsBlockingStrategy => false;
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
     {
-        return dependentSequences.SpinWaitFor(sequence, cancellationToken);
+        return new SequenceWaiter(dependentSequences);
     }
+
+    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+        => throw new NotSupportedException("IWaitStrategy must be converted to " + nameof(ISequenceWaitStrategy) + " before use.");
 
     public void SignalAllWhenBlocking()
     {
+    }
+
+    private class SequenceWaiter(DependentSequenceGroup dependentSequences) : ISequenceWaiter
+    {
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            return dependentSequences.SpinWaitFor(sequence, cancellationToken);
+        }
+
+        public void Cancel()
+        {
+        }
     }
 }

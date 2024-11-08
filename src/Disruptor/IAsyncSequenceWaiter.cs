@@ -1,5 +1,5 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Processing;
 
 namespace Disruptor;
@@ -11,18 +11,9 @@ namespace Disruptor;
 /// The wait strategy is used to wait until events are published (publisher / processor synchronization)
 /// but also until events are processed by the previous processors (processor / processor synchronization).
 /// </remarks>
-[Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " instead.")]
-public interface IWaitStrategy
+public interface IAsyncSequenceWaiter
 {
-    /// <summary>
-    /// Indicates whether this wait strategy is based on blocking synchronization primitives
-    /// and if <see cref="SignalAllWhenBlocking"/> should be invoked.
-    /// </summary>
-    /// <remarks>
-    /// Please implement this property as a constant to help the JIT remove unnecessary branches.
-    /// The value of this property is not expected to change for a given wait strategy type.
-    /// </remarks>
-    bool IsBlockingStrategy { get; }
+    DependentSequenceGroup DependentSequences { get; }
 
     /// <summary>
     /// Wait for the given sequence to be available. It is possible for this method to return a value
@@ -32,14 +23,15 @@ public interface IWaitStrategy
     /// handles this case and will signal a timeout if required.
     /// </summary>
     /// <param name="sequence">sequence to be waited on</param>
-    /// <param name="dependentSequences">sequences on which to wait</param>
     /// <param name="cancellationToken">processing cancellation token</param>
     /// <returns>either the sequence that is available (which may be greater than the requested sequence), or a timeout</returns>
-    SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken);
+    ValueTask<SequenceWaitResult> WaitForAsync(long sequence, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Signal those <see cref="IEventProcessor"/> waiting that the cursor has advanced.
-    /// Only invoked when <see cref="IsBlockingStrategy"/> is true.
+    /// Requests cancellation for all active waits.
     /// </summary>
-    void SignalAllWhenBlocking();
+    /// <remarks>
+    /// Useful for sequence wait strategies that do not rely on the <see cref="CancellationToken"/>.
+    /// </remarks>
+    void Cancel();
 }

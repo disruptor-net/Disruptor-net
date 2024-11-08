@@ -9,15 +9,15 @@ namespace Disruptor.Benchmarks;
 
 public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposable
 {
-    private readonly CustomSequenceBarrier _requesterSequenceBarrier;
-    private readonly CustomSequenceBarrier _replierSequenceBarrier;
+    private readonly SequenceBarrierV1 _requesterSequenceBarrier;
+    private readonly SequenceBarrierV1 _replierSequenceBarrier;
     private readonly Task _replierTask;
     private readonly ManualResetEventSlim _replierStarted = new();
 
     public SequenceBarrierBenchmarksV1()
     {
-        _requesterSequenceBarrier = new CustomSequenceBarrier(_requesterSequencer, _requesterSequencer.GetWaitStrategy(), _requesterSequencer.GetCursorSequence(), Array.Empty<Sequence>());
-        _replierSequenceBarrier = new CustomSequenceBarrier(_replierSequencer, _replierSequencer.GetWaitStrategy(), _replierSequencer.GetCursorSequence(), Array.Empty<Sequence>());
+        _requesterSequenceBarrier = new SequenceBarrierV1(_requesterSequencer, _requesterSequencer.GetWaitStrategy().NewSequenceWaiter(null, new DependentSequenceGroup(_requesterSequencer.GetCursorSequence())));
+        _replierSequenceBarrier = new SequenceBarrierV1(_replierSequencer, _replierSequencer.GetWaitStrategy().NewSequenceWaiter(null, new DependentSequenceGroup(_replierSequencer.GetCursorSequence())));
 
         _replierTask = Task.Run(RunReplier);
         _replierStarted.Wait();
@@ -32,6 +32,12 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
     [Benchmark(OperationsPerInvoke = OperationsPerInvoke)]
     public void Run()
     {
+        Run<ISequenceBarrierOptions.None>();
+    }
+
+    private void Run<T>()
+        where T : ISequenceBarrierOptions
+    {
         for (var i = 0; i < OperationsPerInvoke; i++)
         {
             var seq = _replierRingBuffer.Next();
@@ -41,7 +47,7 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
             SequenceWaitResult result;
             do
             {
-                result = _requesterSequenceBarrier.WaitFor<ISequenceBarrierOptions.None>(seq);
+                result = _requesterSequenceBarrier.WaitFor<T>(seq);
             }
             while (result.IsTimeout || result.UnsafeAvailableSequence < seq);
 
@@ -50,6 +56,12 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
     }
 
     private void RunReplier()
+    {
+        RunReplier<ISequenceBarrierOptions.None>();
+    }
+
+    private void RunReplier<T>()
+        where T : ISequenceBarrierOptions
     {
         _replierStarted.Set();
 
@@ -64,7 +76,7 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
                 SequenceWaitResult result;
                 do
                 {
-                    result = _replierSequenceBarrier.WaitFor<ISequenceBarrierOptions.None>(sequence);
+                    result = _replierSequenceBarrier.WaitFor<T>(sequence);
                 }
                 while (result.IsTimeout || result.UnsafeAvailableSequence < sequence);
 
@@ -81,19 +93,71 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
         }
     }
 
-    private sealed class CustomSequenceBarrier
+    private interface ISequenceBarrierOptions
+    {
+        internal struct None : ISequenceBarrierOptions
+        {
+        }
+
+        internal struct IsDependentSequencePublished : ISequenceBarrierOptions
+        {
+        }
+
+        public static ISequenceBarrierOptions Get(ISequencer sequencer, DependentSequenceGroup dependentSequences)
+        {
+            if (sequencer is SingleProducerSequencer)
+            {
+                // The SingleProducerSequencer increments the cursor sequence on publication so the cursor sequence
+                // is always published.
+                return new IsDependentSequencePublished();
+            }
+
+            if (!dependentSequences.DependsOnCursor)
+            {
+                // When the sequence barrier does not directly depend on the ring buffer cursor, the dependent sequence
+                // is always published (the value is derived from other event processors which cannot process unpublished
+                // sequences).
+                return new IsDependentSequencePublished();
+            }
+
+            return new None();
+        }
+    }
+
+    private sealed class SequenceBarrierV1
     {
         private readonly ISequencer _sequencer;
-        private readonly IWaitStrategy _waitStrategy;
-        private readonly DependentSequenceGroup _dependentSequences;
+        private readonly ISequenceWaiter _waitStrategy;
         private CancellationTokenSource _cancellationTokenSource;
 
-        public CustomSequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, Sequence cursorSequence, Sequence[] dependentSequences)
+        public SequenceBarrierV1(ISequencer sequencer, ISequenceWaiter waitStrategy)
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
-            _dependentSequences = new DependentSequenceGroup(cursorSequence, dependentSequences);
             _cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        public DependentSequenceGroup DependentSequences => _waitStrategy.DependentSequences;
+
+        public bool IsCancellationRequested => _cancellationTokenSource.IsCancellationRequested;
+
+        public CancellationToken CancellationToken
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _cancellationTokenSource.Token;
+        }
+
+        public void ThrowIfCancellationRequested() => _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+
+        public ISequenceBarrierOptions GetSequencerOptions()
+        {
+            return ISequenceBarrierOptions.Get(_sequencer, _waitStrategy.DependentSequences);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
+        public SequenceWaitResult WaitFor(long sequence)
+        {
+            return WaitFor<ISequenceBarrierOptions.None>(sequence);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
@@ -102,7 +166,7 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
         {
             _cancellationTokenSource.Token.ThrowIfCancellationRequested();
 
-            var availableSequence = _dependentSequences.Value;
+            var availableSequence = _waitStrategy.DependentSequences.Value;
             if (availableSequence >= sequence)
             {
                 if (typeof(TSequenceBarrierOptions) == typeof(ISequenceBarrierOptions.IsDependentSequencePublished))
@@ -122,13 +186,13 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
         [MethodImpl(MethodImplOptions.NoInlining)]
         private SequenceWaitResult InvokeWaitStrategy(long sequence)
         {
-            return _waitStrategy.WaitFor(sequence, _dependentSequences, _cancellationTokenSource.Token);
+            return _waitStrategy.WaitFor(sequence, _cancellationTokenSource.Token);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private SequenceWaitResult InvokeWaitStrategyAndWaitForPublishedSequence(long sequence)
         {
-            var waitResult = _waitStrategy.WaitFor(sequence, _dependentSequences, _cancellationTokenSource.Token);
+            var waitResult = _waitStrategy.WaitFor(sequence, _cancellationTokenSource.Token);
 
             if (waitResult.UnsafeAvailableSequence >= sequence)
             {
@@ -138,10 +202,18 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
             return waitResult;
         }
 
+        public void ResetProcessing()
+        {
+            // Not disposing the previous value should be fine because the CancellationTokenSource instance
+            // has no finalizer and no unmanaged resources to release.
+
+            _cancellationTokenSource = new CancellationTokenSource();
+        }
+
         public void CancelProcessing()
         {
             _cancellationTokenSource.Cancel();
-            _waitStrategy.SignalAllWhenBlocking();
+            _waitStrategy.Cancel();
         }
     }
 }

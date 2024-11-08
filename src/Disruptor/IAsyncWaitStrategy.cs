@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -6,6 +7,7 @@ namespace Disruptor;
 /// <summary>
 /// <see cref="IWaitStrategy"/> that supports asynchronous event processors.
 /// </summary>
+[Obsolete("Please use " + nameof(IAsyncSequenceWaitStrategy) + " instead.")]
 public interface IAsyncWaitStrategy : IWaitStrategy
 {
     /// <summary>

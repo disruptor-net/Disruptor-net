@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Disruptor;
@@ -11,14 +12,25 @@ namespace Disruptor;
 /// <remarks>
 /// This strategy can be used when throughput and low-latency are not as important as CPU resources.
 /// </remarks>
-public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
+#pragma warning disable CS0618 // Type or member is obsolete
+public sealed class PhasedBackoffWaitStrategy : ISequenceWaitStrategy, IWaitStrategy
+#pragma warning restore CS0618 // Type or member is obsolete
 {
     private const int _spinTries = 10000;
-    private readonly IWaitStrategy _fallbackStrategy;
+    private readonly ISequenceWaitStrategy _fallbackStrategy;
     private readonly long _spinTimeout;
     private readonly long _yieldTimeout;
 
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public PhasedBackoffWaitStrategy(TimeSpan spinTimeout, TimeSpan yieldTimeout, IWaitStrategy fallbackStrategy)
+    {
+        _spinTimeout = ToStopwatchTimeout(spinTimeout);
+        _yieldTimeout = ToStopwatchTimeout(yieldTimeout);
+        _fallbackStrategy = fallbackStrategy.ToSequenceWaitStrategy();
+    }
+
+    [OverloadResolutionPriority(1)]
+    public PhasedBackoffWaitStrategy(TimeSpan spinTimeout, TimeSpan yieldTimeout, ISequenceWaitStrategy fallbackStrategy)
     {
         _spinTimeout = ToStopwatchTimeout(spinTimeout);
         _yieldTimeout = ToStopwatchTimeout(yieldTimeout);
@@ -48,45 +60,18 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
     /// <returns>The constructed wait strategy.</returns>
     public static PhasedBackoffWaitStrategy WithSleep(TimeSpan spinTimeout, TimeSpan yieldTimeout)
     {
-        return new PhasedBackoffWaitStrategy(spinTimeout, yieldTimeout, new SleepingWaitStrategy(0));
+        return new PhasedBackoffWaitStrategy(spinTimeout, yieldTimeout, (ISequenceWaitStrategy)new SleepingWaitStrategy(0, 0));
     }
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
     {
-        long startTime = 0;
-        int counter = _spinTries;
+        var fallback = _fallbackStrategy.NewSequenceWaiter(eventHandler, dependentSequences);
 
-        do
-        {
-            long availableSequence;
-            if ((availableSequence = dependentSequences.Value) >= sequence)
-                return availableSequence;
-
-            if (0 == --counter)
-            {
-                if (0 == startTime)
-                {
-                    startTime = Stopwatch.GetTimestamp();
-                }
-                else
-                {
-                    var timeDelta = Stopwatch.GetTimestamp() - startTime;
-                    if (timeDelta > _yieldTimeout)
-                    {
-                        return _fallbackStrategy.WaitFor(sequence, dependentSequences, cancellationToken);
-                    }
-
-                    if (timeDelta > _spinTimeout)
-                    {
-                        Thread.Yield();
-                    }
-                }
-
-                counter = _spinTries;
-            }
-        }
-        while (true);
+        return new SequenceWaiter(dependentSequences, fallback, _spinTimeout, _yieldTimeout);
     }
+
+    SequenceWaitResult IWaitStrategy.WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+        => throw new NotSupportedException("IWaitStrategy must be converted to " + nameof(ISequenceWaitStrategy) + " before use.");
 
     public void SignalAllWhenBlocking()
     {
@@ -96,5 +81,67 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
     private static long ToStopwatchTimeout(TimeSpan timeout)
     {
         return (long)(timeout.Ticks * (double)Stopwatch.Frequency / TimeSpan.TicksPerSecond);
+    }
+
+    private class SequenceWaiter : ISequenceWaiter
+    {
+        private readonly DependentSequenceGroup _dependentSequences;
+        private readonly ISequenceWaiter _fallback;
+        private readonly long _spinTimeout;
+        private readonly long _yieldTimeout;
+
+        public SequenceWaiter(DependentSequenceGroup dependentSequences, ISequenceWaiter fallback, long spinTimeout, long yieldTimeout)
+        {
+            _dependentSequences = dependentSequences;
+            _fallback = fallback;
+            _spinTimeout = spinTimeout;
+            _yieldTimeout = yieldTimeout;
+        }
+
+        public DependentSequenceGroup DependentSequences => _dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            var startTime = 0L;
+            var counter = _spinTries;
+            long availableSequence;
+
+            while ((availableSequence = _dependentSequences.Value) < sequence)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                counter--;
+
+                if (counter == 0)
+                {
+                    if (startTime == 0)
+                    {
+                        startTime = Stopwatch.GetTimestamp();
+                    }
+                    else
+                    {
+                        var timeDelta = Stopwatch.GetTimestamp() - startTime;
+                        if (timeDelta > _yieldTimeout)
+                        {
+                            return _fallback.WaitFor(sequence, cancellationToken);
+                        }
+
+                        if (timeDelta > _spinTimeout)
+                        {
+                            Thread.Yield();
+                        }
+                    }
+
+                    counter = _spinTries;
+                }
+            }
+
+            return availableSequence;
+        }
+
+        public void Cancel()
+        {
+            _fallback.Cancel();
+        }
     }
 }

@@ -7,7 +7,7 @@ using Disruptor.Util;
 namespace Disruptor.Processing;
 
 /// <summary>
-/// A <see cref="WorkProcessor{T}"/> wraps a single <see cref="IWorkHandler{T}"/>, effectively consuming the sequence and ensuring appropriate barriers.
+/// Event processor that runs a <see cref="IWorkHandler{T}"/>.
 ///
 /// Generally, this will be used as part of a <see cref="WorkerPool{T}"/>.
 /// </summary>
@@ -135,7 +135,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
                 }
                 else
                 {
-                    var waitResult = _sequenceBarrier.WaitFor(nextSequence);
+                    var waitResult = _sequenceBarrier.WaitForPublishedSequence(nextSequence);
                     if (waitResult.IsTimeout)
                     {
                         NotifyTimeout(_sequence.Value);

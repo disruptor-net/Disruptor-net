@@ -1,6 +1,9 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Processing;
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace Disruptor;
 
@@ -85,5 +88,80 @@ public static class DisruptorUtil
         }
 
         return sequences;
+    }
+
+    /// <summary>
+    /// Creates a <see cref="ISequenceWaitStrategy"/> from a <see cref="IWaitStrategy"/>.
+    /// </summary>
+    [Obsolete(nameof(IWaitStrategy) + " is obsolete.")]
+    public static ISequenceWaitStrategy ToSequenceWaitStrategy(this IWaitStrategy waitStrategy)
+    {
+        return waitStrategy switch
+        {
+            ISequenceWaitStrategy sequenceWaitStrategy => sequenceWaitStrategy,
+            IAsyncWaitStrategy asyncWaitStrategy       => new AsyncWaitStrategyAdapter(asyncWaitStrategy),
+            _                                          => new WaitStrategyAdapter(waitStrategy),
+        };
+    }
+
+    /// <summary>
+    /// Creates a <see cref="ISequenceWaiter"/> for a <see cref="IWaitStrategy"/> and a target <see cref="DependentSequenceGroup"/>.
+    /// </summary>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " instead of " + nameof(IWaitStrategy) + ".")]
+    public static ISequenceWaiter NewSequenceWaiter(IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
+        => new SequenceWaiterAdapter(waitStrategy, dependentSequences);
+
+    /// <summary>
+    /// Creates an <see cref="IAsyncSequenceWaiter"/> for an <see cref="IAsyncWaitStrategy"/> and a target <see cref="DependentSequenceGroup"/>.
+    /// </summary>
+    [Obsolete("Please use " + nameof(IAsyncSequenceWaitStrategy) + " instead of " + nameof(IAsyncWaitStrategy) + ".")]
+    public static IAsyncSequenceWaiter NewAsyncSequenceWaiter(IAsyncWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
+        => new AsyncSequenceWaiterAdapter(waitStrategy, dependentSequences);
+
+    private class WaitStrategyAdapter(IWaitStrategy waitStrategy) : ISequenceWaitStrategy
+    {
+        public bool IsBlockingStrategy => waitStrategy.IsBlockingStrategy;
+
+        public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+            => new SequenceWaiterAdapter(waitStrategy, dependentSequences);
+
+        public void SignalAllWhenBlocking()
+            => waitStrategy.SignalAllWhenBlocking();
+    }
+
+    private class AsyncWaitStrategyAdapter(IAsyncWaitStrategy waitStrategy) : IAsyncSequenceWaitStrategy
+    {
+        public bool IsBlockingStrategy => waitStrategy.IsBlockingStrategy;
+
+        public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+            => new SequenceWaiterAdapter(waitStrategy, dependentSequences);
+
+        public IAsyncSequenceWaiter NewAsyncSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+            => new AsyncSequenceWaiterAdapter(waitStrategy, dependentSequences);
+
+        public void SignalAllWhenBlocking()
+            => waitStrategy.SignalAllWhenBlocking();
+    }
+
+    private class SequenceWaiterAdapter(IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences) : ISequenceWaiter
+    {
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+            => waitStrategy.WaitFor(sequence, dependentSequences, cancellationToken);
+
+        public void Cancel()
+            => waitStrategy.SignalAllWhenBlocking();
+    }
+
+    private class AsyncSequenceWaiterAdapter(IAsyncWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences) : IAsyncSequenceWaiter
+    {
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public ValueTask<SequenceWaitResult> WaitForAsync(long sequence, CancellationToken cancellationToken)
+            => waitStrategy.WaitForAsync(sequence, dependentSequences, cancellationToken);
+
+        public void Cancel()
+            => waitStrategy.SignalAllWhenBlocking();
     }
 }

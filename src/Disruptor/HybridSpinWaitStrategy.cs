@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 
 namespace Disruptor;
 
@@ -20,7 +21,9 @@ namespace Disruptor;
 /// </code>
 /// </para>
 /// </remarks>
-public class HybridSpinWaitStrategy : IWaitStrategy
+#pragma warning disable CS0618 // Type or member is obsolete
+public class HybridSpinWaitStrategy : ISequenceWaitStrategy, IWaitStrategy
+#pragma warning restore CS0618 // Type or member is obsolete
 {
     /// <summary>
     /// Tag that identifies the <see cref="DependentSequenceGroup"/> for which <see cref="AggressiveSpinWait"/> should be used.
@@ -29,14 +32,31 @@ public class HybridSpinWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy { get; set; }
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
     {
-        return dependentSequences.Tag == AggressiveSpinWaitTag
-            ? dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken)
-            : dependentSequences.SpinWaitFor(sequence, cancellationToken);
+        return new SequenceWaiter(dependentSequences);
     }
+
+    SequenceWaitResult IWaitStrategy.WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+        => throw new NotSupportedException("IWaitStrategy must be converted to " + nameof(ISequenceWaitStrategy) + " before use.");
 
     public void SignalAllWhenBlocking()
     {
+    }
+
+    private class SequenceWaiter(DependentSequenceGroup dependentSequences) : ISequenceWaiter
+    {
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            return dependentSequences.Tag == AggressiveSpinWaitTag
+                ? dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken)
+                : dependentSequences.SpinWaitFor(sequence, cancellationToken);
+        }
+
+        public void Cancel()
+        {
+        }
     }
 }

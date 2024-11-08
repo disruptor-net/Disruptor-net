@@ -64,9 +64,26 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
     /// <returns>a constructed ring buffer.</returns>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public static ValueRingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
     {
-        MultiProducerSequencer sequencer = new MultiProducerSequencer(bufferSize, waitStrategy);
+        var sequencer = new MultiProducerSequencer(bufferSize, waitStrategy.ToSequenceWaitStrategy());
+
+        return new ValueRingBuffer<T>(factory, sequencer);
+    }
+
+    /// <summary>
+    /// Create a new multiple producer ValueRingBuffer with the specified wait strategy.
+    /// </summary>
+    /// <param name="factory">used to create the events within the ring buffer.</param>
+    /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
+    /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
+    /// <returns>a constructed ring buffer.</returns>
+    /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [OverloadResolutionPriority(1)]
+    public static ValueRingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize, ISequenceWaitStrategy waitStrategy)
+    {
+        var sequencer = new MultiProducerSequencer(bufferSize, waitStrategy);
 
         return new ValueRingBuffer<T>(factory, sequencer);
     }
@@ -91,9 +108,26 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
     /// <returns>a constructed ring buffer.</returns>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public static ValueRingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
     {
-        SingleProducerSequencer sequencer = new SingleProducerSequencer(bufferSize, waitStrategy);
+        var sequencer = new SingleProducerSequencer(bufferSize, waitStrategy.ToSequenceWaitStrategy());
+
+        return new ValueRingBuffer<T>(factory, sequencer);
+    }
+
+    /// <summary>
+    /// Create a new single producer ValueRingBuffer with the specified wait strategy.
+    /// </summary>
+    /// <param name="factory">used to create the events within the ring buffer.</param>
+    /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
+    /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
+    /// <returns>a constructed ring buffer.</returns>
+    /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [OverloadResolutionPriority(1)]
+    public static ValueRingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize, ISequenceWaitStrategy waitStrategy)
+    {
+        var sequencer = new SingleProducerSequencer(bufferSize, waitStrategy);
 
         return new ValueRingBuffer<T>(factory, sequencer);
     }
@@ -120,7 +154,32 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     /// <returns>a constructed ring buffer.</returns>
     /// <exception cref="ArgumentOutOfRangeException">if the producer type is invalid</exception>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public static ValueRingBuffer<T> Create(ProducerType producerType, Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
+    {
+        switch (producerType)
+        {
+            case ProducerType.Single:
+                return CreateSingleProducer(factory, bufferSize, waitStrategy);
+            case ProducerType.Multi:
+                return CreateMultiProducer(factory, bufferSize, waitStrategy);
+            default:
+                throw new ArgumentOutOfRangeException(producerType.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Create a new ValueRingBuffer with the specified producer type.
+    /// </summary>
+    /// <param name="producerType">producer type to use <see cref="ProducerType" /></param>
+    /// <param name="factory">used to create the events within the ring buffer.</param>
+    /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
+    /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
+    /// <returns>a constructed ring buffer.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">if the producer type is invalid</exception>
+    /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [OverloadResolutionPriority(1)]
+    public static ValueRingBuffer<T> Create(ProducerType producerType, Func<T> factory, int bufferSize, ISequenceWaitStrategy waitStrategy)
     {
         switch (producerType)
         {

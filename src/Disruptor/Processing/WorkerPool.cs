@@ -55,7 +55,6 @@ public sealed class WorkerPool<T> where T : class
     /// <param name="exceptionHandler">exceptionHandler to callback when an error occurs which is not handled by the <see cref="IWorkHandler{T}"/>s.</param>
     /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
     public WorkerPool(Func<T> eventFactory, IExceptionHandler<T> exceptionHandler, params IWorkHandler<T>[] workHandlers)
-
     {
         _ringBuffer = RingBuffer<T>.CreateMultiProducer(eventFactory, 1024, new BlockingWaitStrategy());
         var barrier = _ringBuffer.NewBarrier();

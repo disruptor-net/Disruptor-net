@@ -256,11 +256,11 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
         CheckNotStarted();
 
         var processorSequences = new Sequence[eventHandlers.Length];
-        var barrier = _ringBuffer.NewBarrier(barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
         {
             var eventHandler = eventHandlers[i];
+            var barrier = _ringBuffer.NewBarrier(eventHandler, barrierSequences);
 
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 

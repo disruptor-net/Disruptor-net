@@ -62,7 +62,7 @@ public class MultiBufferEventProcessor<T>
             {
                 for (var i = 0; i < barrierLength; i++)
                 {
-                    var waitResult = _barriers[i].WaitFor(-1);
+                    var waitResult = _barriers[i].WaitForPublishedSequence(-1);
                     if (waitResult.IsTimeout)
                         continue;
 

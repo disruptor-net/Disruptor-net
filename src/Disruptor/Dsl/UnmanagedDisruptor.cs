@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Disruptor.Processing;
 
@@ -43,7 +44,22 @@ public class UnmanagedDisruptor<T> : ValueDisruptor<T, UnmanagedRingBuffer<T>>
     /// <param name="ringBufferSize">the number of events of the ring buffer, must be power of 2</param>
     /// <param name="producerType">the claim strategy to use for the ring buffer</param>
     /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public UnmanagedDisruptor(IntPtr pointer, int eventSize, int ringBufferSize, ProducerType producerType, IWaitStrategy waitStrategy)
+        : this(new UnmanagedRingBuffer<T>(pointer, eventSize, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy.ToSequenceWaitStrategy())), TaskScheduler.Default)
+    {
+    }
+
+    /// <summary>
+    /// Create a new UnmanagedDisruptor.
+    /// </summary>
+    /// <param name="pointer">pointer to the first event of the buffer</param>
+    /// <param name="eventSize">size of each event</param>
+    /// <param name="ringBufferSize">the number of events of the ring buffer, must be power of 2</param>
+    /// <param name="producerType">the claim strategy to use for the ring buffer</param>
+    /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
+    [OverloadResolutionPriority(1)]
+    public UnmanagedDisruptor(IntPtr pointer, int eventSize, int ringBufferSize, ProducerType producerType, ISequenceWaitStrategy waitStrategy)
         : this(new UnmanagedRingBuffer<T>(pointer, eventSize, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy)), TaskScheduler.Default)
     {
     }
@@ -56,7 +72,22 @@ public class UnmanagedDisruptor<T> : ValueDisruptor<T, UnmanagedRingBuffer<T>>
     /// <param name="memory">block of memory that will store the events</param>
     /// <param name="producerType">the claim strategy to use for the ring buffer</param>
     /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public UnmanagedDisruptor(UnmanagedRingBufferMemory memory, ProducerType producerType, IWaitStrategy waitStrategy)
+        : this(new UnmanagedRingBuffer<T>(memory, producerType, waitStrategy.ToSequenceWaitStrategy()), TaskScheduler.Default)
+    {
+    }
+
+    /// <summary>
+    /// Create a new UnmanagedDisruptor.
+    ///
+    /// The <see cref="UnmanagedRingBufferMemory"/> is not owned by the disruptor and should be disposed after shutdown.
+    /// </summary>
+    /// <param name="memory">block of memory that will store the events</param>
+    /// <param name="producerType">the claim strategy to use for the ring buffer</param>
+    /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
+    [OverloadResolutionPriority(1)]
+    public UnmanagedDisruptor(UnmanagedRingBufferMemory memory, ProducerType producerType, ISequenceWaitStrategy waitStrategy)
         : this(new UnmanagedRingBuffer<T>(memory, producerType, waitStrategy), TaskScheduler.Default)
     {
     }
@@ -70,7 +101,23 @@ public class UnmanagedDisruptor<T> : ValueDisruptor<T, UnmanagedRingBuffer<T>>
     /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
     /// <param name="producerType">the claim strategy to use for the ring buffer</param>
     /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public UnmanagedDisruptor(IntPtr pointer, int eventSize, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, IWaitStrategy waitStrategy)
+        : this(new UnmanagedRingBuffer<T>(pointer, eventSize, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy.ToSequenceWaitStrategy())), taskScheduler)
+    {
+    }
+
+    /// <summary>
+    /// Create a new UnmanagedDisruptor.
+    /// </summary>
+    /// <param name="pointer">pointer to the first event of the buffer</param>
+    /// <param name="eventSize">size of each event</param>
+    /// <param name="ringBufferSize">the number of events of the ring buffer, must be power of 2</param>
+    /// <param name="taskScheduler">a <see cref="TaskScheduler"/> to create threads for processors</param>
+    /// <param name="producerType">the claim strategy to use for the ring buffer</param>
+    /// <param name="waitStrategy">the wait strategy to use for the ring buffer</param>
+    [OverloadResolutionPriority(1)]
+    public UnmanagedDisruptor(IntPtr pointer, int eventSize, int ringBufferSize, TaskScheduler taskScheduler, ProducerType producerType, ISequenceWaitStrategy waitStrategy)
         : this(new UnmanagedRingBuffer<T>(pointer, eventSize, SequencerFactory.Create(producerType, ringBufferSize, waitStrategy)), taskScheduler)
     {
     }

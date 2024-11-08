@@ -219,10 +219,11 @@ public class ValueDisruptorTests : IDisposable
         var sequenceGroup2 = _disruptor.GetDependentSequencesFor(h2)!;
         var sequenceGroup3 = _disruptor.GetDependentSequencesFor(h3)!;
 
-        Assert.That(sequenceGroup1, Is.Not.SameAs(sequenceGroup2));
-        Assert.That(sequenceGroup1.DependsOnCursor, Is.True);
-        Assert.That(sequenceGroup2, Is.SameAs(sequenceGroup3));
+        Assert.That(sequenceGroup1.HasSameDependencies(sequenceGroup2), Is.False);
+        Assert.That(sequenceGroup2.HasSameDependencies(sequenceGroup3), Is.True);
+        Assert.That(sequenceGroup1.DependsOnCursor, Is.True); ;
         Assert.That(sequenceGroup2.DependsOnCursor, Is.False);
+        Assert.That(sequenceGroup3.DependsOnCursor, Is.False);
     }
 
     [Test]
@@ -236,10 +237,11 @@ public class ValueDisruptorTests : IDisposable
 
         _disruptor.GetDependentSequencesFor(h1)!.Tag = "1";
         _disruptor.GetDependentSequencesFor(h2)!.Tag = "2";
+        _disruptor.GetDependentSequencesFor(h3)!.Tag = "3";
 
         Assert.That(_disruptor.GetDependentSequencesFor(h1)!.Tag, Is.EqualTo("1"));
         Assert.That(_disruptor.GetDependentSequencesFor(h2)!.Tag, Is.EqualTo("2"));
-        Assert.That(_disruptor.GetDependentSequencesFor(h3)!.Tag, Is.EqualTo("2"));
+        Assert.That(_disruptor.GetDependentSequencesFor(h3)!.Tag, Is.EqualTo("3"));
     }
 
     [Test]

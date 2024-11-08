@@ -22,7 +22,7 @@ public class SingleProducerSequencerTests : SequencerTests
         }
     }
 
-    protected override ISequencer NewSequencer(IWaitStrategy waitStrategy, int bufferSize = 16)
+    protected override ISequencer NewSequencer(ISequenceWaitStrategy waitStrategy, int bufferSize = 16)
     {
         return new SingleProducerSequencer(bufferSize, waitStrategy);
     }

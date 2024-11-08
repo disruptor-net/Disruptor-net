@@ -53,7 +53,24 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
     /// <returns>a constructed ring buffer.</returns>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public static RingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
+    {
+        MultiProducerSequencer sequencer = new MultiProducerSequencer(bufferSize, waitStrategy.ToSequenceWaitStrategy());
+
+        return new RingBuffer<T>(factory, sequencer);
+    }
+
+    /// <summary>
+    /// Create a new multiple producer RingBuffer with the specified wait strategy.
+    /// </summary>
+    /// <param name="factory">used to create the events within the ring buffer.</param>
+    /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
+    /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
+    /// <returns>a constructed ring buffer.</returns>
+    /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [OverloadResolutionPriority(1)]
+    public static RingBuffer<T> CreateMultiProducer(Func<T> factory, int bufferSize, ISequenceWaitStrategy waitStrategy)
     {
         MultiProducerSequencer sequencer = new MultiProducerSequencer(bufferSize, waitStrategy);
 
@@ -80,7 +97,24 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
     /// <returns>a constructed ring buffer.</returns>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public static RingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
+    {
+        SingleProducerSequencer sequencer = new SingleProducerSequencer(bufferSize, waitStrategy.ToSequenceWaitStrategy());
+
+        return new RingBuffer<T>(factory, sequencer);
+    }
+
+    /// <summary>
+    /// Create a new single producer RingBuffer with the specified wait strategy.
+    /// </summary>
+    /// <param name="factory">used to create the events within the ring buffer.</param>
+    /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
+    /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
+    /// <returns>a constructed ring buffer.</returns>
+    /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [OverloadResolutionPriority(1)]
+    public static RingBuffer<T> CreateSingleProducer(Func<T> factory, int bufferSize, ISequenceWaitStrategy waitStrategy)
     {
         SingleProducerSequencer sequencer = new SingleProducerSequencer(bufferSize, waitStrategy);
 
@@ -109,7 +143,32 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// <returns>a constructed ring buffer.</returns>
     /// <exception cref="ArgumentOutOfRangeException">if the producer type is invalid</exception>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [Obsolete("Please use " + nameof(ISequenceWaitStrategy) + " based overload instead.")]
     public static RingBuffer<T> Create(ProducerType producerType, Func<T> factory, int bufferSize, IWaitStrategy waitStrategy)
+    {
+        switch (producerType)
+        {
+            case ProducerType.Single:
+                return CreateSingleProducer(factory, bufferSize, waitStrategy);
+            case ProducerType.Multi:
+                return CreateMultiProducer(factory, bufferSize, waitStrategy);
+            default:
+                throw new ArgumentOutOfRangeException(producerType.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Create a new Ring Buffer with the specified producer type (SINGLE or MULTI)
+    /// </summary>
+    /// <param name="producerType">producer type to use <see cref="ProducerType" /></param>
+    /// <param name="factory">used to create the events within the ring buffer.</param>
+    /// <param name="bufferSize">number of elements to create within the ring buffer.</param>
+    /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
+    /// <returns>a constructed ring buffer.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">if the producer type is invalid</exception>
+    /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
+    [OverloadResolutionPriority(1)]
+    public static RingBuffer<T> Create(ProducerType producerType, Func<T> factory, int bufferSize, ISequenceWaitStrategy waitStrategy)
     {
         switch (producerType)
         {
@@ -220,7 +279,19 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
     public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
     {
-        return _sequencerDispatcher.Sequencer.NewAsyncBarrier(sequencesToTrack);
+        return _sequencerDispatcher.Sequencer.NewAsyncBarrier(null, sequencesToTrack);
+    }
+
+    /// <summary>
+    /// Create a new sequence barrier to be used by an event processor to track which messages
+    /// are available to be read from the ring buffer given a list of sequences to track.
+    /// </summary>
+    /// <param name="eventHandler">The event handler of the target event processor. Can be null for custom event processors or if the event processor is a <see cref="IWorkHandler{T}"/> processor.</param>
+    /// <param name="sequencesToTrack">the additional sequences to track</param>
+    /// <returns>A sequence barrier that will track the specified sequences.</returns>
+    public AsyncSequenceBarrier NewAsyncBarrier(IEventHandler eventHandler, params Sequence[] sequencesToTrack)
+    {
+        return _sequencerDispatcher.Sequencer.NewAsyncBarrier(eventHandler, sequencesToTrack);
     }
 
     /// <summary>
