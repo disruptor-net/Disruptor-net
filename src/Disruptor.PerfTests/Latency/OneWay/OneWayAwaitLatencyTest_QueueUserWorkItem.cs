@@ -21,19 +21,19 @@ public class OneWayAwaitLatencyTest_QueueUserWorkItem : ILatencyTest, IExternalT
 
     public int RequiredProcessorCount => 2;
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
         _completed.Reset();
 
         foreach (var waiter in _waiters)
         {
-            waiter.Initialize(histogram);
+            waiter.Initialize(sessionContext.Histogram);
         }
 
         var pause = _pause;
         var next = Stopwatch.GetTimestamp() + pause;
 
-        stopwatch.Start();
+        sessionContext.Start();
 
         for (var i = 0; i < _iterations; i++)
         {
@@ -56,7 +56,7 @@ public class OneWayAwaitLatencyTest_QueueUserWorkItem : ILatencyTest, IExternalT
 
         _completed.Wait();
 
-        stopwatch.Stop();
+        sessionContext.Stop();
     }
 
     private class Waiter : IThreadPoolWorkItem
@@ -73,6 +73,7 @@ public class OneWayAwaitLatencyTest_QueueUserWorkItem : ILatencyTest, IExternalT
         public void Initialize(HistogramBase histogram)
         {
             _histogram = histogram;
+            _startTimestamp = 0;
         }
 
         public void Notify(long timestamp)

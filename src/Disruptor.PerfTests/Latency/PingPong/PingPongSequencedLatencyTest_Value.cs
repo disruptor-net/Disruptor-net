@@ -45,11 +45,11 @@ public class PingPongSequencedLatencyTest_Value : ILatencyTest
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
         var globalSignal = new CountdownEvent(3);
         var signal = new ManualResetEvent(false);
-        _pinger.Reset(globalSignal, signal, histogram);
+        _pinger.Reset(globalSignal, signal, sessionContext.Histogram);
         _ponger.Reset(globalSignal);
 
         var processorTask1 = _pongProcessor.Start();
@@ -59,10 +59,10 @@ public class PingPongSequencedLatencyTest_Value : ILatencyTest
 
         globalSignal.Signal();
         globalSignal.Wait();
-        stopwatch.Start();
+        sessionContext.Start();
         // running here
         signal.WaitOne();
-        stopwatch.Stop();
+        sessionContext.Stop();
 
         _pingProcessor.Halt();
         _pongProcessor.Halt();

@@ -18,16 +18,16 @@ public class PingPongAwaitLatencyTest_QueueUserWorkItem : ILatencyTest, IExterna
         _pinger = new Pinger();
     }
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
         var signal = new ManualResetEvent(false);
-        _pinger.Reset(signal, histogram);
+        _pinger.Reset(signal, sessionContext.Histogram);
 
-        stopwatch.Start();
+        sessionContext.Start();
         _pinger.SendPing();
 
         signal.WaitOne();
-        stopwatch.Stop();
+        sessionContext.Stop();
 
 #if AWAIT_LATENCY_THREAD_COUNT
         Console.WriteLine($"THREAD COUNT: {Ponger.ThreadCount}");

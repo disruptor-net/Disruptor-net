@@ -24,12 +24,12 @@ public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
         _ponger = new QueuePonger(_pingQueue, _pongQueue);
     }
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
         var cancellationToken = new CancellationTokenSource();
         var signal = new ManualResetEvent(false);
         var globalSignal = new CountdownEvent(3);
-        _pinger.Reset(globalSignal, signal, histogram);
+        _pinger.Reset(globalSignal, signal, sessionContext.Histogram);
         _ponger.Reset(globalSignal, cancellationToken.Token);
 
         _pinger.Start();
@@ -37,9 +37,9 @@ public class PingPongQueueLatencyTest : ILatencyTest, IExternalTest
 
         globalSignal.Signal();
         globalSignal.Wait();
-        stopwatch.Start();
+        sessionContext.Start();
         signal.WaitOne();
-        stopwatch.Stop();
+        sessionContext.Stop();
 
         cancellationToken.Cancel();
     }

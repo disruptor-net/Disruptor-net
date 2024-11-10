@@ -38,14 +38,16 @@ public class OneToOneSequencedThroughputTest_ThreadAffinity : IThroughputTest
     private const int _bufferSize = 1024 * 64;
     private const long _iterations = 1000L * 1000L * 100L;
 
+    private readonly ProgramOptions _options;
     private readonly RingBuffer<PerfEvent> _ringBuffer;
     private readonly AdditionEventHandler _eventHandler;
     private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
     private readonly IEventProcessor<PerfEvent> _eventProcessor;
 
-    public OneToOneSequencedThroughputTest_ThreadAffinity()
+    public OneToOneSequencedThroughputTest_ThreadAffinity(ProgramOptions options)
     {
-        _eventHandler = new AdditionEventHandler();
+        _options = options;
+        _eventHandler = new AdditionEventHandler(options.CpuSet[1]);
         _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
         var sequenceBarrier = _ringBuffer.NewBarrier();
         _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
@@ -60,19 +62,11 @@ public class OneToOneSequencedThroughputTest_ThreadAffinity : IThroughputTest
         long expectedCount = _eventProcessor.Sequence.Value + _iterations;
 
         _eventHandler.Reset(expectedCount);
-
-        var processorTask = PerfTestUtil.StartLongRunning(() =>
-        {
-            using var _ = ThreadAffinityUtil.SetThreadAffinity(0);
-
-            Thread.CurrentThread.Priority = ThreadPriority.Highest;
-
-            _eventProcessor.Run();
-        });
+        var processorTask = _eventProcessor.Start();
 
         _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
-        using var _ = ThreadAffinityUtil.SetThreadAffinity(1);
+        using var _ = ThreadAffinityUtil.SetThreadAffinity(_options.CpuSet[0]);
 
         Thread.CurrentThread.Priority = ThreadPriority.Highest;
 

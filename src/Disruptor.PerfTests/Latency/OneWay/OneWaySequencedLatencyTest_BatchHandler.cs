@@ -28,15 +28,15 @@ public class OneWaySequencedLatencyTest_BatchHandler : ILatencyTest, IDisposable
 
     public int RequiredProcessorCount => 2;
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
-        _handler.Initialize(histogram);
+        _handler.Initialize(sessionContext.Histogram);
         _handler.Started.Wait();
 
         var pause = _pause;
         var next = Stopwatch.GetTimestamp() + pause;
 
-        stopwatch.Start();
+        sessionContext.Start();
 
         var ringBuffer = _disruptor.RingBuffer;
 
@@ -62,7 +62,7 @@ public class OneWaySequencedLatencyTest_BatchHandler : ILatencyTest, IDisposable
 
         _handler.Completed.Wait();
 
-        stopwatch.Stop();
+        sessionContext.Stop();
     }
 
     public void Dispose()

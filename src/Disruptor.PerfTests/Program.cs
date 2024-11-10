@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Text.RegularExpressions;
 
 namespace Disruptor.PerfTests;
 
@@ -14,7 +13,7 @@ public class Program
             return;
         }
 
-        if (!ValidateOptions(options))
+        if (!options.Validate())
             return;
 
         var selector = new PerfTestTypeSelector(options);
@@ -26,23 +25,6 @@ public class Program
         }
     }
 
-    private static bool ValidateOptions(ProgramOptions options)
-    {
-        if (options.Target != null && !Regex.IsMatch(options.Target, @"\\*\w+(?:.\w+)*\\*"))
-        {
-            Console.WriteLine($"Invalid target: [{options.Target}]");
-            return false;
-        }
-
-        if (options.From != null && !Regex.IsMatch(options.From, @"\w+(?:.\w+)*"))
-        {
-            Console.WriteLine($"Invalid from: [{options.From}]");
-            return false;
-        }
-
-        return true;
-    }
-
     private static void RunTestForType(Type perfTestType, ProgramOptions options)
     {
         var outputDirectoryPath = Path.Combine(AppContext.BaseDirectory, "results");
@@ -52,19 +34,57 @@ public class Program
         var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType);
         if (isThroughputTest)
         {
-            var session = new ThroughputTestSession(perfTestType, options, outputDirectoryPath);
-            session.Execute();
+            if (TryCreateTest<IThroughputTest>(perfTestType, options, out var test) && ValidateTest(test.RequiredProcessorCount, options))
+            {
+                using var session = new ThroughputTestSession(test, options, outputDirectoryPath);
+                session.Execute();
+            }
             return;
         }
 
         var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
         if (isLatencyTest)
         {
-            var session = new LatencyTestSession(perfTestType, options, outputDirectoryPath);
-            session.Execute();
+            if (TryCreateTest<ILatencyTest>(perfTestType, options, out var test) && ValidateTest(test.RequiredProcessorCount, options))
+            {
+                var session = new LatencyTestSession(test, options, outputDirectoryPath);
+                session.Execute();
+            }
             return;
         }
 
         throw new NotSupportedException($"Invalid test type: {perfTestType.Name}");
+    }
+
+    private static bool TryCreateTest<T>(Type testType, ProgramOptions options, out T test)
+    {
+        if (testType.GetConstructor([typeof(ProgramOptions)]) is { } constructor)
+        {
+            test = (T)constructor.Invoke([options]);
+            return true;
+        }
+
+        test = (T)Activator.CreateInstance(testType);
+        return test != null;
+    }
+
+    private static bool ValidateTest(int requiredProcessorCount, ProgramOptions options)
+    {
+        var availableProcessors = Environment.ProcessorCount;
+        if (requiredProcessorCount > availableProcessors)
+        {
+            Console.Error.WriteLine("Error: your system has insufficient CPUs to execute the test efficiently.");
+            Console.Error.WriteLine($"CPU count required = {requiredProcessorCount}, available = {availableProcessors}");
+            return false;
+        }
+
+        if (requiredProcessorCount > options.CpuSet.Length)
+        {
+            Console.Error.WriteLine("Error: the CPU set is two small to execute the test efficiently.");
+            Console.Error.WriteLine($"CPU count required = {requiredProcessorCount}, CPU set length = {options.CpuSet.Length}");
+            return false;
+        }
+
+        return true;
     }
 }

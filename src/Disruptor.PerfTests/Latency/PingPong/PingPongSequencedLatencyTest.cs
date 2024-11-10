@@ -23,16 +23,16 @@ public class PingPongSequencedLatencyTest : ILatencyTest
     private readonly Ponger _ponger;
     private readonly IEventProcessor<PerfEvent> _pongProcessor;
 
-    public PingPongSequencedLatencyTest()
+    public PingPongSequencedLatencyTest(ProgramOptions options)
     {
-        var pingBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
-        var pongBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+        var pingBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+        var pongBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
 
         var pingBarrier = pingBuffer.NewBarrier();
         var pongBarrier = pongBuffer.NewBarrier();
 
-        _pinger = new Pinger(pingBuffer, _iterations, _pauseNanos);
-        _ponger = new Ponger(pongBuffer);
+        _pinger = new Pinger(pingBuffer, options.GetCustomCpu(0), _iterations, _pauseNanos);
+        _ponger = new Ponger(pongBuffer, options.GetCustomCpu(1));
 
         _pingProcessor = EventProcessorFactory.Create(pongBuffer,pongBarrier, _pinger);
         _pongProcessor = EventProcessorFactory.Create(pingBuffer,pingBarrier, _ponger);
@@ -45,11 +45,11 @@ public class PingPongSequencedLatencyTest : ILatencyTest
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
         var globalSignal = new CountdownEvent(3);
         var signal = new ManualResetEvent(false);
-        _pinger.Reset(globalSignal, signal, histogram);
+        _pinger.Reset(globalSignal, signal, sessionContext.Histogram);
         _ponger.Reset(globalSignal);
 
         var processorTask1 = _pongProcessor.Start();
@@ -59,10 +59,10 @@ public class PingPongSequencedLatencyTest : ILatencyTest
 
         globalSignal.Signal();
         globalSignal.Wait();
-        stopwatch.Start();
+        sessionContext.Start();
         // running here
         signal.WaitOne();
-        stopwatch.Stop();
+        sessionContext.Stop();
 
         _pingProcessor.Halt();
         _pongProcessor.Halt();
@@ -72,6 +72,7 @@ public class PingPongSequencedLatencyTest : ILatencyTest
     private class Pinger : IEventHandler<PerfEvent>
     {
         private readonly RingBuffer<PerfEvent> _buffer;
+        private readonly int? _cpu;
         private readonly long _maxEvents;
         private readonly long _pauseTimeNs;
         private readonly long _pauseTimeTicks;
@@ -80,10 +81,12 @@ public class PingPongSequencedLatencyTest : ILatencyTest
         private long _counter;
         private CountdownEvent _globalSignal;
         private ManualResetEvent _signal;
+        private ThreadAffinityUtil.Scope _affinityScope;
 
-        public Pinger(RingBuffer<PerfEvent> buffer, long maxEvents, long pauseTimeNs)
+        public Pinger(RingBuffer<PerfEvent> buffer, int? cpu, long maxEvents, long pauseTimeNs)
         {
             _buffer = buffer;
+            _cpu = cpu;
             _maxEvents = maxEvents;
             _pauseTimeNs = pauseTimeNs;
             _pauseTimeTicks = StopwatchUtil.GetTimestampFromNanoseconds(pauseTimeNs);
@@ -122,6 +125,9 @@ public class PingPongSequencedLatencyTest : ILatencyTest
 
         public void OnStart()
         {
+            if (_cpu != null)
+                _affinityScope = ThreadAffinityUtil.SetThreadAffinity(_cpu.Value, ThreadPriority.Highest);
+
             _globalSignal.Signal();
             _globalSignal.Wait();
 
@@ -132,6 +138,8 @@ public class PingPongSequencedLatencyTest : ILatencyTest
 
         public void OnShutdown()
         {
+            if (_cpu != null)
+                _affinityScope.Dispose();
         }
 
         public void Reset(CountdownEvent globalSignal, ManualResetEvent signal, HistogramBase histogram)
@@ -147,11 +155,14 @@ public class PingPongSequencedLatencyTest : ILatencyTest
     private class Ponger : IEventHandler<PerfEvent>
     {
         private readonly RingBuffer<PerfEvent> _buffer;
+        private readonly int? _cpu;
         private CountdownEvent _globalSignal;
+        private ThreadAffinityUtil.Scope _affinityScope;
 
-        public Ponger(RingBuffer<PerfEvent> buffer)
+        public Ponger(RingBuffer<PerfEvent> buffer, int? cpu)
         {
             _buffer = buffer;
+            _cpu = cpu;
         }
 
         public void OnEvent(PerfEvent data, long sequence, bool endOfBatch)
@@ -163,12 +174,17 @@ public class PingPongSequencedLatencyTest : ILatencyTest
 
         public void OnStart()
         {
+            if (_cpu != null)
+                _affinityScope = ThreadAffinityUtil.SetThreadAffinity(_cpu.Value, ThreadPriority.Highest);
+
             _globalSignal.Signal();
             _globalSignal.Wait();
         }
 
         public void OnShutdown()
         {
+            if (_cpu != null)
+                _affinityScope.Dispose();
         }
 
         public void Reset(CountdownEvent globalSignal)

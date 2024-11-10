@@ -20,16 +20,16 @@ public class PingPongAwaitLatencyTest_ManualResetValueTaskSourceCore : ILatencyT
         _pinger = new Pinger();
     }
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
-        _pinger.Reset(histogram);
+        _pinger.Reset(sessionContext.Histogram);
 
-        stopwatch.Start();
+        sessionContext.Start();
 
         var task = _pinger.Start();
         task.Wait();
 
-        stopwatch.Stop();
+        sessionContext.Stop();
     }
 
     public int RequiredProcessorCount => 2;

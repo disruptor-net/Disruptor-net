@@ -37,11 +37,11 @@ public class PingPongChannelLatencyTest : ILatencyTest, IExternalTest
         _ponger = new QueuePonger(_pingChannel, _pongChannel);
     }
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
         var globalSignal = new CountdownEvent(3);
 
-        _pinger.Reset(globalSignal, histogram);
+        _pinger.Reset(globalSignal, sessionContext.Histogram);
         _ponger.Reset(globalSignal);
 
         var pingerTask = _pinger.Start();
@@ -50,10 +50,10 @@ public class PingPongChannelLatencyTest : ILatencyTest, IExternalTest
         globalSignal.Signal();
         globalSignal.Wait();
 
-        stopwatch.Start();
+        sessionContext.Start();
         pingerTask.Wait();
         pongerTask.Wait();
-        stopwatch.Stop();
+        sessionContext.Stop();
     }
 
     public int RequiredProcessorCount => 2;

@@ -3,15 +3,28 @@ using Disruptor.Testing.Support;
 
 namespace Disruptor.PerfTests.Support;
 
-public class AdditionEventHandler : IEventHandler<PerfEvent>, IValueEventHandler<PerfValueEvent>
+public class AdditionEventHandler(int? cpu = null) : IEventHandler<PerfEvent>, IValueEventHandler<PerfValueEvent>
 {
     private PaddedLong _value;
     private PaddedLong _batchesProcessed;
     private long _latchSequence;
     private readonly ManualResetEvent _latch = new(false);
+    private ThreadAffinityUtil.Scope _affinityScope;
 
     public long Value => _value.Value;
     public long BatchesProcessed => _batchesProcessed.Value;
+
+    public void OnStart()
+    {
+        if (cpu != null)
+            _affinityScope = ThreadAffinityUtil.SetThreadAffinity(cpu.Value, ThreadPriority.Highest);
+    }
+
+    public void OnShutdown()
+    {
+        if (cpu != null)
+            _affinityScope.Dispose();
+    }
 
     public void WaitForSequence()
     {

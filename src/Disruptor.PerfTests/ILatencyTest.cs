@@ -5,7 +5,7 @@ namespace Disruptor.PerfTests;
 
 public interface ILatencyTest
 {
-    void Run(Stopwatch stopwatch, HistogramBase histogram);
-
     int RequiredProcessorCount { get; }
+
+    void Run(LatencySessionContext sessionContext);
 }

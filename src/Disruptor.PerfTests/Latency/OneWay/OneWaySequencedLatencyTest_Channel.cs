@@ -31,9 +31,9 @@ public class OneWaySequencedLatencyTest_Channel : ILatencyTest, IExternalTest, I
 
     public int RequiredProcessorCount => 2;
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
-        _consumer.Initialize(histogram);
+        _consumer.Initialize(sessionContext.Histogram);
 
         var consumerTask = Task.Run(_consumer.Run);
 
@@ -44,7 +44,7 @@ public class OneWaySequencedLatencyTest_Channel : ILatencyTest, IExternalTest, I
         var pause = _pause;
         var next = Stopwatch.GetTimestamp() + pause;
 
-        stopwatch.Start();
+        sessionContext.Start();
 
         for (int i = 0; i < _iterations; i++)
         {
@@ -70,7 +70,7 @@ public class OneWaySequencedLatencyTest_Channel : ILatencyTest, IExternalTest, I
 
         _consumer.Completed.Wait();
 
-        stopwatch.Stop();
+        sessionContext.Stop();
 
         consumerTask.Wait();
     }

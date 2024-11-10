@@ -2,60 +2,47 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using HdrHistogram;
 
 namespace Disruptor.PerfTests;
 
-public class LatencyTestSession
+public class LatencyTestSession : IDisposable
 {
-    private readonly Type _perfTestType;
+    private readonly ILatencyTest _test;
     private readonly ProgramOptions _options;
     private readonly string _resultDirectoryPath;
-    private readonly int _runCount;
 
-    public LatencyTestSession(Type perfTestType, ProgramOptions options, string resultDirectoryPath)
+    public LatencyTestSession(ILatencyTest test, ProgramOptions options, string resultDirectoryPath)
     {
-        _perfTestType = perfTestType;
+        _test = test;
         _options = options;
         _resultDirectoryPath = resultDirectoryPath;
-        _runCount = options.RunCountForLatencyTest;
     }
 
     public void Execute()
     {
-        var test = (ILatencyTest)Activator.CreateInstance(_perfTestType);
-
-        try
-        {
-            CheckProcessorsRequirements(test);
-
-            var results = Run(test);
-            Report(test, results);
-        }
-        finally
-        {
-            if (test is IDisposable disposable)
-                disposable.Dispose();
-        }
+        var results = Run();
+        Report(results);
     }
 
-    public List<LatencyTestSessionResult> Run(ILatencyTest test)
+    public List<LatencyTestSessionResult> Run()
     {
-        Console.WriteLine($"Latency Test to run => {_perfTestType.FullName}, Runs => {_runCount}");
+        Console.Write($"Latency Test to run => {_test.GetType().FullName}, Runs => {_options.RunCountForLatencyTest}");
+        if (_options.HasCustomCpuSet)
+            Console.Write($", Cpus: [{string.Join(", ", _options.CpuSet)}]");
+
+        Console.WriteLine();
         Console.WriteLine("Starting");
 
         var results = new List<LatencyTestSessionResult>();
+        var context = new LatencySessionContext();
 
-
-        for (var i = 0; i < _runCount; i++)
+        for (var i = 0; i < _options.RunCountForLatencyTest; i++)
         {
-            var histogram = new LongHistogram(10000000000L, 4);
-            var stopwatch = new Stopwatch();
-
             GC.Collect();
             GC.WaitForPendingFinalizers();
+
+            context.Reset();
 
             var beforeGen0Count = GC.CollectionCount(0);
             var beforeGen1Count = GC.CollectionCount(1);
@@ -64,13 +51,13 @@ public class LatencyTestSession
             LatencyTestSessionResult result;
             try
             {
-                test.Run(stopwatch, histogram);
+                _test.Run(context);
 
                 var gen0Count = GC.CollectionCount(0) - beforeGen0Count;
                 var gen1Count = GC.CollectionCount(1) - beforeGen1Count;
                 var gen2Count = GC.CollectionCount(2) - beforeGen2Count;
 
-                result = new LatencyTestSessionResult(histogram, stopwatch.Elapsed, gen0Count, gen1Count, gen2Count);
+                result = new LatencyTestSessionResult(context.Histogram, context.ElapsedTime, gen0Count, gen1Count, gen2Count);
             }
             catch (Exception ex)
             {
@@ -84,7 +71,7 @@ public class LatencyTestSession
         return results;
     }
 
-    public void Report(ILatencyTest test, List<LatencyTestSessionResult> results)
+    public void Report(List<LatencyTestSessionResult> results)
     {
         var computerSpecifications = new ComputerSpecifications();
 
@@ -97,31 +84,21 @@ public class LatencyTestSession
         if (!_options.GenerateReport)
             return;
 
-        var path = Path.Combine(_resultDirectoryPath, $"{_perfTestType.Name}-{DateTime.Now:yyyy-MM-dd hh-mm-ss}.html");
+        var path = Path.Combine(_resultDirectoryPath, $"{_test.GetType().Name}-{DateTime.Now:yyyy-MM-dd hh-mm-ss}.html");
 
-        File.WriteAllText(path, BuildReport(test, results, computerSpecifications));
+        File.WriteAllText(path, BuildReport(results, computerSpecifications));
 
         var totalsPath = Path.Combine(_resultDirectoryPath, $"Totals-{DateTime.Now:yyyy-MM-dd}.csv");
         foreach (var result in results)
         {
-            File.AppendAllText(totalsPath, FormattableString.Invariant($"{DateTime.Now:HH:mm:ss},{_perfTestType.Name},{result.P(50)},{result.P(90)},{result.P(99)}{Environment.NewLine}"));
+            File.AppendAllText(totalsPath, FormattableString.Invariant($"{DateTime.Now:HH:mm:ss},{_test.GetType().Name},{result.P(50)},{result.P(90)},{result.P(99)}{Environment.NewLine}"));
         }
 
         if (_options.OpenReport)
             Process.Start(path);
     }
 
-    private static void CheckProcessorsRequirements(ILatencyTest test)
-    {
-        var availableProcessors = Environment.ProcessorCount;
-        if (test.RequiredProcessorCount <= availableProcessors)
-            return;
-
-        Console.WriteLine("*** Warning ***: your system has insufficient processors to execute the test efficiently. ");
-        Console.WriteLine($"Processors required = {test.RequiredProcessorCount}, available = {availableProcessors}");
-    }
-
-    private string BuildReport(ILatencyTest test, List<LatencyTestSessionResult> results, ComputerSpecifications computerSpecifications)
+    private string BuildReport(List<LatencyTestSessionResult> results, ComputerSpecifications computerSpecifications)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">")
@@ -150,19 +127,16 @@ public class LatencyTestSession
         }
 
         sb.AppendLine("        <h2>Test configuration</h2>")
-          .AppendLine("        Test: " + _perfTestType.FullName + "<br>")
-          .AppendLine("        Runs: " + _runCount + "<br>");
-        if (test.RequiredProcessorCount > Environment.ProcessorCount)
-            sb.AppendLine("        Warning ! Test requires: " + test.RequiredProcessorCount + " processors but there is only " + Environment.ProcessorCount + " here <br>");
-
-        sb.AppendLine("        <h2>Detailed test results</h2>");
-        sb.AppendLine("        <table border=\"1\">");
-        sb.AppendLine("            <tr>");
-        sb.AppendLine("                <td>Run</td>");
-        sb.AppendLine("                <td>Latencies (hdr histogram output)</td>");
-        sb.AppendLine("                <td>Duration (ms)</td>");
-        sb.AppendLine("                <td># GC (0-1-2)</td>");
-        sb.AppendLine("            </tr>");
+          .AppendLine("        Test: " + _test.GetType().FullName + "<br>")
+          .AppendLine("        Runs: " + _options.RunCountForLatencyTest + "<br>")
+          .AppendLine("        <h2>Detailed test results</h2>")
+          .AppendLine("        <table border=\"1\">")
+          .AppendLine("            <tr>")
+          .AppendLine("                <td>Run</td>")
+          .AppendLine("                <td>Latencies (hdr histogram output)</td>")
+          .AppendLine("                <td>Duration (ms)</td>")
+          .AppendLine("                <td># GC (0-1-2)</td>")
+          .AppendLine("            </tr>");
 
         for (var i = 0; i < results.Count; i++)
         {
@@ -173,5 +147,11 @@ public class LatencyTestSession
         sb.AppendLine("        </table>");
 
         return sb.ToString();
+    }
+
+    public void Dispose()
+    {
+        if (_test is IDisposable disposable)
+            disposable.Dispose();
     }
 }

@@ -1,21 +1,43 @@
 using System;
 using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Disruptor.PerfTests;
 
 public class ProgramOptions
 {
-    public int? RunCount { get; set; }
-    public string Target { get; set; }
-    public bool PrintComputerSpecifications { get; set; } = true;
-    public bool GenerateReport { get; set; } = true;
-    public bool OpenReport { get; set; }
-    public string From { get; set; }
-    public bool IncludeExternal { get; set; }
-    public bool IncludeLatency { get; set; } = true;
-    public bool IncludeThroughput { get; set; } = true;
-    public int RunCountForLatencyTest => RunCount ?? 3;
-    public int RunCountForThroughputTest => RunCount ?? 7;
+    public static int DefaultRunCountForLatencyTest { get; } = 3;
+    public static int DefaultRunCountForThroughputTest { get; } = 7;
+    public static int[] DefaultCpuSet { get; } = Enumerable.Range(0, Environment.ProcessorCount).ToArray();
+
+    private int[] _cpuSet = DefaultCpuSet;
+
+    public int? RunCount { get; private set; }
+    public string Target { get; private set; }
+    public bool PrintComputerSpecifications { get; private set; } = true;
+    public bool GenerateReport { get; private set; } = true;
+    public bool OpenReport { get; private set; }
+    public string From { get; private set; }
+    public bool IncludeExternal { get; private set; }
+    public bool IncludeLatency { get; private set; } = true;
+    public bool IncludeThroughput { get; private set; } = true;
+
+    public int[] CpuSet
+    {
+        get => _cpuSet;
+        private set
+        {
+            _cpuSet = value ?? DefaultCpuSet;
+            HasCustomCpuSet = value != null;
+        }
+    }
+
+    public bool HasCustomCpuSet { get; private set; }
+
+    public int RunCountForLatencyTest => RunCount ?? DefaultRunCountForLatencyTest;
+    public int RunCountForThroughputTest => RunCount ?? DefaultRunCountForThroughputTest;
+    public int? GetCustomCpu(int index) => HasCustomCpuSet ? CpuSet[index] : null;
 
     public static bool TryParse(string[] args, out ProgramOptions options)
     {
@@ -115,6 +137,16 @@ public class ProgramOptions
                 continue;
             }
 
+            if (arg.Equals("--cpus", StringComparison.OrdinalIgnoreCase))
+            {
+                if (index + 1 == args.Length || Regex.Match(args[index + 1], @"(?<cpu0>\d+)(?:,(?<cpun>\d+))*") is not { Success: true} match)
+                    return false;
+
+                options.CpuSet = [int.Parse(match.Groups["cpu0"].Value), ..match.Groups["cpun"].Captures.Select(x => int.Parse(x.Value))];
+                index++;
+                continue;
+            }
+
             return false;
         }
 
@@ -133,11 +165,37 @@ public class ProgramOptions
         Console.WriteLine($"  --report <true|false>               Generates an HTML report file at the end of the test. Default is {options.GenerateReport}.");
         Console.WriteLine($"  --open-report <true|false>          Opens the HTML report file at the end of the test. Default is {options.OpenReport}.");
         Console.WriteLine($"  --print-spec <true|false>           Prints computer specifications. Default is {options.PrintComputerSpecifications}.");
-        Console.WriteLine($"  --runs <count>                      Number of runs per test. Default is {options.RunCountForThroughputTest} for throughput tests and {options.RunCountForLatencyTest} for latency tests.");
+        Console.WriteLine($"  --runs <count>                      Number of runs per test. Default is {DefaultRunCountForThroughputTest} for throughput tests and {DefaultRunCountForLatencyTest} for latency tests.");
         Console.WriteLine($"  --from <name>                       The first test type name to run when running all tests.");
         Console.WriteLine($"  --include-external <true|false>     Includes external tests. Default is {options.IncludeExternal}.");
         Console.WriteLine($"  --include-latency <true|false>      Includes latency tests. Default is {options.IncludeLatency}.");
         Console.WriteLine($"  --include-throughput <true|false>   Includes throughput tests. Default is {options.IncludeThroughput}.");
+        Console.WriteLine($"  --cpus <cpu-set>                    The comma-separated list of CPUs to use for CPU affinity (not supported in all tests).");
         Console.WriteLine();
     }
+
+    public bool Validate()
+    {
+        if (Target != null && !Regex.IsMatch(Target, @"\\*\w+(?:.\w+)*\\*"))
+        {
+            Console.WriteLine($"Invalid target: [{Target}]");
+            return false;
+        }
+
+        if (From != null && !Regex.IsMatch(From, @"\w+(?:.\w+)*"))
+        {
+            Console.WriteLine($"Invalid from: [{From}]");
+            return false;
+        }
+
+        if (HasCustomCpuSet && CpuSet.Except(DefaultCpuSet).Any())
+        {
+            Console.WriteLine($"Invalid cpus: [{string.Join(", ", CpuSet)}], available CPU range: [0-{Environment.ProcessorCount - 1}]");
+            return false;
+        }
+
+        return true;
+    }
+
+
 }

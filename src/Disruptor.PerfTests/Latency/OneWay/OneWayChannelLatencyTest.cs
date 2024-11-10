@@ -31,23 +31,23 @@ public class OneWayChannelLatencyTest : ILatencyTest, IExternalTest
 
     public int RequiredProcessorCount => 2;
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
         var startSignal = new ManualResetEventSlim();
         var producerTask = _producer.Start(startSignal);
-        var consumerTask = _consumer.Start(histogram);
+        var consumerTask = _consumer.Start(sessionContext.Histogram);
 
         _producer.Started.Wait();
         _consumer.Started.Wait();
 
-        stopwatch.Start();
+        sessionContext.Start();
 
         startSignal.Set();
 
         producerTask.Wait();
         consumerTask.Wait();
 
-        stopwatch.Stop();
+        sessionContext.Stop();
     }
 
     private class Producer

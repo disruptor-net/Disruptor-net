@@ -14,14 +14,19 @@ public class ThreadAffinityUtil
     [DllImport("libc.so.6")]
     private static extern int sched_setaffinity(int pid, IntPtr cpusetsize, ref ulong cpuset);
 
-    public static Scope SetThreadAffinity(int processorIndex)
+    public static Scope SetThreadAffinity(int processorIndex, ThreadPriority? threadPriority = null)
     {
+        var previousThreadPriority = Thread.CurrentThread.Priority;
+
         Thread.BeginThreadAffinity();
 
         var affinity = (1ul << processorIndex);
         SetProcessorAffinity(affinity);
 
-        return new Scope();
+        if (threadPriority != null)
+            Thread.CurrentThread.Priority = threadPriority.Value;
+
+        return new Scope(previousThreadPriority);
     }
 
     private static void RemoveThreadAffinity()
@@ -78,11 +83,13 @@ public class ThreadAffinityUtil
         throw new InvalidOperationException($"Could not retrieve native thread with ID: {threadId}, current managed thread ID was {threadId}");
     }
 
-    public readonly ref struct Scope
+    public readonly struct Scope(ThreadPriority initialThreadPriority) : IDisposable
     {
         public void Dispose()
         {
             RemoveThreadAffinity();
+
+            Thread.CurrentThread.Priority = initialThreadPriority;
         }
     }
 }

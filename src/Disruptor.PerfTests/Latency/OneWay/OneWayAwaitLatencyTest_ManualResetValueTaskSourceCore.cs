@@ -24,20 +24,20 @@ public class OneWayAwaitLatencyTest_ManualResetValueTaskSourceCore : ILatencyTes
 
     public int RequiredProcessorCount => 2;
 
-    public void Run(Stopwatch stopwatch, HistogramBase histogram)
+    public void Run(LatencySessionContext sessionContext)
     {
         _completed.Reset();
 
         foreach (var waiter in _waiters)
         {
-            waiter.Initialize(histogram);
+            waiter.Initialize(sessionContext.Histogram);
             waiter.Start();
         }
 
         var pause = _pause;
         var next = Stopwatch.GetTimestamp() + pause;
 
-        stopwatch.Start();
+        sessionContext.Start();
 
         for (int i = 0; i < _iterations; i++)
         {
@@ -64,7 +64,7 @@ public class OneWayAwaitLatencyTest_ManualResetValueTaskSourceCore : ILatencyTes
             waiter.Task.Wait();
         }
 
-        stopwatch.Stop();
+        sessionContext.Stop();
     }
 
     private class Waiter : IValueTaskSource<bool>
