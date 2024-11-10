@@ -4,7 +4,7 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <LangVersion>11.0</LangVersion>
+    <LangVersion>12.0</LangVersion>
     <Prefer32Bit>false</Prefer32Bit>
     <DefaultItemExcludes>$(DefaultItemExcludes);*.DotSettings;*.ncrunchproject</DefaultItemExcludes>
     <DebugType>embedded</DebugType>
