@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <OutputType>exe</OutputType>
     <SignAssembly>false</SignAssembly>
     <DebugType>pdbonly</DebugType>
@@ -17,11 +17,9 @@
     <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
     <PackageReference Include="HdrHistogram" Version="2.5.0" />
     <PackageReference Include="ObjectLayoutInspector" Version="0.1.4" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4"/>
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1"/>
     <PackageReference Include="System.Threading.Channels" Version="7.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Throughput\OneToOne\" />
   </ItemGroup>
 
 </Project>

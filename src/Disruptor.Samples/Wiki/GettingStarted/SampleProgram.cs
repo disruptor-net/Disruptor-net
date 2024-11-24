@@ -31,7 +31,7 @@ public class SampleProgram
 
         for (var i = 0; ; i++)
         {
-            MemoryMarshal.Write(memory.Span, ref i);
+            MemoryMarshal.Write(memory.Span, i);
 
             producer.ProduceUsingRawApi(memory);
 
