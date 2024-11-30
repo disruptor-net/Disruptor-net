@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
 
@@ -36,14 +37,16 @@ public class OneToOneSequencedThroughputTest : IThroughputTest
     private const int _bufferSize = 1024 * 64;
     private const long _iterations = 1000L * 1000L * 100L;
 
+    private static readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
+    private readonly ProgramOptions _options;
     private readonly RingBuffer<PerfEvent> _ringBuffer;
     private readonly AdditionEventHandler _eventHandler;
-    private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
     private readonly IEventProcessor<PerfEvent> _eventProcessor;
 
-    public OneToOneSequencedThroughputTest()
+    public OneToOneSequencedThroughputTest(ProgramOptions options)
     {
-        _eventHandler = new AdditionEventHandler();
+        _options = options;
+        _eventHandler = new AdditionEventHandler(options.GetCustomCpu(1));
         _ringBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
         var sequenceBarrier = _ringBuffer.NewBarrier();
         _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
@@ -61,6 +64,8 @@ public class OneToOneSequencedThroughputTest : IThroughputTest
         var processorTask = _eventProcessor.Start();
 
         _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+
+        using var _ = ThreadAffinityUtil.SetThreadAffinity(_options.GetCustomCpu(0), ThreadPriority.Highest);
 
         sessionContext.Start();
 

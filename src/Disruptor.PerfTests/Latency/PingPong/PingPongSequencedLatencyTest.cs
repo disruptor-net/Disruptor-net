@@ -31,7 +31,7 @@ public class PingPongSequencedLatencyTest : ILatencyTest
         var pingBarrier = pingBuffer.NewBarrier();
         var pongBarrier = pongBuffer.NewBarrier();
 
-        _pinger = new Pinger(pingBuffer, options.GetCustomCpu(0), _iterations, _pauseNanos);
+        _pinger = new Pinger(pingBuffer, options.GetCustomCpu(0));
         _ponger = new Ponger(pongBuffer, options.GetCustomCpu(1));
 
         _pingProcessor = EventProcessorFactory.Create(pongBuffer,pongBarrier, _pinger);
@@ -73,32 +73,28 @@ public class PingPongSequencedLatencyTest : ILatencyTest
     {
         private readonly RingBuffer<PerfEvent> _buffer;
         private readonly int? _cpu;
-        private readonly long _maxEvents;
-        private readonly long _pauseTimeNs;
         private readonly long _pauseTimeTicks;
         private HistogramBase _histogram;
         private long _t0;
         private long _counter;
         private CountdownEvent _globalSignal;
         private ManualResetEvent _signal;
-        private ThreadAffinityUtil.Scope _affinityScope;
+        private ThreadAffinityScope _affinityScope;
 
-        public Pinger(RingBuffer<PerfEvent> buffer, int? cpu, long maxEvents, long pauseTimeNs)
+        public Pinger(RingBuffer<PerfEvent> buffer, int? cpu)
         {
             _buffer = buffer;
             _cpu = cpu;
-            _maxEvents = maxEvents;
-            _pauseTimeNs = pauseTimeNs;
-            _pauseTimeTicks = StopwatchUtil.GetTimestampFromNanoseconds(pauseTimeNs);
+            _pauseTimeTicks = StopwatchUtil.GetTimestampFromNanoseconds(_pauseNanos);
         }
 
         public void OnEvent(PerfEvent data, long sequence, bool endOfBatch)
         {
             var t1 = Stopwatch.GetTimestamp();
 
-            _histogram.RecordValueWithExpectedInterval(StopwatchUtil.ToNanoseconds(t1 - _t0), _pauseTimeNs);
+            _histogram.RecordValueWithExpectedInterval(StopwatchUtil.ToNanoseconds(t1 - _t0), _pauseNanos);
 
-            if (data.Value < _maxEvents)
+            if (data.Value < _iterations)
             {
                 while (_pauseTimeTicks > (Stopwatch.GetTimestamp() - t1))
                 {
@@ -125,8 +121,7 @@ public class PingPongSequencedLatencyTest : ILatencyTest
 
         public void OnStart()
         {
-            if (_cpu != null)
-                _affinityScope = ThreadAffinityUtil.SetThreadAffinity(_cpu.Value, ThreadPriority.Highest);
+            _affinityScope = ThreadAffinityUtil.SetThreadAffinity(_cpu, ThreadPriority.Highest);
 
             _globalSignal.Signal();
             _globalSignal.Wait();
@@ -138,8 +133,7 @@ public class PingPongSequencedLatencyTest : ILatencyTest
 
         public void OnShutdown()
         {
-            if (_cpu != null)
-                _affinityScope.Dispose();
+            _affinityScope.Dispose();
         }
 
         public void Reset(CountdownEvent globalSignal, ManualResetEvent signal, HistogramBase histogram)
@@ -157,7 +151,7 @@ public class PingPongSequencedLatencyTest : ILatencyTest
         private readonly RingBuffer<PerfEvent> _buffer;
         private readonly int? _cpu;
         private CountdownEvent _globalSignal;
-        private ThreadAffinityUtil.Scope _affinityScope;
+        private ThreadAffinityScope _affinityScope;
 
         public Ponger(RingBuffer<PerfEvent> buffer, int? cpu)
         {
@@ -174,8 +168,7 @@ public class PingPongSequencedLatencyTest : ILatencyTest
 
         public void OnStart()
         {
-            if (_cpu != null)
-                _affinityScope = ThreadAffinityUtil.SetThreadAffinity(_cpu.Value, ThreadPriority.Highest);
+            _affinityScope = ThreadAffinityUtil.SetThreadAffinity(_cpu, ThreadPriority.Highest);
 
             _globalSignal.Signal();
             _globalSignal.Wait();
@@ -183,8 +176,7 @@ public class PingPongSequencedLatencyTest : ILatencyTest
 
         public void OnShutdown()
         {
-            if (_cpu != null)
-                _affinityScope.Dispose();
+            _affinityScope.Dispose();
         }
 
         public void Reset(CountdownEvent globalSignal)

@@ -14,30 +14,35 @@ public class ThreadAffinityUtil
     [DllImport("libc.so.6")]
     private static extern int sched_setaffinity(int pid, IntPtr cpusetsize, ref ulong cpuset);
 
-    public static Scope SetThreadAffinity(int processorIndex, ThreadPriority? threadPriority = null)
+    public static ThreadAffinityScope SetThreadAffinity(int? cpuId, ThreadPriority? threadPriority = null)
     {
-        var previousThreadPriority = Thread.CurrentThread.Priority;
+        if (cpuId != null)
+        {
+            var affinity = (1ul << cpuId.Value);
+            SetProcessorAffinity(affinity);
+        }
 
-        Thread.BeginThreadAffinity();
-
-        var affinity = (1ul << processorIndex);
-        SetProcessorAffinity(affinity);
-
+        ThreadPriority? previousThreadPriority;
         if (threadPriority != null)
+        {
+            previousThreadPriority = Thread.CurrentThread.Priority;
             Thread.CurrentThread.Priority = threadPriority.Value;
+        }
+        else
+        {
+            previousThreadPriority = null;
+        }
 
-        return new Scope(previousThreadPriority);
+        return new ThreadAffinityScope(cpuId != null, previousThreadPriority);
     }
 
-    private static void RemoveThreadAffinity()
+    public static void RemoveThreadAffinity()
     {
         var affinity = (1ul << Environment.ProcessorCount) - 1;
         SetProcessorAffinity(affinity);
-
-        Thread.EndThreadAffinity();
     }
 
-    private static void SetProcessorAffinity(ulong mask)
+    public static void SetProcessorAffinity(ulong mask)
     {
 #if NETFRAMEWORK
         SetProcessorAffinityWindows(mask);
@@ -81,15 +86,5 @@ public class ThreadAffinityUtil
         }
 
         throw new InvalidOperationException($"Could not retrieve native thread with ID: {threadId}, current managed thread ID was {threadId}");
-    }
-
-    public readonly struct Scope(ThreadPriority initialThreadPriority) : IDisposable
-    {
-        public void Dispose()
-        {
-            RemoveThreadAffinity();
-
-            Thread.CurrentThread.Priority = initialThreadPriority;
-        }
     }
 }

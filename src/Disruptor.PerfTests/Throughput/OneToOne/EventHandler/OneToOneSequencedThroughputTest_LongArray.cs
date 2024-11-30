@@ -39,15 +39,17 @@ public class OneToOneSequencedThroughputTest_LongArray : IThroughputTest
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
+    private readonly ProgramOptions _options;
     private readonly RingBuffer<long[]> _ringBuffer;
     private readonly LongArrayEventHandler _handler;
     private readonly IEventProcessor<long[]> _eventProcessor;
 
-    public OneToOneSequencedThroughputTest_LongArray()
+    public OneToOneSequencedThroughputTest_LongArray(ProgramOptions options)
     {
+        _options = options;
+        _handler = new LongArrayEventHandler(options.GetCustomCpu(1));
         _ringBuffer = RingBuffer<long[]>.CreateSingleProducer(() => new long[_arraySize], _bufferSize, new YieldingWaitStrategy());
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        _handler = new LongArrayEventHandler();
         _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);
         _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);
     }
@@ -58,11 +60,15 @@ public class OneToOneSequencedThroughputTest_LongArray : IThroughputTest
 
     public long Run(ThroughputSessionContext sessionContext)
     {
-        var signal = new ManualResetEvent(false);
         var expectedCount = _eventProcessor.Sequence.Value + _iterations;
+
+        var signal = new ManualResetEvent(false);
         _handler.Reset(signal, _iterations);
         var processorTask = _eventProcessor.Start();
+
         _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+
+        using var _ = ThreadAffinityUtil.SetThreadAffinity(_options.GetCustomCpu(0), ThreadPriority.Highest);
 
         sessionContext.Start();
 

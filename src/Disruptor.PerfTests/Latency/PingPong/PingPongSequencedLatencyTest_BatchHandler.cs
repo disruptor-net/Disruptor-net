@@ -23,16 +23,16 @@ public class PingPongSequencedLatencyTest_BatchHandler : ILatencyTest
     private readonly Ponger _ponger;
     private readonly IEventProcessor<PerfEvent> _pongProcessor;
 
-    public PingPongSequencedLatencyTest_BatchHandler()
+    public PingPongSequencedLatencyTest_BatchHandler(ProgramOptions options)
     {
-        var pingBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
-        var pongBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+        var pingBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+        var pongBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
 
         var pingBarrier = pingBuffer.NewBarrier();
         var pongBarrier = pongBuffer.NewBarrier();
 
-        _pinger = new Pinger(pingBuffer, _iterations, _pauseNanos);
-        _ponger = new Ponger(pongBuffer);
+        _pinger = new Pinger(pingBuffer, options.GetCustomCpu(0), _iterations, _pauseNanos);
+        _ponger = new Ponger(pongBuffer, options.GetCustomCpu(1));
 
         _pingProcessor = EventProcessorFactory.Create(pongBuffer,pongBarrier, _pinger);
         _pongProcessor = EventProcessorFactory.Create(pingBuffer,pingBarrier, _ponger);
@@ -72,6 +72,7 @@ public class PingPongSequencedLatencyTest_BatchHandler : ILatencyTest
     private class Pinger : IBatchEventHandler<PerfEvent>
     {
         private readonly RingBuffer<PerfEvent> _buffer;
+        private readonly int? _cpu;
         private readonly long _maxEvents;
         private readonly long _pauseTimeNs;
         private readonly long _pauseTimeTicks;
@@ -80,10 +81,12 @@ public class PingPongSequencedLatencyTest_BatchHandler : ILatencyTest
         private long _counter;
         private CountdownEvent _globalSignal;
         private ManualResetEvent _signal;
+        private ThreadAffinityScope _affinityScope;
 
-        public Pinger(RingBuffer<PerfEvent> buffer, long maxEvents, long pauseTimeNs)
+        public Pinger(RingBuffer<PerfEvent> buffer, int? cpu, long maxEvents, long pauseTimeNs)
         {
             _buffer = buffer;
+            _cpu = cpu;
             _maxEvents = maxEvents;
             _pauseTimeNs = pauseTimeNs;
             _pauseTimeTicks = StopwatchUtil.GetTimestampFromNanoseconds(pauseTimeNs);
@@ -125,6 +128,8 @@ public class PingPongSequencedLatencyTest_BatchHandler : ILatencyTest
 
         public void OnStart()
         {
+            _affinityScope = ThreadAffinityUtil.SetThreadAffinity(_cpu, ThreadPriority.Highest);
+
             _globalSignal.Signal();
             _globalSignal.Wait();
 
@@ -135,6 +140,7 @@ public class PingPongSequencedLatencyTest_BatchHandler : ILatencyTest
 
         public void OnShutdown()
         {
+            _affinityScope.Dispose();
         }
 
         public void Reset(CountdownEvent globalSignal, ManualResetEvent signal, HistogramBase histogram)
@@ -150,11 +156,14 @@ public class PingPongSequencedLatencyTest_BatchHandler : ILatencyTest
     private class Ponger : IBatchEventHandler<PerfEvent>
     {
         private readonly RingBuffer<PerfEvent> _buffer;
+        private readonly int? _cpu;
         private CountdownEvent _globalSignal;
+        private ThreadAffinityScope _affinityScope;
 
-        public Ponger(RingBuffer<PerfEvent> buffer)
+        public Ponger(RingBuffer<PerfEvent> buffer, int? cpu)
         {
             _buffer = buffer;
+            _cpu = cpu;
         }
 
         public void OnBatch(EventBatch<PerfEvent> batch, long sequence)
@@ -169,12 +178,15 @@ public class PingPongSequencedLatencyTest_BatchHandler : ILatencyTest
 
         public void OnStart()
         {
+            _affinityScope = ThreadAffinityUtil.SetThreadAffinity(_cpu, ThreadPriority.Highest);
+
             _globalSignal.Signal();
             _globalSignal.Wait();
         }
 
         public void OnShutdown()
         {
+            _affinityScope.Dispose();
         }
 
         public void Reset(CountdownEvent globalSignal)

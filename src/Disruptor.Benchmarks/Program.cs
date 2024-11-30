@@ -16,8 +16,6 @@ public static class Program
             config: DefaultConfig.Instance.WithOption(ConfigOptions.JoinSummary, true),
             args: args
         );
-
-        Console.ReadLine();
     }
 
     public static async Task MainTests()

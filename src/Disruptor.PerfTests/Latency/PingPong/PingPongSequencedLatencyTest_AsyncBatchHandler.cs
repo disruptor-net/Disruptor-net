@@ -30,7 +30,7 @@ public class PingPongSequencedLatencyTest_AsyncBatchHandler : ILatencyTest
         var pingBarrier = pingBuffer.NewAsyncBarrier();
         var pongBarrier = pongBuffer.NewAsyncBarrier();
 
-        _pinger = new Pinger(pongBuffer, _pauseNanos);
+        _pinger = new Pinger(pongBuffer);
         _ponger = new Ponger(pingBuffer);
 
         _pingProcessor = EventProcessorFactory.Create(pingBuffer, pingBarrier, _pinger);
@@ -77,7 +77,6 @@ public class PingPongSequencedLatencyTest_AsyncBatchHandler : ILatencyTest
     private class Pinger : IAsyncBatchEventHandler<PingPongEvent>
     {
         private readonly RingBuffer<PingPongEvent> _buffer;
-        private readonly long _pauseTimeNs;
         private readonly long _pauseTimeTicks;
         private HistogramBase _histogram;
         private CountdownEvent _startCountdown;
@@ -85,11 +84,10 @@ public class PingPongSequencedLatencyTest_AsyncBatchHandler : ILatencyTest
         private long _t0;
         private long _counter;
 
-        public Pinger(RingBuffer<PingPongEvent> buffer, long pauseTimeNs)
+        public Pinger(RingBuffer<PingPongEvent> buffer)
         {
             _buffer = buffer;
-            _pauseTimeNs = pauseTimeNs;
-            _pauseTimeTicks = StopwatchUtil.GetTimestampFromNanoseconds(pauseTimeNs);
+            _pauseTimeTicks = StopwatchUtil.GetTimestampFromNanoseconds(_pauseNanos);
         }
 
         public ValueTask OnBatch(EventBatch<PingPongEvent> batch, long sequence)
@@ -97,7 +95,7 @@ public class PingPongSequencedLatencyTest_AsyncBatchHandler : ILatencyTest
             foreach (var data in batch)
             {
                 var t1 = Stopwatch.GetTimestamp();
-                _histogram.RecordValueWithExpectedInterval(StopwatchUtil.ToNanoseconds(t1 - _t0), _pauseTimeNs);
+                _histogram.RecordValueWithExpectedInterval(StopwatchUtil.ToNanoseconds(t1 - _t0), _pauseNanos);
 
                 if (data.Counter == _iterations)
                 {
