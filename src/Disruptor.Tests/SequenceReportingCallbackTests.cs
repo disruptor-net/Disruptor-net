@@ -21,17 +21,17 @@ public class SequenceReportingCallbackTests
 
         var task = eventProcessor.Start();
 
-        Assert.AreEqual(-1L, eventProcessor.Sequence.Value);
+        Assert.That(eventProcessor.Sequence.Value, Is.EqualTo(-1L));
         ringBuffer.Publish(ringBuffer.Next());
 
         handler.CallbackSignal.WaitOne();
-        Assert.AreEqual(0L, eventProcessor.Sequence.Value);
+        Assert.That(eventProcessor.Sequence.Value, Is.EqualTo(0L));
 
         handler.OnEndOfBatchSignal.Set();
-        Assert.AreEqual(0L, eventProcessor.Sequence.Value);
+        Assert.That(eventProcessor.Sequence.Value, Is.EqualTo(0L));
 
         eventProcessor.Halt();
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(10)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(10)));
     }
 
     [Test]
@@ -45,17 +45,17 @@ public class SequenceReportingCallbackTests
 
         var task = eventProcessor.Start();
 
-        Assert.AreEqual(-1L, eventProcessor.Sequence.Value);
+        Assert.That(eventProcessor.Sequence.Value, Is.EqualTo(-1L));
         ringBuffer.Publish(ringBuffer.Next());
 
         handler.CallbackSignal.WaitOne();
-        Assert.AreEqual(0L, eventProcessor.Sequence.Value);
+        Assert.That(eventProcessor.Sequence.Value, Is.EqualTo(0L));
 
         handler.OnEndOfBatchSignal.Set();
-        Assert.AreEqual(0L, eventProcessor.Sequence.Value);
+        Assert.That(eventProcessor.Sequence.Value, Is.EqualTo(0L));
 
         eventProcessor.Halt();
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(10)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(10)));
     }
 
     private class TestSequenceReportingEventHandler : IEventHandler<StubEvent>, IValueEventHandler<StubValueEvent>, IEventProcessorSequenceAware

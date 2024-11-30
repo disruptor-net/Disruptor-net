@@ -54,7 +54,7 @@ public class StubPublisher
         else
         {
             var actualPublicationCount = _publicationCount;
-            Assert.IsTrue(actualPublicationCount >= expectedPublicationCount, "Producer reached unexpected count. Expected at least " + expectedPublicationCount + " but only reached " + actualPublicationCount);
+            Assert.That(actualPublicationCount >= expectedPublicationCount, "Producer reached unexpected count. Expected at least " + expectedPublicationCount + " but only reached " + actualPublicationCount);
         }
     }
 }

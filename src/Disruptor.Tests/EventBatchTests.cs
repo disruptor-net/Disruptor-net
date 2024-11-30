@@ -19,7 +19,7 @@ public class EventBatchTests
         var copy = batch.ToArray();
 
         // Assert
-        Assert.AreEqual(array.Skip(1).ToArray(), copy);
+        Assert.That(copy, Is.EqualTo(array.Skip(1).ToArray()));
     }
 
     [Test]
@@ -33,7 +33,7 @@ public class EventBatchTests
         var copy = batch.AsEnumerable().ToArray();
 
         // Assert
-        Assert.AreEqual(array.Skip(1).ToArray(), copy);
+        Assert.That(copy, Is.EqualTo(array.Skip(1).ToArray()));
     }
 
     [TestCase(0, 3)]
@@ -50,7 +50,7 @@ public class EventBatchTests
         var slice = batch.Slice(start, length);
 
         // Assert
-        Assert.AreEqual(batch.AsSpan().Slice(start, length).ToArray(), slice.ToArray());
+        Assert.That(slice.ToArray(), Is.EqualTo(batch.AsSpan().Slice(start, length).ToArray()));
     }
 
     [TestCase(-1, 3)]
@@ -79,10 +79,10 @@ public class EventBatchTests
             ++itemCount;
         }
 
-        Assert.Zero(itemCount);
-        Assert.Zero(batch.Length);
-        Assert.Zero(batch.AsSpan().Length);
-        Assert.Zero(batch.Slice(0, 0).Length);
-        Assert.AreEqual(Array.Empty<TestEvent>(), batch.ToArray());
+        Assert.That(itemCount, Is.Zero);
+        Assert.That(batch.Length, Is.Zero);
+        Assert.That(batch.AsSpan().Length, Is.Zero);
+        Assert.That(batch.Slice(0, 0).Length, Is.Zero);
+        Assert.That(batch.ToArray(), Is.EqualTo(Array.Empty<TestEvent>()));
     }
 }

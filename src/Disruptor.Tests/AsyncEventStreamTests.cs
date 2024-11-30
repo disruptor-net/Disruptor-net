@@ -79,7 +79,7 @@ public class AsyncEventStreamTests
             }
         }
         // Assert
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(2)));
         Assert.That(processedValues, Is.EquivalentTo(publishedValues));
     }
 
@@ -130,8 +130,8 @@ public class AsyncEventStreamTests
         }
 
         // Assert
-        Assert.IsTrue(task1.Wait(TimeSpan.FromSeconds(2)));
-        Assert.IsTrue(task2.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(task1.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(task2.Wait(TimeSpan.FromSeconds(2)));
         Assert.That(processedValues1, Is.EquivalentTo(publishedValues));
         Assert.That(processedValues2, Is.EquivalentTo(publishedValues));
     }
@@ -163,7 +163,7 @@ public class AsyncEventStreamTests
         _ringBuffer.PublishStubEvent(3);
 
         // Assert
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(2)));
         Assert.That(processedValues, Is.EquivalentTo(new[] { 3 }));
     }
 
@@ -179,7 +179,7 @@ public class AsyncEventStreamTests
 
         var canGetNextSequence = _ringBuffer.TryNext(out _);
 
-        Assert.IsFalse(canGetNextSequence);
+        Assert.That(!canGetNextSequence);
     }
 
     [Test]
@@ -196,7 +196,7 @@ public class AsyncEventStreamTests
 
         var canGetNextSequence = _ringBuffer.TryNext(out _);
 
-        Assert.IsTrue(canGetNextSequence);
+        Assert.That(canGetNextSequence);
     }
 
     [Test]
@@ -216,7 +216,7 @@ public class AsyncEventStreamTests
 
         _ringBuffer.PublishStubEvent(0);
 
-        Assert.IsTrue(processingSignal.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(processingSignal.Wait(TimeSpan.FromSeconds(2)));
 
         cancellationTokenSource.Cancel();
 
@@ -239,7 +239,7 @@ public class AsyncEventStreamTests
 
         _ringBuffer.PublishStubEvent(0);
 
-        Assert.IsTrue(processingSignal.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(processingSignal.Wait(TimeSpan.FromSeconds(2)));
 
         stream.Dispose();
 
@@ -249,6 +249,6 @@ public class AsyncEventStreamTests
     private static void AssertIsCancelled(Task task)
     {
         var exception = Assert.Catch<AggregateException>(() => task.Wait(TimeSpan.FromSeconds(2)));
-        Assert.IsInstanceOf<TaskCanceledException>(exception!.InnerException);
+        Assert.That(exception!.InnerException, Is.InstanceOf<OperationCanceledException>());
     }
 }

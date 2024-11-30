@@ -50,11 +50,11 @@ public class AsyncBatchEventProcessorTests
 
         var task = eventProcessor.Start();
 
-        Assert.IsTrue(eventSignal.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(eventSignal.Wait(TimeSpan.FromSeconds(2)));
 
         eventProcessor.Halt();
 
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(2)));
     }
 
     [Test]
@@ -71,11 +71,11 @@ public class AsyncBatchEventProcessorTests
 
         var task = eventProcessor.Start();
 
-        Assert.IsTrue(onTimeoutSignal.WaitOne(TimeSpan.FromSeconds(2)));
+        Assert.That(onTimeoutSignal.WaitOne(TimeSpan.FromSeconds(2)));
 
         eventProcessor.Halt();
 
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(2)));
     }
 
     [Test]
@@ -95,14 +95,14 @@ public class AsyncBatchEventProcessorTests
 
         var task = eventProcessor.Start();
 
-        Assert.IsTrue(exception.Task.Wait(TimeSpan.FromSeconds(2)));
-        Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
-        Assert.AreEqual(1, exceptionHandler.TimeoutExceptionCount);
-        Assert.AreEqual(0, exceptionHandler.BatchExceptionCount);
+        Assert.That(exception.Task.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(exceptionHandler.EventExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.TimeoutExceptionCount, Is.EqualTo(1));
+        Assert.That(exceptionHandler.BatchExceptionCount, Is.EqualTo(0));
 
         eventProcessor.Halt();
 
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(2)));
     }
 
     [Test]
@@ -120,14 +120,14 @@ public class AsyncBatchEventProcessorTests
 
         _ringBuffer.PublishStubEvent(0);
 
-        Assert.IsTrue(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
-        Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
-        Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
-        Assert.AreEqual(1, exceptionHandler.BatchExceptionCount);
+        Assert.That(exceptionSignal.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(exceptionHandler.EventExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.TimeoutExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.BatchExceptionCount, Is.EqualTo(1));
 
         eventProcessor.Halt();
 
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(2)));
     }
 
     [Test]
@@ -150,38 +150,38 @@ public class AsyncBatchEventProcessorTests
         var task = eventProcessor.Start();
 
         _ringBuffer.PublishStubEvent(0);
-        Assert.IsTrue(processingSignal.WaitOne(TimeSpan.FromSeconds(2)));
-        Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
-        Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
-        Assert.AreEqual(0, exceptionHandler.BatchExceptionCount);
+        Assert.That(processingSignal.WaitOne(TimeSpan.FromSeconds(2)));
+        Assert.That(exceptionHandler.EventExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.TimeoutExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.BatchExceptionCount, Is.EqualTo(0));
 
         _ringBuffer.PublishStubEvent(1);
-        Assert.IsTrue(processingSignal.WaitOne(TimeSpan.FromSeconds(2)));
-        Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
-        Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
-        Assert.AreEqual(1, exceptionHandler.BatchExceptionCount);
+        Assert.That(processingSignal.WaitOne(TimeSpan.FromSeconds(2)));
+        Assert.That(exceptionHandler.EventExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.TimeoutExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.BatchExceptionCount, Is.EqualTo(1));
 
         _ringBuffer.PublishStubEvent(0);
-        Assert.IsTrue(processingSignal.WaitOne(TimeSpan.FromSeconds(2)));
-        Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
-        Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
-        Assert.AreEqual(1, exceptionHandler.BatchExceptionCount);
+        Assert.That(processingSignal.WaitOne(TimeSpan.FromSeconds(2)));
+        Assert.That(exceptionHandler.EventExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.TimeoutExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.BatchExceptionCount, Is.EqualTo(1));
 
         _ringBuffer.PublishStubEvent(1);
-        Assert.IsTrue(processingSignal.WaitOne(TimeSpan.FromSeconds(2)));
-        Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
-        Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
-        Assert.AreEqual(2, exceptionHandler.BatchExceptionCount);
+        Assert.That(processingSignal.WaitOne(TimeSpan.FromSeconds(2)));
+        Assert.That(exceptionHandler.EventExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.TimeoutExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.BatchExceptionCount, Is.EqualTo(2));
 
         _ringBuffer.PublishStubEvent(0);
-        Assert.IsTrue(processingSignal.WaitOne(TimeSpan.FromSeconds(2)));
-        Assert.AreEqual(0, exceptionHandler.EventExceptionCount);
-        Assert.AreEqual(0, exceptionHandler.TimeoutExceptionCount);
-        Assert.AreEqual(2, exceptionHandler.BatchExceptionCount);
+        Assert.That(processingSignal.WaitOne(TimeSpan.FromSeconds(2)));
+        Assert.That(exceptionHandler.EventExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.TimeoutExceptionCount, Is.EqualTo(0));
+        Assert.That(exceptionHandler.BatchExceptionCount, Is.EqualTo(2));
 
         eventProcessor.Halt();
 
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(2)));
     }
 
     [Test]
@@ -198,8 +198,8 @@ public class AsyncBatchEventProcessorTests
         p1.Halt();
         p1.Start();
 
-        Assert.IsTrue(h1.WaitStart(TimeSpan.FromSeconds(2)));
-        Assert.IsTrue(h1.WaitShutdown(TimeSpan.FromSeconds(2)));
+        Assert.That(h1.WaitStart(TimeSpan.FromSeconds(2)));
+        Assert.That(h1.WaitShutdown(TimeSpan.FromSeconds(2)));
 
         for (int i = 0; i < 1000; i++)
         {
@@ -209,8 +209,8 @@ public class AsyncBatchEventProcessorTests
 
             p2.Halt();
 
-            Assert.IsTrue(h2.WaitStart(TimeSpan.FromSeconds(2)));
-            Assert.IsTrue(h2.WaitShutdown(TimeSpan.FromSeconds(2)));
+            Assert.That(h2.WaitStart(TimeSpan.FromSeconds(2)));
+            Assert.That(h2.WaitShutdown(TimeSpan.FromSeconds(2)));
         }
 
         for (int i = 0; i < 1000; i++)
@@ -222,8 +222,8 @@ public class AsyncBatchEventProcessorTests
             Thread.Yield();
             p2.Halt();
 
-            Assert.IsTrue(h2.WaitStart(TimeSpan.FromSeconds(2)));
-            Assert.IsTrue(h2.WaitShutdown(TimeSpan.FromSeconds(2)));
+            Assert.That(h2.WaitStart(TimeSpan.FromSeconds(2)));
+            Assert.That(h2.WaitShutdown(TimeSpan.FromSeconds(2)));
         }
     }
 
@@ -236,18 +236,18 @@ public class AsyncBatchEventProcessorTests
         var task = processor.Start();
 
         var wasStarted = handler.WaitStart(TimeSpan.FromMilliseconds(500));
-        Assert.IsTrue(wasStarted);
+        Assert.That(wasStarted);
 
         var wasShutdownAfterStart = handler.WaitShutdown(TimeSpan.FromMilliseconds(10));
-        Assert.IsFalse(wasShutdownAfterStart);
+        Assert.That(!wasShutdownAfterStart);
 
         processor.Halt();
 
         var stopped = task.Wait(TimeSpan.FromMilliseconds(500));
-        Assert.IsTrue(stopped);
+        Assert.That(stopped);
 
         var wasShutdownAfterStop = handler.WaitShutdown(TimeSpan.FromMilliseconds(10));
-        Assert.IsTrue(wasShutdownAfterStop);
+        Assert.That(wasShutdownAfterStop);
     }
 
     [Test]
@@ -268,8 +268,8 @@ public class AsyncBatchEventProcessorTests
 
         eventProcessor.Start();
 
-        Assert.IsTrue(eventSignal.Wait(TimeSpan.FromSeconds(2)));
-        CollectionAssert.AreEqual(new[] { 6, 6, 3 }, eventHandler.BatchSizes);
+        Assert.That(eventSignal.Wait(TimeSpan.FromSeconds(2)));
+        Assert.That(eventHandler.BatchSizes, Is.EqualTo(new List<long> { 6, 6, 3 }));
 
         eventProcessor.Halt();
     }

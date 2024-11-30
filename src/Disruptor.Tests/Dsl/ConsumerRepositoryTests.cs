@@ -70,7 +70,7 @@ public class ConsumerRepositoryTests
             }
         }
 
-        Assert.True(seen1, "Included eventProcessor 1");
-        Assert.True(seen2, "Included eventProcessor 2");
+        Assert.That(seen1, "Included eventProcessor 1");
+        Assert.That(seen2, "Included eventProcessor 2");
     }
 }

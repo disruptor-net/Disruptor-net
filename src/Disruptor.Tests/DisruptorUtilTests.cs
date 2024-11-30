@@ -10,7 +10,7 @@ public class DisruptorUtilTests
     {
         var powerOfTwo = DisruptorUtil.CeilingNextPowerOfTwo(1000);
 
-        Assert.AreEqual(1024, powerOfTwo);
+        Assert.That(powerOfTwo, Is.EqualTo(1024));
     }
 
     [Test]
@@ -18,7 +18,7 @@ public class DisruptorUtilTests
     {
         var powerOfTwo = DisruptorUtil.CeilingNextPowerOfTwo(1024);
 
-        Assert.AreEqual(1024, powerOfTwo);
+        Assert.That(powerOfTwo, Is.EqualTo(1024));
     }
 
     [Test]
@@ -26,7 +26,7 @@ public class DisruptorUtilTests
     {
         var sequences = new[] {new Sequence(11), new Sequence(4), new Sequence(13)};
 
-        Assert.AreEqual(4L, DisruptorUtil.GetMinimumSequence(sequences));
+        Assert.That(DisruptorUtil.GetMinimumSequence(sequences), Is.EqualTo(4L));
     }
 
     [Test]
@@ -34,6 +34,6 @@ public class DisruptorUtilTests
     {
         var sequences = new Sequence[0];
 
-        Assert.AreEqual(long.MaxValue, DisruptorUtil.GetMinimumSequence(sequences));
+        Assert.That(DisruptorUtil.GetMinimumSequence(sequences), Is.EqualTo(long.MaxValue));
     }
 }

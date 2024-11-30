@@ -15,7 +15,7 @@ public class DependentSequenceGroupTests
 
         var cursorValue = dependentSequences.CursorValue;
 
-        Assert.AreEqual(42, cursorValue);
+        Assert.That(cursorValue, Is.EqualTo((long)42));
     }
 
     [Test]
@@ -26,7 +26,7 @@ public class DependentSequenceGroupTests
 
         var value = dependentSequences.Value;
 
-        Assert.AreEqual(42, value);
+        Assert.That(value, Is.EqualTo((long)42));
     }
 
     [Test, Repeat(10)]
@@ -43,7 +43,7 @@ public class DependentSequenceGroupTests
         var value = dependentSequences.Value;
 
         var expectedValue = sequences.Select(x => x.Value).Min();
-        Assert.AreEqual(expectedValue, value);
+        Assert.That(value, Is.EqualTo(expectedValue));
     }
 
     [TestCase(0, 1)]
@@ -58,6 +58,6 @@ public class DependentSequenceGroupTests
 
         var dependentSequences = new DependentSequenceGroup(cursor, sequences);
 
-        Assert.AreEqual(expectedDependentSequenceCount, dependentSequences.DependentSequenceCount);
+        Assert.That(dependentSequences.DependentSequenceCount, Is.EqualTo(expectedDependentSequenceCount));
     }
 }

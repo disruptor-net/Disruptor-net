@@ -20,8 +20,8 @@ public class PhasedBackoffWaitStrategyTestWithLock : WaitStrategyFixture<PhasedB
         var yieldTimeout = TimeSpan.FromMilliseconds(15);
         var waitStrategy = PhasedBackoffWaitStrategy.WithLock(spinTimeout, yieldTimeout);
 
-        Assert.AreEqual(spinTimeout, GetElapsedTime(waitStrategy.SpinTimeout));
-        Assert.AreEqual(yieldTimeout, GetElapsedTime(waitStrategy.YieldTimeout));
+        Assert.That(GetElapsedTime(waitStrategy.SpinTimeout), Is.EqualTo(spinTimeout));
+        Assert.That(GetElapsedTime(waitStrategy.YieldTimeout), Is.EqualTo(yieldTimeout));
     }
 
     private static TimeSpan GetElapsedTime(long stopwatchTicks) => new((long)(stopwatchTicks * _stopwatchTickFrequency));

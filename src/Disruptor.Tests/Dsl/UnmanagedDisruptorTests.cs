@@ -48,8 +48,8 @@ public class UnmanagedDisruptorTests : IDisposable
             scope.Event().Value = 102;
         }
 
-        Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
-        Assert.AreEqual(new List<int> { 101, 102 }, values);
+        Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(values, Is.EqualTo(new List<int> { 101, 102 }));
     }
 
     [Test]
@@ -74,7 +74,7 @@ public class UnmanagedDisruptorTests : IDisposable
             scope.Event(1).Value = 104;
         }
 
-        Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
-        Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
+        Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(values, Is.EqualTo(new List<int> { 101, 102, 103, 104 }));
     }
 }

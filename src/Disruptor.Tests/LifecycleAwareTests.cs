@@ -31,8 +31,8 @@ public class LifecycleAwareTests
 
         _shutdownSignal.WaitOne();
 
-        Assert.AreEqual(_eventHandler.StartCounter, 1);
-        Assert.AreEqual(_eventHandler.ShutdownCounter, 1);
+        Assert.That(1, Is.EqualTo(_eventHandler.StartCounter));
+        Assert.That(1, Is.EqualTo(_eventHandler.ShutdownCounter));
     }
 
     private sealed class LifecycleAwareEventHandler : IEventHandler<StubEvent>

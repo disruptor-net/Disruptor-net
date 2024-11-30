@@ -25,13 +25,13 @@ public abstract class SequencerTests
     [Test]
     public void ShouldStartWithInitialValue()
     {
-        Assert.AreEqual(0, _sequencer.Next());
+        Assert.That(_sequencer.Next(), Is.EqualTo((long)0));
     }
 
     [Test]
     public void ShouldBatchClaim()
     {
-        Assert.AreEqual(3, _sequencer.Next(4));
+        Assert.That(_sequencer.Next(4), Is.EqualTo((long)3));
     }
 
     [Test]
@@ -39,14 +39,14 @@ public abstract class SequencerTests
     {
         _sequencer.AddGatingSequences(_gatingSequence);
 
-        Assert.IsTrue(_sequencer.HasAvailableCapacity(1));
-        Assert.IsTrue(_sequencer.HasAvailableCapacity(_bufferSize));
-        Assert.False(_sequencer.HasAvailableCapacity(_bufferSize + 1));
+        Assert.That(_sequencer.HasAvailableCapacity(1));
+        Assert.That(_sequencer.HasAvailableCapacity(_bufferSize));
+        Assert.That(!_sequencer.HasAvailableCapacity(_bufferSize + 1));
 
         _sequencer.Publish(_sequencer.Next());
 
-        Assert.IsTrue(_sequencer.HasAvailableCapacity(_bufferSize - 1));
-        Assert.False(_sequencer.HasAvailableCapacity(_bufferSize));
+        Assert.That(_sequencer.HasAvailableCapacity(_bufferSize - 1));
+        Assert.That(!_sequencer.HasAvailableCapacity(_bufferSize));
     }
 
     [Test]
@@ -57,7 +57,7 @@ public abstract class SequencerTests
         var sequence = _sequencer.Next(_bufferSize);
         _sequencer.Publish(sequence - (_bufferSize - 1), sequence);
 
-        Assert.IsFalse(_sequencer.HasAvailableCapacity(1));
+        Assert.That(!_sequencer.HasAvailableCapacity(1));
     }
 
     [Test]
@@ -102,7 +102,7 @@ public abstract class SequencerTests
             _sequencer.Next();
         }
 
-        Assert.IsFalse(_sequencer.TryNext(out _));
+        Assert.That(!_sequencer.TryNext(out _));
     }
 
     [Test]
@@ -334,10 +334,10 @@ public abstract class SequencerTests
     public void SequencesBecomeAvailableAfterAPublish()
     {
         var seq = _sequencer.Next();
-        Assert.IsFalse(_sequencer.IsAvailable(seq));
+        Assert.That(!_sequencer.IsAvailable(seq));
         _sequencer.Publish(seq);
 
-        Assert.IsTrue(_sequencer.IsAvailable(seq));
+        Assert.That(_sequencer.IsAvailable(seq));
     }
 
     [Test]
@@ -345,13 +345,13 @@ public abstract class SequencerTests
     {
         var seq = _sequencer.Next();
         _sequencer.Publish(seq);
-        Assert.IsTrue(_sequencer.IsAvailable(seq));
+        Assert.That(_sequencer.IsAvailable(seq));
 
         for (var i = 0; i < _bufferSize; i++)
         {
             _sequencer.Publish(_sequencer.Next());
         }
 
-        Assert.IsFalse(_sequencer.IsAvailable(seq));
+        Assert.That(!_sequencer.IsAvailable(seq));
     }
 }

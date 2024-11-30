@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
-using static Disruptor.Tests.RingBufferEqualsConstraint;
 
 namespace Disruptor.Tests;
 
@@ -32,7 +30,7 @@ public class RingBufferTests : IDisposable
     [Test]
     public void ShouldClaimAndGet()
     {
-        Assert.AreEqual(Sequence.InitialCursorValue, _ringBuffer.Cursor);
+        Assert.That(_ringBuffer.Cursor, Is.EqualTo(Sequence.InitialCursorValue));
 
         var expectedEvent = new StubEvent(2701);
 
@@ -42,12 +40,12 @@ public class RingBufferTests : IDisposable
         _ringBuffer.Publish(claimSequence);
 
         var waitResult = _sequenceBarrier.WaitFor(0);
-        Assert.AreEqual(new SequenceWaitResult(0), waitResult);
+        Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(0)));
 
         var evt = _ringBuffer[waitResult.UnsafeAvailableSequence];
-        Assert.AreEqual(expectedEvent, evt);
+        Assert.That(evt, Is.EqualTo(expectedEvent));
 
-        Assert.AreEqual(0L, _ringBuffer.Cursor);
+        Assert.That(_ringBuffer.Cursor, Is.EqualTo(0L));
     }
 
     [Test]
@@ -69,7 +67,7 @@ public class RingBufferTests : IDisposable
             scope.Event().Copy(expectedEvent);
         }
 
-        Assert.AreEqual(expectedEvent, events.Result[0]);
+        Assert.That(events.Result[0], Is.EqualTo(expectedEvent));
     }
 
     [Test]
@@ -86,11 +84,11 @@ public class RingBufferTests : IDisposable
 
         var expectedSequence = numEvents - 1;
         var waitResult = _sequenceBarrier.WaitFor(expectedSequence);
-        Assert.AreEqual(new SequenceWaitResult(expectedSequence), waitResult);
+        Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedSequence)));
 
         for (var i = 0; i < numEvents; i++)
         {
-            Assert.AreEqual(i, _ringBuffer[i].Value);
+            Assert.That(_ringBuffer[i].Value, Is.EqualTo(i));
         }
     }
 
@@ -109,11 +107,11 @@ public class RingBufferTests : IDisposable
 
         var expectedSequence = numEvents + offset - 1;
         var waitResult = _sequenceBarrier.WaitFor(expectedSequence);
-        Assert.AreEqual(new SequenceWaitResult(expectedSequence), waitResult);
+        Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedSequence)));
 
         for (var i = offset; i < numEvents + offset; i++)
         {
-            Assert.AreEqual(i, _ringBuffer[i].Value);
+            Assert.That(_ringBuffer[i].Value, Is.EqualTo(i));
         }
     }
 
@@ -142,7 +140,7 @@ public class RingBufferTests : IDisposable
             ringBuffer.PublishEvent().Dispose();
         }
 
-        Assert.IsFalse(ringBuffer.TryNext(out _));
+        Assert.That(!ringBuffer.TryNext(out _));
     }
 
     [Test]
@@ -153,12 +151,12 @@ public class RingBufferTests : IDisposable
         for (var i = 0; i < _ringBuffer.BufferSize; i++)
         {
             var succeeded = _ringBuffer.TryNext(out var n);
-            Assert.IsTrue(succeeded);
+            Assert.That(succeeded);
 
             _ringBuffer.Publish(n);
         }
 
-        Assert.IsFalse(_ringBuffer.TryNext(out _));
+        Assert.That(!_ringBuffer.TryNext(out _));
     }
 
     [Test]
@@ -190,55 +188,55 @@ public class RingBufferTests : IDisposable
         mre.WaitOne();
 
         // Publisher should not be complete, blocked at RingBuffer.Next
-        Assert.IsFalse(task.IsCompleted);
+        Assert.That(!task.IsCompleted);
 
         // Run the processor, freeing up entries in the ring buffer for the producer to continue and "complete"
         processor.Run();
 
         // Check producer completes
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(1)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(1)));
     }
 
     [Test]
     public void ShouldPublishEvent()
     {
-        var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
+        var ringBuffer = RingBuffer<LongEvent>.CreateSingleProducer(() => new LongEvent(-1), 4);
 
         using (var scope = ringBuffer.PublishEvent())
         {
-            scope.Event()[0] = scope.Sequence;
+            scope.Event().Value = scope.Sequence;
         }
         using (var scope = ringBuffer.TryPublishEvent())
         {
-            Assert.IsTrue(scope.HasEvent);
-            Assert.IsTrue(scope.TryGetEvent(out var e));
-            e.Event()[0] = e.Sequence;
+            Assert.That(scope.HasEvent);
+            Assert.That(scope.TryGetEvent(out var e));
+            e.Event().Value = e.Sequence;
         }
 
-        Assert.That(ringBuffer, IsRingBufferWithEvents(0L, 1L));
+        Assert.That(ringBuffer, IsRingBuffer.WithEvents(new LongEvent(0), new LongEvent(1)));
     }
 
     [Test]
     public void ShouldPublishEvents()
     {
-        var ringBuffer = RingBuffer<object[]>.CreateSingleProducer(() => new object[1], 4);
+        var ringBuffer = RingBuffer<LongEvent>.CreateSingleProducer(() => new LongEvent(-1), 4);
 
         using (var scope = ringBuffer.PublishEvents(2))
         {
-            scope.Event(0)[0] = scope.StartSequence;
-            scope.Event(1)[0] = scope.StartSequence + 1;
+            scope.Event(0).Value = scope.StartSequence;
+            scope.Event(1).Value = scope.StartSequence + 1;
         }
-        Assert.That(ringBuffer, IsRingBufferWithEvents(0L, 1L, null, null));
+        Assert.That(ringBuffer, IsRingBuffer.WithEvents(new LongEvent(0), new LongEvent(1), new LongEvent(-1), new LongEvent(-1)));
 
         using (var scope = ringBuffer.TryPublishEvents(2))
         {
-            Assert.IsTrue(scope.HasEvents);
-            Assert.IsTrue(scope.TryGetEvents(out var e));
-            e.Event(0)[0] = e.StartSequence;
-            e.Event(1)[0] = e.StartSequence + 1;
+            Assert.That(scope.HasEvents);
+            Assert.That(scope.TryGetEvents(out var e));
+            e.Event(0).Value = e.StartSequence;
+            e.Event(1).Value = e.StartSequence + 1;
         }
 
-        Assert.That(ringBuffer, IsRingBufferWithEvents(0L, 1L, 2L, 3L));
+        Assert.That(ringBuffer, IsRingBuffer.WithEvents(new LongEvent(0), new LongEvent(1), new LongEvent(2), new LongEvent(3)));
     }
 
     [Test]
@@ -334,7 +332,7 @@ public class RingBufferTests : IDisposable
         sequenceSeven.SetValue(7);
 
         Assert.That(ringBuffer.GetMinimumGatingSequence(), Is.EqualTo(3L));
-        Assert.IsTrue(ringBuffer.RemoveGatingSequence(sequenceThree));
+        Assert.That(ringBuffer.RemoveGatingSequence(sequenceThree));
         Assert.That(ringBuffer.GetMinimumGatingSequence(), Is.EqualTo(7L));
     }
 

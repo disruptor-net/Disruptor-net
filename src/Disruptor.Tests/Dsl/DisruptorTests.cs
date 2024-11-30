@@ -43,11 +43,11 @@ public class DisruptorTests : IDisposable
     [Test]
     public void ShouldHaveStartedAfterStartCalled()
     {
-        Assert.IsFalse(_disruptor.HasStarted, "Should only be set to started after start is called");
+        Assert.That(!_disruptor.HasStarted, "Should only be set to started after start is called");
 
         _disruptor.Start();
 
-        Assert.IsTrue(_disruptor.HasStarted, "Should be set to started after start is called");
+        Assert.That(_disruptor.HasStarted, "Should be set to started after start is called");
     }
 
     [Test]
@@ -70,8 +70,8 @@ public class DisruptorTests : IDisposable
             scope.Event().Value = 102;
         }
 
-        Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
-        Assert.AreEqual(new List<int> { 101, 102 }, values);
+        Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(values, Is.EqualTo(new List<int> { 101, 102 }));
     }
 
     [Test]
@@ -94,8 +94,8 @@ public class DisruptorTests : IDisposable
             scope.Event().Value = 102;
         }
 
-        Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
-        Assert.AreEqual(new List<int> { 101, 102 }, values);
+        Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(values, Is.EqualTo(new List<int> { 101, 102 }));
     }
 
     [Test]
@@ -118,8 +118,8 @@ public class DisruptorTests : IDisposable
             scope.Event().Value = 102;
         }
 
-        Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
-        Assert.AreEqual(new List<int> { 101, 102 }, values);
+        Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(values, Is.EqualTo(new List<int> { 101, 102 }));
     }
 
     [Test]
@@ -144,8 +144,8 @@ public class DisruptorTests : IDisposable
             scope.Event(1).Value = 104;
         }
 
-        Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
-        Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
+        Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(values, Is.EqualTo(new List<int> { 101, 102, 103, 104 }));
     }
 
     [Test]
@@ -170,8 +170,8 @@ public class DisruptorTests : IDisposable
             scope.Event(1).Value = 104;
         }
 
-        Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
-        Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
+        Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(values, Is.EqualTo(new List<int> { 101, 102, 103, 104 }));
     }
 
     [Test]
@@ -196,8 +196,8 @@ public class DisruptorTests : IDisposable
             scope.Event(1).Value = 104;
         }
 
-        Assert.IsTrue(eventCounter.Wait(TimeSpan.FromSeconds(5)));
-        Assert.AreEqual(new List<int> { 101, 102, 103, 104 }, values);
+        Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(values, Is.EqualTo(new List<int> { 101, 102, 103, 104 }));
     }
 
     [Test]
@@ -376,7 +376,7 @@ public class DisruptorTests : IDisposable
         var eventHandlerGroup = _disruptor.HandleEventsWith(eventHandler1, eventHandler2);
         _disruptor.Start();
 
-        Assert.IsNotNull(eventHandlerGroup);
+        Assert.That(eventHandlerGroup, Is.Not.Null);
         Assert.That(_taskScheduler.TaskCount, Is.EqualTo(2));
     }
 
@@ -486,7 +486,7 @@ public class DisruptorTests : IDisposable
         PublishEvent();
 
         var actualException = WaitFor(eventHandled);
-        Assert.AreSame(testException, actualException);
+        Assert.That(actualException, Is.SameAs(testException));
     }
 
     [Test]
@@ -503,7 +503,7 @@ public class DisruptorTests : IDisposable
         PublishEvent();
 
         var actualException = WaitFor(eventHandled);
-        Assert.AreSame(testException, actualException);
+        Assert.That(actualException, Is.SameAs(testException));
     }
 
     [Test]
@@ -520,7 +520,7 @@ public class DisruptorTests : IDisposable
         PublishEvent();
 
         var actualException = WaitFor(eventHandled);
-        Assert.AreSame(testException, actualException);
+        Assert.That(actualException, Is.SameAs(testException));
     }
 
     [Test]
@@ -537,7 +537,7 @@ public class DisruptorTests : IDisposable
         PublishEvent();
 
         var actualException = WaitFor(eventHandled);
-        Assert.AreSame(testException, actualException);
+        Assert.That(actualException, Is.SameAs(testException));
     }
 
     [Test]
@@ -554,7 +554,7 @@ public class DisruptorTests : IDisposable
         PublishEvent();
 
         var actualException = WaitFor(eventHandled);
-        Assert.AreSame(testException, actualException);
+        Assert.That(actualException, Is.SameAs(testException));
     }
 
     [Test]
@@ -571,7 +571,7 @@ public class DisruptorTests : IDisposable
         PublishEvent();
 
         var actualException = WaitFor(eventHandled);
-        Assert.AreSame(testException, actualException);
+        Assert.That(actualException, Is.SameAs(testException));
     }
 
     [Test]
@@ -946,7 +946,7 @@ public class DisruptorTests : IDisposable
 
         _disruptor.HandleEventsWith((rb, sequenceBarrier) =>
         {
-            Assert.IsTrue(sequenceBarrier.DependentSequences.DependsOnCursor, "Should depend on cursor");
+            Assert.That(sequenceBarrier.DependentSequences.DependsOnCursor, "Should depend on cursor");
             return EventProcessorFactory.Create(_disruptor.RingBuffer, sequenceBarrier, eventHandler);
         });
 
@@ -962,8 +962,8 @@ public class DisruptorTests : IDisposable
 
         _disruptor.HandleEventsWith(delayedEventHandler).Then((ringBuffer, sequenceBarrier) =>
         {
-            Assert.IsFalse(sequenceBarrier.DependentSequences.DependsOnCursor, "Should not depend on cursor");
-            Assert.AreEqual(1, sequenceBarrier.DependentSequences.DependentSequenceCount, "Should have had a barrier sequence");
+            Assert.That(!sequenceBarrier.DependentSequences.DependsOnCursor, "Should not depend on cursor");
+            Assert.That(sequenceBarrier.DependentSequences.DependentSequenceCount, Is.EqualTo(1), "Should have had a barrier sequence");
             return EventProcessorFactory.Create(ringBuffer, sequenceBarrier, eventHandler);
         });
 
@@ -1033,6 +1033,6 @@ public class DisruptorTests : IDisposable
     private void AssertThatCountDownLatchIsZero(CountdownEvent countDownLatch)
     {
         var released = countDownLatch.Wait(TimeSpan.FromSeconds(_timeoutInSeconds));
-        Assert.IsTrue(released, "Batch handler did not receive entries: " + countDownLatch.CurrentCount);
+        Assert.That(released, "Batch handler did not receive entries: " + countDownLatch.CurrentCount);
     }
 }

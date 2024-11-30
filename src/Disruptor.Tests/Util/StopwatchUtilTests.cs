@@ -16,7 +16,7 @@ public class StopwatchUtilTests
 
         var expectedTimeSpanTicks = 123 * 10;
         var elapsedTimeSpanTicks = stopwatch.Elapsed.Ticks;
-        Assert.AreEqual(expectedTimeSpanTicks, elapsedTimeSpanTicks);
+        Assert.That(elapsedTimeSpanTicks, Is.EqualTo((long)expectedTimeSpanTicks));
     }
 
     [Test]
@@ -27,7 +27,7 @@ public class StopwatchUtilTests
 
         var expectedTimeSpanTicks = 1000 / 100;
         var elapsedTimeSpanTicks = stopwatch.Elapsed.Ticks;
-        Assert.AreEqual(expectedTimeSpanTicks, elapsedTimeSpanTicks);
+        Assert.That(elapsedTimeSpanTicks, Is.EqualTo((long)expectedTimeSpanTicks));
     }
 
     [Test]
@@ -38,7 +38,7 @@ public class StopwatchUtilTests
         var stopwatch = CreateStopwatch(timestamp);
 
         var expectedNanoseconds = stopwatch.Elapsed.Ticks * 100;
-        Assert.AreEqual(expectedNanoseconds, nanoseconds);
+        Assert.That(nanoseconds, Is.EqualTo(expectedNanoseconds));
     }
 
     [Test]
@@ -47,7 +47,7 @@ public class StopwatchUtilTests
         var timestamp = StopwatchUtil.GetTimestampFromMicroseconds(123);
         var nanoseconds = StopwatchUtil.ToNanoseconds(timestamp);
 
-        Assert.AreEqual(123 * 1000, nanoseconds);
+        Assert.That(nanoseconds, Is.EqualTo((long)(123 * 1000)));
     }
 
     private static Stopwatch CreateStopwatch(long elapsedTimestamp)

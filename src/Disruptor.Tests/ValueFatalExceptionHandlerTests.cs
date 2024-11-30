@@ -21,7 +21,7 @@ public class ValueFatalExceptionHandlerTests
         }
         catch (Exception ex)
         {
-            Assert.AreEqual(causeException, ex.InnerException);
+            Assert.That(ex.InnerException, Is.EqualTo(causeException));
         }
     }
 }

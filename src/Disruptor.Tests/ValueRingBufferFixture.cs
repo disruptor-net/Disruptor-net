@@ -40,7 +40,7 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
     [Test]
     public void ShouldClaimAndGet()
     {
-        Assert.AreEqual(Sequence.InitialCursorValue, _ringBuffer.Cursor);
+        Assert.That(_ringBuffer.Cursor, Is.EqualTo(Sequence.InitialCursorValue));
 
         var expectedEvent = new T { Value = 2701 };
 
@@ -49,12 +49,12 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         _ringBuffer.Publish(claimSequence);
 
         var waitResult = _sequenceBarrier.WaitFor(0);
-        Assert.AreEqual(new SequenceWaitResult(0), waitResult);
+        Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(0)));
 
         var evt = _ringBuffer[waitResult.UnsafeAvailableSequence];
-        Assert.AreEqual(expectedEvent, evt);
+        Assert.That(evt, Is.EqualTo(expectedEvent));
 
-        Assert.AreEqual(0L, _ringBuffer.Cursor);
+        Assert.That(_ringBuffer.Cursor, Is.EqualTo(0L));
     }
 
     [Test]
@@ -75,7 +75,7 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         _ringBuffer[sequence] = expectedEvent;
         _ringBuffer.Publish(sequence);
 
-        Assert.AreEqual(expectedEvent, events.Result[0]);
+        Assert.That(events.Result[0], Is.EqualTo(expectedEvent));
     }
 
     [Test]
@@ -91,11 +91,11 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
 
         var expectedSequence = numEvents - 1;
         var waitResult = _sequenceBarrier.WaitFor(expectedSequence);
-        Assert.AreEqual(new SequenceWaitResult(expectedSequence), waitResult);
+        Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedSequence)));
 
         for (var i = 0; i < numEvents; i++)
         {
-            Assert.AreEqual(i, _ringBuffer[i].Value);
+            Assert.That(_ringBuffer[i].Value, Is.EqualTo(i));
         }
     }
 
@@ -113,11 +113,11 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
 
         var expectedSequence = numEvents + offset - 1;
         var waitResult = _sequenceBarrier.WaitFor(expectedSequence);
-        Assert.AreEqual(new SequenceWaitResult(expectedSequence), waitResult);
+        Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedSequence)));
 
         for (var i = offset; i < numEvents + offset; i++)
         {
-            Assert.AreEqual(i, _ringBuffer[i].Value);
+            Assert.That(_ringBuffer[i].Value, Is.EqualTo(i));
         }
     }
 
@@ -147,7 +147,7 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
             ringBuffer.Publish(l);
         }
 
-        Assert.IsFalse(ringBuffer.TryNext(out _));
+        Assert.That(!ringBuffer.TryNext(out _));
     }
 
     [Test]
@@ -158,12 +158,12 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         for (var i = 0; i < _ringBuffer.BufferSize; i++)
         {
             var succeeded = _ringBuffer.TryNext(out var n);
-            Assert.IsTrue(succeeded);
+            Assert.That(succeeded);
 
             _ringBuffer.Publish(n);
         }
 
-        Assert.IsFalse(_ringBuffer.TryNext(out _));
+        Assert.That(!_ringBuffer.TryNext(out _));
     }
 
     [Test]
@@ -195,13 +195,13 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         mre.WaitOne();
 
         // Publisher should not be complete, blocked at RingBuffer.Next
-        Assert.IsFalse(task.IsCompleted);
+        Assert.That(!task.IsCompleted);
 
         // Run the processor, freeing up entries in the ring buffer for the producer to continue and "complete"
         processor.Run();
 
         // Check producer completes
-        Assert.IsTrue(task.Wait(TimeSpan.FromSeconds(1)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(1)));
     }
 
     [Test]
@@ -222,7 +222,7 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         sequenceSeven.SetValue(7);
 
         Assert.That(ringBuffer.GetMinimumGatingSequence(), Is.EqualTo(3L));
-        Assert.IsTrue(ringBuffer.RemoveGatingSequence(sequenceThree));
+        Assert.That(ringBuffer.RemoveGatingSequence(sequenceThree));
         Assert.That(ringBuffer.GetMinimumGatingSequence(), Is.EqualTo(7L));
     }
 

@@ -22,16 +22,16 @@ public class EventProcessorFactoryTests
         // Assert
         foreach (var genericArgument in eventProcessor.GetType().GetGenericArguments().Where(x => x != typeof(TestEvent)))
         {
-            Assert.True(genericArgument.IsValueType, $"Generic argument {genericArgument.Name} is not a value type");
+            Assert.That(genericArgument.IsValueType, $"Generic argument {genericArgument.Name} is not a value type");
         }
     }
 
     [Test]
     public void ShouldDetectExplicitImplementation()
     {
-        Assert.True(EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithImplicitImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
-        Assert.True(EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithExplicitImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
-        Assert.False(EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithNoImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
+        Assert.That(EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithImplicitImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
+        Assert.That(EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithExplicitImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
+        Assert.That(!EventProcessorFactory.HasNonDefaultImplementation(typeof(TypeWithNoImplementation<int>), typeof(IInterface<int>), nameof(IInterface<int>.Method)));
     }
 
     [SuppressMessage("ReSharper", "UnusedTypeParameter")]

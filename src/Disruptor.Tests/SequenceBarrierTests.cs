@@ -39,7 +39,7 @@ public abstract class SequenceBarrierTests : IDisposable
         var sequenceBarrier = _ringBuffer.NewBarrier(sequence1, sequence2, sequence3);
 
         var completedWorkSequence = sequenceBarrier.WaitFor(expectedWorkSequence).UnsafeAvailableSequence;
-        Assert.IsTrue(completedWorkSequence >= expectedWorkSequence);
+        Assert.That(completedWorkSequence >= expectedWorkSequence);
     }
 
     [Test]
@@ -70,7 +70,7 @@ public abstract class SequenceBarrierTests : IDisposable
 
         const long expectedWorkSequence = expectedNumberMessages;
         var completedWorkSequence = dependencyBarrier.WaitFor(expectedNumberMessages).UnsafeAvailableSequence;
-        Assert.IsTrue(completedWorkSequence >= expectedWorkSequence);
+        Assert.That(completedWorkSequence >= expectedWorkSequence);
     }
 
     [Test]
@@ -134,23 +134,23 @@ public abstract class SequenceBarrierTests : IDisposable
 
         const long expectedWorkSequence = expectedNumberMessages - 1;
         var completedWorkSequence = eventProcessorBarrier.WaitFor(expectedWorkSequence).UnsafeAvailableSequence;
-        Assert.IsTrue(completedWorkSequence >= expectedWorkSequence);
+        Assert.That(completedWorkSequence >= expectedWorkSequence);
     }
 
     [Test]
     public void ShouldSetAndClearAlertStatus()
     {
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        Assert.IsFalse(sequenceBarrier.CancellationToken.IsCancellationRequested);
-        Assert.IsFalse(sequenceBarrier.IsCancellationRequested);
+        Assert.That(!sequenceBarrier.CancellationToken.IsCancellationRequested);
+        Assert.That(!sequenceBarrier.IsCancellationRequested);
 
         sequenceBarrier.CancelProcessing();
-        Assert.IsTrue(sequenceBarrier.CancellationToken.IsCancellationRequested);
-        Assert.IsTrue(sequenceBarrier.IsCancellationRequested);
+        Assert.That(sequenceBarrier.CancellationToken.IsCancellationRequested);
+        Assert.That(sequenceBarrier.IsCancellationRequested);
 
         sequenceBarrier.ResetProcessing();
-        Assert.IsFalse(sequenceBarrier.CancellationToken.IsCancellationRequested);
-        Assert.IsFalse(sequenceBarrier.IsCancellationRequested);
+        Assert.That(!sequenceBarrier.CancellationToken.IsCancellationRequested);
+        Assert.That(!sequenceBarrier.IsCancellationRequested);
     }
 
     private void FillRingBuffer(long expectedNumberEvents)

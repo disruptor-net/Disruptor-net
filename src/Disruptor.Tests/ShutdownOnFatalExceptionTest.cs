@@ -43,7 +43,7 @@ public class ShutdownOnFatalExceptionTest : IDisposable
             }
         });
 
-        Assert.IsTrue(task.Wait(1000));
+        Assert.That(task.Wait(1000));
     }
 
     private class FailingEventHandler : IEventHandler<byte[]>

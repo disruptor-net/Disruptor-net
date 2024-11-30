@@ -17,7 +17,7 @@ public class FatalExceptionHandlerTests
 
         var exception = Assert.Throws<ApplicationException>(() => exceptionHandler.HandleEventException(causeException, 0L, evt));
 
-        Assert.IsNotNull(exception);
-        Assert.AreEqual(causeException, exception!.InnerException);
+        Assert.That(exception, Is.Not.Null);
+        Assert.That(exception!.InnerException, Is.EqualTo(causeException));
     }
 }

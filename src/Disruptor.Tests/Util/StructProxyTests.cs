@@ -12,20 +12,20 @@ public class StructProxyTests
         var foo = new Foo();
         var fooProxy = StructProxy.CreateProxyInstance<IFoo>(foo);
 
-        Assert.IsNotNull(fooProxy);
-        Assert.IsTrue(fooProxy.GetType().IsValueType);
-        Assert.IsInstanceOf<IFoo>(fooProxy);
-        Assert.IsInstanceOf<IOtherInterface>(fooProxy);
+        Assert.That(fooProxy, Is.Not.Null);
+        Assert.That(fooProxy.GetType().IsValueType);
+        Assert.That(fooProxy, Is.InstanceOf<IFoo>());
+        Assert.That(fooProxy, Is.InstanceOf<IOtherInterface>());
 
         fooProxy.Value = 888;
 
-        Assert.AreEqual(foo.Value, 888);
-        Assert.AreEqual(fooProxy.Value, 888);
+        Assert.That(888, Is.EqualTo(foo.Value));
+        Assert.That(888, Is.EqualTo(fooProxy.Value));
 
         fooProxy.Compute(400, 44);
 
-        Assert.AreEqual(foo.Value, 444);
-        Assert.AreEqual(fooProxy.Value, 444);
+        Assert.That(444, Is.EqualTo(foo.Value));
+        Assert.That(444, Is.EqualTo(fooProxy.Value));
     }
 
     [Test]
@@ -37,8 +37,8 @@ public class StructProxyTests
         Assert.DoesNotThrow(() => fooProxy.Value = 1);
         Assert.DoesNotThrow(() => fooProxy.Compute(1, 2));
 
-        Assert.IsNotNull(fooProxy);
-        Assert.AreSame(fooProxy, foo);
+        Assert.That(fooProxy, Is.Not.Null);
+        Assert.That((IFoo?)foo, Is.SameAs(fooProxy));
     }
 
     [Test]
@@ -50,8 +50,8 @@ public class StructProxyTests
         Assert.DoesNotThrow(() => fooProxy.Value = 1);
         Assert.DoesNotThrow(() => fooProxy.Compute(1, 2));
 
-        Assert.IsNotNull(fooProxy);
-        Assert.AreSame(fooProxy, foo);
+        Assert.That(fooProxy, Is.Not.Null);
+        Assert.That((IFoo?)foo, Is.SameAs(fooProxy));
     }
 
     [Test]
@@ -60,8 +60,8 @@ public class StructProxyTests
         var bar = new Bar<InternalBarArg>();
         var barProxy = StructProxy.CreateProxyInstance<IBar<InternalBarArg>>(bar);
 
-        Assert.IsNotNull(barProxy);
-        Assert.AreEqual(barProxy, bar);
+        Assert.That(barProxy, Is.Not.Null);
+        Assert.That((IBar<InternalBarArg>?)bar, Is.EqualTo(barProxy));
     }
 
     public interface IFoo

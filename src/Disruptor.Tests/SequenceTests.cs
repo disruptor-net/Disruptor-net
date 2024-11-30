@@ -10,8 +10,8 @@ public class SequenceTests
     {
         var sequence = new Sequence(0);
 
-        Assert.AreEqual(10, sequence.AddAndGet(10));
-        Assert.AreEqual(10, sequence.Value);
+        Assert.That(sequence.AddAndGet(10), Is.EqualTo((long)10));
+        Assert.That(sequence.Value, Is.EqualTo((long)10));
     }
 
     [Test]
@@ -19,7 +19,7 @@ public class SequenceTests
     {
         var sequence = new Sequence(0);
 
-        Assert.AreEqual(1, sequence.IncrementAndGet());
-        Assert.AreEqual(1, sequence.Value);
+        Assert.That(sequence.IncrementAndGet(), Is.EqualTo((long)1));
+        Assert.That(sequence.Value, Is.EqualTo((long)1));
     }
 }

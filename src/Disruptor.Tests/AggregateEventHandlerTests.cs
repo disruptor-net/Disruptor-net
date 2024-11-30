@@ -65,8 +65,8 @@ public class AggregateEventHandlerTests
     {
         foreach (var handler in handlers)
         {
-            Assert.AreSame(handler.LastEvent, evt);
-            Assert.AreEqual(handler.LastSequence, sequence);
+            Assert.That(evt, Is.SameAs(handler.LastEvent));
+            Assert.That(sequence, Is.EqualTo(handler.LastSequence));
         }
     }
 
@@ -74,7 +74,7 @@ public class AggregateEventHandlerTests
     {
         foreach (var handler in handlers)
         {
-            Assert.AreEqual(handler.StartCalls, startCalls);
+            Assert.That(startCalls, Is.EqualTo(handler.StartCalls));
         }
     }
 
@@ -82,7 +82,7 @@ public class AggregateEventHandlerTests
     {
         foreach (var handler in handlers)
         {
-            Assert.AreEqual(handler.ShutdownCalls, shutdownCalls);
+            Assert.That(shutdownCalls, Is.EqualTo(handler.ShutdownCalls));
         }
     }
 }

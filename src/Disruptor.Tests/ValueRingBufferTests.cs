@@ -29,12 +29,12 @@ public class ValueRingBufferTests : ValueRingBufferFixture<StubValueEvent>
 
         using (var scope = ringBuffer.TryPublishEvent())
         {
-            Assert.IsTrue(scope.HasEvent);
-            Assert.IsTrue(scope.TryGetEvent(out var e));
+            Assert.That(scope.HasEvent);
+            Assert.That(scope.TryGetEvent(out var e));
             e.Event() = e.Sequence;
         }
 
-        Assert.That(ringBuffer, ValueRingBufferEqualsConstraint.IsValueRingBufferWithEvents(0L, 1L));
+        Assert.That(ringBuffer, IsValueRingBuffer.WithEvents(0L, 1L));
     }
 
     [Test]
@@ -48,17 +48,17 @@ public class ValueRingBufferTests : ValueRingBufferFixture<StubValueEvent>
             scope.Event(1) = scope.StartSequence + 1;
         }
 
-        Assert.That(ringBuffer, ValueRingBufferEqualsConstraint.IsValueRingBufferWithEvents(0L, 1L, -1, -1));
+        Assert.That(ringBuffer, IsValueRingBuffer.WithEvents(0L, 1L, -1, -1));
 
         using (var scope = ringBuffer.TryPublishEvents(2))
         {
-            Assert.IsTrue(scope.HasEvents);
-            Assert.IsTrue(scope.TryGetEvents(out var e));
+            Assert.That(scope.HasEvents);
+            Assert.That(scope.TryGetEvents(out var e));
             e.Event(0) = e.StartSequence;
             e.Event(1) = e.StartSequence + 1;
         }
 
-        Assert.That(ringBuffer, ValueRingBufferEqualsConstraint.IsValueRingBufferWithEvents(0L, 1L, 2L, 3L));
+        Assert.That(ringBuffer, IsValueRingBuffer.WithEvents(0L, 1L, 2L, 3L));
     }
 
     [Test]

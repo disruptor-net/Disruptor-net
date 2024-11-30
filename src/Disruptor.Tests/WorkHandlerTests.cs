@@ -55,7 +55,7 @@ public class WorkHandlerTests
 
         // countdownEvent should not reach zero because of the dropped sequence
         var await = countdownEvent.Wait(TimeSpan.FromMilliseconds(500));
-        Assert.IsFalse(await);
+        Assert.That(!await);
     }
 
     [Test]
@@ -98,7 +98,7 @@ public class WorkHandlerTests
 
         ringBuffer.RemoveGatingSequence(processor1.Sequence);
 
-        Assert.IsTrue(countdownEvent.Wait(TimeSpan.FromSeconds(3)));
+        Assert.That(countdownEvent.Wait(TimeSpan.FromSeconds(3)));
     }
 
     private static List<int> InitData(int start, int eventSize)

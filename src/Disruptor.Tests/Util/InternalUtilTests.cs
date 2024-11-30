@@ -26,8 +26,8 @@ public class InternalUtilTests
     {
         var padding = InternalUtil.GetRingBufferPaddingEventCount(eventSize);
 
-        Assert.AreEqual(expectedPadding, padding);
-        Assert.GreaterOrEqual(padding * eventSize, 128);
+        Assert.That(padding, Is.EqualTo(expectedPadding));
+        Assert.That(padding * eventSize, Is.GreaterThanOrEqualTo(128));
     }
 
     [Test]
@@ -39,7 +39,7 @@ public class InternalUtilTests
         {
             var evt = InternalUtil.Read<StubEvent>(array, i);
 
-            Assert.AreEqual(new StubEvent(i), evt);
+            Assert.That(evt, Is.EqualTo(new StubEvent(i)));
         }
     }
 
@@ -54,10 +54,10 @@ public class InternalUtilTests
         {
             var block = InternalUtil.ReadSpan<StubEvent>(array, i, blockSize);
 
-            Assert.AreEqual(blockSize, block.Length);
+            Assert.That(block.Length, Is.EqualTo(blockSize));
             for (var dataIndex = 0; dataIndex < blockSize; dataIndex++)
             {
-                Assert.AreEqual(new StubEvent(i + dataIndex), block[dataIndex]);
+                Assert.That(block[dataIndex], Is.EqualTo(new StubEvent(i + dataIndex)));
             }
         }
     }
@@ -71,7 +71,7 @@ public class InternalUtilTests
         {
             var evt = InternalUtil.ReadValue<StubValueEvent>(array, i);
 
-            Assert.AreEqual(new StubValueEvent(i), evt);
+            Assert.That(evt, Is.EqualTo(new StubValueEvent(i)));
         }
     }
 
@@ -84,7 +84,7 @@ public class InternalUtilTests
         {
             var evt = InternalUtil.ReadValue<UnalignedEvent>(array, i);
 
-            Assert.AreEqual(new UnalignedEvent(i), evt);
+            Assert.That(evt, Is.EqualTo(new UnalignedEvent(i)));
         }
     }
 
@@ -98,7 +98,7 @@ public class InternalUtilTests
             {
                 var evt = InternalUtil.ReadValue<StubUnmanagedEvent>(memory.PointerToFirstEvent, i, memory.EventSize);
 
-                Assert.AreEqual(new StubUnmanagedEvent(i), evt);
+                Assert.That(evt, Is.EqualTo(new StubUnmanagedEvent(i)));
             }
         }
     }
@@ -118,7 +118,7 @@ public class InternalUtilTests
         {
             var evt = InternalUtil.ReadValue<StubValueEvent>(array, i);
 
-            Assert.AreEqual(evt.Value.ToString(), evt.TestString);
+            Assert.That(evt.TestString, Is.EqualTo(evt.Value.ToString()));
         }
     }
 
@@ -137,7 +137,7 @@ public class InternalUtilTests
         {
             var evt = InternalUtil.ReadValue<UnalignedEvent>(array, i);
 
-            Assert.AreEqual(evt.Value.ToString(), evt.TestString);
+            Assert.That(evt.TestString, Is.EqualTo(evt.Value.ToString()));
         }
     }
 
@@ -157,7 +157,7 @@ public class InternalUtilTests
             {
                 var evt = InternalUtil.ReadValue<StubUnmanagedEvent>(memory.PointerToFirstEvent, i, memory.EventSize);
 
-                Assert.AreEqual(evt.Value + 0.1, evt.DoubleValue);
+                Assert.That(evt.DoubleValue, Is.EqualTo(evt.Value + 0.1));
             }
         }
     }
@@ -183,7 +183,7 @@ public class InternalUtilTests
     {
         Console.WriteLine(Environment.Is64BitProcess ? "64BIT" : "32BIT");
 
-        Assert.AreEqual(InternalUtil.ComputeArrayDataOffset(), InternalUtil.ArrayDataOffset);
+        Assert.That(InternalUtil.ArrayDataOffset, Is.EqualTo(InternalUtil.ComputeArrayDataOffset()));
     }
 
     [Test]
@@ -191,7 +191,7 @@ public class InternalUtilTests
     {
         Console.WriteLine(Environment.Is64BitProcess ? "64BIT" : "32BIT");
 
-        Assert.AreEqual(ComputeArrayDataOffsetWithMemoryMarshal(), InternalUtil.ArrayDataOffset);
+        Assert.That(InternalUtil.ArrayDataOffset, Is.EqualTo(ComputeArrayDataOffsetWithMemoryMarshal()));
     }
 
     private static int ComputeArrayDataOffsetWithMemoryMarshal()

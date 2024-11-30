@@ -61,7 +61,7 @@ public class StubTaskScheduler : TaskScheduler
             if (!thread.Join(5000))
             {
                 thread.Interrupt();
-                Assert.IsTrue(thread.Join(5000), "Failed to stop thread: " + thread);
+                Assert.That(thread.Join(5000), "Failed to stop thread: " + thread);
             }
         }
     }
