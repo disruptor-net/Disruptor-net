@@ -1,7 +1,7 @@
 # Disruptor-net
 
-[![Build](https://github.com/Disruptor-net/Disruptor-net/workflows/Build/badge.svg)](https://github.com/Disruptor-net/Disruptor-net/actions?query=workflow%3ABuild)
-[![NuGet](https://buildstats.info/nuget/Disruptor)](http://www.nuget.org/packages/Disruptor/)
+[![Build](https://github.com/Disruptor-net/Disruptor-net/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/disruptor-net/Disruptor-net/actions?query=branch%3Amaster+workflow%3ABuild++)
+[![NuGet package](https://img.shields.io/nuget/v/Disruptor.svg?logo=NuGet)](https://www.nuget.org/packages/Disruptor)
 
 ## Overview
 
