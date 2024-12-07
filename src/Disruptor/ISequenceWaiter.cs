@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Disruptor.Processing;
 
 namespace Disruptor;
@@ -7,7 +8,12 @@ namespace Disruptor;
 /// Represents a sequence waiter created by a <see cref="ISequenceWaitStrategy"/>.
 /// It is used by event processor to wait for available sequences.
 /// </summary>
-public interface ISequenceWaiter
+/// <remarks>
+/// <see cref="IDisposable.Dispose"/> should be used to release the sequence waiter, which should only
+/// be required for dynamic event processor removal. The implementation is expected is to be no-op,
+/// unless the wait strategy contains custom state per sequence waiter.
+/// </remarks>
+public interface ISequenceWaiter : IDisposable
 {
     /// <summary>
     /// Gets the dependent sequences of the sequence waiter.
@@ -31,6 +37,7 @@ public interface ISequenceWaiter
     /// </summary>
     /// <remarks>
     /// Useful for sequence wait strategies that do not rely on the <see cref="CancellationToken"/>.
+    /// The implementation is expected to be a no-op in non-blocking wait strategies.
     /// </remarks>
     void Cancel();
 }

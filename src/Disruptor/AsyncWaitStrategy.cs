@@ -115,5 +115,9 @@ public sealed class AsyncWaitStrategy : IAsyncSequenceWaitStrategy, IAsyncWaitSt
 
         public void Cancel()
             => waitStrategy.SignalAllWhenBlocking();
+
+        public void Dispose()
+        {
+        }
     }
 }

@@ -152,6 +152,10 @@ public static class DisruptorUtil
 
         public void Cancel()
             => waitStrategy.SignalAllWhenBlocking();
+
+        public void Dispose()
+        {
+        }
     }
 
     private class AsyncSequenceWaiterAdapter(IAsyncWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences) : IAsyncSequenceWaiter
@@ -163,5 +167,9 @@ public static class DisruptorUtil
 
         public void Cancel()
             => waitStrategy.SignalAllWhenBlocking();
+
+        public void Dispose()
+        {
+        }
     }
 }

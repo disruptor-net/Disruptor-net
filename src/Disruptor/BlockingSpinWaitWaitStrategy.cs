@@ -62,5 +62,9 @@ public sealed class BlockingSpinWaitWaitStrategy : ISequenceWaitStrategy, IWaitS
                 Monitor.PulseAll(gate);
             }
         }
+
+        public void Dispose()
+        {
+        }
     }
 }

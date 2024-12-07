@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -5,7 +6,15 @@ using Disruptor.Util;
 
 namespace Disruptor;
 
-public sealed class AsyncSequenceBarrier
+/// <summary>
+/// Coordination barrier used by event processors for tracking the ring buffer cursor and the sequences of
+/// dependent event processors.
+/// </summary>
+/// <remarks>
+/// <see cref="IDisposable.Dispose"/> should be used to release the sequence barrier, which should only
+/// be required for dynamic event processor removal.
+/// </remarks>
+public sealed class AsyncSequenceBarrier : IDisposable
 {
     private readonly ISequencer _sequencer;
     private readonly IAsyncSequenceWaiter _sequenceWaiter;
@@ -92,5 +101,11 @@ public sealed class AsyncSequenceBarrier
     {
         _cancellationTokenSource.Cancel();
         _sequenceWaiter.Cancel();
+    }
+
+    public void Dispose()
+    {
+        _sequenceWaiter.Dispose();
+        _cancellationTokenSource.Dispose();
     }
 }

@@ -81,5 +81,9 @@ public sealed class TimeoutBlockingWaitStrategy : ISequenceWaitStrategy, IWaitSt
                 Monitor.PulseAll(gate);
             }
         }
+
+        public void Dispose()
+        {
+        }
     }
 }
