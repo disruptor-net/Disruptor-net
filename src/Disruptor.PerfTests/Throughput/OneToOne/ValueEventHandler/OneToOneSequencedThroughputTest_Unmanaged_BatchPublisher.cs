@@ -49,10 +49,10 @@ public class OneToOneSequencedThroughputTest_Unmanaged_BatchPublisher : IThrough
     private readonly IValueEventProcessor<PerfValueEvent> _eventProcessor;
     private readonly UnmanagedRingBufferMemory _memory;
 
-    public OneToOneSequencedThroughputTest_Unmanaged_BatchPublisher()
+    public OneToOneSequencedThroughputTest_Unmanaged_BatchPublisher(ProgramOptions options)
     {
         _memory = UnmanagedRingBufferMemory.Allocate(_bufferSize, PerfValueEvent.Size);
-        _ringBuffer = new UnmanagedRingBuffer<PerfValueEvent>(_memory, ProducerType.Single,new YieldingWaitStrategy());
+        _ringBuffer = new UnmanagedRingBuffer<PerfValueEvent>(_memory, ProducerType.Single, options.GetWaitStrategy());
         var sequenceBarrier = _ringBuffer.NewBarrier();
         _handler = new AdditionEventHandler();
         _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -10,6 +11,14 @@ public class ProgramOptions
     public static int DefaultRunCountForLatencyTest { get; } = 3;
     public static int DefaultRunCountForThroughputTest { get; } = 7;
     public static int[] DefaultCpuSet { get; } = Enumerable.Range(0, Environment.ProcessorCount).ToArray();
+
+    public static IReadOnlyDictionary<string, Func<IWaitStrategy>> ConfigurableWaitStrategies { get; } = new Dictionary<string, Func<IWaitStrategy>>(StringComparer.OrdinalIgnoreCase)
+
+    {
+        ["yielding"] = () => new YieldingWaitStrategy(),
+        ["blocking"] = () => new BlockingWaitStrategy(),
+        ["busy-spin"] = () => new BusySpinWaitStrategy(),
+    };
 
     private int[] _cpuSet = DefaultCpuSet;
 
@@ -35,9 +44,20 @@ public class ProgramOptions
 
     public bool HasCustomCpuSet { get; private set; }
 
+    public Func<IWaitStrategy> WaitStrategySource { get; set; }
+
     public int RunCountForLatencyTest => RunCount ?? DefaultRunCountForLatencyTest;
     public int RunCountForThroughputTest => RunCount ?? DefaultRunCountForThroughputTest;
-    public int? GetCustomCpu(int index) => HasCustomCpuSet ? CpuSet[index] : null;
+
+    public int? GetCustomCpu(int index)
+        => HasCustomCpuSet ? CpuSet[index] : null;
+
+    public IWaitStrategy GetWaitStrategy()
+        => GetWaitStrategy<YieldingWaitStrategy>();
+
+    public IWaitStrategy GetWaitStrategy<TDefault>()
+        where TDefault : IWaitStrategy, new()
+        => WaitStrategySource != null ? WaitStrategySource.Invoke() : new TDefault();
 
     public static bool TryParse(string[] args, out ProgramOptions options)
     {
@@ -147,6 +167,16 @@ public class ProgramOptions
                 continue;
             }
 
+            if (arg.Equals("--wait-strategy", StringComparison.OrdinalIgnoreCase))
+            {
+                if (index + 1 == args.Length || !ConfigurableWaitStrategies.TryGetValue(args[index + 1], out var waitStrategy))
+                    return false;
+
+                options.WaitStrategySource = waitStrategy;
+                index++;
+                continue;
+            }
+
             return false;
         }
 
@@ -171,6 +201,7 @@ public class ProgramOptions
         Console.WriteLine($"  --include-latency <true|false>      Includes latency tests. Default is {options.IncludeLatency}.");
         Console.WriteLine($"  --include-throughput <true|false>   Includes throughput tests. Default is {options.IncludeThroughput}.");
         Console.WriteLine($"  --cpus <cpu-set>                    The comma-separated list of CPUs to use for CPU affinity (not supported in all tests).");
+        Console.WriteLine($"  --wait-strategy <type>              The disruptor wait strategy. Supported values: {string.Join(", ", ConfigurableWaitStrategies.Keys)}. (not supported in all tests).");
         Console.WriteLine();
     }
 

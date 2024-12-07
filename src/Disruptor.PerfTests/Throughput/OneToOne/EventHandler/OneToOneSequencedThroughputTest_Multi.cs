@@ -48,7 +48,7 @@ public class OneToOneSequencedThroughputTest_Multi : IThroughputTest
     {
         _options = options;
         _eventHandler = new AdditionEventHandler(options.GetCustomCpu(1));
-        _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+        _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
         var sequenceBarrier = _ringBuffer.NewBarrier();
         _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
         _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);

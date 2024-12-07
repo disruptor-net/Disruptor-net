@@ -43,11 +43,11 @@ public class OneToOneSequencedThroughputTest_Unmanaged : IThroughputTest
     private readonly IValueEventProcessor<PerfValueEvent> _eventProcessor;
     private readonly UnmanagedRingBufferMemory _memory;
 
-    public OneToOneSequencedThroughputTest_Unmanaged()
+    public OneToOneSequencedThroughputTest_Unmanaged(ProgramOptions options)
     {
         _eventHandler = new AdditionEventHandler();
         _memory = UnmanagedRingBufferMemory.Allocate(_bufferSize, PerfValueEvent.Size);
-        _ringBuffer = new UnmanagedRingBuffer<PerfValueEvent>(_memory, ProducerType.Single, new YieldingWaitStrategy());
+        _ringBuffer = new UnmanagedRingBuffer<PerfValueEvent>(_memory, ProducerType.Single, options.GetWaitStrategy());
         var sequenceBarrier = _ringBuffer.NewBarrier();
         _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
         _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);

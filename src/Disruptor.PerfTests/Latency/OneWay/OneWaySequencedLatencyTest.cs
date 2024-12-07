@@ -21,7 +21,7 @@ public class OneWaySequencedLatencyTest : ILatencyTest, IDisposable
     public OneWaySequencedLatencyTest(ProgramOptions options)
     {
         _options = options;
-        _disruptor = new Disruptor<PerfEvent>(() => new PerfEvent(), _bufferSize, new YieldingWaitStrategy());
+        _disruptor = new Disruptor<PerfEvent>(() => new PerfEvent(), _bufferSize, options.GetWaitStrategy());
         _handler = new Handler(options.GetCustomCpu(1));
         _disruptor.HandleEventsWith(_handler);
         _disruptor.Start();

@@ -25,8 +25,8 @@ public class PingPongSequencedLatencyTest_Value : ILatencyTest
 
     public PingPongSequencedLatencyTest_Value(ProgramOptions options)
     {
-        var pingBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
-        var pongBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new BlockingWaitStrategy());
+        var pingBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
+        var pongBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
 
         var pingBarrier = pingBuffer.NewBarrier();
         var pongBarrier = pongBuffer.NewBarrier();

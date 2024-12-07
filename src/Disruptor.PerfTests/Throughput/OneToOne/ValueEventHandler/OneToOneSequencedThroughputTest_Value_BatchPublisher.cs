@@ -47,9 +47,9 @@ public class OneToOneSequencedThroughputTest_Value_BatchPublisher : IThroughputT
     private readonly AdditionEventHandler _handler;
     private readonly IValueEventProcessor<PerfValueEvent> _eventProcessor;
 
-    public OneToOneSequencedThroughputTest_Value_BatchPublisher()
+    public OneToOneSequencedThroughputTest_Value_BatchPublisher(ProgramOptions options)
     {
-        _ringBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+        _ringBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
         var sequenceBarrier = _ringBuffer.NewBarrier();
         _handler = new AdditionEventHandler();
         _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);

@@ -25,8 +25,8 @@ public class PingPongSequencedLatencyTest_Multi : ILatencyTest
 
     public PingPongSequencedLatencyTest_Multi(ProgramOptions options)
     {
-        var pingBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
-        var pongBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+        var pingBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
+        var pongBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
 
         var pingBarrier = pingBuffer.NewBarrier();
         var pongBarrier = pongBuffer.NewBarrier();

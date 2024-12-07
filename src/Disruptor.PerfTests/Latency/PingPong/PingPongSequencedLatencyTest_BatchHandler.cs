@@ -25,8 +25,8 @@ public class PingPongSequencedLatencyTest_BatchHandler : ILatencyTest
 
     public PingPongSequencedLatencyTest_BatchHandler(ProgramOptions options)
     {
-        var pingBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
-        var pongBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+        var pingBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
+        var pongBuffer = RingBuffer<PerfEvent>.CreateSingleProducer(PerfEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
 
         var pingBarrier = pingBuffer.NewBarrier();
         var pongBarrier = pongBuffer.NewBarrier();

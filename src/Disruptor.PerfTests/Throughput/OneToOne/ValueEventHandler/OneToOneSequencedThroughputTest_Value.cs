@@ -41,10 +41,10 @@ public class OneToOneSequencedThroughputTest_Value : IThroughputTest
     private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
     private readonly IValueEventProcessor<PerfValueEvent> _eventProcessor;
 
-    public OneToOneSequencedThroughputTest_Value()
+    public OneToOneSequencedThroughputTest_Value(ProgramOptions options)
     {
         _eventHandler = new AdditionEventHandler();
-        _ringBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, new YieldingWaitStrategy());
+        _ringBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
         var sequenceBarrier = _ringBuffer.NewBarrier();
         _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
         _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);
