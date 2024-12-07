@@ -1,17 +1,20 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Processing;
 
 namespace Disruptor;
 
 /// <summary>
-/// Strategy used by the event processors to wait until sequence values are available for processing.
+/// Represents a sequence waiter created by a <see cref="IAsyncSequenceWaitStrategy"/>.
+/// It is used by event processor to wait for available sequences.
 /// </summary>
 /// <remarks>
-/// The wait strategy is used to wait until events are published (publisher / processor synchronization)
-/// but also until events are processed by the previous processors (processor / processor synchronization).
+/// <see cref="IDisposable.Dispose"/> should be used to release the sequence waiter, which should only
+/// be required for dynamic event processor removal. The implementation is expected is to be no-op,
+/// unless the wait strategy contains custom state per sequence waiter.
 /// </remarks>
-public interface IAsyncSequenceWaiter
+public interface IAsyncSequenceWaiter : IDisposable
 {
     DependentSequenceGroup DependentSequences { get; }
 

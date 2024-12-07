@@ -34,5 +34,9 @@ public sealed class SpinWaitWaitStrategy : ISequenceWaitStrategy
         public void Cancel()
         {
         }
+
+        public void Dispose()
+        {
+        }
     }
 }

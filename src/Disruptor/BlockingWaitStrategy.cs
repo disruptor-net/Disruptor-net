@@ -58,5 +58,9 @@ public sealed class BlockingWaitStrategy : ISequenceWaitStrategy
                 Monitor.PulseAll(gate);
             }
         }
+
+        public void Dispose()
+        {
+        }
     }
 }

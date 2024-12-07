@@ -41,5 +41,9 @@ public sealed class BusySpinWaitStrategy : ISequenceWaitStrategy
         public void Cancel()
         {
         }
+
+        public void Dispose()
+        {
+        }
     }
 }

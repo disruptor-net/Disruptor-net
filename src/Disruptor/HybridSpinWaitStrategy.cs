@@ -52,5 +52,9 @@ public class HybridSpinWaitStrategy : ISequenceWaitStrategy
         public void Cancel()
         {
         }
+
+        public void Dispose()
+        {
+        }
     }
 }

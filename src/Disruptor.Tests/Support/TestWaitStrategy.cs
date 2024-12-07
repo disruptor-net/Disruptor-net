@@ -48,5 +48,9 @@ public class TestWaitStrategy : ISequenceWaitStrategy, IAsyncSequenceWaitStrateg
         public void Cancel()
         {
         }
+
+        public void Dispose()
+        {
+        }
     }
 }

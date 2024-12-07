@@ -71,5 +71,9 @@ public sealed class SleepingWaitStrategy : ISequenceWaitStrategy
         public void Cancel()
         {
         }
+
+        public void Dispose()
+        {
+        }
     }
 }

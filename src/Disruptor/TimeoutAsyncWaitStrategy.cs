@@ -142,5 +142,9 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncSequenceWaitStrategy
         {
             waitStrategy.SignalAllWhenBlocking();
         }
+
+        public void Dispose()
+        {
+        }
     }
 }

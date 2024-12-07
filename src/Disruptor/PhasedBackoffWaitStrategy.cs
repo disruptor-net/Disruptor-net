@@ -128,5 +128,10 @@ public sealed class PhasedBackoffWaitStrategy : ISequenceWaitStrategy
         {
             _fallback.Cancel();
         }
+
+        public void Dispose()
+        {
+            _fallback.Dispose();
+        }
     }
 }

@@ -16,4 +16,8 @@ public class DummySequenceWaiter(DependentSequenceGroup dependentSequences) : IS
     public void Cancel()
     {
     }
+
+    public void Dispose()
+    {
+    }
 }

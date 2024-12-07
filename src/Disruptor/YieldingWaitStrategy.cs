@@ -60,5 +60,9 @@ public sealed class YieldingWaitStrategy : ISequenceWaitStrategy
         public void Cancel()
         {
         }
+
+        public void Dispose()
+        {
+        }
     }
 }

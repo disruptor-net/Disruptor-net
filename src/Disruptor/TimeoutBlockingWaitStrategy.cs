@@ -78,5 +78,9 @@ public sealed class TimeoutBlockingWaitStrategy : ISequenceWaitStrategy
         {
             waitStrategy.SignalAllWhenBlocking();
         }
+
+        public void Dispose()
+        {
+        }
     }
 }
