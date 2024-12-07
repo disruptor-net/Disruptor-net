@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,7 +18,6 @@ public sealed class WorkerPool<T> where T : class
     private volatile int _runState = ProcessorRunStates.Idle;
     private readonly Sequence _workSequence = new();
     private readonly RingBuffer<T> _ringBuffer;
-    // WorkProcessors are created to wrap each of the provided WorkHandlers
     private readonly WorkProcessor<T>[] _workProcessors;
 
     /// <summary>
@@ -27,56 +27,46 @@ public sealed class WorkerPool<T> where T : class
     /// called before the work pool is started.
     /// </summary>
     /// <param name="ringBuffer">ringBuffer of events to be consumed.</param>
-    /// <param name="sequenceBarrier">sequenceBarrier on which the workers will depend.</param>
+    /// <param name="barrierSequences">sequences of the processors that must run before</param>
     /// <param name="exceptionHandler">exceptionHandler to callback when an error occurs which is not handled by the <see cref="IWorkHandler{T}"/>s.</param>
     /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
-    public WorkerPool(RingBuffer<T> ringBuffer, SequenceBarrier sequenceBarrier, IExceptionHandler<T> exceptionHandler, params IWorkHandler<T>[] workHandlers)
+    public WorkerPool(RingBuffer<T> ringBuffer, Sequence[] barrierSequences, IExceptionHandler<T> exceptionHandler, params IWorkHandler<T>[] workHandlers)
     {
+        if (workHandlers.Length == 0)
+            throw new ArgumentException("Unable to create worker pool without any work handlers.");
+
         _ringBuffer = ringBuffer;
-        _workProcessors = new WorkProcessor<T>[workHandlers.Length];
+        _workProcessors = workHandlers.Select(x => CreateWorkProcessor(x, _workSequence)).ToArray();
 
-        for (var i = 0; i < workHandlers.Length; i++)
+        DependentSequences = _workProcessors[0].DependentSequences;
+
+        WorkProcessor<T> CreateWorkProcessor(IWorkHandler<T> workHandler, Sequence workSequence)
         {
-            _workProcessors[i] = new WorkProcessor<T>(
-                ringBuffer,
-                sequenceBarrier,
-                workHandlers[i],
-                exceptionHandler,
-                _workSequence);
+            var sequenceBarrier = ringBuffer.NewBarrier(barrierSequences);
+            return new WorkProcessor<T>(ringBuffer, sequenceBarrier, workHandler, exceptionHandler, workSequence);
         }
     }
 
     /// <summary>
-    /// Construct a work pool with an internal <see cref="RingBuffer{T}"/> for convenience.
+    /// Create a worker pool to enable an array of <see cref="IWorkHandler{T}"/>s to consume published sequences.
     ///
-    /// This option does not require <see cref="ISequencer.AddGatingSequences"/> to be called before the work pool is started.
+    /// This option requires a pre-configured <see cref="RingBuffer{T}"/> which must have <see cref="ISequencer.AddGatingSequences"/>
+    /// called before the work pool is started.
     /// </summary>
-    /// <param name="eventFactory">eventFactory for filling the <see cref="RingBuffer{T}"/></param>
-    /// <param name="exceptionHandler">exceptionHandler to callback when an error occurs which is not handled by the <see cref="IWorkHandler{T}"/>s.</param>
-    /// <param name="workHandlers">workHandlers to distribute the work load across.</param>
-    public WorkerPool(Func<T> eventFactory, IExceptionHandler<T> exceptionHandler, params IWorkHandler<T>[] workHandlers)
+    /// <param name="ringBuffer">ringBuffer of events to be consumed.</param>
+    /// <param name="workProcessors">event processors of the target <see cref="IWorkHandler{T}"/>.</param>
+    public WorkerPool(RingBuffer<T> ringBuffer, WorkProcessor<T>[] workProcessors)
     {
-        _ringBuffer = RingBuffer<T>.CreateMultiProducer(eventFactory, 1024, new BlockingWaitStrategy());
-        var barrier = _ringBuffer.NewBarrier();
-        _workProcessors = new WorkProcessor<T>[workHandlers.Length];
+        if (workProcessors.Length == 0)
+            throw new ArgumentException("Unable to create worker pool without any work processors.");
 
-        for (var i = 0; i < workHandlers.Length; i++)
-        {
-            _workProcessors[i] = new WorkProcessor<T>(
-                _ringBuffer,
-                barrier,
-                workHandlers[i],
-                exceptionHandler,
-                _workSequence);
-        }
+        _ringBuffer = ringBuffer;
+        _workProcessors = workProcessors;
 
-        _ringBuffer.AddGatingSequences(GetWorkerSequences());
+        DependentSequences = _workProcessors[0].DependentSequences;
     }
 
-    /// <summary>
-    /// The <see cref="RingBuffer{T}"/> used by this worker pool.
-    /// </summary>
-    public RingBuffer<T> RingBuffer => _ringBuffer;
+    public DependentSequenceGroup DependentSequences { get; }
 
     /// <summary>
     /// Get an array of <see cref="Sequence"/>s representing the progress of the workers.
@@ -113,16 +103,16 @@ public sealed class WorkerPool<T> where T : class
     /// Start the worker pool processing events in sequence.
     /// </summary>
     /// <exception cref="InvalidOperationException">if the pool is already started or halted</exception>
-    public RingBuffer<T> Start()
+    public void Start()
     {
-        return Start(TaskScheduler.Default);
+        Start(TaskScheduler.Default);
     }
 
     /// <summary>
     /// Start the worker pool processing events in sequence.
     /// </summary>
     /// <exception cref="InvalidOperationException">if the pool is already started or halted</exception>
-    public RingBuffer<T> Start(TaskScheduler taskScheduler)
+    public void Start(TaskScheduler taskScheduler)
     {
         var previousRunState = Interlocked.CompareExchange(ref _runState, ProcessorRunStates.Running, ProcessorRunStates.Idle);
         if (previousRunState == ProcessorRunStates.Running)
@@ -143,8 +133,6 @@ public sealed class WorkerPool<T> where T : class
             workProcessor.Sequence.SetValue(cursor);
             workProcessor.StartLongRunning(taskScheduler);
         }
-
-        return _ringBuffer;
     }
 
     /// <summary>

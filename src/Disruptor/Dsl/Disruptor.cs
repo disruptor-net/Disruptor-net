@@ -509,10 +509,9 @@ public class Disruptor<T>
 
     internal EventHandlerGroup<T> CreateWorkerPool(Sequence[] barrierSequences, IWorkHandler<T>[] workHandlers)
     {
-        var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
-        var workerPool = new WorkerPool<T>(_ringBuffer, sequenceBarrier, _exceptionHandler, workHandlers);
+        var workerPool = new WorkerPool<T>(_ringBuffer, barrierSequences, _exceptionHandler, workHandlers);
 
-        _consumerRepository.Add(workerPool, sequenceBarrier.DependentSequences);
+        _consumerRepository.Add(workerPool, workerPool.DependentSequences);
 
         var workerSequences = workerPool.GetWorkerSequences();
 

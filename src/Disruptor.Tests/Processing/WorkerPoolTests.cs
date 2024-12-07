@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Disruptor.Processing;
 using NUnit.Framework;
 
@@ -10,12 +11,14 @@ public class WorkerPoolTests
     [Test]
     public void ShouldProcessEachMessageByOnlyOneWorker()
     {
-        var pool = new WorkerPool<AtomicLong>(() => new AtomicLong(),
+        var ringBuffer = RingBuffer<AtomicLong>.CreateMultiProducer(() => new AtomicLong(), 1024, new BlockingWaitStrategy());
+        var pool = new WorkerPool<AtomicLong>(ringBuffer,
+                                              Array.Empty<Sequence>(),
                                               new FatalExceptionHandler<AtomicLong>(),
                                               new AtomicLongWorkHandler(),
                                               new AtomicLongWorkHandler());
 
-        var ringBuffer = pool.Start();
+        pool.Start();
 
         ringBuffer.Next();
         ringBuffer.Next();
@@ -31,12 +34,14 @@ public class WorkerPoolTests
     [Test]
     public void ShouldProcessOnlyOnceItHasBeenPublished()
     {
-        var pool = new WorkerPool<AtomicLong>(() => new AtomicLong(),
+        var ringBuffer = RingBuffer<AtomicLong>.CreateMultiProducer(() => new AtomicLong(), 1024, new BlockingWaitStrategy());
+        var pool = new WorkerPool<AtomicLong>(ringBuffer,
+                                              Array.Empty<Sequence>(),
                                               new FatalExceptionHandler<AtomicLong>(),
                                               new AtomicLongWorkHandler(),
                                               new AtomicLongWorkHandler());
 
-        var ringBuffer = pool.Start();
+        pool.Start();
 
         ringBuffer.Next();
         ringBuffer.Next();
