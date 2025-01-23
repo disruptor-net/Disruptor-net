@@ -22,13 +22,13 @@ public sealed class AsyncWaitStrategy : IAsyncSequenceWaitStrategy, IAsyncWaitSt
 
     public bool IsBlockingStrategy => true;
 
-    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
         _hasSyncWaiter = true;
         return new SequenceWaiter(this, dependentSequences);
     }
 
-    public IAsyncSequenceWaiter NewAsyncSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public IAsyncSequenceWaiter NewAsyncSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
         => new SequenceWaiter(this, dependentSequences);
 
     SequenceWaitResult IWaitStrategy.WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)

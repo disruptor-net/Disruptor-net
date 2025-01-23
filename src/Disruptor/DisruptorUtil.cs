@@ -122,7 +122,7 @@ public static class DisruptorUtil
     {
         public bool IsBlockingStrategy => waitStrategy.IsBlockingStrategy;
 
-        public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+        public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
             => new SequenceWaiterAdapter(waitStrategy, dependentSequences);
 
         public void SignalAllWhenBlocking()
@@ -133,10 +133,10 @@ public static class DisruptorUtil
     {
         public bool IsBlockingStrategy => waitStrategy.IsBlockingStrategy;
 
-        public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+        public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
             => new SequenceWaiterAdapter(waitStrategy, dependentSequences);
 
-        public IAsyncSequenceWaiter NewAsyncSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+        public IAsyncSequenceWaiter NewAsyncSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
             => new AsyncSequenceWaiterAdapter(waitStrategy, dependentSequences);
 
         public void SignalAllWhenBlocking()

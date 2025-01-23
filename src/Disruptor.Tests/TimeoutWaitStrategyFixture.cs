@@ -26,7 +26,7 @@ public abstract class TimeoutWaitStrategyFixture<T> : WaitStrategyFixture<T>
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
         var sequence1 = new Sequence();
-        var sequenceWaiter1 = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences());
+        var sequenceWaiter1 = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
         var stopwatch = Stopwatch.StartNew();
 
         var waitTask1 = Task.Run(() =>
@@ -36,7 +36,7 @@ public abstract class TimeoutWaitStrategyFixture<T> : WaitStrategyFixture<T>
             sequence1.SetValue(10);
         });
 
-        var sequenceWaiter2 = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences(sequence1));
+        var sequenceWaiter2 = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence1));
         var waitTask2 = Task.Run(() => waitResult2.SetResult(sequenceWaiter2.WaitFor(10, CancellationToken)));
 
         // Ensure waiting tasks are blocked

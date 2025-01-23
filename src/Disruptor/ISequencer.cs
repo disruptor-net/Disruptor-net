@@ -35,18 +35,18 @@ public interface ISequencer : ISequenced, ICursored, IPublishedSequenceReader
     /// <summary>
     /// Create a <see cref="SequenceBarrier"/> that gates on the cursor and a list of <see cref="Sequence"/>s
     /// </summary>
-    /// <param name="eventHandler">The event handler of the target event processor. Can be null for custom event processors or if the event processor is a <see cref="IWorkHandler{T}"/> processor.</param>
+    /// <param name="owner">The owner of the sequence waiter.</param>
     /// <param name="sequencesToTrack">All the sequences that the newly constructed barrier will wait on.</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    SequenceBarrier NewBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack);
+    SequenceBarrier NewBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack);
 
     /// <summary>
     /// Create a <see cref="AsyncSequenceBarrier"/> that gates on the cursor and a list of <see cref="Sequence"/>s
     /// </summary>
-    /// <param name="eventHandler">The event handler of the target event processor. Can be null for custom event processors or if the event processor is a <see cref="IWorkHandler{T}"/> processor.</param>
+    /// <param name="owner">The owner of the sequence waiter.</param>
     /// <param name="sequencesToTrack">All the sequences that the newly constructed barrier will wait on.</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    AsyncSequenceBarrier NewAsyncBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack);
+    AsyncSequenceBarrier NewAsyncBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack);
 
     /// <summary>
     /// Get the minimum sequence value from all the gating sequences

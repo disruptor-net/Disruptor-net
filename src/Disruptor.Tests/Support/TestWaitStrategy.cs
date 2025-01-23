@@ -15,14 +15,14 @@ public class TestWaitStrategy : ISequenceWaitStrategy, IAsyncSequenceWaitStrateg
         _nextWaitResults[eventHandler] = waitResult;
     }
 
-    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
-        return new SequenceWaiter(this, eventHandler, dependentSequences);
+        return new SequenceWaiter(this, owner.Handler as IEventHandler, dependentSequences);
     }
 
-    public IAsyncSequenceWaiter NewAsyncSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public IAsyncSequenceWaiter NewAsyncSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
-        return new SequenceWaiter(this, eventHandler, dependentSequences);
+        return new SequenceWaiter(this, owner.Handler as IEventHandler, dependentSequences);
     }
 
     public void SignalAllWhenBlocking()

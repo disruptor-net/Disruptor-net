@@ -63,9 +63,9 @@ public sealed class PhasedBackoffWaitStrategy : ISequenceWaitStrategy, IWaitStra
         return new PhasedBackoffWaitStrategy(spinTimeout, yieldTimeout, (ISequenceWaitStrategy)new SleepingWaitStrategy(0, 0));
     }
 
-    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
-        var fallback = _fallbackStrategy.NewSequenceWaiter(eventHandler, dependentSequences);
+        var fallback = _fallbackStrategy.NewSequenceWaiter(owner, dependentSequences);
 
         return new SequenceWaiter(dependentSequences, fallback, _spinTimeout, _yieldTimeout);
     }

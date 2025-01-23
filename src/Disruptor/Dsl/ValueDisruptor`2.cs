@@ -260,8 +260,9 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
         for (int i = 0; i < eventHandlers.Length; i++)
         {
             var eventHandler = eventHandlers[i];
-            var barrier = _ringBuffer.NewBarrier(eventHandler, barrierSequences);
 
+            var sequenceWaiterOwner = SequenceWaiterOwner.EventHandler(eventHandler);
+            var barrier = _ringBuffer.NewBarrier(sequenceWaiterOwner, barrierSequences);
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
             eventProcessor.SetExceptionHandler(_exceptionHandler);
@@ -302,7 +303,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
 
         IEventProcessor CreateEventProcessor(ValueEventProcessorCreator<T> processorFactory)
         {
-            var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
+            var sequenceBarrier = _ringBuffer.NewBarrier(SequenceWaiterOwner.Unknown, barrierSequences);
             return processorFactory.Invoke(_ringBuffer, sequenceBarrier);
         }
     }

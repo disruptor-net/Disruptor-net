@@ -100,5 +100,5 @@ public class ValueEventHandlerGroup<T>
     /// </summary>
     /// <returns>a <see cref="SequenceBarrier"/> including all the processors in this group.</returns>
     public SequenceBarrier AsSequenceBarrier()
-        => _disruptor.RingBuffer.NewBarrier(_sequences);
+        => _disruptor.RingBuffer.NewBarrier(SequenceWaiterOwner.Unknown, _sequences);
 }

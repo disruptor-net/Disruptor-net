@@ -23,7 +23,7 @@ public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
         var sequence1 = new Sequence();
-        var sequenceWaiter1 = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences());
+        var sequenceWaiter1 = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
         var stopwatch = Stopwatch.StartNew();
 
         var waitTask1 = Task.Run(() =>
@@ -33,7 +33,7 @@ public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
             sequence1.SetValue(10);
         });
 
-        var sequenceWaiter2 = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences(sequence1));
+        var sequenceWaiter2 = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence1));
         var waitTask2 = Task.Run(() => waitResult2.SetResult(sequenceWaiter1.WaitFor(10, CancellationToken)));
 
         // Ensure waiting tasks are blocked
@@ -64,7 +64,7 @@ public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
         var sequence1 = new Sequence();
-        var sequenceWaiter1 = waitStrategy.NewAsyncSequenceWaiter(null, CreateDependentSequences());
+        var sequenceWaiter1 = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
         var stopwatch = Stopwatch.StartNew();
 
         var waitTask1 = Task.Run(async () =>
@@ -74,7 +74,7 @@ public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
             sequence1.SetValue(10);
         });
 
-        var sequenceWaiter2 = waitStrategy.NewAsyncSequenceWaiter(null, CreateDependentSequences(sequence1));
+        var sequenceWaiter2 = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence1));
         var waitTask2 = Task.Run(async () => waitResult2.SetResult(await sequenceWaiter2.WaitForAsync(10, CancellationToken)));
 
         // Ensure waiting tasks are blocked

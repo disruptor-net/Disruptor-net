@@ -168,7 +168,7 @@ public class EventHandlerGroup<T> where T : class
     /// <returns>a <see cref="SequenceBarrier"/> including all the processors in this group.</returns>
     public SequenceBarrier AsSequenceBarrier()
     {
-        return _disruptor.RingBuffer.NewBarrier(_sequences);
+        return _disruptor.RingBuffer.NewBarrier(SequenceWaiterOwner.Unknown, _sequences);
     }
 
     /// <summary>
@@ -179,6 +179,6 @@ public class EventHandlerGroup<T> where T : class
     /// <returns>a <see cref="AsyncSequenceBarrier"/> including all the processors in this group.</returns>
     public AsyncSequenceBarrier AsAsyncSequenceBarrier()
     {
-        return _disruptor.RingBuffer.NewAsyncBarrier(_sequences);
+        return _disruptor.RingBuffer.NewAsyncBarrier(SequenceWaiterOwner.Unknown, _sequences);
     }
 }

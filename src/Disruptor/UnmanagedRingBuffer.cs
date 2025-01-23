@@ -266,23 +266,12 @@ public abstract class UnmanagedRingBuffer : ICursored
     /// Create a new SequenceBarrier to be used by an EventProcessor to track which messages
     /// are available to be read from the ring buffer given a list of sequences to track.
     /// </summary>
+    /// <param name="owner">The owner of the sequence waiter.</param>
     /// <param name="sequencesToTrack">the additional sequences to track</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
+    public SequenceBarrier NewBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack)
     {
-        return _sequencerDispatcher.Sequencer.NewBarrier(null, sequencesToTrack);
-    }
-
-    /// <summary>
-    /// Create a new SequenceBarrier to be used by an EventProcessor to track which messages
-    /// are available to be read from the ring buffer given a list of sequences to track.
-    /// </summary>
-    /// <param name="eventHandler">The event handler of the target event processor. Can be null for custom event processors or if the event processor is a <see cref="IWorkHandler{T}"/> processor.</param>
-    /// <param name="sequencesToTrack">the additional sequences to track</param>
-    /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    public SequenceBarrier NewBarrier(IEventHandler eventHandler, params Sequence[] sequencesToTrack)
-    {
-        return _sequencerDispatcher.Sequencer.NewBarrier(eventHandler, sequencesToTrack);
+        return _sequencerDispatcher.Sequencer.NewBarrier(owner, sequencesToTrack);
     }
 
     /// <summary>

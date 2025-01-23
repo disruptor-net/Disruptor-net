@@ -190,7 +190,7 @@ public class BatchEventProcessorTests
     {
         var waitStrategy = new BusySpinWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
-        var sequenceWaiter = waitStrategy.NewSequenceWaiter(null, new DependentSequenceGroup(new Sequence()));
+        var sequenceWaiter = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, new DependentSequenceGroup(new Sequence()));
         var barrier = new SequenceBarrier(sequencer, sequenceWaiter);
         var dp = new ArrayDataProvider<StubEvent>(sequencer.BufferSize);
 
