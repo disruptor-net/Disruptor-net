@@ -31,25 +31,9 @@ public sealed class TimeoutBlockingWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
     {
-        var timeout = _timeoutMilliseconds;
-        if (dependentSequences.CursorValue < sequence)
-        {
-            lock (_gate)
-            {
-                while (dependentSequences.CursorValue < sequence)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (!Monitor.Wait(_gate, timeout))
-                    {
-                        return SequenceWaitResult.Timeout;
-                    }
-                }
-            }
-        }
-
-        return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
+        return new SequenceWaiter(_gate, _timeoutMilliseconds, dependentSequences);
     }
 
     public void SignalAllWhenBlocking()
@@ -57,6 +41,44 @@ public sealed class TimeoutBlockingWaitStrategy : IWaitStrategy
         lock (_gate)
         {
             Monitor.PulseAll(_gate);
+        }
+    }
+
+    private class SequenceWaiter(object gate, int timeoutMilliseconds, DependentSequenceGroup dependentSequences) : ISequenceWaiter
+    {
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            var timeout = timeoutMilliseconds;
+            if (dependentSequences.CursorValue < sequence)
+            {
+                lock (gate)
+                {
+                    while (dependentSequences.CursorValue < sequence)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        if (!Monitor.Wait(gate, timeout))
+                        {
+                            return SequenceWaitResult.Timeout;
+                        }
+                    }
+                }
+            }
+
+            return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
+        }
+
+        public void Cancel()
+        {
+            lock (gate)
+            {
+                Monitor.PulseAll(gate);
+            }
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

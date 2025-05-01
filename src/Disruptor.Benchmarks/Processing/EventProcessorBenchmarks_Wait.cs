@@ -1,7 +1,6 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using System.Threading;
+﻿using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
+using Disruptor.Processing;
 using Disruptor.Util;
 
 namespace Disruptor.Benchmarks.Processing;
@@ -14,20 +13,15 @@ public class EventProcessorBenchmarks_Wait
     private const int _operationsPerInvoke = 1000;
 
     private readonly IPartialEventProcessor _processor1;
-    private readonly IPartialEventProcessor _processor2;
 
     public EventProcessorBenchmarks_Wait()
     {
         var waitStrategy = new YieldingWaitStrategy();
         var sequencer = new SingleProducerSequencer(64, waitStrategy);
         var cursorSequence = new Sequence();
-        var sequenceBarrier = new SequenceBarrier(sequencer, waitStrategy, new DependentSequenceGroup(cursorSequence));
-        var sequenceBarrierClass = new SequenceBarrierClass(sequencer, waitStrategy, new DependentSequenceGroup(cursorSequence));
-        var sequenceBarrierProxy = StructProxy.CreateProxyInstance(sequenceBarrierClass);
-        var eventProcessorType = typeof(PartialEventProcessor<,>).MakeGenericType(typeof(ISequenceBarrierOptions.IsDependentSequencePublished), sequenceBarrierProxy.GetType());
-        _processor1 = (IPartialEventProcessor)Activator.CreateInstance(eventProcessorType, sequenceBarrier, sequenceBarrierProxy);
-
-        _processor2 = new PartialEventProcessor<ISequenceBarrierOptions.IsDependentSequencePublished, SequenceBarrierStruct>(sequenceBarrier, new SequenceBarrierStruct(sequencer, waitStrategy, new DependentSequenceGroup(cursorSequence)));
+        var sequenceWaiter = waitStrategy.NewSequenceWaiter(null, new DependentSequenceGroup(cursorSequence));
+        var sequenceBarrier = new SequenceBarrier(sequencer, sequenceWaiter);
+        _processor1 = new PartialEventProcessor<EventProcessorHelpers.NoopPublishedSequenceReader>(sequenceBarrier, new EventProcessorHelpers.NoopPublishedSequenceReader());
 
         sequencer.Publish(42);
         cursorSequence.SetValue(42);
@@ -36,76 +30,43 @@ public class EventProcessorBenchmarks_Wait
     [Benchmark(Baseline = true, OperationsPerInvoke = _operationsPerInvoke)]
     public void ProcessingLoop_Default()
     {
-        _processor1.ProcessingLoop_Options(42);
-    }
-
-    [Benchmark(OperationsPerInvoke = _operationsPerInvoke)]
-    public void ProcessingLoop_Typed_Class_Proxy()
-    {
-        _processor1.ProcessingLoop_Typed(42);
-    }
-
-    [Benchmark(OperationsPerInvoke = _operationsPerInvoke)]
-    public void ProcessingLoop_Typed_Struct()
-    {
-        _processor2.ProcessingLoop_Typed(42);
+        _processor1.ProcessingLoop(42);
     }
 
     public interface IPartialEventProcessor
     {
-        void ProcessingLoop_Options(long nextSequence);
-        void ProcessingLoop_Typed(long nextSequence);
+        void ProcessingLoop(long nextSequence);
     }
 
     /// <summary>
-    /// Partial copy of <see cref="EventProcessor{T, TDataProvider, TSequenceBarrier, TEventHandler, TBatchStartAware}"/>
+    /// Partial copy of <see cref="EventProcessor{T, TDataProvider, TPublishedSequenceReader, TEventHandler, TOnBatchStartEvaluator, TBatchSizeLimiter}"/>
     /// </summary>
-    public sealed class PartialEventProcessor<TSequenceBarrierOptions, TSequenceBarrier> : IPartialEventProcessor
-        where TSequenceBarrierOptions : ISequenceBarrierOptions
-        where TSequenceBarrier : ISequenceBarrier
+    public sealed class PartialEventProcessor<TPublishedSequenceReader> : IPartialEventProcessor
+        where TPublishedSequenceReader : struct, IPublishedSequenceReader
     {
         private readonly Sequence _sequence = new();
         private readonly SequenceBarrier _sequenceBarrier;
-        private TSequenceBarrier _typedSequenceBarrier;
+        private readonly TPublishedSequenceReader _publishedSequenceReader;
 
-        public PartialEventProcessor(SequenceBarrier sequenceBarrier, TSequenceBarrier typedSequenceBarrier)
+        public PartialEventProcessor(SequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader)
         {
             _sequenceBarrier = sequenceBarrier;
-            _typedSequenceBarrier = typedSequenceBarrier;
+            _publishedSequenceReader = publishedSequenceReader;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | Constants.AggressiveOptimization)]
-        public void ProcessingLoop_Options(long nextSequence)
+        public void ProcessingLoop(long nextSequence)
         {
             for (var i = 0; i < _operationsPerInvoke; i++)
             {
-                var waitResult = _sequenceBarrier.WaitFor<TSequenceBarrierOptions>(nextSequence);
+                var waitResult = _sequenceBarrier.WaitFor(nextSequence);
                 if (waitResult.IsTimeout)
                 {
                     HandleTimeout(_sequence.Value);
                     return;
                 }
 
-                var availableSequence = waitResult.UnsafeAvailableSequence;
-                Process(availableSequence);
-
-                _sequence.SetValue(availableSequence);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining | Constants.AggressiveOptimization)]
-        public void ProcessingLoop_Typed(long nextSequence)
-        {
-            for (var i = 0; i < _operationsPerInvoke; i++)
-            {
-                var waitResult = _typedSequenceBarrier.WaitFor(nextSequence);
-                if (waitResult.IsTimeout)
-                {
-                    HandleTimeout(_sequence.Value);
-                    return;
-                }
-
-                var availableSequence = waitResult.UnsafeAvailableSequence;
+                var availableSequence = _publishedSequenceReader.GetHighestPublishedSequence(nextSequence, waitResult.UnsafeAvailableSequence);
                 Process(availableSequence);
 
                 _sequence.SetValue(availableSequence);
@@ -120,83 +81,6 @@ public class EventProcessorBenchmarks_Wait
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void Process(long sequence)
         {
-        }
-    }
-
-    public interface ISequenceBarrier
-    {
-        SequenceWaitResult WaitFor(long sequence);
-    }
-
-    public sealed class SequenceBarrierClass : ISequenceBarrier
-    {
-        private readonly ISequencer _sequencer;
-        private readonly IWaitStrategy _waitStrategy;
-        private readonly DependentSequenceGroup _dependentSequences;
-        private CancellationTokenSource _cancellationTokenSource;
-
-        public SequenceBarrierClass(ISequencer sequencer, IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
-        {
-            _sequencer = sequencer;
-            _waitStrategy = waitStrategy;
-            _dependentSequences = dependentSequences;
-            _cancellationTokenSource = new CancellationTokenSource();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
-        public SequenceWaitResult WaitFor(long sequence)
-        {
-            _cancellationTokenSource.Token.ThrowIfCancellationRequested();
-
-            var availableSequence = _dependentSequences.Value;
-            if (availableSequence >= sequence)
-            {
-                return availableSequence;
-            }
-
-            return InvokeWaitStrategy(sequence);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private SequenceWaitResult InvokeWaitStrategy(long sequence)
-        {
-            return _waitStrategy.WaitFor(sequence, _dependentSequences, _cancellationTokenSource.Token);
-        }
-    }
-
-    public struct SequenceBarrierStruct : ISequenceBarrier
-    {
-        private readonly ISequencer _sequencer;
-        private readonly IWaitStrategy _waitStrategy;
-        private readonly DependentSequenceGroup _dependentSequences;
-        private CancellationTokenSource _cancellationTokenSource;
-
-        public SequenceBarrierStruct(ISequencer sequencer, IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
-        {
-            _sequencer = sequencer;
-            _waitStrategy = waitStrategy;
-            _dependentSequences = dependentSequences;
-            _cancellationTokenSource = new CancellationTokenSource();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
-        public SequenceWaitResult WaitFor(long sequence)
-        {
-            _cancellationTokenSource.Token.ThrowIfCancellationRequested();
-
-            var availableSequence = _dependentSequences.Value;
-            if (availableSequence >= sequence)
-            {
-                return availableSequence;
-            }
-
-            return InvokeWaitStrategy(sequence);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private SequenceWaitResult InvokeWaitStrategy(long sequence)
-        {
-            return _waitStrategy.WaitFor(sequence, _dependentSequences, _cancellationTokenSource.Token);
         }
     }
 }

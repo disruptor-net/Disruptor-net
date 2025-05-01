@@ -29,14 +29,32 @@ public class HybridSpinWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy { get; set; }
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
     {
-        return dependentSequences.Tag == AggressiveSpinWaitTag
-            ? dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken)
-            : dependentSequences.SpinWaitFor(sequence, cancellationToken);
+        return new SequenceWaiter(dependentSequences);
     }
 
     public void SignalAllWhenBlocking()
     {
+    }
+
+    private class SequenceWaiter(DependentSequenceGroup dependentSequences) : ISequenceWaiter
+    {
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            return dependentSequences.Tag == AggressiveSpinWaitTag
+                ? dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken)
+                : dependentSequences.SpinWaitFor(sequence, cancellationToken);
+        }
+
+        public void Cancel()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
     }
 }

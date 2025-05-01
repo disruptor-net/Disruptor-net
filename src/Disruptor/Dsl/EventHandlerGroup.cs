@@ -163,7 +163,7 @@ public class EventHandlerGroup<T> where T : class
     /// <summary>
     /// Create a sequence barrier for the processors in this group.
     /// This allows custom event processors to have dependencies on
-    /// <see cref="IEventProcessor{T}"/>s created by the disruptor.
+    /// event processors created by the disruptor.
     /// </summary>
     /// <returns>a <see cref="SequenceBarrier"/> including all the processors in this group.</returns>
     public SequenceBarrier AsSequenceBarrier()

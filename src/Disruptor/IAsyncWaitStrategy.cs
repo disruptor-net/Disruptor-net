@@ -1,6 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Disruptor;
 
 /// <summary>
@@ -9,12 +6,10 @@ namespace Disruptor;
 public interface IAsyncWaitStrategy : IWaitStrategy
 {
     /// <summary>
-    /// Wait for the given sequence to be available.
+    /// Creates the <see cref="IAsyncSequenceWaiter"/> that will be used by an asynchronous event processor to wait for available sequences.
     /// </summary>
-    /// <param name="sequence">sequence to be waited on</param>
-    /// <param name="dependentSequences">sequences on which to wait</param>
-    /// <param name="cancellationToken">processing cancellation token</param>
-    /// <returns>either the sequence that is available (which may be greater than the requested sequence), or a timeout</returns>
-    /// <seealso cref="IWaitStrategy.WaitFor"/>
-    ValueTask<SequenceWaitResult> WaitForAsync(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken);
+    /// <param name="eventHandler">The event handler of the target event processor. Can be null for custom event processors or if the event processor is a <see cref="IWorkHandler{T}"/> processor.</param>
+    /// <param name="dependentSequences">The dependent sequences of the target event processor.</param>
+    /// <returns>The sequence waiter.</returns>
+    IAsyncSequenceWaiter NewAsyncSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences);
 }

@@ -126,12 +126,12 @@ public class RingBufferWithAssertingStubTest
             return false;
         }
 
-        public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
+        public SequenceBarrier NewBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack)
         {
             throw new NotSupportedException();
         }
 
-        public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
+        public AsyncSequenceBarrier NewAsyncBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack)
         {
             throw new NotSupportedException();
         }

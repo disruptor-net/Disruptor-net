@@ -1,14 +1,15 @@
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Disruptor;
 
 /// <summary>
-/// Represents a group a sequences that are the dependencies for a set of event processors.
+/// Represents a group a sequences that are the dependencies for an event processor.
 /// </summary>
 /// <remarks>
-/// For a given set S of event processors, the dependencies are the sequences of the processors that must run before S.
-/// If S represents the first processors of the disruptor, then the only dependency is the ring buffer cursor.
+/// For a given event processors P, the dependencies are the sequences of the processors that must run before P.
+/// If P is an initial processor of the disruptor processors graph, then the only dependency is the ring buffer cursor.
 /// </remarks>
 public class DependentSequenceGroup
 {
@@ -77,6 +78,27 @@ public class DependentSequenceGroup
     {
         get => _tag;
         set => _tag = value;
+    }
+
+    /// <summary>
+    /// Indicates whether the target <see cref="DependentSequenceGroup"/> has the same dependent sequences
+    /// as the current instance.
+    /// </summary>
+    public bool HasSameDependencies(DependentSequenceGroup dependentSequenceGroup)
+    {
+        if (!ReferenceEquals(_cursor, dependentSequenceGroup._cursor))
+            return false;
+
+        if (_dependencies.Length != dependentSequenceGroup._dependencies.Length)
+            return false;
+
+        for (var index = 0; index < _dependencies.Length; index++)
+        {
+            if (!ReferenceEquals(_dependencies[index], dependentSequenceGroup._dependencies[index]))
+                return false;
+        }
+
+        return true;
     }
 
     /// <summary>

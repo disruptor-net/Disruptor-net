@@ -1,21 +1,20 @@
-﻿using System.Threading;
-
-namespace Disruptor.Tests.Support;
+﻿namespace Disruptor.Tests.Support;
 
 public class DummyWaitStrategy : IWaitStrategy
 {
-    public DummyWaitStrategy(bool isBlockingStrategy = true)
-    {
-        IsBlockingStrategy = isBlockingStrategy;
-    }
-
-    public bool IsBlockingStrategy { get; private set; }
+    public bool IsBlockingStrategy { get; set; }
 
     public int SignalAllWhenBlockingCalls { get; private set; }
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public DummySequenceWaiter? LastSequenceWaiter { get; private set; }
+    public IEventHandler? LastSequenceWaiterEventHandler { get; private set; }
+
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
     {
-        return 0;
+        LastSequenceWaiterEventHandler = eventHandler;
+        LastSequenceWaiter = new DummySequenceWaiter(dependentSequences);
+
+        return LastSequenceWaiter;
     }
 
     public void SignalAllWhenBlocking()

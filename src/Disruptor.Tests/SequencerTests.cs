@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Disruptor.Dsl;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
@@ -142,7 +141,7 @@ public abstract class SequencerTests
     [Test]
     public void ShouldNotifyWaitStrategyOnPublish()
     {
-        var waitStrategy = new DummyWaitStrategy();
+        var waitStrategy = new DummyWaitStrategy { IsBlockingStrategy = true };
         var sequencer = NewSequencer(waitStrategy);
 
         sequencer.Publish(sequencer.Next());
@@ -153,7 +152,7 @@ public abstract class SequencerTests
     [Test]
     public void ShouldNotNotifyNonBlockingWaitStrategyOnPublish()
     {
-        var waitStrategy = new DummyWaitStrategy(isBlockingStrategy: false);
+        var waitStrategy = new DummyWaitStrategy { IsBlockingStrategy = false };
         var sequencer = NewSequencer(waitStrategy);
 
         sequencer.Publish(sequencer.Next());
@@ -164,7 +163,7 @@ public abstract class SequencerTests
     [Test]
     public void ShouldNotifyWaitStrategyOnPublishBatch()
     {
-        var waitStrategy = new DummyWaitStrategy();
+        var waitStrategy = new DummyWaitStrategy { IsBlockingStrategy = true };
         var sequencer = NewSequencer(waitStrategy);
 
         var next = _sequencer.Next(4);
@@ -176,7 +175,7 @@ public abstract class SequencerTests
     [Test]
     public void ShouldNotNotifyNonBlockingWaitStrategyOnPublishBatch()
     {
-        var waitStrategy = new DummyWaitStrategy(isBlockingStrategy: false);
+        var waitStrategy = new DummyWaitStrategy { IsBlockingStrategy = false };
         var sequencer = NewSequencer(waitStrategy);
 
         var next = _sequencer.Next(4);
@@ -188,7 +187,7 @@ public abstract class SequencerTests
     [Test]
     public void ShouldWaitOnPublication()
     {
-        var barrier = _sequencer.NewBarrier();
+        var barrier = _sequencer.NewBarrier(null);
 
         var next = _sequencer.Next(10);
         var lo = next - (10 - 1);
@@ -199,20 +198,20 @@ public abstract class SequencerTests
             _sequencer.Publish(l);
         }
 
-        Assert.That(barrier.WaitFor(-1), Is.EqualTo(new SequenceWaitResult(mid - 1)));
+        Assert.That(barrier.WaitForPublishedSequence(-1), Is.EqualTo(new SequenceWaitResult(mid - 1)));
 
         for (var l = mid; l <= next; l++)
         {
             _sequencer.Publish(l);
         }
-        Assert.That(barrier.WaitFor(-1), Is.EqualTo(new SequenceWaitResult(next)));
+        Assert.That(barrier.WaitForPublishedSequence(-1), Is.EqualTo(new SequenceWaitResult(next)));
     }
 
     [Test]
     public async Task ShouldWaitOnPublicationAsync()
     {
         var sequencer = NewSequencer(new AsyncWaitStrategy());
-        var barrier = sequencer.NewAsyncBarrier();
+        var barrier = sequencer.NewAsyncBarrier(null);
 
         var next = sequencer.Next(10);
         var lo = next - (10 - 1);
@@ -223,7 +222,7 @@ public abstract class SequencerTests
             sequencer.Publish(l);
         }
 
-        var s1 = await barrier.WaitForAsync(-1);
+        var s1 = await barrier.WaitForPublishedSequenceAsync(-1);
 
         Assert.That(s1, Is.EqualTo(new SequenceWaitResult(mid - 1)));
 
@@ -232,9 +231,39 @@ public abstract class SequencerTests
             sequencer.Publish(l);
         }
 
-        var s2 = await barrier.WaitForAsync(-1);
+        var s2 = await barrier.WaitForPublishedSequenceAsync(-1);
 
         Assert.That(s2, Is.EqualTo(new SequenceWaitResult(next)));
+    }
+
+    [Test]
+    public void ShouldCreateBarrierUsingSpecifiedEventHandler()
+    {
+        var waitStrategy = new TestWaitStrategy();
+        var sequencer = NewSequencer(waitStrategy);
+        var eventHandler = new TestEventHandler<TestEvent>();
+
+        waitStrategy.SetupNextSequence(eventHandler, new SequenceWaitResult(42));
+
+        var barrier = sequencer.NewBarrier(eventHandler);
+        var waitResult = barrier.WaitFor(0);
+
+        Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(42)));
+    }
+
+    [Test]
+    public async Task ShouldCreateBarrierUsingSpecifiedEventHandlerAsync()
+    {
+        var waitStrategy = new TestWaitStrategy();
+        var sequencer = NewSequencer(waitStrategy);
+        var eventHandler = new TestEventHandler<TestEvent>();
+
+        waitStrategy.SetupNextSequence(eventHandler, new SequenceWaitResult(42));
+
+        var barrier = sequencer.NewAsyncBarrier(eventHandler);
+        var waitResult = await barrier.WaitForAsync(0);
+
+        Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(42)));
     }
 
     [Test]

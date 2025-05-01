@@ -153,14 +153,17 @@ public class TestSequencer : ISequencer
         }
     }
 
-    public SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack)
+    public SequenceBarrier NewBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack)
     {
-        return new SequenceBarrier(this, _waitStrategy, new DependentSequenceGroup(_cursor, sequencesToTrack));
+        return new SequenceBarrier(this, _waitStrategy.NewSequenceWaiter(eventHandler, new DependentSequenceGroup(_cursor, sequencesToTrack)));
     }
 
-    public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack)
     {
-        return new AsyncSequenceBarrier(this, _waitStrategy, new DependentSequenceGroup(_cursor, sequencesToTrack));
+        if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
+            throw new InvalidOperationException($"Unable to create an async event stream: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
+
+        return new AsyncSequenceBarrier(this, asyncWaitStrategy.NewAsyncSequenceWaiter(eventHandler, new DependentSequenceGroup(_cursor, sequencesToTrack)));
     }
 
     public long GetMinimumSequence()
@@ -194,6 +197,6 @@ public class TestSequencer : ISequencer
         if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
             throw new InvalidOperationException($"Unable to create an async event stream: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
 
-        return new AsyncEventStream<T>(provider, asyncWaitStrategy, this, _cursor, gatingSequences);
+        return new AsyncEventStream<T>(provider, asyncWaitStrategy.NewAsyncSequenceWaiter(null, new DependentSequenceGroup(_cursor, gatingSequences)), this);
     }
 }

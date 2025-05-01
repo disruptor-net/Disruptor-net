@@ -17,14 +17,14 @@ namespace Disruptor.Processing;
 /// </remarks>
 /// <typeparam name="T">the type of event used.</typeparam>
 /// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
-/// <typeparam name="TSequenceBarrierOptions">the type of the <see cref="ISequenceBarrierOptions"/> used.</typeparam>
+/// <typeparam name="TPublishedSequenceReader">the type of the <see cref="IPublishedSequenceReader"/> used.</typeparam>
 /// <typeparam name="TEventHandler">the type of the <see cref="IEventHandler{T}"/> used.</typeparam>
 /// <typeparam name="TOnBatchStartEvaluator">the type of the <see cref="IOnBatchStartEvaluator"/> used.</typeparam>
 /// <typeparam name="TBatchSizeLimiter">the type of the <see cref="IBatchSizeLimiter"/> used.</typeparam>
-public class EventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEventHandler, TOnBatchStartEvaluator, TBatchSizeLimiter> : IEventProcessor<T>
+public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHandler, TOnBatchStartEvaluator, TBatchSizeLimiter> : IEventProcessor<T>
     where T : class
     where TDataProvider : IDataProvider<T>
-    where TSequenceBarrierOptions : ISequenceBarrierOptions
+    where TPublishedSequenceReader : IPublishedSequenceReader
     where TEventHandler : IEventHandler<T>
     where TOnBatchStartEvaluator : IOnBatchStartEvaluator
     where TBatchSizeLimiter : IBatchSizeLimiter
@@ -32,6 +32,7 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEventHan
     // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
     private TDataProvider _dataProvider;
     private SequenceBarrier _sequenceBarrier;
+    private TPublishedSequenceReader _publishedSequenceReader;
     private TEventHandler _eventHandler;
     private TOnBatchStartEvaluator _onBatchStartEvaluator;
     private TBatchSizeLimiter _batchSizeLimiter;
@@ -42,10 +43,11 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEventHan
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
     private volatile int _runState = ProcessorRunStates.Idle;
 
-    public EventProcessor(TDataProvider dataProvider, SequenceBarrier sequenceBarrier, TEventHandler eventHandler, TOnBatchStartEvaluator onBatchStartEvaluator, TBatchSizeLimiter batchSizeLimiter)
+    public EventProcessor(TDataProvider dataProvider, SequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TOnBatchStartEvaluator onBatchStartEvaluator, TBatchSizeLimiter batchSizeLimiter)
     {
         _dataProvider = dataProvider;
         _sequenceBarrier = sequenceBarrier;
+        _publishedSequenceReader = publishedSequenceReader;
         _eventHandler = eventHandler;
         _onBatchStartEvaluator = onBatchStartEvaluator;
         _batchSizeLimiter = batchSizeLimiter;
@@ -134,14 +136,15 @@ public class EventProcessor<T, TDataProvider, TSequenceBarrierOptions, TEventHan
         {
             try
             {
-                var waitResult = _sequenceBarrier.WaitFor<TSequenceBarrierOptions>(nextSequence);
+                var waitResult = _sequenceBarrier.WaitFor(nextSequence);
                 if (waitResult.IsTimeout)
                 {
                     NotifyTimeout();
                     continue;
                 }
 
-                var availableSequence = _batchSizeLimiter.ApplyMaxBatchSize(waitResult.UnsafeAvailableSequence, nextSequence);
+                var publishedSequence = _publishedSequenceReader.GetHighestPublishedSequence(nextSequence, waitResult.UnsafeAvailableSequence);
+                var availableSequence = _batchSizeLimiter.ApplyMaxBatchSize(publishedSequence, nextSequence);
 
                 if (_onBatchStartEvaluator.ShouldInvokeOnBatchStart(availableSequence, nextSequence))
                     _eventHandler.OnBatchStart(availableSequence - nextSequence + 1);

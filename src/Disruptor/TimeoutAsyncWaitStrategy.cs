@@ -34,7 +34,34 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    {
+        return new SequenceWaiter(this, dependentSequences);
+    }
+
+    public IAsyncSequenceWaiter NewAsyncSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    {
+        return new SequenceWaiter(this, dependentSequences);
+    }
+
+    public void SignalAllWhenBlocking()
+    {
+        lock (_gate)
+        {
+            if (_hasSyncWaiter)
+            {
+                Monitor.PulseAll(_gate);
+            }
+
+            foreach (var completionSource in _taskCompletionSources)
+            {
+                completionSource.TrySetResult(true);
+            }
+            _taskCompletionSources.Clear();
+        }
+    }
+
+    private SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         var timeout = _timeoutMilliseconds;
         if (dependentSequences.CursorValue < sequence)
@@ -57,24 +84,7 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncWaitStrategy
         return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
     }
 
-    public void SignalAllWhenBlocking()
-    {
-        lock (_gate)
-        {
-            if (_hasSyncWaiter)
-            {
-                Monitor.PulseAll(_gate);
-            }
-
-            foreach (var completionSource in _taskCompletionSources)
-            {
-                completionSource.TrySetResult(true);
-            }
-            _taskCompletionSources.Clear();
-        }
-    }
-
-    public async ValueTask<SequenceWaitResult> WaitForAsync(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    private async ValueTask<SequenceWaitResult> WaitForAsync(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
     {
         while (dependentSequences.CursorValue < sequence)
         {
@@ -112,5 +122,29 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncWaitStrategy
         await Task.WhenAny(tcs.Task, Task.Delay(_timeoutMilliseconds)).ConfigureAwait(false);
 
         return tcs.Task.IsCompleted;
+    }
+
+    private class SequenceWaiter(TimeoutAsyncWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences) : ISequenceWaiter, IAsyncSequenceWaiter
+    {
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            return waitStrategy.WaitFor(sequence, dependentSequences, cancellationToken);
+        }
+
+        public ValueTask<SequenceWaitResult> WaitForAsync(long sequence, CancellationToken cancellationToken)
+        {
+            return waitStrategy.WaitForAsync(sequence, dependentSequences, cancellationToken);
+        }
+
+        public void Cancel()
+        {
+            waitStrategy.SignalAllWhenBlocking();
+        }
+
+        public void Dispose()
+        {
+        }
     }
 }

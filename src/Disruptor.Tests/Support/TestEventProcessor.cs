@@ -43,7 +43,7 @@ public class TestEventProcessor : IEventProcessor
             throw new InvalidOperationException("Already running");
 
         _runEvent.Set();
-        _sequenceBarrier.WaitFor(0L);
+        _sequenceBarrier.WaitForPublishedSequence(0L);
         Sequence.SetValue(Sequence.Value + 1);
     }
 }

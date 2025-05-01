@@ -15,13 +15,13 @@ public class PingPongYieldingWaitStrategyBenchmarks : IDisposable
     private readonly Sequence _pongCursor = new();
     private readonly ManualResetEventSlim _pongStarted = new();
     private readonly Task _pongTask;
-    private readonly DependentSequenceGroup _pingDependentSequences;
-    private readonly DependentSequenceGroup _pongDependentSequences;
+    private readonly ISequenceWaiter _pingSequenceWaiter;
+    private readonly ISequenceWaiter _pongSequenceWaiter;
 
     public PingPongYieldingWaitStrategyBenchmarks()
     {
-        _pingDependentSequences = new DependentSequenceGroup(_pingCursor);
-        _pongDependentSequences = new DependentSequenceGroup(_pongCursor);
+        _pingSequenceWaiter = _pingWaitStrategy.NewSequenceWaiter(null, new DependentSequenceGroup(_pingCursor));
+        _pongSequenceWaiter = _pongWaitStrategy.NewSequenceWaiter(null, new DependentSequenceGroup(_pongCursor));
         _pongTask = Task.Run(RunPong);
         _pongStarted.Wait();
     }
@@ -44,7 +44,7 @@ public class PingPongYieldingWaitStrategyBenchmarks : IDisposable
             {
                 sequence++;
 
-                _pingWaitStrategy.WaitFor(sequence, _pingDependentSequences, _cancellationTokenSource.Token);
+                _pingSequenceWaiter.WaitFor(sequence, _cancellationTokenSource.Token);
 
                 _pongCursor.SetValue(sequence);
                 _pongWaitStrategy.SignalAllWhenBlocking();
@@ -69,7 +69,7 @@ public class PingPongYieldingWaitStrategyBenchmarks : IDisposable
             _pingCursor.SetValue(s);
             _pingWaitStrategy.SignalAllWhenBlocking();
 
-            _pongWaitStrategy.WaitFor(s, _pongDependentSequences, _cancellationTokenSource.Token);
+            _pongSequenceWaiter.WaitFor(s, _cancellationTokenSource.Token);
         }
     }
 }

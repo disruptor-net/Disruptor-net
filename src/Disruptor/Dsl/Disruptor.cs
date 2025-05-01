@@ -413,11 +413,11 @@ public class Disruptor<T>
         CheckNotStarted();
 
         var processorSequences = new Sequence[eventHandlers.Length];
-        var barrier = _ringBuffer.NewBarrier(barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
         {
             var eventHandler = eventHandlers[i];
+            var barrier = _ringBuffer.NewBarrier(eventHandler, barrierSequences);
 
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
@@ -437,11 +437,11 @@ public class Disruptor<T>
         CheckNotStarted();
 
         var processorSequences = new Sequence[eventHandlers.Length];
-        var barrier = _ringBuffer.NewBarrier(barrierSequences);
 
         for (int i = 0; i < eventHandlers.Length; i++)
         {
             var eventHandler = eventHandlers[i];
+            var barrier = _ringBuffer.NewBarrier(eventHandler, barrierSequences);
 
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
@@ -466,7 +466,7 @@ public class Disruptor<T>
         {
             var eventHandler = eventHandlers[i];
 
-            var barrier = _ringBuffer.NewAsyncBarrier(barrierSequences);
+            var barrier = _ringBuffer.NewAsyncBarrier(eventHandler, barrierSequences);
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
 
             eventProcessor.SetExceptionHandler(_exceptionHandler);

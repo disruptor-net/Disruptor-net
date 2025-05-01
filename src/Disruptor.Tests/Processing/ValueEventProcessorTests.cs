@@ -213,7 +213,8 @@ public class ValueEventProcessorTests
     {
         var waitStrategy = new BusySpinWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
-        var barrier = new SequenceBarrier(sequencer, waitStrategy, new DependentSequenceGroup(new Sequence()));
+        var sequenceWaiter = waitStrategy.NewSequenceWaiter(null, new DependentSequenceGroup(new Sequence()));
+        var barrier = new SequenceBarrier(sequencer, sequenceWaiter);
         var dp = new ArrayValueDataProvider<StubValueEvent>(sequencer.BufferSize);
 
         var h1 = new LifeCycleHandler();

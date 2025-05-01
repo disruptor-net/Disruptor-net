@@ -15,51 +15,65 @@ namespace Disruptor;
 /// </remarks>
 public sealed class SleepingWaitStrategy : IWaitStrategy
 {
-    private const int _defaultRetries = 200;
-    private readonly int _retries;
+    private readonly int _yieldIndex;
+    private readonly int _sleepIndex;
 
-    public SleepingWaitStrategy(int retries = _defaultRetries)
+    public SleepingWaitStrategy()
+        : this(100, 100)
     {
-        _retries = retries;
+    }
+
+    public SleepingWaitStrategy(int busySpinCount, int yieldCount)
+    {
+        _yieldIndex = busySpinCount;
+        _sleepIndex = busySpinCount + yieldCount;
     }
 
     public bool IsBlockingStrategy => false;
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
     {
-        long availableSequence;
-        int counter = _retries;
-
-        while ((availableSequence = dependentSequences.Value) < sequence)
-        {
-            counter = ApplyWaitMethod(cancellationToken, counter);
-        }
-
-        return availableSequence;
+        return new SequenceWaiter(dependentSequences, _yieldIndex, _sleepIndex);
     }
 
     public void SignalAllWhenBlocking()
     {
     }
 
-    private static int ApplyWaitMethod(CancellationToken cancellationToken, int counter)
+    private class SequenceWaiter(DependentSequenceGroup dependentSequences, int yieldIndex, int sleepIndex) : ISequenceWaiter
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        public DependentSequenceGroup DependentSequences => dependentSequences;
 
-        if (counter > 100)
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
-            --counter;
-        }
-        else if (counter > 0)
-        {
-            --counter;
-            Thread.Yield();
-        }
-        else
-        {
-            Thread.Sleep(0);
+            long availableSequence;
+            var counter = 0;
+
+            while ((availableSequence = dependentSequences.Value) < sequence)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (counter >= sleepIndex)
+                {
+                    Thread.Sleep(0);
+                }
+                else if (counter >= yieldIndex)
+                {
+                    Thread.Yield();
+                }
+
+                counter++;
+            }
+
+            return availableSequence;
         }
 
-        return counter;
+        public void Cancel()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
     }
 }

@@ -13,12 +13,30 @@ public sealed class SpinWaitWaitStrategy : IWaitStrategy
 {
     public bool IsBlockingStrategy => false;
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
     {
-        return dependentSequences.SpinWaitFor(sequence, cancellationToken);
+        return new SequenceWaiter(dependentSequences);
     }
 
     public void SignalAllWhenBlocking()
     {
+    }
+
+    private class SequenceWaiter(DependentSequenceGroup dependentSequences) : ISequenceWaiter
+    {
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            return dependentSequences.SpinWaitFor(sequence, cancellationToken);
+        }
+
+        public void Cancel()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Disruptor.Processing;
 
 namespace Disruptor;
@@ -23,20 +24,15 @@ public interface IWaitStrategy
     bool IsBlockingStrategy { get; }
 
     /// <summary>
-    /// Wait for the given sequence to be available. It is possible for this method to return a value
-    /// less than the sequence number supplied depending on the implementation of the wait strategy. A common
-    /// use for this is to signal a timeout. Any event process that is using a wait strategy to get notifications
-    /// about message becoming available should remember to handle this case. The <see cref="IEventProcessor"/> explicitly
-    /// handles this case and will signal a timeout if required.
+    /// Creates the <see cref="ISequenceWaiter"/> that will be used by an event processor to wait for available sequences.
     /// </summary>
-    /// <param name="sequence">sequence to be waited on</param>
-    /// <param name="dependentSequences">sequences on which to wait</param>
-    /// <param name="cancellationToken">processing cancellation token</param>
-    /// <returns>either the sequence that is available (which may be greater than the requested sequence), or a timeout</returns>
-    SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken);
+    /// <param name="eventHandler">The event handler of the target event processor. Can be null for custom event processors or if the event processor is a <see cref="IWorkHandler{T}"/> processor.</param>
+    /// <param name="dependentSequences">The dependent sequences of the target event processor.</param>
+    /// <returns>The sequence waiter.</returns>
+    ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences);
 
     /// <summary>
-    /// Signal those <see cref="IEventProcessor"/> waiting that the cursor has advanced.
+    /// Signals to the waiting event processors that the cursor has advanced.
     /// Only invoked when <see cref="IsBlockingStrategy"/> is true.
     /// </summary>
     void SignalAllWhenBlocking();

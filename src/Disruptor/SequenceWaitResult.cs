@@ -62,4 +62,9 @@ public readonly struct SequenceWaitResult : IEquatable<SequenceWaitResult>
     {
         return !left.Equals(right);
     }
+
+    public override string ToString()
+    {
+        return IsTimeout ? "Timeout" : UnsafeAvailableSequence.ToString();
+    }
 }

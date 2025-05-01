@@ -39,7 +39,7 @@ public class RingBufferTests : IDisposable
         oldEvent.Copy(expectedEvent);
         _ringBuffer.Publish(claimSequence);
 
-        var waitResult = _sequenceBarrier.WaitFor(0);
+        var waitResult = _sequenceBarrier.WaitForPublishedSequence(0);
         Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(0)));
 
         var evt = _ringBuffer[waitResult.UnsafeAvailableSequence];
@@ -83,7 +83,7 @@ public class RingBufferTests : IDisposable
         }
 
         var expectedSequence = numEvents - 1;
-        var waitResult = _sequenceBarrier.WaitFor(expectedSequence);
+        var waitResult = _sequenceBarrier.WaitForPublishedSequence(expectedSequence);
         Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedSequence)));
 
         for (var i = 0; i < numEvents; i++)
@@ -106,7 +106,7 @@ public class RingBufferTests : IDisposable
         }
 
         var expectedSequence = numEvents + offset - 1;
-        var waitResult = _sequenceBarrier.WaitFor(expectedSequence);
+        var waitResult = _sequenceBarrier.WaitForPublishedSequence(expectedSequence);
         Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedSequence)));
 
         for (var i = offset; i < numEvents + offset; i++)
@@ -467,7 +467,7 @@ public class RingBufferTests : IDisposable
         public List<StubEvent> Call()
         {
             _barrier.SignalAndWait();
-            _sequenceBarrier.WaitFor(_toWaitForSequence);
+            _sequenceBarrier.WaitForPublishedSequence(_toWaitForSequence);
 
             var events = new List<StubEvent>();
             for (var l = _initialSequence; l <= _toWaitForSequence; l++)

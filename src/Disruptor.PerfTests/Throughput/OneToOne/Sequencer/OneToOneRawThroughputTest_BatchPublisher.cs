@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Processing;
 
 namespace Disruptor.PerfTests.Throughput.OneToOne.Sequencer;
 
@@ -99,7 +100,7 @@ public class OneToOneRawThroughputTest_BatchPublisher : IThroughputTest
 
         public MyRunnable(ISequencer sequencer)
         {
-            _barrier = sequencer.NewBarrier();
+            _barrier = sequencer.NewBarrier(null);
         }
 
         public void Reset(ManualResetEvent latch, long expectedCount)
@@ -110,6 +111,12 @@ public class OneToOneRawThroughputTest_BatchPublisher : IThroughputTest
 
         public void Run()
         {
+            Run(default(EventProcessorHelpers.NoopPublishedSequenceReader));
+        }
+
+        private void Run<T>(T publishedSequenceReader)
+            where T : struct, IPublishedSequenceReader
+        {
             var expected = _expectedCount;
 
             try
@@ -117,7 +124,9 @@ public class OneToOneRawThroughputTest_BatchPublisher : IThroughputTest
                 long processed;
                 do
                 {
-                    processed = _barrier.WaitFor(Sequence.Value + 1).UnsafeAvailableSequence;
+                    var nextSequence = Sequence.Value + 1;
+                    var availableSequence = _barrier.WaitFor(nextSequence).UnsafeAvailableSequence;
+                    processed = publishedSequenceReader.GetHighestPublishedSequence(nextSequence, availableSequence);
                     Sequence.SetValue(processed);
                 }
                 while (processed < expected);

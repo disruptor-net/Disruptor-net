@@ -31,9 +31,10 @@ public abstract class WaitStrategyFixture<T>
         Cursor.SetValue(cursorValue);
 
         var dependentSequence = new Sequence(dependentSequenceValue);
+        var sequenceWaiter = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences(dependentSequence));
 
         // Act
-        var waitResult = waitStrategy.WaitFor(10, CreateDependentSequences(dependentSequence), CancellationToken);
+        var waitResult = sequenceWaiter.WaitFor(10, CancellationToken);
 
         // Assert
         Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(expectedResult)));
@@ -49,7 +50,8 @@ public abstract class WaitStrategyFixture<T>
         var dependentSequence = new Sequence();
         var waitResult = new TaskCompletionSource<SequenceWaitResult>();
 
-        var waitTask = Task.Run(() => waitResult.SetResult(waitStrategy.WaitFor(10, CreateDependentSequences(dependentSequence), CancellationToken)));
+        var sequenceWaiter = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences(dependentSequence));
+        var waitTask = Task.Run(() => waitResult.SetResult(sequenceWaiter.WaitFor(10, CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitTask);
@@ -73,15 +75,18 @@ public abstract class WaitStrategyFixture<T>
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
         var sequence1 = new Sequence();
+        var sequenceWaiter1 = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences());
 
         var waitTask1 = Task.Run(() =>
         {
-            waitResult1.SetResult(waitStrategy.WaitFor(10, CreateDependentSequences(), CancellationToken));
+            waitResult1.SetResult(sequenceWaiter1.WaitFor(10, CancellationToken));
             Thread.Sleep(1);
             sequence1.SetValue(10);
         });
 
-        var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, CreateDependentSequences(sequence1), CancellationToken)));
+        var sequenceWaiter2 = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences(sequence1));
+
+        var waitTask2 = Task.Run(() => waitResult2.SetResult(sequenceWaiter2.WaitFor(10, CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitResult1.Task);
@@ -108,15 +113,17 @@ public abstract class WaitStrategyFixture<T>
         var task1Signal = new ManualResetEvent(false);
 
         var sequence1 = new Sequence();
+        var sequenceWaiter1 = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences());
 
         var waitTask1 = Task.Run(() =>
         {
-            waitResult1.SetResult(waitStrategy.WaitFor(10, CreateDependentSequences(), CancellationToken));
+            waitResult1.SetResult(sequenceWaiter1.WaitFor(10, CancellationToken));
             task1Signal.WaitOne(DefaultAssertTimeout);
             sequence1.SetValue(10);
         });
 
-        var waitTask2 = Task.Run(() => waitResult2.SetResult(waitStrategy.WaitFor(10, CreateDependentSequences(sequence1), CancellationToken)));
+        var sequenceWaiter2 = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences(sequence1));
+        var waitTask2 = Task.Run(() => waitResult2.SetResult(sequenceWaiter2.WaitFor(10, CancellationToken)));
 
         // Ensure waiting tasks are blocked
         AssertIsNotCompleted(waitResult1.Task);
@@ -146,12 +153,13 @@ public abstract class WaitStrategyFixture<T>
         var waitStrategy = CreateWaitStrategy();
         var dependentSequence = new Sequence();
         var waitResult = new TaskCompletionSource<Exception>();
+        var sequenceWaiter = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences(dependentSequence));
 
         var waitTask = Task.Run(() =>
         {
             try
             {
-                waitStrategy.WaitFor(10, CreateDependentSequences(dependentSequence), CancellationToken);
+                sequenceWaiter.WaitFor(10, CancellationToken);
             }
             catch (Exception e)
             {
@@ -179,16 +187,17 @@ public abstract class WaitStrategyFixture<T>
         var waitStrategy = CreateWaitStrategy();
         var dependentSequence = new Sequence();
         var waitResult = new TaskCompletionSource<Exception>();
+        var sequenceWaiter = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences(dependentSequence));
 
         CancellationTokenSource.Cancel();
-        waitStrategy.SignalAllWhenBlocking();
+        sequenceWaiter.Cancel();
 
         // Act
         var waitTask = Task.Run(() =>
         {
             try
             {
-                waitStrategy.WaitFor(10, CreateDependentSequences(dependentSequence), CancellationToken);
+                sequenceWaiter.WaitFor(10, CancellationToken);
             }
             catch (Exception e)
             {
@@ -212,11 +221,11 @@ public abstract class WaitStrategyFixture<T>
         var waitTask1 = Task.Run(() =>
         {
             var cancellationTokenSource = new CancellationTokenSource();
-            var dependentSequences = CreateDependentSequences();
+            var sequenceWaiter = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences());
 
             for (var i = 0; i < 500; i++)
             {
-                waitStrategy.WaitFor(i, dependentSequences, cancellationTokenSource.Token);
+                sequenceWaiter.WaitFor(i, cancellationTokenSource.Token);
                 sequence1.SetValue(i);
             }
         });
@@ -224,11 +233,11 @@ public abstract class WaitStrategyFixture<T>
         var waitTask2 = Task.Run(() =>
         {
             var cancellationTokenSource = new CancellationTokenSource();
-            var dependentSequences = CreateDependentSequences(sequence1);
+            var sequenceWaiter = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences(sequence1));
 
             for (var i = 0; i < 500; i++)
             {
-                waitStrategy.WaitFor(i, dependentSequences, cancellationTokenSource.Token);
+                sequenceWaiter.WaitFor(i, cancellationTokenSource.Token);
             }
         });
 

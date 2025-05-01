@@ -2,28 +2,34 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Disruptor.Processing;
 using Disruptor.Util;
 
 namespace Disruptor;
 
-public sealed class AsyncSequenceBarrier
+/// <summary>
+/// Coordination barrier used by event processors for tracking the ring buffer cursor and the sequences of
+/// dependent event processors.
+/// </summary>
+/// <remarks>
+/// <see cref="IDisposable.Dispose"/> should be used to release the sequence barrier, which should only
+/// be required for dynamic event processor removal.
+/// </remarks>
+public sealed class AsyncSequenceBarrier : IDisposable
 {
     private readonly ISequencer _sequencer;
-    private readonly IAsyncWaitStrategy _waitStrategy;
+    private readonly IAsyncSequenceWaiter _sequenceWaiter;
     private readonly DependentSequenceGroup _dependentSequences;
     private CancellationTokenSource _cancellationTokenSource;
 
-    public AsyncSequenceBarrier(ISequencer sequencer, IWaitStrategy waitStrategy, DependentSequenceGroup dependentSequences)
+    public AsyncSequenceBarrier(ISequencer sequencer, IAsyncSequenceWaiter sequenceWaiter)
     {
-        if (waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
-            throw new InvalidOperationException($"The disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
-
         _sequencer = sequencer;
-        _waitStrategy = asyncWaitStrategy;
-        _dependentSequences = dependentSequences;
+        _sequenceWaiter = sequenceWaiter;
+        _dependentSequences = sequenceWaiter.DependentSequences;
         _cancellationTokenSource = new CancellationTokenSource();
     }
+
+    internal ISequencer Sequencer => _sequencer;
 
     public DependentSequenceGroup DependentSequences => _dependentSequences;
 
@@ -37,54 +43,50 @@ public sealed class AsyncSequenceBarrier
 
     public void ThrowIfCancellationRequested() => _cancellationTokenSource.Token.ThrowIfCancellationRequested();
 
-    public ISequenceBarrierOptions GetSequencerOptions()
+    /// <summary>
+    /// Waits until the requested sequence is available using the <see cref="ISequenceWaiter"/>.
+    /// Returns the last available and published sequence, which might be greater than the requested sequence.
+    /// </summary>
+    /// <remarks>
+    /// <p>
+    /// The returned value can be timeout (see <see cref="SequenceWaitResult.IsTimeout"/>
+    /// </p>
+    /// </remarks>
+    public async ValueTask<SequenceWaitResult> WaitForPublishedSequenceAsync(long sequence)
     {
-        return ISequenceBarrierOptions.Get(_sequencer, _dependentSequences);
+        var waitResult = await WaitForAsync(sequence).ConfigureAwait(false);
+        return waitResult.IsTimeout ? waitResult : _sequencer.GetHighestPublishedSequence(sequence, waitResult.UnsafeAvailableSequence);
     }
 
+    /// <summary>
+    /// Waits until the requested sequence is available using the <see cref="ISequenceWaiter"/>.
+    /// Returns the last available sequence, which might be greater than the requested sequence.
+    /// </summary>
+    /// <remarks>
+    /// <p>
+    /// The returned value can be timeout (see <see cref="SequenceWaitResult.IsTimeout"/>
+    /// </p>
+    /// <p>
+    /// The return sequence might not be published yet. Use either <see cref="WaitForPublishedSequenceAsync"/>
+    /// or a <see cref="IPublishedSequenceReader"/> to ensure the sequence is published.
+    /// </p>
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
     public ValueTask<SequenceWaitResult> WaitForAsync(long sequence)
-    {
-        return WaitForAsync<ISequenceBarrierOptions.None>(sequence);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
-    public ValueTask<SequenceWaitResult> WaitForAsync<TSequenceBarrierOptions>(long sequence)
-        where TSequenceBarrierOptions : ISequenceBarrierOptions
     {
         _cancellationTokenSource.Token.ThrowIfCancellationRequested();
 
         var availableSequence = _dependentSequences.Value;
         if (availableSequence >= sequence)
-        {
-            if (typeof(TSequenceBarrierOptions) == typeof(ISequenceBarrierOptions.IsDependentSequencePublished))
-            {
-                return new ValueTask<SequenceWaitResult>(availableSequence);
-            }
+            return new ValueTask<SequenceWaitResult>(availableSequence);
 
-            return new ValueTask<SequenceWaitResult>(_sequencer.GetHighestPublishedSequence(sequence, availableSequence));
-        }
-
-        if (typeof(TSequenceBarrierOptions) == typeof(ISequenceBarrierOptions.IsDependentSequencePublished))
-        {
-            return InvokeWaitStrategy(sequence);
-        }
-
-        return InvokeWaitStrategyAndWaitForPublishedSequence(sequence);
+        return InvokeWaitStrategy(sequence);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private ValueTask<SequenceWaitResult> InvokeWaitStrategy(long sequence)
     {
-        return _waitStrategy.WaitForAsync(sequence, _dependentSequences, _cancellationTokenSource.Token);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private async ValueTask<SequenceWaitResult> InvokeWaitStrategyAndWaitForPublishedSequence(long sequence)
-    {
-        var waitResult = await _waitStrategy.WaitForAsync(sequence, _dependentSequences, _cancellationTokenSource.Token).ConfigureAwait(false);
-
-        return waitResult.UnsafeAvailableSequence >= sequence ? _sequencer.GetHighestPublishedSequence(sequence, waitResult.UnsafeAvailableSequence) : waitResult;
+        return _sequenceWaiter.WaitForAsync(sequence, _cancellationTokenSource.Token);
     }
 
     public void ResetProcessing()
@@ -98,6 +100,12 @@ public sealed class AsyncSequenceBarrier
     public void CancelProcessing()
     {
         _cancellationTokenSource.Cancel();
-        _waitStrategy.SignalAllWhenBlocking();
+        _sequenceWaiter.Cancel();
+    }
+
+    public void Dispose()
+    {
+        _sequenceWaiter.Dispose();
+        _cancellationTokenSource.Dispose();
     }
 }

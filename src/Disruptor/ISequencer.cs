@@ -3,7 +3,7 @@ namespace Disruptor;
 /// <summary>
 /// Coordinator for claiming sequences for access to a data structure while tracking dependent <see cref="Sequence"/>s
 /// </summary>
-public interface ISequencer : ISequenced, ICursored
+public interface ISequencer : ISequenced, ICursored, IPublishedSequenceReader
 {
     /// <summary>
     /// Claim a specific sequence when only one publisher is involved.
@@ -33,38 +33,27 @@ public interface ISequencer : ISequenced, ICursored
     bool RemoveGatingSequence(Sequence sequence);
 
     /// <summary>
-    /// Create a <see cref="SequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
+    /// Create a <see cref="SequenceBarrier"/> that gates on the cursor and a list of <see cref="Sequence"/>s
     /// </summary>
-    /// <param name="sequencesToTrack">All of the sequences that the newly constructed barrier will wait on.</param>
+    /// <param name="eventHandler">The event handler of the target event processor. Can be null for custom event processors or if the event processor is a <see cref="IWorkHandler{T}"/> processor.</param>
+    /// <param name="sequencesToTrack">All the sequences that the newly constructed barrier will wait on.</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    SequenceBarrier NewBarrier(params Sequence[] sequencesToTrack);
+    SequenceBarrier NewBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack);
 
     /// <summary>
-    /// Create a <see cref="AsyncSequenceBarrier"/> that gates on the the cursor and a list of <see cref="Sequence"/>s
+    /// Create a <see cref="AsyncSequenceBarrier"/> that gates on the cursor and a list of <see cref="Sequence"/>s
     /// </summary>
-    /// <param name="sequencesToTrack">All of the sequences that the newly constructed barrier will wait on.</param>
+    /// <param name="eventHandler">The event handler of the target event processor. Can be null for custom event processors or if the event processor is a <see cref="IWorkHandler{T}"/> processor.</param>
+    /// <param name="sequencesToTrack">All the sequences that the newly constructed barrier will wait on.</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack);
+    AsyncSequenceBarrier NewAsyncBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack);
 
     /// <summary>
-    /// Get the minimum sequence value from all of the gating sequences
+    /// Get the minimum sequence value from all the gating sequences
     /// added to this ringBuffer.
     /// </summary>
     /// <returns>The minimum gating sequence or the cursor sequence if no sequences have been added.</returns>
     long GetMinimumSequence();
-
-    /// <summary>
-    /// Get the highest sequence number that can be safely read from the ring buffer.  Depending
-    /// on the implementation of the Sequencer this call may need to scan a number of values
-    /// in the Sequencer.  The scan will range from nextSequence to availableSequence.  If
-    /// there are no available values <code>>= nextSequence</code> the return value will be
-    /// <code>nextSequence - 1</code>.  To work correctly a consumer should pass a value that
-    /// it 1 higher than the last sequence that was successfully processed.
-    /// </summary>
-    /// <param name="nextSequence">The sequence to start scanning from.</param>
-    /// <param name="availableSequence">The sequence to scan to.</param>
-    /// <returns>The highest value that can be safely read, will be at least <code>nextSequence - 1</code>.</returns>
-    long GetHighestPublishedSequence(long nextSequence, long availableSequence);
 
     /// <summary>
     /// Creates an event poller for this sequence that will use the supplied data provider and

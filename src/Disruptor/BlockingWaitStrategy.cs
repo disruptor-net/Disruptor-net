@@ -17,21 +17,9 @@ public sealed class BlockingWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public SequenceWaitResult WaitFor(long sequence, DependentSequenceGroup dependentSequences, CancellationToken cancellationToken)
+    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
     {
-        if (dependentSequences.CursorValue < sequence)
-        {
-            lock (_gate)
-            {
-                while (dependentSequences.CursorValue < sequence)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    Monitor.Wait(_gate);
-                }
-            }
-        }
-
-        return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
+        return new SequenceWaiter(_gate, dependentSequences);
     }
 
     public void SignalAllWhenBlocking()
@@ -39,6 +27,40 @@ public sealed class BlockingWaitStrategy : IWaitStrategy
         lock (_gate)
         {
             Monitor.PulseAll(_gate);
+        }
+    }
+
+    private class SequenceWaiter(object gate, DependentSequenceGroup dependentSequences) : ISequenceWaiter
+    {
+        public DependentSequenceGroup DependentSequences => dependentSequences;
+
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            if (dependentSequences.CursorValue < sequence)
+            {
+                lock (gate)
+                {
+                    while (dependentSequences.CursorValue < sequence)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        Monitor.Wait(gate);
+                    }
+                }
+            }
+
+            return dependentSequences.AggressiveSpinWaitFor(sequence, cancellationToken);
+        }
+
+        public void Cancel()
+        {
+            lock (gate)
+            {
+                Monitor.PulseAll(gate);
+            }
+        }
+
+        public void Dispose()
+        {
         }
     }
 }
