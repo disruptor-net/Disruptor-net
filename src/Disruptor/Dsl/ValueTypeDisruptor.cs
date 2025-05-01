@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Processing;
@@ -10,26 +11,28 @@ namespace Disruptor.Dsl;
 /// Base class for disruptors of value type events.
 /// </summary>
 /// <typeparam name="T">the type of event used.</typeparam>
-/// <typeparam name="TRingBuffer">the type of the underlying ring buffer.</typeparam>
 /// <seealso cref="ValueDisruptor{T}"/>
 /// <seealso cref="UnmanagedDisruptor{T}"/>.
-public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
+public abstract class ValueTypeDisruptor<T>
     where T : struct
-    where TRingBuffer : IValueRingBuffer<T>
 {
-    protected readonly TRingBuffer _ringBuffer;
+    private readonly IValueRingBuffer<T> _ringBuffer;
     private readonly TaskScheduler _taskScheduler;
     private readonly ConsumerRepository _consumerRepository = new();
     private readonly ValueExceptionHandlerWrapper<T> _exceptionHandler = new();
     private volatile int _started;
 
-    protected ValueDisruptor(TRingBuffer ringBuffer, TaskScheduler taskScheduler)
+    protected ValueTypeDisruptor(IValueRingBuffer<T> ringBuffer, TaskScheduler taskScheduler)
     {
         _ringBuffer = ringBuffer;
         _taskScheduler = taskScheduler;
     }
 
-    IValueRingBuffer<T> IValueDisruptor<T>.RingBuffer => _ringBuffer;
+    public IValueRingBuffer<T> RingBuffer
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _ringBuffer;
+    }
 
     /// <summary>
     /// Set up event handlers to handle events from the ring buffer. These handlers will process events
@@ -152,7 +155,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// This method must only be called once after all event processors have been added.
     /// </summary>
     /// <returns>the configured ring buffer</returns>
-    public TRingBuffer Start()
+    public IValueRingBuffer<T> Start()
     {
         CheckOnlyStartedOnce();
         foreach (var consumerInfo in _consumerRepository)
@@ -246,12 +249,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
     /// <value>true when start has been called on this instance; otherwise false</value>
     public bool HasStarted => _started == 1;
 
-    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
-    {
-        return CreateEventProcessors(barrierSequences, eventHandlers);
-    }
-
-    private ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
+    internal ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
     {
         CheckNotStarted();
 
@@ -290,12 +288,7 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
         }
     }
 
-    ValueEventHandlerGroup<T> IValueDisruptor<T>.CreateEventProcessors(Sequence[] barrierSequences, ValueEventProcessorCreator<T>[] processorFactories)
-    {
-        return CreateEventProcessors(barrierSequences, processorFactories);
-    }
-
-    private ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, ValueEventProcessorCreator<T>[] processorFactories)
+    internal ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, ValueEventProcessorCreator<T>[] processorFactories)
     {
         var eventProcessors = processorFactories.Select(p => CreateEventProcessor(p)).ToArray();
 

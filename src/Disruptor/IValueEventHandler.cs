@@ -8,7 +8,7 @@ namespace Disruptor;
 /// </summary>
 /// <typeparam name="T">Type of events for sharing during exchange or parallel coordination of an event.</typeparam>
 /// <remarks>
-/// See <see cref="Dsl.ValueDisruptor{T,TRingBuffer}.SetDefaultExceptionHandler"/> or <see cref="ValueDisruptor{T,TRingBuffer}.HandleExceptionsFor"/>
+/// See <see cref="ValueTypeDisruptor{T}.SetDefaultExceptionHandler"/> or <see cref="ValueTypeDisruptor{T}.HandleExceptionsFor"/>
 /// if you want to handle exceptions propagated out of the handler.
 /// </remarks>
 public interface IValueEventHandler<T> : IEventHandler

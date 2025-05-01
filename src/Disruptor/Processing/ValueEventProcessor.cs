@@ -13,7 +13,7 @@ namespace Disruptor.Processing;
 /// </summary>
 /// <remarks>
 /// You should probably not use this type directly but instead implement <see cref="IValueEventHandler{T}"/> and register your handler
-/// using <see cref="ValueDisruptor{T, TR}.HandleEventsWith(IValueEventHandler{T}[])"/>.
+/// using <see cref="ValueTypeDisruptor{T}.HandleEventsWith(IValueEventHandler{T}[])"/>.
 /// </remarks>
 /// <typeparam name="T">the type of event used.</typeparam>
 /// <typeparam name="TDataProvider">the type of the <see cref="IValueDataProvider{T}"/> used.</typeparam>

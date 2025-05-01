@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Disruptor.Processing;
 
@@ -20,7 +21,7 @@ namespace Disruptor.Dsl;
 /// </code>
 /// </summary>
 /// <typeparam name="T">the type of event used.</typeparam>
-public class ValueDisruptor<T> : ValueDisruptor<T, ValueRingBuffer<T>>
+public class ValueDisruptor<T> : ValueTypeDisruptor<T>
     where T : struct
 {
     /// <summary>
@@ -72,28 +73,36 @@ public class ValueDisruptor<T> : ValueDisruptor<T, ValueRingBuffer<T>>
     /// The <see cref="ValueRingBuffer{T}"/> used by this disruptor. This is useful for creating custom
     /// event processors if the behaviour of <see cref="IValueEventProcessor{T}"/> is not suitable.
     /// </summary>
-    public ValueRingBuffer<T> RingBuffer => _ringBuffer;
+    public new ValueRingBuffer<T> RingBuffer
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get
+        {
+            var ringBuffer = base.RingBuffer;
+            return Unsafe.As<IValueRingBuffer<T>, ValueRingBuffer<T>>(ref ringBuffer);
+        }
+    }
 
     /// <summary>
     /// Get the value of the cursor indicating the published sequence.
     /// </summary>
-    public long Cursor => _ringBuffer.Cursor;
+    public long Cursor => RingBuffer.Cursor;
 
     /// <summary>
     /// The capacity of the data structure to hold entries.
     /// </summary>
-    public long BufferSize => _ringBuffer.BufferSize;
+    public long BufferSize => RingBuffer.BufferSize;
 
     /// <summary>
     /// Get the event for a given sequence in the RingBuffer.
     /// </summary>
     /// <param name="sequence">sequence for the event</param>
     /// <returns>event for the sequence</returns>
-    public ref T this[long sequence] => ref _ringBuffer[sequence];
+    public ref T this[long sequence] => ref RingBuffer[sequence];
 
     /// <inheritdoc cref="ValueRingBuffer{T}.PublishEvent"/>
-    public ValueRingBuffer<T>.UnpublishedEventScope PublishEvent() => _ringBuffer.PublishEvent();
+    public ValueRingBuffer<T>.UnpublishedEventScope PublishEvent() => RingBuffer.PublishEvent();
 
     /// <inheritdoc cref="ValueRingBuffer{T}.PublishEvents"/>
-    public ValueRingBuffer<T>.UnpublishedEventBatchScope PublishEvents(int count) => _ringBuffer.PublishEvents(count);
+    public ValueRingBuffer<T>.UnpublishedEventBatchScope PublishEvents(int count) => RingBuffer.PublishEvents(count);
 }

@@ -11,11 +11,11 @@ namespace Disruptor.Dsl;
 public class ValueEventHandlerGroup<T>
     where T : struct
 {
-    private readonly IValueDisruptor<T> _disruptor;
+    private readonly ValueTypeDisruptor<T> _disruptor;
     private readonly ConsumerRepository _consumerRepository;
     private readonly Sequence[] _sequences;
 
-    internal ValueEventHandlerGroup(IValueDisruptor<T> disruptor, ConsumerRepository consumerRepository, IEnumerable<Sequence> sequences)
+    internal ValueEventHandlerGroup(ValueTypeDisruptor<T> disruptor, ConsumerRepository consumerRepository, IEnumerable<Sequence> sequences)
     {
         _disruptor = disruptor;
         _consumerRepository = consumerRepository;
