@@ -34,7 +34,7 @@ public class OneToThreeReleasingWorkerPoolThroughputTest : IThroughputTest
     {
         ResetCounters();
 
-        var workerPool = new WorkerPool<PerfEvent>(_ringBuffer, _ringBuffer.NewBarrier(), new FatalExceptionHandler<PerfEvent>(), _handlers);
+        var workerPool = new WorkerPool<PerfEvent>(_ringBuffer, Array.Empty<Sequence>(), new FatalExceptionHandler<PerfEvent>(), _handlers);
         _ringBuffer.AddGatingSequences(workerPool.GetWorkerSequences());
 
         workerPool.Start();

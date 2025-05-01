@@ -48,6 +48,8 @@ public sealed class WorkProcessor<T> : IEventProcessor
     /// <inheritdoc/>
     public Sequence Sequence => _sequence;
 
+    public DependentSequenceGroup DependentSequences => _sequenceBarrier.DependentSequences;
+
     /// <inheritdoc/>
     public void Halt()
     {
