@@ -22,7 +22,9 @@ public class WorkHandlerTests
         var workSequence = new Sequence();
 
         var disruptor = new Disruptor<StubEvent>(StubEvent.EventFactory, 4);
-        var ringBuffer = disruptor.Start();
+        disruptor.Start();
+
+        var ringBuffer = disruptor.RingBuffer;
 
         var handler1 = new DynamicHandler(1, countdownEvent);
         var processor1 = new WorkProcessor<StubEvent>(ringBuffer, ringBuffer.NewBarrier(), handler1, new FatalExceptionHandler<StubEvent>(), workSequence);
@@ -67,7 +69,9 @@ public class WorkHandlerTests
         var workSequence = new Sequence();
 
         var disruptor = new Disruptor<StubEvent>(StubEvent.EventFactory, 4);
-        var ringBuffer = disruptor.Start();
+        disruptor.Start();
+
+        var ringBuffer = disruptor.RingBuffer;
 
         var handler1 = new DynamicHandler(1, countdownEvent);
         var processor1 = new WorkProcessor<StubEvent>(ringBuffer, ringBuffer.NewBarrier(), handler1, new FatalExceptionHandler<StubEvent>(), workSequence);

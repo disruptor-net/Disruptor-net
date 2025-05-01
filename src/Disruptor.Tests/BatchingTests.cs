@@ -66,8 +66,9 @@ public class BatchingTests
         var handler2 = new ParallelEventHandler(1, 1);
 
         d.HandleEventsWith(handler1, handler2);
+        d.Start();
 
-        var buffer = d.Start();
+        var buffer = d.RingBuffer;
 
         const int eventCount = 10000;
         for (var i = 0; i < eventCount; i++)

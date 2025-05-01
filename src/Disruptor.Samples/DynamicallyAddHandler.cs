@@ -10,7 +10,9 @@ public class DynamicallyAddHandler
     public static void Main(string[] args)
     {
         var disruptor = new Disruptor<DynamicEvent>(() => new DynamicEvent(), 1024, TaskScheduler.Current);
-        var ringBuffer = disruptor.Start();
+        disruptor.Start();
+
+        var ringBuffer = disruptor.RingBuffer;
 
         // Construct 2 batch event processors.
         var handler1 = new DynamicHandler();

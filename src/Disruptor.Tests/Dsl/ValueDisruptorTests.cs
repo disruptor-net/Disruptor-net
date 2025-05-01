@@ -389,8 +389,9 @@ public class ValueDisruptorTests : IDisposable
     {
         var delayedEventHandler = CreateDelayedEventHandler();
         _disruptor.HandleEventsWith(delayedEventHandler);
+        _disruptor.Start();
 
-        var ringBuffer = _disruptor.Start();
+        var ringBuffer = _disruptor.RingBuffer;
         delayedEventHandler.AwaitStart();
 
         var stubPublisher = new StubPublisher(ringBuffer);

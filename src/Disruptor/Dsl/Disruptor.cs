@@ -291,16 +291,13 @@ public class Disruptor<T>
     ///
     /// This method must only be called once after all event processors have been added.
     /// </summary>
-    /// <returns>the configured ring buffer</returns>
-    public RingBuffer<T> Start()
+    public void Start()
     {
         CheckOnlyStartedOnce();
         foreach (var consumerInfo in _consumerRepository)
         {
             consumerInfo.Start(_taskScheduler);
         }
-
-        return _ringBuffer;
     }
 
     /// <summary>
