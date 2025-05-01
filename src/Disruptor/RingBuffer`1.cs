@@ -216,23 +216,12 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// Create a new sequence barrier to be used by an event processor to track which messages
     /// are available to be read from the ring buffer given a list of sequences to track.
     /// </summary>
+    /// <param name="owner">The owner of the sequence waiter.</param>
     /// <param name="sequencesToTrack">the additional sequences to track</param>
     /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    public AsyncSequenceBarrier NewAsyncBarrier(params Sequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack)
     {
-        return _sequencerDispatcher.Sequencer.NewAsyncBarrier(null, sequencesToTrack);
-    }
-
-    /// <summary>
-    /// Create a new sequence barrier to be used by an event processor to track which messages
-    /// are available to be read from the ring buffer given a list of sequences to track.
-    /// </summary>
-    /// <param name="eventHandler">The event handler of the target event processor. Can be null for custom event processors or if the event processor is a <see cref="IWorkHandler{T}"/> processor.</param>
-    /// <param name="sequencesToTrack">the additional sequences to track</param>
-    /// <returns>A sequence barrier that will track the specified sequences.</returns>
-    public AsyncSequenceBarrier NewAsyncBarrier(IEventHandler eventHandler, params Sequence[] sequencesToTrack)
-    {
-        return _sequencerDispatcher.Sequencer.NewAsyncBarrier(eventHandler, sequencesToTrack);
+        return _sequencerDispatcher.Sequencer.NewAsyncBarrier(owner, sequencesToTrack);
     }
 
     /// <summary>

@@ -24,7 +24,7 @@ public sealed class YieldingWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy => false;
 
-    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
         return new SequenceWaiter(dependentSequences, _yieldIndex);
     }

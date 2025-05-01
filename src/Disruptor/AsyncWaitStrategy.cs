@@ -20,13 +20,13 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
         _hasSyncWaiter = true;
         return new SequenceWaiter(this, dependentSequences);
     }
 
-    public IAsyncSequenceWaiter NewAsyncSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public IAsyncSequenceWaiter NewAsyncSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
         => new SequenceWaiter(this, dependentSequences);
 
     public void SignalAllWhenBlocking()

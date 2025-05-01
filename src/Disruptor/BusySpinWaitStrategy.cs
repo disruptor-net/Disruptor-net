@@ -13,7 +13,7 @@ public sealed class BusySpinWaitStrategy : IWaitStrategy
 {
     public bool IsBlockingStrategy => false;
 
-    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
         return new SequenceWaiter(dependentSequences);
     }

@@ -187,7 +187,7 @@ public abstract class SequencerTests
     [Test]
     public void ShouldWaitOnPublication()
     {
-        var barrier = _sequencer.NewBarrier(null);
+        var barrier = _sequencer.NewBarrier(SequenceWaiterOwner.Unknown);
 
         var next = _sequencer.Next(10);
         var lo = next - (10 - 1);
@@ -211,7 +211,7 @@ public abstract class SequencerTests
     public async Task ShouldWaitOnPublicationAsync()
     {
         var sequencer = NewSequencer(new AsyncWaitStrategy());
-        var barrier = sequencer.NewAsyncBarrier(null);
+        var barrier = sequencer.NewAsyncBarrier(SequenceWaiterOwner.Unknown);
 
         var next = sequencer.Next(10);
         var lo = next - (10 - 1);
@@ -245,7 +245,7 @@ public abstract class SequencerTests
 
         waitStrategy.SetupNextSequence(eventHandler, new SequenceWaitResult(42));
 
-        var barrier = sequencer.NewBarrier(eventHandler);
+        var barrier = sequencer.NewBarrier(SequenceWaiterOwner.EventHandler(eventHandler));
         var waitResult = barrier.WaitFor(0);
 
         Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(42)));
@@ -260,7 +260,7 @@ public abstract class SequencerTests
 
         waitStrategy.SetupNextSequence(eventHandler, new SequenceWaitResult(42));
 
-        var barrier = sequencer.NewAsyncBarrier(eventHandler);
+        var barrier = sequencer.NewAsyncBarrier(SequenceWaiterOwner.EventHandler(eventHandler));
         var waitResult = await barrier.WaitForAsync(0);
 
         Assert.That(waitResult, Is.EqualTo(new SequenceWaitResult(42)));

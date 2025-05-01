@@ -31,7 +31,7 @@ public sealed class TimeoutBlockingWaitStrategy : IWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
         return new SequenceWaiter(_gate, _timeoutMilliseconds, dependentSequences);
     }

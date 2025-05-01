@@ -16,7 +16,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<IAsyncWaitStr
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
         var sequence1 = new Sequence();
-        var sequenceWaiter1 = waitStrategy.NewAsyncSequenceWaiter(null, CreateDependentSequences());
+        var sequenceWaiter1 = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
 
         var waitTask1 = Task.Run(async () =>
         {
@@ -25,7 +25,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<IAsyncWaitStr
             sequence1.SetValue(10);
         });
 
-        var sequenceWaiter2 = waitStrategy.NewAsyncSequenceWaiter(null, CreateDependentSequences(sequence1));
+        var sequenceWaiter2 = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence1));
         var waitTask2 = Task.Run(async () => waitResult2.SetResult(await sequenceWaiter2.WaitForAsync(10, CancellationToken)));
 
         // Ensure waiting tasks are blocked
@@ -53,7 +53,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<IAsyncWaitStr
         var waitResult3 = new TaskCompletionSource<SequenceWaitResult>();
 
         var sequence1 = new Sequence();
-        var sequenceWaiter1 = waitStrategy.NewSequenceWaiter(null, CreateDependentSequences());
+        var sequenceWaiter1 = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
 
         var waitTask1 = Task.Run(() =>
         {
@@ -63,7 +63,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<IAsyncWaitStr
         });
 
         var sequence2 = new Sequence();
-        var sequenceWaiter2 = waitStrategy.NewAsyncSequenceWaiter(null, CreateDependentSequences(sequence1));
+        var sequenceWaiter2 = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence1));
 
         var waitTask2 = Task.Run(async () =>
         {
@@ -72,7 +72,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<IAsyncWaitStr
             sequence2.SetValue(10);
         });
 
-        var sequenceWaiter3 = waitStrategy.NewAsyncSequenceWaiter(null, CreateDependentSequences(sequence2));
+        var sequenceWaiter3 = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence2));
 
         var waitTask3 = Task.Run(async () => waitResult3.SetResult(await sequenceWaiter3.WaitForAsync(10, CancellationToken)));
 
@@ -100,7 +100,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<IAsyncWaitStr
         // Arrange
         var waitStrategy = CreateWaitStrategy();
         var sequence = new Sequence();
-        var sequenceWaiter = waitStrategy.NewAsyncSequenceWaiter(null, CreateDependentSequences(sequence));
+        var sequenceWaiter = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence));
         var waitResult = new TaskCompletionSource<Exception>();
 
         CancellationTokenSource.Cancel();
@@ -131,7 +131,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<IAsyncWaitStr
         // Arrange
         var waitStrategy = CreateWaitStrategy();
         var sequence = new Sequence();
-        var sequenceWaiter = waitStrategy.NewAsyncSequenceWaiter(null, CreateDependentSequences(sequence));
+        var sequenceWaiter = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence));
         var waitResult = new TaskCompletionSource<Exception>();
 
         var waitTask = Task.Run(async () =>
@@ -170,7 +170,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<IAsyncWaitStr
         var waitTask1 = Task.Run(async () =>
         {
             var cancellationTokenSource = new CancellationTokenSource();
-            var sequenceWaiter = waitStrategy.NewAsyncSequenceWaiter(null, CreateDependentSequences());
+            var sequenceWaiter = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
 
             for (var i = 0; i < 500; i++)
             {
@@ -182,7 +182,7 @@ public abstract class AsyncWaitStrategyTests : WaitStrategyFixture<IAsyncWaitStr
         var waitTask2 = Task.Run(async () =>
         {
             var cancellationTokenSource = new CancellationTokenSource();
-            var sequenceWaiter = waitStrategy.NewAsyncSequenceWaiter(null, CreateDependentSequences(sequence1));
+            var sequenceWaiter = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence1));
 
             for (var i = 0; i < 500; i++)
             {

@@ -153,17 +153,17 @@ public class TestSequencer : ISequencer
         }
     }
 
-    public SequenceBarrier NewBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack)
+    public SequenceBarrier NewBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack)
     {
-        return new SequenceBarrier(this, _waitStrategy.NewSequenceWaiter(eventHandler, new DependentSequenceGroup(_cursor, sequencesToTrack)));
+        return new SequenceBarrier(this, _waitStrategy.NewSequenceWaiter(owner, new DependentSequenceGroup(_cursor, sequencesToTrack)));
     }
 
-    public AsyncSequenceBarrier NewAsyncBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack)
     {
         if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
             throw new InvalidOperationException($"Unable to create an async event stream: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
 
-        return new AsyncSequenceBarrier(this, asyncWaitStrategy.NewAsyncSequenceWaiter(eventHandler, new DependentSequenceGroup(_cursor, sequencesToTrack)));
+        return new AsyncSequenceBarrier(this, asyncWaitStrategy.NewAsyncSequenceWaiter(owner, new DependentSequenceGroup(_cursor, sequencesToTrack)));
     }
 
     public long GetMinimumSequence()
@@ -197,6 +197,6 @@ public class TestSequencer : ISequencer
         if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
             throw new InvalidOperationException($"Unable to create an async event stream: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
 
-        return new AsyncEventStream<T>(provider, asyncWaitStrategy.NewAsyncSequenceWaiter(null, new DependentSequenceGroup(_cursor, gatingSequences)), this);
+        return new AsyncEventStream<T>(provider, asyncWaitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, new DependentSequenceGroup(_cursor, gatingSequences)), this);
     }
 }

@@ -34,12 +34,12 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncWaitStrategy
 
     public bool IsBlockingStrategy => true;
 
-    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
         return new SequenceWaiter(this, dependentSequences);
     }
 
-    public IAsyncSequenceWaiter NewAsyncSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public IAsyncSequenceWaiter NewAsyncSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
         return new SequenceWaiter(this, dependentSequences);
     }

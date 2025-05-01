@@ -59,22 +59,22 @@ public sealed class SingleProducerSequencer : ISequencer
     }
 
     /// <inheritdoc cref="ISequencer.NewBarrier"/>
-    public SequenceBarrier NewBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack)
+    public SequenceBarrier NewBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack)
     {
         var dependentSequences = new DependentSequenceGroup(_cursor, sequencesToTrack);
-        var sequenceWaiter = _waitStrategy.NewSequenceWaiter(eventHandler, dependentSequences);
+        var sequenceWaiter = _waitStrategy.NewSequenceWaiter(owner, dependentSequences);
 
         return new SequenceBarrier(this, sequenceWaiter);
     }
 
     /// <inheritdoc cref="ISequencer.NewAsyncBarrier"/>
-    public AsyncSequenceBarrier NewAsyncBarrier(IEventHandler? eventHandler, params Sequence[] sequencesToTrack)
+    public AsyncSequenceBarrier NewAsyncBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack)
     {
         if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
             throw new InvalidOperationException($"Unable to create an async barrier: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
 
         var dependentSequences = new DependentSequenceGroup(_cursor, sequencesToTrack);
-        var sequenceWaiter = asyncWaitStrategy.NewAsyncSequenceWaiter(eventHandler, dependentSequences);
+        var sequenceWaiter = asyncWaitStrategy.NewAsyncSequenceWaiter(owner, dependentSequences);
 
         return new AsyncSequenceBarrier(this, sequenceWaiter);
     }
@@ -297,7 +297,7 @@ public sealed class SingleProducerSequencer : ISequencer
             throw new InvalidOperationException($"Unable to create an async event stream: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
 
         var dependentSequences = new DependentSequenceGroup(_cursor, gatingSequences);
-        var sequenceWaiter = asyncWaitStrategy.NewAsyncSequenceWaiter(null, dependentSequences);
+        var sequenceWaiter = asyncWaitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, dependentSequences);
 
         return new AsyncEventStream<T>(provider, sequenceWaiter, this);
     }

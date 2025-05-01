@@ -26,10 +26,10 @@ public interface IWaitStrategy
     /// <summary>
     /// Creates the <see cref="ISequenceWaiter"/> that will be used by an event processor to wait for available sequences.
     /// </summary>
-    /// <param name="eventHandler">The event handler of the target event processor. Can be null for custom event processors or if the event processor is a <see cref="IWorkHandler{T}"/> processor.</param>
+    /// <param name="owner">The owner of the sequence waiter.</param>
     /// <param name="dependentSequences">The dependent sequences of the target event processor.</param>
     /// <returns>The sequence waiter.</returns>
-    ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences);
+    ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences);
 
     /// <summary>
     /// Signals to the waiting event processors that the cursor has advanced.

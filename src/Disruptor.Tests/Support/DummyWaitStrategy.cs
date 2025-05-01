@@ -7,11 +7,11 @@ public class DummyWaitStrategy : IWaitStrategy
     public int SignalAllWhenBlockingCalls { get; private set; }
 
     public DummySequenceWaiter? LastSequenceWaiter { get; private set; }
-    public IEventHandler? LastSequenceWaiterEventHandler { get; private set; }
+    public SequenceWaiterOwner? LastSequenceWaiterOwner { get; private set; }
 
-    public ISequenceWaiter NewSequenceWaiter(IEventHandler? eventHandler, DependentSequenceGroup dependentSequences)
+    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
-        LastSequenceWaiterEventHandler = eventHandler;
+        LastSequenceWaiterOwner = owner;
         LastSequenceWaiter = new DummySequenceWaiter(dependentSequences);
 
         return LastSequenceWaiter;

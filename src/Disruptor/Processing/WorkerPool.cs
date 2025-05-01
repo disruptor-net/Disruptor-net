@@ -42,7 +42,7 @@ public sealed class WorkerPool<T> where T : class
 
         WorkProcessor<T> CreateWorkProcessor(IWorkHandler<T> workHandler, Sequence workSequence)
         {
-            var sequenceBarrier = ringBuffer.NewBarrier(barrierSequences);
+            var sequenceBarrier = ringBuffer.NewBarrier(SequenceWaiterOwner.WorkHandler(workHandler), barrierSequences);
             return new WorkProcessor<T>(ringBuffer, sequenceBarrier, workHandler, exceptionHandler, workSequence);
         }
     }
