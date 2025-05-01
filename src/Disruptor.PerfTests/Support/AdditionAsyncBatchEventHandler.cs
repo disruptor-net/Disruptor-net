@@ -9,11 +9,13 @@ public class AdditionAsyncBatchEventHandler : IAsyncBatchEventHandler<PerfEvent>
 {
     private PaddedLong _value;
     private PaddedLong _batchesProcessed;
+    private PaddedLong _timeoutCount;
     private long _latchSequence;
     private readonly ManualResetEvent _latch = new(false);
 
     public long Value => _value.Value;
     public long BatchesProcessed => _batchesProcessed.Value;
+    public int TimeoutCount => (int)_timeoutCount.Value;
 
     public void WaitForSequence()
     {
@@ -26,6 +28,7 @@ public class AdditionAsyncBatchEventHandler : IAsyncBatchEventHandler<PerfEvent>
         _latch.Reset();
         _latchSequence = expectedSequence;
         _batchesProcessed.Value = 0;
+        _timeoutCount.Value = 0;
     }
 
     public ValueTask OnBatch(EventBatch<PerfEvent> batch, long sequence)
@@ -43,5 +46,10 @@ public class AdditionAsyncBatchEventHandler : IAsyncBatchEventHandler<PerfEvent>
         }
 
         return ValueTask.CompletedTask;
+    }
+
+    public void OnTimeout(long sequence)
+    {
+        _timeoutCount.Value++;
     }
 }

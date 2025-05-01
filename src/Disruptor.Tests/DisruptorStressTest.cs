@@ -12,22 +12,38 @@ public class DisruptorStressTest
     [Test]
     public void ShouldHandleLotsOfThreads_EventHandler()
     {
-        ShouldHandleLotsOfThreads<TestEventHandler>(new BusySpinWaitStrategy(), 20_000_000);
+        ShouldHandleLotsOfThreads<TestEventHandler>(new BusySpinWaitStrategy(), 10_000_000, TimeoutOptions.None);
+    }
+
+    [Test]
+    public void ShouldHandleLotsOfThreads_EventHandler_Timeout()
+    {
+        var timeout = TimeSpan.FromMilliseconds(20);
+        var timeoutOptions = new TimeoutOptions(50, timeout);
+        ShouldHandleLotsOfThreads<TestEventHandler>(new TimeoutBlockingWaitStrategy(timeout), 2_000_000, timeoutOptions);
     }
 
     [Test]
     public void ShouldHandleLotsOfThreads_BatchEventHandler()
     {
-        ShouldHandleLotsOfThreads<TestBatchEventHandler>(new BusySpinWaitStrategy(), 20_000_000);
+        ShouldHandleLotsOfThreads<TestBatchEventHandler>(new BusySpinWaitStrategy(), 10_000_000, TimeoutOptions.None);
     }
 
     [Test]
     public void ShouldHandleLotsOfThreads_AsyncBatchEventHandler()
     {
-        ShouldHandleLotsOfThreads<TestAsyncBatchEventHandler>(new AsyncWaitStrategy(), 2_000_000);
+        ShouldHandleLotsOfThreads<TestAsyncBatchEventHandler>(new AsyncWaitStrategy(), 2_000_000, TimeoutOptions.None);
     }
 
-    private static void ShouldHandleLotsOfThreads<T>(IWaitStrategy waitStrategy, int iterations) where T : IHandler, new()
+    [Test]
+    public void ShouldHandleLotsOfThreads_AsyncBatchEventHandler_Timeout()
+    {
+        var timeout = TimeSpan.FromMilliseconds(20);
+        var timeoutOptions = new TimeoutOptions(50, timeout);
+        ShouldHandleLotsOfThreads<TestAsyncBatchEventHandler>(new TimeoutAsyncWaitStrategy(timeout), 1_000_000, timeoutOptions);
+    }
+
+    private static void ShouldHandleLotsOfThreads<T>(IWaitStrategy waitStrategy, int iterations, TimeoutOptions timeoutOptions) where T : IHandler, new()
     {
         var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, waitStrategy);
         var ringBuffer = disruptor.RingBuffer;
@@ -55,6 +71,8 @@ public class DisruptorStressTest
 
         disruptor.Start();
 
+        Thread.Sleep(timeoutOptions.TimoutCount * timeoutOptions.TimeoutDelay);
+
         foreach (var publisher in publishers)
         {
             Task.Run(publisher.Run);
@@ -78,6 +96,7 @@ public class DisruptorStressTest
 
         foreach (var handler in handlers)
         {
+            Assert.That(handler.TimeoutCount, Is.GreaterThanOrEqualTo(timeoutOptions.TimoutCount * 0.5));
             Assert.That(handler.MessagesSeen, Is.Not.EqualTo(0));
             Assert.That(handler.FailureCount, Is.EqualTo(0));
         }
@@ -87,6 +106,7 @@ public class DisruptorStressTest
     {
         int FailureCount { get; }
         int MessagesSeen { get; }
+        int TimeoutCount { get; }
 
         void Register(Disruptor<TestEvent> disruptor);
     }
@@ -95,10 +115,16 @@ public class DisruptorStressTest
     {
         public int FailureCount { get; private set; }
         public int MessagesSeen { get; private set; }
+        public int TimeoutCount { get; private set; }
 
         public void Register(Disruptor<TestEvent> disruptor)
         {
             disruptor.HandleEventsWith(this);
+        }
+
+        public void OnTimeout(long sequence)
+        {
+            TimeoutCount++;
         }
 
         public void OnEvent(TestEvent @event, long sequence, bool endOfBatch)
@@ -116,6 +142,7 @@ public class DisruptorStressTest
     {
         public int FailureCount { get; private set; }
         public int MessagesSeen { get; private set; }
+        public int TimeoutCount { get; private set; }
 
         public void Register(Disruptor<TestEvent> disruptor)
         {
@@ -144,9 +171,17 @@ public class DisruptorStressTest
         public int FailureCount { get; private set; }
         public int MessagesSeen { get; private set; }
 
+        public int TimeoutCount { get; private set; }
+
         public void Register(Disruptor<TestEvent> disruptor)
         {
             disruptor.HandleEventsWith(this);
+        }
+
+        public void OnTimeout(long sequence)
+        {
+            TimeoutCount++;
+            Console.WriteLine($"Timeout! {DateTime.UtcNow:HH:mm:ss.fff}");
         }
 
         public async ValueTask OnBatch(EventBatch<TestEvent> batch, long sequence)
@@ -166,6 +201,11 @@ public class DisruptorStressTest
 
             await Task.Yield();
         }
+    }
+
+    private record TimeoutOptions(int TimoutCount, TimeSpan TimeoutDelay)
+    {
+        public static TimeoutOptions None { get; } = new TimeoutOptions(0, TimeSpan.Zero);
     }
 
     private class Publisher

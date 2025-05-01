@@ -14,7 +14,7 @@ namespace Disruptor;
 /// </remarks>
 public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
 {
-    private readonly List<SequenceWaiter> _waiters = new();
+    private readonly List<SequenceWaiter> _waitList = new();
     private readonly object _gate = new();
     private bool _hasSyncWaiter;
 
@@ -38,11 +38,11 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
                 Monitor.PulseAll(_gate);
             }
 
-            foreach (var waiter in _waiters)
+            foreach (var waiter in _waitList)
             {
                 waiter.Signal();
             }
-            _waiters.Clear();
+            _waitList.Clear();
         }
     }
 
@@ -74,7 +74,7 @@ public sealed class AsyncWaitStrategy : IAsyncWaitStrategy
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    _waiters.Add(waiter);
+                    _waitList.Add(waiter);
 
                     return waiter.Wait(sequence, cancellationToken);
                 }
