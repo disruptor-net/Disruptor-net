@@ -972,6 +972,22 @@ public class DisruptorTests : IDisposable
         EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
     }
 
+    [Test]
+    public void ShouldCreateDedicatedSequenceBarriersForCustomEventProcessors()
+    {
+        TestEventProcessor? s1 = null;
+        TestEventProcessor? s2 = null;
+
+        _disruptor.HandleEventsWith(
+            (_, sb) => s1 = new TestEventProcessor(sb),
+            (_, sb) => s2 = new TestEventProcessor(sb)
+        );
+
+        Assert.That(s1, Is.Not.Null);
+        Assert.That(s2, Is.Not.Null);
+        Assert.That(s1!.SequenceBarrier, Is.Not.SameAs(s2!.SequenceBarrier));
+    }
+
     private TestWorkHandler CreateTestWorkHandler()
     {
         var testWorkHandler = new TestWorkHandler();

@@ -296,10 +296,15 @@ public abstract class ValueDisruptor<T, TRingBuffer> : IValueDisruptor<T>
 
     private ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, ValueEventProcessorCreator<T>[] processorFactories)
     {
-        var barrier = _ringBuffer.NewBarrier(barrierSequences);
-        var eventProcessors = processorFactories.Select(p => p.Invoke(_ringBuffer, barrier)).ToArray();
+        var eventProcessors = processorFactories.Select(p => CreateEventProcessor(p)).ToArray();
 
         return HandleEventsWith(eventProcessors);
+
+        IEventProcessor CreateEventProcessor(ValueEventProcessorCreator<T> processorFactory)
+        {
+            var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
+            return processorFactory.Invoke(_ringBuffer, sequenceBarrier);
+        }
     }
 
     private void CheckNotStarted()

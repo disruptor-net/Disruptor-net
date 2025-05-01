@@ -496,10 +496,15 @@ public class Disruptor<T>
 
     internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, EventProcessorCreator<T>[] processorFactories)
     {
-        var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
-        var eventProcessors = processorFactories.Select(p => p.Invoke(_ringBuffer, sequenceBarrier)).ToArray();
+        var eventProcessors = processorFactories.Select(p => CreateEventProcessor(p)).ToArray();
 
         return HandleEventsWith(eventProcessors);
+
+        IEventProcessor CreateEventProcessor(EventProcessorCreator<T> processorFactory)
+        {
+            var sequenceBarrier = _ringBuffer.NewBarrier(barrierSequences);
+            return processorFactory.Invoke(_ringBuffer, sequenceBarrier);
+        }
     }
 
     internal EventHandlerGroup<T> CreateWorkerPool(Sequence[] barrierSequences, IWorkHandler<T>[] workHandlers)

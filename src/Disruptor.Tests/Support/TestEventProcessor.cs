@@ -9,14 +9,14 @@ namespace Disruptor.Tests.Support;
 public class TestEventProcessor : IEventProcessor
 {
     private readonly ManualResetEventSlim _runEvent = new();
-    private readonly SequenceBarrier _sequenceBarrier;
     private volatile int _running;
 
     public TestEventProcessor(SequenceBarrier sequenceBarrier)
     {
-        _sequenceBarrier = sequenceBarrier;
+        SequenceBarrier = sequenceBarrier;
     }
 
+    public SequenceBarrier SequenceBarrier { get; }
     public Sequence Sequence { get; } = new();
 
     public void WaitUntilStarted(TimeSpan timeout)
@@ -43,7 +43,7 @@ public class TestEventProcessor : IEventProcessor
             throw new InvalidOperationException("Already running");
 
         _runEvent.Set();
-        _sequenceBarrier.WaitForPublishedSequence(0L);
+        SequenceBarrier.WaitForPublishedSequence(0L);
         Sequence.SetValue(Sequence.Value + 1);
     }
 }
