@@ -53,7 +53,7 @@ public class ConsumerRepositoryTests
 
         var seen1 = false;
         var seen2 = false;
-        foreach (var testEntryEventProcessorInfo in _consumerRepository)
+        foreach (var testEntryEventProcessorInfo in _consumerRepository.Consumers)
         {
             var eventProcessorInfo = (EventProcessorInfo)testEntryEventProcessorInfo;
             if (!seen1 && eventProcessorInfo.EventProcessor == _eventProcessor1 && eventProcessorInfo.Handler == _handler1)

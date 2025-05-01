@@ -294,7 +294,7 @@ public class Disruptor<T>
     public void Start()
     {
         CheckOnlyStartedOnce();
-        foreach (var consumerInfo in _consumerRepository)
+        foreach (var consumerInfo in _consumerRepository.Consumers)
         {
             consumerInfo.Start(_taskScheduler);
         }
@@ -305,7 +305,7 @@ public class Disruptor<T>
     /// </summary>
     public void Halt()
     {
-        foreach (var consumerInfo in _consumerRepository)
+        foreach (var consumerInfo in _consumerRepository.Consumers)
         {
             consumerInfo.Halt();
         }

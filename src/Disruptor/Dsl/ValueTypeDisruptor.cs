@@ -157,7 +157,7 @@ public abstract class ValueTypeDisruptor<T>
     public void Start()
     {
         CheckOnlyStartedOnce();
-        foreach (var consumerInfo in _consumerRepository)
+        foreach (var consumerInfo in _consumerRepository.Consumers)
         {
             consumerInfo.Start(_taskScheduler);
         }
@@ -168,7 +168,7 @@ public abstract class ValueTypeDisruptor<T>
     /// </summary>
     public void Halt()
     {
-        foreach (var consumerInfo in _consumerRepository)
+        foreach (var consumerInfo in _consumerRepository.Consumers)
         {
             consumerInfo.Halt();
         }

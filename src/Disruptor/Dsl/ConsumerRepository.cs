@@ -6,11 +6,13 @@ using Disruptor.Processing;
 
 namespace Disruptor.Dsl;
 
-internal class ConsumerRepository : IEnumerable<IConsumerInfo>
+internal class ConsumerRepository
 {
     private readonly Dictionary<IEventHandler, EventProcessorInfo> _eventProcessorInfoByEventHandler = new(new IdentityComparer<IEventHandler>());
     private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence = new(new IdentityComparer<Sequence>());
     private readonly List<IConsumerInfo> _consumerInfos = new();
+
+    public IEnumerable<IConsumerInfo> Consumers => _consumerInfos;
 
     public void Add(IEventProcessor eventProcessor, IEventHandler eventHandler, DependentSequenceGroup dependentSequences)
     {
@@ -87,13 +89,6 @@ internal class ConsumerRepository : IEnumerable<IConsumerInfo>
     public DependentSequenceGroup? GetDependentSequencesFor(IEventHandler eventHandler)
     {
         return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo) ? eventProcessorInfo.DependentSequences : null;
-    }
-
-    public IEnumerator<IConsumerInfo> GetEnumerator() => _consumerInfos.GetEnumerator();
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
     }
 
     private class IdentityComparer<TKey> : IEqualityComparer<TKey>
