@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Disruptor.Processing;
 
 namespace Disruptor.PerfTests.Support;
 
@@ -10,13 +9,13 @@ public class MultiBufferEventProcessor<T>
 {
     private readonly ManualResetEventSlim _runEvent = new();
     private volatile int _isRunning;
-    private readonly IDataProvider<T>[] _providers;
+    private readonly RingBuffer<T>[] _providers;
     private readonly SequenceBarrier[] _barriers;
     private readonly IEventHandler<T> _handler;
     private readonly Sequence[] _sequences;
     private long _count;
 
-    public MultiBufferEventProcessor(IDataProvider<T>[] providers, SequenceBarrier[] barriers, IEventHandler<T> handler)
+    public MultiBufferEventProcessor(RingBuffer<T>[] providers, SequenceBarrier[] barriers, IEventHandler<T> handler)
     {
         if (providers.Length != barriers.Length)
             throw new ArgumentException();
@@ -32,9 +31,9 @@ public class MultiBufferEventProcessor<T>
         }
     }
 
-    public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+    public Task StartLongRunning()
     {
-        return Task.Factory.StartNew(Run, CancellationToken.None, taskCreationOptions, taskScheduler);
+        return Task.Factory.StartNew(Run, TaskCreationOptions.LongRunning);
     }
 
     public void WaitUntilStarted(TimeSpan timeout)
@@ -68,12 +67,12 @@ public class MultiBufferEventProcessor<T>
 
                     var available = waitResult.UnsafeAvailableSequence;
                     var sequence = _sequences[i];
+                    var dataProvider = _providers[i];
 
                     var nextSequence = sequence.Value + 1;
-
-                    for (var l = nextSequence; l <= available; l++)
+                    for (var s = nextSequence; s <= available; s++)
                     {
-                        _handler.OnEvent(_providers[i][l], l, l == available);
+                        _handler.OnEvent(dataProvider[s], s, s == available);
                     }
 
                     sequence.SetValue(available);

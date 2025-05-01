@@ -1,7 +1,7 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
-using LongArrayPublisher = System.Action<System.Threading.CountdownEvent, Disruptor.RingBuffer<long[]>, long, long>;
 
 namespace Disruptor.PerfTests.Throughput.ThreeToThree;
 
@@ -53,7 +53,7 @@ public class ThreeToThreeSequencedThroughputTest : IThroughputTest
         {
             _buffers[i] = RingBuffer<long[]>.CreateSingleProducer(() => new long[_arraySize], _bufferSize, new YieldingWaitStrategy());
             _barriers[i] = _buffers[i].NewBarrier();
-            _valuePublishers[i] = ValuePublisher;
+            _valuePublishers[i] = new LongArrayPublisher(_cyclicBarrier, _buffers[i], _iterations / _numPublishers, _arraySize);
         }
 
         _eventProcessor = new MultiBufferEventProcessor<long[]>(_buffers, _barriers, _handler);
@@ -76,10 +76,11 @@ public class ThreeToThreeSequencedThroughputTest : IThroughputTest
         var futures = new Task[_numPublishers];
         for (var i = 0; i < _numPublishers; i++)
         {
-            var index = i;
-            futures[i] = Task.Run(() => _valuePublishers[index](_cyclicBarrier, _buffers[index], _iterations / _numPublishers, _arraySize));
+            futures[i] = _valuePublishers[i].StartLongRunning();
         }
-        var processorTask = Task.Run(() => _eventProcessor.Run());
+        var processorTask = _eventProcessor.StartLongRunning();
+
+        _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();
         _cyclicBarrier.Signal();
@@ -99,22 +100,5 @@ public class ThreeToThreeSequencedThroughputTest : IThroughputTest
         sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations * _arraySize);
 
         return _iterations * _arraySize;
-    }
-
-    private static void ValuePublisher(CountdownEvent countdownEvent, RingBuffer<long[]> ringBuffer, long iterations, long arraySize)
-    {
-        countdownEvent.Signal();
-        countdownEvent.Wait();
-
-        for (long i = 0; i < iterations; i++)
-        {
-            var sequence = ringBuffer.Next();
-            var eventData = ringBuffer[sequence];
-            for (var j = 0; j < arraySize; j++)
-            {
-                eventData[j] = i + j;
-            }
-            ringBuffer.Publish(sequence);
-        }
     }
 }
