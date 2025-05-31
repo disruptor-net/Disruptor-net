@@ -27,7 +27,7 @@ jobs:
       - name: Test
         run: dotnet test --configuration Release --no-build src/Disruptor-net.sln
       - name: Upload NuGet
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: NuGet
           path: build/nuget/*.nupkg
