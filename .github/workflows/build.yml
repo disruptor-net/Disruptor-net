@@ -52,3 +52,24 @@ jobs:
         run: dotnet build --configuration Release --no-restore src/Disruptor-net.sln
       - name: Test
         run: dotnet test --configuration Release --no-build src/Disruptor-net.sln
+  macos:
+    name: Build-Test (macOS)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: | 
+            3.1.x
+            6.0.x
+            7.0.x
+      - name: Clear NuGet Cache
+        run: dotnet nuget locals all --clear
+      - name: Restore
+        run: dotnet restore src/Disruptor-net.sln
+      - name: Build
+        run: dotnet build --configuration Release --no-restore src/Disruptor-net.sln
+      - name: Test
+        run: dotnet test --configuration Release --no-build src/Disruptor-net.sln
