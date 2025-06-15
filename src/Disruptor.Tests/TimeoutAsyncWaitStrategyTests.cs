@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace Disruptor.Tests;
 
-public class AsyncWaitStrategyTestsWithTimeout : AsyncWaitStrategyTests
+public class TimeoutAsyncWaitStrategyTests : AsyncWaitStrategyFixture
 {
     protected override IAsyncWaitStrategy CreateWaitStrategy()
     {
