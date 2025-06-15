@@ -41,7 +41,7 @@ public class WorkHandlerTests
         handler1.AwaitStart();
         handler2.AwaitStart();
 
-        Thread.Sleep(100);
+        Thread.Sleep(500);
 
         // processor1 should own an unavailable work sequence
         // => this sequence will be dropped by Halt
@@ -88,7 +88,7 @@ public class WorkHandlerTests
         handler1.AwaitStart();
         handler2.AwaitStart();
 
-        Thread.Sleep(100);
+        Thread.Sleep(500);
 
         // processor1 should own an unavailable work sequence
         // => this sequence should not be dropped by HaltLater
