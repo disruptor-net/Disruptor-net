@@ -274,9 +274,9 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
     private void SetAvailableBufferValue(int index, int flag)
     {
 #if NETCOREAPP
-        _availableBufferPointer[index] = flag;
+        Volatile.Write(ref _availableBufferPointer[index], flag);
 #else
-        _availableBuffer[index] = flag;
+        Volatile.Write(ref _availableBuffer[index], flag);
 #endif
     }
 
