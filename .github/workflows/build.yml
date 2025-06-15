@@ -3,54 +3,58 @@ on: [push, pull_request]
 env:
   DOTNET_NOLOGO: 1
 jobs:
-  windows:
-    name: Build-Test-Publish (Windows)
-    runs-on: windows-latest
+  build:
+    name: Build-Test (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            runner: ubuntu-latest
+          - name: macOS
+            runner: macos-latest
+          - name: Windows
+            runner: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: | 
             3.1.x
             6.0.x
             8.0.x
             9.0.x
-      - name: Clear NuGet Cache
-        run: dotnet nuget locals all --clear
+      - name: Restore
+        run: dotnet restore src/Disruptor-net.sln
+      - name: Build
+        run: dotnet build --configuration Release --no-restore src/Disruptor-net.sln
+      - name: Test
+        run: dotnet test --configuration Release --no-build src/Disruptor-net.sln
+  pack:
+    name: Pack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: | 
+            3.1.x
+            6.0.x
+            8.0.x
+            9.0.x
       - name: Restore
         run: dotnet restore src/Disruptor-net.sln
       - name: Build
         run: dotnet build --configuration Release --no-restore src/Disruptor-net.sln
       - name: Pack
         run: dotnet pack --configuration Release --no-build src/Disruptor-net.sln
-      - name: Test
-        run: dotnet test --configuration Release --no-build src/Disruptor-net.sln
       - name: Upload NuGet
         uses: actions/upload-artifact@v4
         with:
           name: NuGet
           path: build/nuget/*.nupkg
-  linux:
-    name: Build-Test (Linux)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: | 
-            3.1.x
-            6.0.x
-            8.0.x
-            9.0.x
-      - name: Clear NuGet Cache
-        run: dotnet nuget locals all --clear
-      - name: Restore
-        run: dotnet restore src/Disruptor-net.sln
-      - name: Build
-        run: dotnet build --configuration Release --no-restore src/Disruptor-net.sln
-      - name: Test
-        run: dotnet test --configuration Release --no-build src/Disruptor-net.sln
