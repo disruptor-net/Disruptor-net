@@ -83,7 +83,7 @@ public class ThreeToOneSequencedThroughputTest_BatchPublication : IThroughputTes
             var index = i;
             futures[i] = Task.Run(() => _valuePublishers[index].Run());
         }
-        var startTask = _eventProcessor.StartLongRunning();
+        var startTask = _eventProcessor.Start();
         startTask.Wait(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();

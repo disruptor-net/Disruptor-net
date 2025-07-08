@@ -6,23 +6,17 @@ namespace Disruptor.Processing;
 
 public static class EventProcessorExtensions
 {
+    /// <summary>
+    /// Starts the processor on the default task scheduler.
+    /// </summary>
+    /// <returns>A task that represents the startup of the processor.</returns>
     public static Task Start(this IEventProcessor eventProcessor)
     {
-        return eventProcessor.Start(TaskScheduler.Default, TaskCreationOptions.None);
+        return eventProcessor.Start(TaskScheduler.Default);
     }
 
-    public static Task StartLongRunning(this IEventProcessor eventProcessor)
+    internal static Task StartLongRunningTask(this TaskScheduler taskScheduler, Action action)
     {
-        return eventProcessor.StartLongRunning(TaskScheduler.Default);
-    }
-
-    public static Task StartLongRunning(this IEventProcessor eventProcessor, TaskScheduler taskScheduler)
-    {
-        return eventProcessor.Start(taskScheduler, TaskCreationOptions.LongRunning);
-    }
-
-    internal static Task ScheduleAndStart(this TaskScheduler taskScheduler, Action action, TaskCreationOptions taskCreationOptions)
-    {
-        return Task.Factory.StartNew(action, CancellationToken.None, taskCreationOptions, taskScheduler);
+        return Task.Factory.StartNew(action, CancellationToken.None, TaskCreationOptions.LongRunning, taskScheduler);
     }
 }

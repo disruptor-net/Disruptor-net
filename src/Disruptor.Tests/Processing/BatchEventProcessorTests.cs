@@ -198,7 +198,7 @@ public class BatchEventProcessorTests
         var h1 = new LifeCycleHandler();
         var p1 = CreateEventProcessor(dp, barrier, h1);
 
-        p1.Start(delayedTaskScheduler, TaskCreationOptions.None);
+        p1.Start(delayedTaskScheduler);
         p1.Halt();
         delayedTaskScheduler.StartPendingTasks();
 

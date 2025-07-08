@@ -30,7 +30,7 @@ internal class EventProcessorInfo : IConsumerInfo
 
     public void Start(TaskScheduler taskScheduler)
     {
-        EventProcessor.StartLongRunning(taskScheduler);
+        EventProcessor.Start(taskScheduler);
     }
 
     public void Halt()

@@ -73,12 +73,11 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
     }
 
     /// <inheritdoc/>
-    public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+    public Task Start(TaskScheduler taskScheduler)
     {
         var runState = _state.Start();
 
-        taskCreationOptions &= ~TaskCreationOptions.LongRunning;
-        Task.Factory.StartNew(async () => await RunAsync(runState), CancellationToken.None, taskCreationOptions, taskScheduler);
+        Task.Factory.StartNew(async () => await RunAsync(runState), CancellationToken.None, TaskCreationOptions.None, taskScheduler);
 
         return runState.StartTask;
     }

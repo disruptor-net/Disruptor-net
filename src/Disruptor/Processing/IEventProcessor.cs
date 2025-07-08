@@ -28,7 +28,7 @@ public interface IEventProcessor
     /// <returns>
     /// A task that represents the shutdown of the processor.
     /// The task completes after <see cref="IEventHandler.OnShutdown"/> is invoked.
-    /// </returns>.
+    /// </returns>
     Task Halt();
 
     /// <summary>
@@ -37,8 +37,8 @@ public interface IEventProcessor
     /// <returns>
     /// A task that represents the startup of the processor.
     /// The task completes after <see cref="IEventHandler.OnStart"/> is invoked.
-    /// </returns>.
-    Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions);
+    /// </returns>
+    Task Start(TaskScheduler taskScheduler);
 
     /// <summary>
     /// Indicates whether the processor is running.

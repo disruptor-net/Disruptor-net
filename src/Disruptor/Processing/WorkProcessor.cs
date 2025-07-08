@@ -61,10 +61,10 @@ public sealed class WorkProcessor<T> : IEventProcessor
     public bool IsRunning => _state.IsRunning;
 
     /// <inheritdoc/>
-    public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+    public Task Start(TaskScheduler taskScheduler)
     {
         var runState = _state.Start();
-        taskScheduler.ScheduleAndStart(() => Run(runState), taskCreationOptions);
+        taskScheduler.StartLongRunningTask(() => Run(runState));
 
         return runState.StartTask;
     }

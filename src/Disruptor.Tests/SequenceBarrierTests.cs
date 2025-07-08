@@ -160,10 +160,10 @@ public abstract class SequenceBarrierTests : IDisposable
             _sequence.SetValue(sequence);
         }
 
-        public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
+        public Task Start(TaskScheduler taskScheduler)
         {
             var runState = _state.Start();
-            taskScheduler.ScheduleAndStart(() => Run(runState), taskCreationOptions);
+            taskScheduler.StartLongRunningTask(() => Run(runState));
 
             return runState.StartTask;
         }

@@ -83,7 +83,7 @@ public class ThreeToOneSequencedThroughputTest : IThroughputTest
             var index = i;
             futures[i] = Task.Factory.StartNew(() => _valuePublishers[index](_cyclicBarrier, _ringBuffer, _iterations / _numPublishers), CancellationToken.None, TaskCreationOptions.None, _scheduler);
         }
-        var startTask = _eventProcessor.StartLongRunning(_scheduler);
+        var startTask = _eventProcessor.Start(_scheduler);
         startTask.Wait(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();

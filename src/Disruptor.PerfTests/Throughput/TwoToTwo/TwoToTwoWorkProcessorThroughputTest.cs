@@ -64,7 +64,7 @@ public class TwoToTwoWorkProcessorThroughputTest : IThroughputTest
 
         foreach (var workProcessor in workProcessors)
         {
-            var startTask = workProcessor.StartLongRunning();
+            var startTask = workProcessor.Start();
             startTask.Wait(TimeSpan.FromSeconds(5));
         }
 

@@ -109,7 +109,7 @@ public sealed class WorkerPool<T> where T : class
         foreach (var workProcessor in _workProcessors)
         {
             workProcessor.Sequence.SetValue(cursor);
-            startTasks.Add(workProcessor.StartLongRunning(taskScheduler));
+            startTasks.Add(workProcessor.Start(taskScheduler));
         }
 
         return Task.WhenAll(startTasks);

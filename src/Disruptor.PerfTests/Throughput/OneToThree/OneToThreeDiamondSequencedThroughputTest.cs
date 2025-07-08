@@ -97,9 +97,9 @@ public class OneToThreeDiamondSequencedThroughputTest : IThroughputTest
         var latch = new ManualResetEvent(false);
         _fizzBuzzHandler.Reset(latch, _eventProcessorFizzBuzz.Sequence.Value + _iterations);
 
-        var startTask1 = _eventProcessorFizz.StartLongRunning();
-        var startTask2 = _eventProcessorBuzz.StartLongRunning();
-        var startTask3 = _eventProcessorFizzBuzz.StartLongRunning();
+        var startTask1 = _eventProcessorFizz.Start();
+        var startTask2 = _eventProcessorBuzz.Start();
+        var startTask3 = _eventProcessorFizzBuzz.Start();
         startTask1.Wait(TimeSpan.FromSeconds(5));
         startTask2.Wait(TimeSpan.FromSeconds(5));
         startTask3.Wait(TimeSpan.FromSeconds(5));
