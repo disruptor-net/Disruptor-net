@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -15,7 +16,7 @@ namespace Disruptor.Processing;
 /// <typeparam name="T">event to be processed by a pool of workers</typeparam>
 public sealed class WorkerPool<T> where T : class
 {
-    private volatile int _runState = ProcessorRunStates.Idle;
+    private readonly EventProcessorState _state = new(restartable: false);
     private readonly Sequence _workSequence = new();
     private readonly RingBuffer<T> _ringBuffer;
     private readonly WorkProcessor<T>[] _workProcessors;
@@ -84,88 +85,81 @@ public sealed class WorkerPool<T> where T : class
     }
 
     /// <summary>
-    /// Waits before the event processors are started.
+    /// Start the worker pool processing events in sequence.
     /// </summary>
-    /// <param name="timeout">maximum wait duration</param>
-    public void WaitUntilStarted(TimeSpan timeout)
+    /// <exception cref="InvalidOperationException">if the pool is already started or halted</exception>
+    public Task Start()
     {
-        var stopwatch = Stopwatch.StartNew();
-
-        foreach (var workProcessor in _workProcessors)
-        {
-            var elapsed = stopwatch.Elapsed;
-            var remaining = timeout >= elapsed ? timeout - elapsed : TimeSpan.Zero;
-            workProcessor.WaitUntilStarted(remaining);
-        }
+        return Start(TaskScheduler.Default);
     }
 
     /// <summary>
     /// Start the worker pool processing events in sequence.
     /// </summary>
     /// <exception cref="InvalidOperationException">if the pool is already started or halted</exception>
-    public void Start()
+    public Task Start(TaskScheduler taskScheduler)
     {
-        Start(TaskScheduler.Default);
-    }
-
-    /// <summary>
-    /// Start the worker pool processing events in sequence.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">if the pool is already started or halted</exception>
-    public void Start(TaskScheduler taskScheduler)
-    {
-        var previousRunState = Interlocked.CompareExchange(ref _runState, ProcessorRunStates.Running, ProcessorRunStates.Idle);
-        if (previousRunState == ProcessorRunStates.Running)
-        {
-            throw new InvalidOperationException("WorkerPool is already running");
-        }
-
-        if (previousRunState == ProcessorRunStates.Halted)
-        {
-            throw new InvalidOperationException("WorkerPool is halted and cannot be restarted");
-        }
+        _state.Start();
 
         var cursor = _ringBuffer.Cursor;
         _workSequence.SetValue(cursor);
 
+        var startTasks = new List<Task>(_workProcessors.Length);
+
         foreach (var workProcessor in _workProcessors)
         {
             workProcessor.Sequence.SetValue(cursor);
-            workProcessor.StartLongRunning(taskScheduler);
-        }
-    }
-
-    /// <summary>
-    /// Wait for the <see cref="RingBuffer{T}"/> to drain of published events then halt the workers.
-    /// </summary>
-    public void DrainAndHalt()
-    {
-        var workerSequences = GetWorkerSequences();
-        while (_ringBuffer.Cursor > DisruptorUtil.GetMinimumSequence(workerSequences))
-        {
-            Thread.Sleep(0);
+            startTasks.Add(workProcessor.StartLongRunning(taskScheduler));
         }
 
-        foreach (var workProcessor in _workProcessors)
-        {
-            workProcessor.Halt();
-        }
-
-        _runState = ProcessorRunStates.Halted;
+        return Task.WhenAll(startTasks);
     }
 
     /// <summary>
     /// Halt all workers immediately at then end of their current cycle.
     /// </summary>
-    public void Halt()
+    public Task Halt()
     {
+        _state.Halt();
+
+        var haltTasks = new List<Task>(_workProcessors.Length);
+
         foreach (var workProcessor in _workProcessors)
         {
-            workProcessor.Halt();
+            haltTasks.Add(workProcessor.Halt());
         }
 
-        _runState = ProcessorRunStates.Halted;
+        return Task.WhenAll(haltTasks);
     }
 
-    public bool IsRunning => _runState == ProcessorRunStates.Running;
+    public bool IsRunning
+    {
+        get
+        {
+            foreach (var workProcessor in _workProcessors)
+            {
+                if (workProcessor.IsRunning)
+                    return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether all messages have been consumed.
+    /// </summary>
+    public bool HasBacklog()
+    {
+        var cursor  = _ringBuffer.Cursor;
+        foreach (var workProcessor in _workProcessors)
+        {
+            if (cursor > workProcessor.Sequence.Value)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

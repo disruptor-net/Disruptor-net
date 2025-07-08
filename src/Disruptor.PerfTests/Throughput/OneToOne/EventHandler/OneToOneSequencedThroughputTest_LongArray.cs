@@ -64,9 +64,8 @@ public class OneToOneSequencedThroughputTest_LongArray : IThroughputTest
 
         var signal = new ManualResetEvent(false);
         _handler.Reset(signal, _iterations);
-        var processorTask = _eventProcessor.Start();
-
-        _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+        var startTask = _eventProcessor.Start();
+        startTask.Wait(TimeSpan.FromSeconds(5));
 
         using var _ = ThreadAffinityUtil.SetThreadAffinity(_options.GetCustomCpu(0), ThreadPriority.Highest);
 
@@ -87,8 +86,9 @@ public class OneToOneSequencedThroughputTest_LongArray : IThroughputTest
         signal.WaitOne();
         sessionContext.Stop();
         WaitForEventProcessorSequence(expectedCount);
-        _eventProcessor.Halt();
-        processorTask.Wait(2000);
+
+        var shutdownTask = _eventProcessor.Halt();
+        shutdownTask.Wait(2000);
 
         sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations);
 

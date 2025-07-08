@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace Disruptor.Processing;
 
 /// <summary>
@@ -9,11 +7,6 @@ namespace Disruptor.Processing;
 public interface IAsyncEventProcessor<T> : IEventProcessor
     where T : class
 {
-    /// <summary>
-    /// Asynchronously runs the processor.
-    /// </summary>
-    Task RunAsync();
-
     /// <summary>
     /// Set a new <see cref="IExceptionHandler{T}"/> for handling exceptions propagated out of the event handler.
     /// </summary>

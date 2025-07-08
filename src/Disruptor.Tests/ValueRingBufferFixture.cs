@@ -198,7 +198,7 @@ public abstract class ValueRingBufferFixture<T> : IDisposable
         Assert.That(!task.IsCompleted);
 
         // Run the processor, freeing up entries in the ring buffer for the producer to continue and "complete"
-        processor.Run();
+        processor.Start();
 
         // Check producer completes
         Assert.That(task.Wait(TimeSpan.FromSeconds(1)));

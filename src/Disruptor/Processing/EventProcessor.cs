@@ -39,9 +39,8 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
     // ReSharper restore FieldCanBeMadeReadOnly.Local
 
     private readonly Sequence _sequence = new();
-    private readonly ManualResetEventSlim _started = new();
+    private readonly EventProcessorState _state = new EventProcessorState(restartable: true);
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
-    private volatile int _runState = ProcessorRunStates.Idle;
 
     public EventProcessor(TDataProvider dataProvider, SequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TOnBatchStartEvaluator onBatchStartEvaluator, TBatchSizeLimiter batchSizeLimiter)
     {
@@ -60,14 +59,16 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
     public Sequence Sequence => _sequence;
 
     /// <inheritdoc/>
-    public void Halt()
+    public Task Halt()
     {
-        _runState = ProcessorRunStates.Halted;
+        var runState = _state.Halt();
         _sequenceBarrier.CancelProcessing();
+
+        return runState.ShutdownTask;
     }
 
     /// <inheritdoc/>
-    public bool IsRunning => _runState != ProcessorRunStates.Idle;
+    public bool IsRunning => _state.IsRunning;
 
     /// <inheritdoc/>
     public void SetExceptionHandler(IExceptionHandler<T> exceptionHandler)
@@ -76,59 +77,36 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
     }
 
     /// <inheritdoc/>
-    public void WaitUntilStarted(TimeSpan timeout)
-    {
-        _started.Wait(timeout);
-    }
-
-    /// <inheritdoc/>
     public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
     {
-        return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
+        var runState = _state.Start();
+        taskScheduler.ScheduleAndStart(() => Run(runState), taskCreationOptions);
+
+        return runState.StartTask;
     }
 
     /// <inheritdoc/>
-    /// <remarks>
-    /// It is ok to have another thread rerun this method after a halt().
-    /// </remarks>
-    /// <exception cref="InvalidOperationException">if this object instance is already running in a thread</exception>
     public void Run()
     {
-#pragma warning disable 420
-        var previousRunning = Interlocked.CompareExchange(ref _runState, ProcessorRunStates.Running, ProcessorRunStates.Idle);
-#pragma warning restore 420
+        var runState = _state.Start();
+        Run(runState);
+    }
 
-        if (previousRunning == ProcessorRunStates.Running)
+    private void Run(EventProcessorState.RunState runState)
+    {
+        NotifyStart(runState);
+        try
         {
-            throw new InvalidOperationException("Thread is already running");
+            ProcessEvents(runState.CancellationToken);
         }
-
-        if (previousRunning == ProcessorRunStates.Idle)
+        finally
         {
-            _sequenceBarrier.ResetProcessing();
-
-            NotifyStart();
-            try
-            {
-                if (_runState == ProcessorRunStates.Running)
-                {
-                    ProcessEvents();
-                }
-            }
-            finally
-            {
-                NotifyShutdown();
-                _runState = ProcessorRunStates.Idle;
-            }
-        }
-        else
-        {
-            EarlyExit();
+            NotifyShutdown(runState);
         }
     }
 
     [MethodImpl(Constants.AggressiveOptimization)]
-    private void ProcessEvents()
+    private void ProcessEvents(CancellationToken cancellationToken)
     {
         var nextSequence = _sequence.Value + 1L;
 
@@ -136,7 +114,7 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
         {
             try
             {
-                var waitResult = _sequenceBarrier.WaitFor(nextSequence);
+                var waitResult = _sequenceBarrier.WaitFor(nextSequence, cancellationToken);
                 if (waitResult.IsTimeout)
                 {
                     NotifyTimeout();
@@ -158,12 +136,9 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
 
                 _sequence.SetValue(availableSequence);
             }
-            catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                if (_runState != ProcessorRunStates.Running)
-                {
-                    break;
-                }
+                break;
             }
             catch (Exception ex)
             {
@@ -173,12 +148,6 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
                 nextSequence++;
             }
         }
-    }
-
-    private void EarlyExit()
-    {
-        NotifyStart();
-        NotifyShutdown();
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -197,7 +166,8 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
     /// <summary>
     /// Notifies the EventHandler when this processor is starting up
     /// </summary>
-    private void NotifyStart()
+    /// <param name="runState"></param>
+    private void NotifyStart(EventProcessorState.RunState runState)
     {
         try
         {
@@ -208,13 +178,14 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
             _exceptionHandler.HandleOnStartException(e);
         }
 
-        _started.Set();
+        runState.OnStarted();
     }
 
     /// <summary>
     /// Notifies the EventHandler immediately prior to this processor shutting down
     /// </summary>
-    private void NotifyShutdown()
+    /// <param name="runState"></param>
+    private void NotifyShutdown(EventProcessorState.RunState runState)
     {
         try
         {
@@ -225,6 +196,6 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
             _exceptionHandler.HandleOnShutdownException(e);
         }
 
-        _started.Reset();
+        runState.OnShutdown();
     }
 }

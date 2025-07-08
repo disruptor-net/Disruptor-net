@@ -8,7 +8,7 @@ public interface IEventProcessor<T> : IEventProcessor
     where T : class
 {
     /// <summary>
-    /// Synchronously runs the processor.
+    /// Runs the processor and blocks the calling thead until shutdown.
     /// </summary>
     void Run();
 

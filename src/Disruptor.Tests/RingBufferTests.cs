@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
@@ -191,7 +192,7 @@ public class RingBufferTests : IDisposable
         Assert.That(!task.IsCompleted);
 
         // Run the processor, freeing up entries in the ring buffer for the producer to continue and "complete"
-        processor.Run();
+        processor.Start();
 
         // Check producer completes
         Assert.That(task.Wait(TimeSpan.FromSeconds(1)));

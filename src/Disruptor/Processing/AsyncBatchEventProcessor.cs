@@ -36,9 +36,8 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
     // ReSharper restore FieldCanBeMadeReadOnly.Local
 
     private readonly Sequence _sequence = new();
-    private readonly ManualResetEventSlim _started = new();
+    private readonly EventProcessorState _state = new(restartable: true);
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
-    private volatile int _runState = ProcessorRunStates.Idle;
 
     public AsyncBatchEventProcessor(TDataProvider dataProvider, AsyncSequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TBatchSizeLimiter batchSizeLimiter)
     {
@@ -56,14 +55,16 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
     public Sequence Sequence => _sequence;
 
     /// <inheritdoc/>
-    public void Halt()
+    public Task Halt()
     {
-        _runState = ProcessorRunStates.Halted;
+        var runState = _state.Halt();
         _sequenceBarrier.CancelProcessing();
+
+        return runState.ShutdownTask;
     }
 
     /// <inheritdoc/>
-    public bool IsRunning => _runState != ProcessorRunStates.Idle;
+    public bool IsRunning => _state.IsRunning;
 
     /// <inheritdoc/>
     public void SetExceptionHandler(IExceptionHandler<T> exceptionHandler)
@@ -72,59 +73,31 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
     }
 
     /// <inheritdoc/>
-    public void WaitUntilStarted(TimeSpan timeout)
-    {
-        _started.Wait(timeout);
-    }
-
-    /// <inheritdoc/>
     public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
     {
-        return Task.Factory.StartNew(async () => await RunAsync(), CancellationToken.None, TaskCreationOptions.None, taskScheduler).Unwrap();
+        var runState = _state.Start();
+
+        taskCreationOptions &= ~TaskCreationOptions.LongRunning;
+        Task.Factory.StartNew(async () => await RunAsync(runState), CancellationToken.None, taskCreationOptions, taskScheduler);
+
+        return runState.StartTask;
     }
 
-    /// <inheritdoc/>
-    /// <remarks>
-    /// It is ok to have another thread rerun this method after a halt().
-    /// </remarks>
-    /// <exception cref="InvalidOperationException">if this object instance is already running in a thread</exception>
-    public async Task RunAsync()
+    private async Task RunAsync(EventProcessorState.RunState runState)
     {
-#pragma warning disable 420
-        var previousRunning = Interlocked.CompareExchange(ref _runState, ProcessorRunStates.Running, ProcessorRunStates.Idle);
-#pragma warning restore 420
-
-        if (previousRunning == ProcessorRunStates.Running)
+        NotifyStart(runState);
+        try
         {
-            throw new InvalidOperationException("Thread is already running");
+            await ProcessEvents(runState.CancellationToken).ConfigureAwait(false);
         }
-
-        if (previousRunning == ProcessorRunStates.Idle)
+        finally
         {
-            _sequenceBarrier.ResetProcessing();
-
-            NotifyStart();
-            try
-            {
-                if (_runState == ProcessorRunStates.Running)
-                {
-                    await ProcessEvents().ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                NotifyShutdown();
-                _runState = ProcessorRunStates.Idle;
-            }
-        }
-        else
-        {
-            EarlyExit();
+            NotifyShutdown(runState);
         }
     }
 
     [MethodImpl(Constants.AggressiveOptimization)]
-    private async Task ProcessEvents()
+    private async Task ProcessEvents(CancellationToken cancellationToken)
     {
         var nextSequence = _sequence.Value + 1L;
         var availableSequence = _sequence.Value;
@@ -133,7 +106,7 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
         {
             try
             {
-                var waitResult = await _sequenceBarrier.WaitForAsync(nextSequence).ConfigureAwait(false);
+                var waitResult = await _sequenceBarrier.WaitForAsync(nextSequence, cancellationToken).ConfigureAwait(false);
                 if (waitResult.IsTimeout)
                 {
                     NotifyTimeout();
@@ -152,12 +125,9 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
 
                 _sequence.SetValue(nextSequence - 1);
             }
-            catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                if (_runState != ProcessorRunStates.Running)
-                {
-                    break;
-                }
+                break;
             }
             catch (Exception ex)
             {
@@ -170,12 +140,6 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
                 }
             }
         }
-    }
-
-    private void EarlyExit()
-    {
-        NotifyStart();
-        NotifyShutdown();
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -194,7 +158,8 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
     /// <summary>
     /// Notifies the EventHandler when this processor is starting up
     /// </summary>
-    private void NotifyStart()
+    /// <param name="runState"></param>
+    private void NotifyStart(EventProcessorState.RunState runState)
     {
         try
         {
@@ -205,13 +170,14 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
             _exceptionHandler.HandleOnStartException(e);
         }
 
-        _started.Set();
+        runState.OnStarted();
     }
 
     /// <summary>
     /// Notifies the EventHandler immediately prior to this processor shutting down
     /// </summary>
-    private void NotifyShutdown()
+    /// <param name="runState"></param>
+    private void NotifyShutdown(EventProcessorState.RunState runState)
     {
         try
         {
@@ -222,6 +188,6 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
             _exceptionHandler.HandleOnShutdownException(e);
         }
 
-        _started.Reset();
+        runState.OnShutdown();
     }
 }

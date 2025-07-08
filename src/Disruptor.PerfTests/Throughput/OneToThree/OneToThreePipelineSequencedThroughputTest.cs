@@ -91,13 +91,13 @@ public class OneToThreePipelineSequencedThroughputTest : IThroughputTest
         var latch = new ManualResetEvent(false);
         _stepThreeFunctionHandler.Reset(latch, _stepThreeEventProcessor.Sequence.Value + _iterations);
 
-        var processorTask1 = _stepOneEventProcessor.Start();
-        var processorTask2 = _stepTwoEventProcessor.Start();
-        var processorTask3 = _stepThreeEventProcessor.Start();
+        var startTask1 = _stepOneEventProcessor.Start();
+        var startTask2 = _stepTwoEventProcessor.Start();
+        var startTask3 = _stepThreeEventProcessor.Start();
 
-        _stepOneEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
-        _stepTwoEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
-        _stepThreeEventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+        startTask1.Wait(TimeSpan.FromSeconds(5));
+        startTask2.Wait(TimeSpan.FromSeconds(5));
+        startTask3.Wait(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();
 
@@ -117,10 +117,10 @@ public class OneToThreePipelineSequencedThroughputTest : IThroughputTest
         latch.WaitOne();
         sessionContext.Stop();
 
-        _stepOneEventProcessor.Halt();
-        _stepTwoEventProcessor.Halt();
-        _stepThreeEventProcessor.Halt();
-        Task.WaitAll(processorTask1, processorTask2, processorTask3);
+        var shutdownTask1 = _stepOneEventProcessor.Halt();
+        var shutdownTask2 = _stepTwoEventProcessor.Halt();
+        var shutdownTask3 = _stepThreeEventProcessor.Halt();
+        Task.WaitAll(shutdownTask1, shutdownTask2, shutdownTask3);
 
         PerfTestUtil.FailIfNot(_expectedResult, _stepThreeFunctionHandler.StepThreeCounter);
 

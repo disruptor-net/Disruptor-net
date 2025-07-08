@@ -254,12 +254,14 @@ public class EventProcessorTests
         var sequenceWaiter = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, new DependentSequenceGroup(new Sequence()));
         var barrier = new SequenceBarrier(sequencer, sequenceWaiter);
         var dp = new ArrayDataProvider<StubEvent>(sequencer.BufferSize);
+        var delayedTaskScheduler = new DelayedTaskScheduler();
 
         var h1 = new LifeCycleHandler();
         var p1 = CreateEventProcessor(dp, barrier, h1);
 
+        p1.Start(delayedTaskScheduler, TaskCreationOptions.None);
         p1.Halt();
-        p1.Start();
+        delayedTaskScheduler.StartPendingTasks();
 
         Assert.That(h1.WaitStart(TimeSpan.FromSeconds(2)));
         Assert.That(h1.WaitShutdown(TimeSpan.FromSeconds(2)));

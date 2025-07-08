@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Util;
 
@@ -21,8 +20,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
     private readonly IWorkHandler<T> _workHandler;
     private readonly IExceptionHandler<T> _exceptionHandler;
     private readonly Sequence _workSequence;
-    private readonly ManualResetEventSlim _started = new();
-    private volatile int _runState = ProcessorRunStates.Idle;
+    private readonly EventProcessorState _state = new(restartable: false);
 
     /// <summary>
     /// Construct a <see cref="WorkProcessor{T}"/>.
@@ -51,53 +49,32 @@ public sealed class WorkProcessor<T> : IEventProcessor
     public DependentSequenceGroup DependentSequences => _sequenceBarrier.DependentSequences;
 
     /// <inheritdoc/>
-    public void Halt()
+    public Task Halt()
     {
-        _runState = ProcessorRunStates.Halted;
+        var runState = _state.Halt();
         _sequenceBarrier.CancelProcessing();
-    }
 
-    /// <summary>
-    /// Signal that this <see cref="WorkProcessor{T}"/> should stop when it has finished processing its work sequence.
-    /// </summary>
-    public void HaltLater()
-    {
-        _runState = ProcessorRunStates.Halted;
+        return runState.ShutdownTask;
     }
 
     /// <inheritdoc/>
-    public bool IsRunning => _runState == ProcessorRunStates.Running;
-
-    /// <inheritdoc/>
-    public void WaitUntilStarted(TimeSpan timeout)
-    {
-        _started.Wait(timeout);
-    }
+    public bool IsRunning => _state.IsRunning;
 
     /// <inheritdoc/>
     public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
     {
-        return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
+        var runState = _state.Start();
+        taskScheduler.ScheduleAndStart(() => Run(runState), taskCreationOptions);
+
+        return runState.StartTask;
     }
 
     [MethodImpl(Constants.AggressiveOptimization)]
-    public void Run()
+    private void Run(EventProcessorState.RunState runState)
     {
-        var previousRunState = Interlocked.CompareExchange(ref _runState, ProcessorRunStates.Running, ProcessorRunStates.Idle);
-        if (previousRunState == ProcessorRunStates.Running)
-        {
-            throw new InvalidOperationException("WorkProcessor is already running");
-        }
+        NotifyStart(runState);
 
-        if (previousRunState == ProcessorRunStates.Halted)
-        {
-            throw new InvalidOperationException("WorkProcessor is halted and cannot be restarted");
-        }
-
-        _sequenceBarrier.ResetProcessing();
-
-        NotifyStart();
-
+        var cancellationToken = runState.CancellationToken;
         var processedSequence = true;
         var cachedAvailableSequence = long.MinValue;
         var nextSequence = _sequence.Value;
@@ -114,10 +91,10 @@ public sealed class WorkProcessor<T> : IEventProcessor
 
                 if (processedSequence)
                 {
-                    if (_runState != ProcessorRunStates.Running)
+                    if (runState.IsHalted)
                     {
                         _sequenceBarrier.CancelProcessing();
-                        _sequenceBarrier.ThrowIfCancellationRequested();
+                        break;
                     }
 
                     processedSequence = false;
@@ -137,7 +114,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
                 }
                 else
                 {
-                    var waitResult = _sequenceBarrier.WaitForPublishedSequence(nextSequence);
+                    var waitResult = _sequenceBarrier.WaitForPublishedSequence(nextSequence, cancellationToken);
                     if (waitResult.IsTimeout)
                     {
                         NotifyTimeout(_sequence.Value);
@@ -147,12 +124,9 @@ public sealed class WorkProcessor<T> : IEventProcessor
                     cachedAvailableSequence = waitResult.UnsafeAvailableSequence;
                 }
             }
-            catch (OperationCanceledException) when (_sequenceBarrier.IsCancellationRequested)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                if (_runState != ProcessorRunStates.Running)
-                {
-                    break;
-                }
+                break;
             }
             catch (Exception ex)
             {
@@ -162,9 +136,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
             }
         }
 
-        NotifyShutdown();
-
-        _runState = ProcessorRunStates.Halted;
+        NotifyShutdown(runState);
     }
 
     private void NotifyTimeout(long availableSequence)
@@ -179,7 +151,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
         }
     }
 
-    private void NotifyStart()
+    private void NotifyStart(EventProcessorState.RunState runState)
     {
         try
         {
@@ -190,10 +162,10 @@ public sealed class WorkProcessor<T> : IEventProcessor
             _exceptionHandler.HandleOnStartException(ex);
         }
 
-        _started.Set();
+        runState.OnStarted();
     }
 
-    private void NotifyShutdown()
+    private void NotifyShutdown(EventProcessorState.RunState runState)
     {
         try
         {
@@ -204,7 +176,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
             _exceptionHandler.HandleOnShutdownException(ex);
         }
 
-        _started.Reset();
+        runState.OnShutdown();
     }
 
     private class EventReleaser : IEventReleaser

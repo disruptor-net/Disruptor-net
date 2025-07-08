@@ -59,9 +59,8 @@ public class OneToOneSequencedThroughputTest_AsyncBatchHandler_Timeout : IThroug
         long expectedCount = _eventProcessor.Sequence.Value + _iterations;
 
         _eventHandler.Reset(expectedCount);
-        var processorTask = _eventProcessor.Start();
-
-        _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+        var startTask = _eventProcessor.Start();
+        startTask.Wait(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();
 
@@ -77,9 +76,9 @@ public class OneToOneSequencedThroughputTest_AsyncBatchHandler_Timeout : IThroug
         _eventHandler.WaitForSequence();
         sessionContext.Stop();
         PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _eventProcessor);
-        _eventProcessor.Halt();
+        var shutdownTask = _eventProcessor.Halt();
 
-        if (!processorTask.Wait(2000))
+        if (!shutdownTask.Wait(2000))
             throw new InvalidOperationException("Process task should be completed");
 
         sessionContext.SetBatchData(_eventHandler.BatchesProcessed, _iterations);

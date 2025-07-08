@@ -78,9 +78,9 @@ public class ThreeToThreeSequencedThroughputTest : IThroughputTest
         {
             futures[i] = _valuePublishers[i].StartLongRunning();
         }
-        var processorTask = _eventProcessor.StartLongRunning();
+        var startTask = _eventProcessor.StartLongRunning();
 
-        _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+        startTask.Wait(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();
         _cyclicBarrier.Signal();
@@ -94,8 +94,8 @@ public class ThreeToThreeSequencedThroughputTest : IThroughputTest
         latch.WaitOne();
 
         sessionContext.Stop();
-        _eventProcessor.Halt();
-        processorTask.Wait(2000);
+        var shutdownTask = _eventProcessor.Halt();
+        shutdownTask.Wait(2000);
 
         sessionContext.SetBatchData(_handler.BatchesProcessed, _iterations * _arraySize);
 

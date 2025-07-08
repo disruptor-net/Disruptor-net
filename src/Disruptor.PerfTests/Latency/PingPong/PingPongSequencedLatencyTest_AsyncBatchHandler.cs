@@ -51,10 +51,10 @@ public class PingPongSequencedLatencyTest_AsyncBatchHandler : ILatencyTest
         _pinger.Reset(startCountdown, completedSignal, sessionContext.Histogram);
         _ponger.Reset(startCountdown);
 
-        var processorTask1 = _pongProcessor.Start();
-        var processorTask2 = _pingProcessor.Start();
-        _pongProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
-        _pingProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+        var startTask1 = _pongProcessor.Start();
+        var startTask2 = _pingProcessor.Start();
+        startTask1.Wait(TimeSpan.FromSeconds(5));
+        startTask2.Wait(TimeSpan.FromSeconds(5));
 
         startCountdown.Signal();
         startCountdown.Wait();
@@ -64,9 +64,9 @@ public class PingPongSequencedLatencyTest_AsyncBatchHandler : ILatencyTest
 
         sessionContext.Stop();
 
-        _pingProcessor.Halt();
-        _pongProcessor.Halt();
-        Task.WaitAll(processorTask1, processorTask2);
+        var stopTask1 = _pingProcessor.Halt();
+        var stopTask2 = _pongProcessor.Halt();
+        Task.WaitAll(stopTask1, stopTask2);
     }
 
     private class PingPongEvent

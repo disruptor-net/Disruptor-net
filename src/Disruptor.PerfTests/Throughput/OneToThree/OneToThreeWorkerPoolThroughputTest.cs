@@ -48,8 +48,8 @@ public class OneToThreeWorkerPoolThroughputTest : IThroughputTest
 
         _ringBuffer.AddGatingSequences(workerPool.GetWorkerSequences());
 
-        workerPool.Start();
-        workerPool.WaitUntilStarted(TimeSpan.FromSeconds(5));
+        var startTask = workerPool.Start();
+        startTask.Wait(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();
 
@@ -61,11 +61,19 @@ public class OneToThreeWorkerPoolThroughputTest : IThroughputTest
             ringBuffer.Publish(sequence);
         }
 
-        workerPool.DrainAndHalt();
+        while (workerPool.HasBacklog())
+        {
+            Thread.Yield();
+        }
 
+        // ???
         // Workaround to ensure that the last worker(s) have completed after releasing their events
         Thread.Sleep(1);
+
         sessionContext.Stop();
+
+        var shutdownTask = workerPool.Halt();
+        shutdownTask.Wait();
 
         PerfTestUtil.FailIfNot(_iterations, SumCounters());
 

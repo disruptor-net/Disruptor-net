@@ -59,9 +59,8 @@ public class OneToOneSequencedThroughputTest_BatchHandler : IThroughputTest
         long expectedCount = _eventProcessor.Sequence.Value + _iterations;
 
         _eventHandler.Reset(expectedCount);
-        var processorTask = _eventProcessor.Start();
-
-        _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+        var startTask = _eventProcessor.Start();
+        startTask.Wait(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();
 
@@ -77,8 +76,9 @@ public class OneToOneSequencedThroughputTest_BatchHandler : IThroughputTest
         _eventHandler.WaitForSequence();
         sessionContext.Stop();
         PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _eventProcessor);
-        _eventProcessor.Halt();
-        processorTask.Wait(2000);
+
+        var shutdownTask = _eventProcessor.Halt();
+        shutdownTask.Wait(2000);
 
         sessionContext.SetBatchData(_eventHandler.BatchesProcessed, _iterations);
 

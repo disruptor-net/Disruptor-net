@@ -85,6 +85,7 @@ public abstract class SequenceBarrierTests : IDisposable
 
         var sequenceBarrier = _ringBuffer.NewBarrier(sequence1, sequence2, sequence3);
         var startedSignal = new ManualResetEventSlim();
+        var cancellationTokenSource = new CancellationTokenSource();
 
         var alerted = false;
         var task = Task.Run(() =>
@@ -92,7 +93,7 @@ public abstract class SequenceBarrierTests : IDisposable
             startedSignal.Set();
             try
             {
-                sequenceBarrier.WaitForPublishedSequence(expectedNumberMessages - 1);
+                sequenceBarrier.WaitForPublishedSequence(expectedNumberMessages - 1, cancellationTokenSource.Token);
             }
             catch (OperationCanceledException)
             {
@@ -104,6 +105,7 @@ public abstract class SequenceBarrierTests : IDisposable
 
         Thread.Sleep(200);
 
+        cancellationTokenSource.Cancel();
         sequenceBarrier.CancelProcessing();
         task.Wait();
 
@@ -137,22 +139,6 @@ public abstract class SequenceBarrierTests : IDisposable
         Assert.That(completedWorkSequence >= expectedWorkSequence);
     }
 
-    [Test]
-    public void ShouldSetAndClearAlertStatus()
-    {
-        var sequenceBarrier = _ringBuffer.NewBarrier();
-        Assert.That(!sequenceBarrier.CancellationToken.IsCancellationRequested);
-        Assert.That(!sequenceBarrier.IsCancellationRequested);
-
-        sequenceBarrier.CancelProcessing();
-        Assert.That(sequenceBarrier.CancellationToken.IsCancellationRequested);
-        Assert.That(sequenceBarrier.IsCancellationRequested);
-
-        sequenceBarrier.ResetProcessing();
-        Assert.That(!sequenceBarrier.CancellationToken.IsCancellationRequested);
-        Assert.That(!sequenceBarrier.IsCancellationRequested);
-    }
-
     private void FillRingBuffer(long expectedNumberEvents)
     {
         for (var i = 0; i < expectedNumberEvents; i++)
@@ -167,8 +153,7 @@ public abstract class SequenceBarrierTests : IDisposable
     private class StubEventProcessor : IEventProcessor
     {
         private readonly Sequence _sequence = new();
-        private readonly ManualResetEventSlim _runEvent = new();
-        private volatile int _running;
+        private readonly EventProcessorState _state = new(restartable: true);
 
         public StubEventProcessor(long sequence)
         {
@@ -177,30 +162,26 @@ public abstract class SequenceBarrierTests : IDisposable
 
         public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
         {
-            return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
+            var runState = _state.Start();
+            taskScheduler.ScheduleAndStart(() => Run(runState), taskCreationOptions);
+
+            return runState.StartTask;
         }
 
-        public void WaitUntilStarted(TimeSpan timeout)
+        private void Run(EventProcessorState.RunState runState)
         {
-            _runEvent.Wait();
+            runState.OnStarted();
+            runState.OnShutdown();
         }
 
-        public void Run()
-        {
-            if (Interlocked.Exchange(ref _running, 1) != 0)
-                throw new InvalidOperationException("Already running");
-
-            _runEvent.Set();
-        }
-
-        public bool IsRunning => _running == 1;
+        public bool IsRunning => _state.IsRunning;
 
         public Sequence Sequence => _sequence;
 
-        public void Halt()
+        public Task Halt()
         {
-            _running = 0;
-            _runEvent.Reset();
+            var runState = _state.Halt();
+            return runState.ShutdownTask;
         }
     }
 }

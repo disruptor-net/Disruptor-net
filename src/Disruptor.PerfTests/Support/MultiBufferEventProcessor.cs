@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Processing;
 
 namespace Disruptor.PerfTests.Support;
 
 public class MultiBufferEventProcessor<T>
     where T : class
 {
-    private readonly ManualResetEventSlim _runEvent = new();
-    private volatile int _isRunning;
+    private readonly EventProcessorState _state = new EventProcessorState(restartable: true);
     private readonly RingBuffer<T>[] _providers;
     private readonly SequenceBarrier[] _barriers;
     private readonly IEventHandler<T> _handler;
@@ -33,35 +33,26 @@ public class MultiBufferEventProcessor<T>
 
     public Task StartLongRunning()
     {
-        return Task.Factory.StartNew(Run, TaskCreationOptions.LongRunning);
+        var runState = _state.Start();
+        Task.Factory.StartNew(() => Run(runState), TaskCreationOptions.LongRunning);
+
+        return runState.StartTask;
     }
 
-    public void WaitUntilStarted(TimeSpan timeout)
+    private void Run(EventProcessorState.RunState runState)
     {
-        _runEvent.Wait();
-    }
+        runState.OnStarted();
 
-    public void Run()
-    {
-        if (Interlocked.Exchange(ref _isRunning, 1) != 0)
-            throw new ApplicationException("Already running");
-
-        _runEvent.Set();
-
-        foreach (var barrier in _barriers)
-        {
-            barrier.ResetProcessing();
-        }
-
-        var barrierLength = _barriers.Length;
+        var cancellationToken = runState.CancellationToken;
+        var barriers = _barriers;
 
         while (true)
         {
             try
             {
-                for (var i = 0; i < barrierLength; i++)
+                for (var i = 0; i < barriers.Length; i++)
                 {
-                    var waitResult = _barriers[i].WaitForPublishedSequence(-1);
+                    var waitResult = barriers[i].WaitForPublishedSequence(-1, cancellationToken);
                     if (waitResult.IsTimeout)
                         continue;
 
@@ -82,10 +73,9 @@ public class MultiBufferEventProcessor<T>
 
                 Thread.Yield();
             }
-            catch (OperationCanceledException) when (_barriers[0].IsCancellationRequested)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                if (_isRunning == 0)
-                    break;
+                break;
             }
             catch (Exception e)
             {
@@ -93,6 +83,8 @@ public class MultiBufferEventProcessor<T>
                 break;
             }
         }
+
+        runState.OnShutdown();
     }
 
     public long Count => _count;
@@ -102,12 +94,17 @@ public class MultiBufferEventProcessor<T>
         return _sequences;
     }
 
-    public void Halt()
+    public Task Halt()
     {
-        _isRunning = 0;
-        _runEvent.Reset();
-        _barriers[0].CancelProcessing();
+        var runState = _state.Halt();
+
+        foreach (var barrier in _barriers)
+        {
+            barrier.CancelProcessing();
+        }
+
+        return runState.ShutdownTask;
     }
 
-    public bool IsRunning => _isRunning == 1;
+    public bool IsRunning => _state.IsRunning;
 }

@@ -12,6 +12,7 @@ public class SequenceBarrierBenchmarksV2 : SequenceBarrierBenchmarks, IDisposabl
 {
     private readonly SequenceBarrier _requesterSequenceBarrier;
     private readonly SequenceBarrier _replierSequenceBarrier;
+    private readonly CancellationTokenSource _replierCancellationTokenSource;
     private readonly Task _replierTask;
     private readonly ManualResetEventSlim _replierStarted = new();
 
@@ -19,6 +20,7 @@ public class SequenceBarrierBenchmarksV2 : SequenceBarrierBenchmarks, IDisposabl
     {
         _requesterSequenceBarrier = new SequenceBarrier(_requesterSequencer, _requesterSequencer.GetWaitStrategy().NewSequenceWaiter(null, new DependentSequenceGroup(_requesterSequencer.GetCursorSequence())));
         _replierSequenceBarrier = new SequenceBarrier(_replierSequencer, _replierSequencer.GetWaitStrategy().NewSequenceWaiter(null, new DependentSequenceGroup(_replierSequencer.GetCursorSequence())));
+        _replierCancellationTokenSource = new CancellationTokenSource();
 
         _replierTask = Task.Run(RunReplier);
         _replierStarted.Wait();
@@ -26,6 +28,7 @@ public class SequenceBarrierBenchmarksV2 : SequenceBarrierBenchmarks, IDisposabl
 
     public void Dispose()
     {
+        _replierCancellationTokenSource.Cancel();
         _replierSequenceBarrier.CancelProcessing();
         _replierTask.Wait();
     }
@@ -66,6 +69,8 @@ public class SequenceBarrierBenchmarksV2 : SequenceBarrierBenchmarks, IDisposabl
     {
         _replierStarted.Set();
 
+        var cancellationToken = _replierCancellationTokenSource.Token;
+
         try
         {
             var sequence = -1L;
@@ -77,7 +82,7 @@ public class SequenceBarrierBenchmarksV2 : SequenceBarrierBenchmarks, IDisposabl
                 SequenceWaitResult result;
                 do
                 {
-                    result = _replierSequenceBarrier.WaitFor(sequence);
+                    result = _replierSequenceBarrier.WaitFor(sequence, cancellationToken);
                 }
                 while (result.IsTimeout || publishedSequenceReader.GetHighestPublishedSequence(sequence, result.UnsafeAvailableSequence) < sequence);
 

@@ -8,8 +8,7 @@ namespace Disruptor.Tests.Support;
 
 public class TestEventProcessor : IEventProcessor
 {
-    private readonly ManualResetEventSlim _runEvent = new();
-    private volatile int _running;
+    private readonly EventProcessorState _state = new(restartable: true);
 
     public TestEventProcessor(SequenceBarrier sequenceBarrier)
     {
@@ -19,31 +18,26 @@ public class TestEventProcessor : IEventProcessor
     public SequenceBarrier SequenceBarrier { get; }
     public Sequence Sequence { get; } = new();
 
-    public void WaitUntilStarted(TimeSpan timeout)
-    {
-        _runEvent.Wait();
-    }
+    public bool IsRunning => _state.IsRunning;
 
-    public bool IsRunning => _running != 0;
-
-    public void Halt()
+    public Task Halt()
     {
-        _running = 0;
-        _runEvent.Reset();
+        var runState = _state.Halt();
+        return runState.ShutdownTask;
     }
 
     public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
     {
-        return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
+        var runState = _state.Start();
+        taskScheduler.ScheduleAndStart(() => Run(runState), taskCreationOptions);
+        return runState.StartTask;
     }
 
-    public void Run()
+    private void Run(EventProcessorState.RunState runState)
     {
-        if (Interlocked.Exchange(ref _running, 1) != 0)
-            throw new InvalidOperationException("Already running");
-
-        _runEvent.Set();
+        runState.OnStarted();
         SequenceBarrier.WaitForPublishedSequence(0L);
         Sequence.SetValue(Sequence.Value + 1);
+        runState.OnShutdown();
     }
 }

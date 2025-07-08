@@ -19,29 +19,17 @@ public sealed class AsyncSequenceBarrier : IDisposable
     private readonly ISequencer _sequencer;
     private readonly IAsyncSequenceWaiter _sequenceWaiter;
     private readonly DependentSequenceGroup _dependentSequences;
-    private CancellationTokenSource _cancellationTokenSource;
 
     public AsyncSequenceBarrier(ISequencer sequencer, IAsyncSequenceWaiter sequenceWaiter)
     {
         _sequencer = sequencer;
         _sequenceWaiter = sequenceWaiter;
         _dependentSequences = sequenceWaiter.DependentSequences;
-        _cancellationTokenSource = new CancellationTokenSource();
     }
 
     internal ISequencer Sequencer => _sequencer;
 
     public DependentSequenceGroup DependentSequences => _dependentSequences;
-
-    public bool IsCancellationRequested => _cancellationTokenSource.IsCancellationRequested;
-
-    public CancellationToken CancellationToken
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _cancellationTokenSource.Token;
-    }
-
-    public void ThrowIfCancellationRequested() => _cancellationTokenSource.Token.ThrowIfCancellationRequested();
 
     /// <summary>
     /// Waits until the requested sequence is available using the <see cref="ISequenceWaiter"/>.
@@ -52,9 +40,9 @@ public sealed class AsyncSequenceBarrier : IDisposable
     /// The returned value can be timeout (see <see cref="SequenceWaitResult.IsTimeout"/>
     /// </p>
     /// </remarks>
-    public async ValueTask<SequenceWaitResult> WaitForPublishedSequenceAsync(long sequence)
+    public async ValueTask<SequenceWaitResult> WaitForPublishedSequenceAsync(long sequence, CancellationToken cancellationToken = default)
     {
-        var waitResult = await WaitForAsync(sequence).ConfigureAwait(false);
+        var waitResult = await WaitForAsync(sequence, cancellationToken).ConfigureAwait(false);
         return waitResult.IsTimeout ? waitResult : _sequencer.GetHighestPublishedSequence(sequence, waitResult.UnsafeAvailableSequence);
     }
 
@@ -72,40 +60,30 @@ public sealed class AsyncSequenceBarrier : IDisposable
     /// </p>
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
-    public ValueTask<SequenceWaitResult> WaitForAsync(long sequence)
+    public ValueTask<SequenceWaitResult> WaitForAsync(long sequence, CancellationToken cancellationToken = default)
     {
-        _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+        cancellationToken.ThrowIfCancellationRequested();
 
         var availableSequence = _dependentSequences.Value;
         if (availableSequence >= sequence)
             return new ValueTask<SequenceWaitResult>(availableSequence);
 
-        return InvokeWaitStrategy(sequence);
+        return InvokeWaitStrategy(sequence, cancellationToken);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private ValueTask<SequenceWaitResult> InvokeWaitStrategy(long sequence)
+    private ValueTask<SequenceWaitResult> InvokeWaitStrategy(long sequence, CancellationToken cancellationToken)
     {
-        return _sequenceWaiter.WaitForAsync(sequence, _cancellationTokenSource.Token);
-    }
-
-    public void ResetProcessing()
-    {
-        // Not disposing the previous value should be fine because the CancellationTokenSource instance
-        // has no finalizer and no unmanaged resources to release.
-
-        _cancellationTokenSource = new CancellationTokenSource();
+        return _sequenceWaiter.WaitForAsync(sequence, cancellationToken);
     }
 
     public void CancelProcessing()
     {
-        _cancellationTokenSource.Cancel();
         _sequenceWaiter.Cancel();
     }
 
     public void Dispose()
     {
         _sequenceWaiter.Dispose();
-        _cancellationTokenSource.Dispose();
     }
 }

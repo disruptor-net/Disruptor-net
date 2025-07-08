@@ -164,10 +164,16 @@ public abstract class ValueTypeDisruptor<T>
     }
 
     /// <summary>
-    /// Calls <see cref="IEventProcessor.Halt"/> on all of the event processors created via this disruptor.
+    /// Calls <see cref="IEventProcessor.Halt"/> on all the event processors created via this disruptor.
     /// </summary>
     public void Halt()
     {
+        if (_started == 0)
+        {
+            // Preserve previous behavior: ignore Halt if the Disruptor is not started
+            return;
+        }
+
         foreach (var consumerInfo in _consumerRepository.Consumers)
         {
             consumerInfo.Halt();

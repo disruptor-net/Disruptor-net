@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using System.Threading;
+using BenchmarkDotNet.Attributes;
 
 namespace Disruptor.Benchmarks;
 
@@ -32,7 +33,7 @@ public class RingBufferPublicationBenchmarks
             _ringBuffer.Publish(sequence);
         }
 
-        _sequenceBarrier.WaitFor(sequence);
+        _sequenceBarrier.WaitFor(sequence, CancellationToken.None);
     }
 
     // [Benchmark(Baseline = true)]

@@ -21,7 +21,6 @@ public class EventHandlerBenchmark_OneToOne_Yielding
     private readonly Handler _eventHandler;
     private readonly IEventProcessor<Event> _eventProcessor;
     private long _expectedCount;
-    private Task _processorTask;
 
     public EventHandlerBenchmark_OneToOne_Yielding()
     {
@@ -38,16 +37,16 @@ public class EventHandlerBenchmark_OneToOne_Yielding
         _expectedCount = _eventProcessor.Sequence.Value + _iterations;
 
         _eventHandler.Reset(_expectedCount);
-        _processorTask = _eventProcessor.Start();
+        var startTask = _eventProcessor.Start();
 
-        _eventProcessor.WaitUntilStarted(TimeSpan.FromSeconds(5));
+        startTask.Wait(TimeSpan.FromSeconds(5));
     }
 
     [IterationCleanup]
     public void IterationCleanup()
     {
-        _eventProcessor.Halt();
-        _processorTask.Wait();
+        var shutdownTask = _eventProcessor.Halt();
+        shutdownTask.Wait();
     }
 
     [Benchmark(OperationsPerInvoke = (int)_iterations)]

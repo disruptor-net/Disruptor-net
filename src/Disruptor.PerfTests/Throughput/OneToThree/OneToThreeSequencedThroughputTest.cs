@@ -83,12 +83,11 @@ public class OneToThreeSequencedThroughputTest : IThroughputTest
     {
         var latch = new Barrier(_numEventProcessors + 1);
 
-        var processorTasks = new List<Task>();
         for (var i = 0; i < _numEventProcessors; i++)
         {
             _handlers[i].Reset(latch, _eventProcessors[i].Sequence.Value + _iterations);
-            processorTasks.Add(_eventProcessors[i].Start());
-            _eventProcessors[i].WaitUntilStarted(TimeSpan.FromSeconds(5));
+            var startTask = _eventProcessors[i].Start();
+            startTask.Wait(TimeSpan.FromSeconds(5));
         }
 
         sessionContext.Start();
@@ -105,12 +104,13 @@ public class OneToThreeSequencedThroughputTest : IThroughputTest
         latch.SignalAndWait();
         sessionContext.Stop();
 
+        var shutdownTasks = new List<Task>();
         for (var i = 0; i < _numEventProcessors; i++)
         {
-            _eventProcessors[i].Halt();
+            shutdownTasks.Add(_eventProcessors[i].Halt());
             PerfTestUtil.FailIfNot(_results[i], _handlers[i].Value, $"Result {_results[i]} != {_handlers[i].Value}");
         }
-        Task.WaitAll(processorTasks.ToArray());
+        Task.WaitAll(shutdownTasks.ToArray());
 
         sessionContext.SetBatchData(_handlers.Sum(x => x.BatchesProcessedCount.Value), _numEventProcessors * _iterations);
 

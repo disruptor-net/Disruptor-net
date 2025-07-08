@@ -7,8 +7,7 @@ namespace Disruptor.Tests.Support;
 
 public class DummyEventProcessor : IEventProcessor
 {
-    private readonly ManualResetEventSlim _runEvent = new();
-    private int _running;
+    private readonly EventProcessorState _state = new(restartable: true);
 
 
     public DummyEventProcessor()
@@ -23,29 +22,24 @@ public class DummyEventProcessor : IEventProcessor
 
     public Sequence Sequence { get; }
 
-    public void Halt()
+    public Task Halt()
     {
-        Thread.VolatileWrite(ref _running, 1);
-        _runEvent.Reset();
+        var runState = _state.Halt();
+        return runState.ShutdownTask;
     }
 
     public Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions)
     {
-        return taskScheduler.ScheduleAndStart(Run, taskCreationOptions);
+        var runState = _state.Start();
+        taskScheduler.ScheduleAndStart(() => Run(runState), taskCreationOptions);
+        return runState.StartTask;
     }
 
-    public void WaitUntilStarted(TimeSpan timeout)
+    public bool IsRunning => _state.IsRunning;
+
+    private void Run(EventProcessorState.RunState runState)
     {
-        _runEvent.Wait();
-    }
-
-    public bool IsRunning => Thread.VolatileRead(ref _running) == 1;
-
-    public void Run()
-    {
-        if (Interlocked.Exchange(ref _running, 1) != 0)
-            throw new InvalidOperationException("Already running");
-
-        _runEvent.Set();
+        runState.OnStarted();
+        runState.OnShutdown();
     }
 }

@@ -97,12 +97,12 @@ public class OneToThreeDiamondSequencedThroughputTest : IThroughputTest
         var latch = new ManualResetEvent(false);
         _fizzBuzzHandler.Reset(latch, _eventProcessorFizzBuzz.Sequence.Value + _iterations);
 
-        var processorTask1 = _eventProcessorFizz.StartLongRunning();
-        var processorTask2 = _eventProcessorBuzz.StartLongRunning();
-        var processorTask3 = _eventProcessorFizzBuzz.StartLongRunning();
-        _eventProcessorFizz.WaitUntilStarted(TimeSpan.FromSeconds(5));
-        _eventProcessorBuzz.WaitUntilStarted(TimeSpan.FromSeconds(5));
-        _eventProcessorFizzBuzz.WaitUntilStarted(TimeSpan.FromSeconds(5));
+        var startTask1 = _eventProcessorFizz.StartLongRunning();
+        var startTask2 = _eventProcessorBuzz.StartLongRunning();
+        var startTask3 = _eventProcessorFizzBuzz.StartLongRunning();
+        startTask1.Wait(TimeSpan.FromSeconds(5));
+        startTask2.Wait(TimeSpan.FromSeconds(5));
+        startTask3.Wait(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();
 
@@ -118,10 +118,10 @@ public class OneToThreeDiamondSequencedThroughputTest : IThroughputTest
         latch.WaitOne();
         sessionContext.Stop();
 
-        _eventProcessorFizz.Halt();
-        _eventProcessorBuzz.Halt();
-        _eventProcessorFizzBuzz.Halt();
-        Task.WaitAll(processorTask1, processorTask2, processorTask3);
+        var shutdownTask1 = _eventProcessorFizz.Halt();
+        var shutdownTask2 = _eventProcessorBuzz.Halt();
+        var shutdownTask3 = _eventProcessorFizzBuzz.Halt();
+        Task.WaitAll(shutdownTask1, shutdownTask2, shutdownTask3);
 
         PerfTestUtil.FailIfNot(_expectedResult, _fizzBuzzHandler.FizzBuzzCounter);
 

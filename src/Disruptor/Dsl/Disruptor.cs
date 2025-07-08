@@ -301,10 +301,16 @@ public class Disruptor<T>
     }
 
     /// <summary>
-    /// Calls <see cref="IEventProcessor.Halt"/> on all of the event processors created via this disruptor.
+    /// Calls <see cref="IEventProcessor.Halt"/> on all the event processors created via this disruptor.
     /// </summary>
     public void Halt()
     {
+        if (_started == 0)
+        {
+            // Preserve previous behavior: ignore Halt if the Disruptor is not started
+            return;
+        }
+
         foreach (var consumerInfo in _consumerRepository.Consumers)
         {
             consumerInfo.Halt();
@@ -390,9 +396,8 @@ public class Disruptor<T>
     public long GetSequenceValueFor(IEventHandler<T> handler) => _consumerRepository.GetSequenceFor(handler).Value;
 
     /// <summary>
-    /// Confirms if all messages have been consumed by all event processors.
+    /// Indicates whether all messages have been consumed by all event processors.
     /// </summary>
-    /// <returns></returns>
     private bool HasBacklog()
     {
         var cursor = _ringBuffer.Cursor;

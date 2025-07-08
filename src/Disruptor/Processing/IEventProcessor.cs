@@ -20,24 +20,28 @@ public interface IEventProcessor
     Sequence Sequence { get; }
 
     /// <summary>
-    /// Signal that this <see cref="IEventProcessor"/> should stop when it has finished consuming at the next clean break.
-    /// It will call <see cref="SequenceBarrier.CancelProcessing"/> to notify the thread to check status.
+    /// Halts the processor.
+    /// <remarks>
+    /// If the processor is processing an event batch when <see cref="Halt"/> is invoked, it will complete processing the current batch before halting.
+    /// </remarks>
     /// </summary>
-    void Halt();
+    /// <returns>
+    /// A task that represents the shutdown of the processor.
+    /// The task completes after <see cref="IEventHandler.OnShutdown"/> is invoked.
+    /// </returns>.
+    Task Halt();
 
     /// <summary>
-    /// Starts this processor.
+    /// Starts the processor.
     /// </summary>
+    /// <returns>
+    /// A task that represents the startup of the processor.
+    /// The task completes after <see cref="IEventHandler.OnStart"/> is invoked.
+    /// </returns>.
     Task Start(TaskScheduler taskScheduler, TaskCreationOptions taskCreationOptions);
 
     /// <summary>
-    /// Waits before the event processor enters the running state.
-    /// </summary>
-    /// <param name="timeout">Maximum wait duration</param>
-    void WaitUntilStarted(TimeSpan timeout);
-
-    /// <summary>
-    /// Gets if the processor is running
+    /// Indicates whether the processor is running.
     /// </summary>
     bool IsRunning { get; }
 }
