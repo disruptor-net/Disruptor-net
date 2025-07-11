@@ -1,8 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Disruptor.Dsl;
 
-internal interface IConsumerInfo
+internal interface IConsumerInfo : IDisposable
 {
     Sequence[] Sequences { get; }
 

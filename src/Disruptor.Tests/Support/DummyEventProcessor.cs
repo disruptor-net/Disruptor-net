@@ -9,7 +9,6 @@ public class DummyEventProcessor : IEventProcessor
 {
     private readonly EventProcessorState _state = new(restartable: true);
 
-
     public DummyEventProcessor()
         : this(new Sequence())
     {
@@ -25,7 +24,12 @@ public class DummyEventProcessor : IEventProcessor
     public Task Halt()
     {
         var runState = _state.Halt();
-        return runState.ShutdownTask;
+        return runState != null ? runState.ShutdownTask : Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _state.Dispose();
     }
 
     public Task Start(TaskScheduler taskScheduler)

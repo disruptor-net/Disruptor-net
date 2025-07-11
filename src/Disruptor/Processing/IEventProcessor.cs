@@ -12,7 +12,7 @@ namespace Disruptor.Processing;
 ///
 /// An event process will generally be associated with a thread (long running task) for execution.
 /// </summary>
-public interface IEventProcessor
+public interface IEventProcessor : IDisposable
 {
     /// <summary>
     /// Return a reference to the <see cref="Sequence"/> being used by this <see cref="IEventProcessor"/>

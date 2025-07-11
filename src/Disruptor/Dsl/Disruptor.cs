@@ -21,7 +21,7 @@ namespace Disruptor.Dsl;
 /// var ringBuffer = disruptor.Start();</code>
 /// </summary>
 /// <typeparam name="T">the type of event used.</typeparam>
-public class Disruptor<T>
+public class Disruptor<T> : IDisposable
     where T : class
 {
     private readonly RingBuffer<T> _ringBuffer;
@@ -155,9 +155,14 @@ public class Disruptor<T>
     /// <returns>a <see cref="EventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public EventHandlerGroup<T> HandleEventsWith(params IEventProcessor[] processors)
     {
+        return HandleEventsWith(processors, false);
+    }
+
+    private EventHandlerGroup<T> HandleEventsWith(IEventProcessor[] processors, bool owned)
+    {
         foreach (var processor in processors)
         {
-            _consumerRepository.Add(processor);
+            _consumerRepository.Add(processor, owned);
         }
 
         var sequences = new Sequence[processors.Length];
@@ -190,7 +195,7 @@ public class Disruptor<T>
     /// <param name="exceptionHandler">the exception handler to use</param>
     public void SetDefaultExceptionHandler(IExceptionHandler<T> exceptionHandler)
     {
-        _state.ThrowIfStarted();
+        _state.ThrowIfStartedOrDisposed();
         _exceptionHandler.SwitchTo(exceptionHandler);
     }
 
@@ -366,6 +371,13 @@ public class Disruptor<T>
         return Halt();
     }
 
+    public void Dispose()
+    {
+        _state.Dispose();
+
+        _consumerRepository.DisposeAll();
+    }
+
     /// <summary>
     /// The <see cref="RingBuffer{T}"/> used by this disruptor.
     /// </summary>
@@ -424,7 +436,7 @@ public class Disruptor<T>
 
     internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IEventHandler<T>[] eventHandlers)
     {
-        _state.ThrowIfStarted();
+        _state.ThrowIfStartedOrDisposed();
 
         var processorSequences = new Sequence[eventHandlers.Length];
 
@@ -437,7 +449,7 @@ public class Disruptor<T>
 
             eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-            _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
+            _consumerRepository.AddOwnedProcessor(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;
         }
 
@@ -448,7 +460,7 @@ public class Disruptor<T>
 
     internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IBatchEventHandler<T>[] eventHandlers)
     {
-        _state.ThrowIfStarted();
+        _state.ThrowIfStartedOrDisposed();
 
         var processorSequences = new Sequence[eventHandlers.Length];
 
@@ -461,7 +473,7 @@ public class Disruptor<T>
 
             eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-            _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
+            _consumerRepository.AddOwnedProcessor(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;
         }
 
@@ -472,7 +484,7 @@ public class Disruptor<T>
 
     internal EventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IAsyncBatchEventHandler<T>[] eventHandlers)
     {
-        _state.ThrowIfStarted();
+        _state.ThrowIfStartedOrDisposed();
 
         var processorSequences = new Sequence[eventHandlers.Length];
 
@@ -486,7 +498,7 @@ public class Disruptor<T>
 
             eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-            _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
+            _consumerRepository.AddOwnedProcessor(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;
         }
 
@@ -513,7 +525,7 @@ public class Disruptor<T>
     {
         var eventProcessors = processorFactories.Select(p => CreateEventProcessor(p)).ToArray();
 
-        return HandleEventsWith(eventProcessors);
+        return HandleEventsWith(eventProcessors, true);
 
         IEventProcessor CreateEventProcessor(EventProcessorCreator<T> processorFactory)
         {

@@ -41,7 +41,7 @@ public class ValueEventHandlerGroup<T>
     {
         foreach (var eventProcessor in processors)
         {
-            _consumerRepository.Add(eventProcessor);
+            _consumerRepository.Add(eventProcessor, false);
         }
         return new ValueEventHandlerGroup<T>(_disruptor, _consumerRepository, processors.Select(p => p.Sequence).Concat(_sequences));
     }

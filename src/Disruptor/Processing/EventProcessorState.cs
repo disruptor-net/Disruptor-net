@@ -15,6 +15,7 @@ public class EventProcessorState
 {
     private readonly object _lock = new();
     private readonly bool _restartable;
+    private bool _disposed;
     private RunState? _currentRunState;
 
     public EventProcessorState(bool restartable)
@@ -38,11 +39,14 @@ public class EventProcessorState
     {
         lock (_lock)
         {
+            if (_disposed)
+                throw new InvalidOperationException("Event processor is disposed");
+
             var runState = _currentRunState;
             if (runState != null)
             {
                 if (!_restartable)
-                    throw new InvalidOperationException("Event process was started once and cannot be restarted");
+                    throw new InvalidOperationException("Event processor was started once and cannot be restarted");
 
                 if (!runState.IsShutdown)
                     throw new InvalidOperationException("Event processor is already running");
@@ -53,18 +57,35 @@ public class EventProcessorState
         }
     }
 
-    public RunState Halt()
+    public RunState? Halt()
     {
         lock (_lock)
         {
-            var runState = _currentRunState;
-            if (runState == null)
-                throw new InvalidOperationException("Event processor is not running");
+            if (_disposed)
+                return null;
 
-            if (runState.IsHalted)
-                throw new InvalidOperationException("Event processor is already halted");
+            var runState = _currentRunState;
+            if (runState == null || runState.IsHalted)
+                return null;
 
             runState.Halt();
+            return runState;
+        }
+    }
+
+    public RunState? Dispose()
+    {
+        lock (_lock)
+        {
+            if (_disposed)
+                return null;
+
+            var runState = _currentRunState;
+            if (runState is { IsHalted: false })
+                runState.Halt();
+
+            _disposed = true;
+
             return runState;
         }
     }

@@ -52,9 +52,27 @@ public sealed class WorkProcessor<T> : IEventProcessor
     public Task Halt()
     {
         var runState = _state.Halt();
-        _sequenceBarrier.CancelProcessing();
+        if (runState != null)
+        {
+            _sequenceBarrier.CancelProcessing();
+            return runState.ShutdownTask;
+        }
 
-        return runState.ShutdownTask;
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        var runState = _state.Dispose();
+        if (runState != null)
+        {
+            _sequenceBarrier.CancelProcessing();
+            runState.ShutdownTask.ContinueWith(_ => _sequenceBarrier.Dispose());
+        }
+        else
+        {
+            _sequenceBarrier.Dispose();
+        }
     }
 
     /// <inheritdoc/>

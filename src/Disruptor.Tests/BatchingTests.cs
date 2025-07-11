@@ -60,7 +60,7 @@ public class BatchingTests
     [Test]
     public void ShouldBatch()
     {
-        var d = new Disruptor<LongEvent>(() => new LongEvent(), 2048, TaskScheduler.Current, _producerType, new SleepingWaitStrategy());
+        using var d = new Disruptor<LongEvent>(() => new LongEvent(), 2048, TaskScheduler.Current, _producerType, new SleepingWaitStrategy());
 
         var handler1 = new ParallelEventHandler(1, 0);
         var handler2 = new ParallelEventHandler(1, 1);

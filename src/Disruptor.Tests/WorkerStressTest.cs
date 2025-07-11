@@ -12,7 +12,7 @@ public class WorkerStressTest
     [Test]
     public void ShouldHandleLotsOfThreads()
     {
-        var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, new SleepingWaitStrategy());
+        using var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, new SleepingWaitStrategy());
         var ringBuffer = disruptor.RingBuffer;
         disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler<TestEvent>());
 

@@ -21,7 +21,7 @@ public class ConsumerRepositoryTests
     [Test]
     public void ShouldGetDependentSequenceGroupByHandler()
     {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
+        _consumerRepository.AddOwnedProcessor(_eventProcessor1, _handler1, _dependentSequenceGroup1);
 
         Assert.That(_consumerRepository.GetDependentSequencesFor(_handler1), Is.SameAs(_dependentSequenceGroup1));
     }
@@ -35,7 +35,7 @@ public class ConsumerRepositoryTests
     [Test]
     public void ShouldRetrieveEventProcessorForHandler()
     {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
+        _consumerRepository.AddOwnedProcessor(_eventProcessor1, _handler1, _dependentSequenceGroup1);
         Assert.That(_consumerRepository.GetEventProcessorFor(_handler1), Is.SameAs(_eventProcessor1));
     }
 
@@ -48,8 +48,8 @@ public class ConsumerRepositoryTests
     [Test]
     public void ShouldIterateAllEventProcessors()
     {
-        _consumerRepository.Add(_eventProcessor1, _handler1, _dependentSequenceGroup1);
-        _consumerRepository.Add(_eventProcessor2, _handler2, _dependentSequenceGroup2);
+        _consumerRepository.AddOwnedProcessor(_eventProcessor1, _handler1, _dependentSequenceGroup1);
+        _consumerRepository.AddOwnedProcessor(_eventProcessor2, _handler2, _dependentSequenceGroup2);
 
         var seen1 = false;
         var seen2 = false;

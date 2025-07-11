@@ -36,10 +36,9 @@ public class DisruptorTests : IDisposable
             testWorkHandler.StopWaiting();
         }
 
-        if (_disruptor.IsRunning)
-            _disruptor.Halt();
+        _disruptor.Dispose();
 
-        _taskScheduler.JoinAllThreads();
+        Assert.That(_taskScheduler.JoinAllThreads(1000));
     }
 
     [Test]
@@ -1047,6 +1046,20 @@ public class DisruptorTests : IDisposable
 
         shutdownSignal2.Set();
         Assert.That(haltTask.Wait(500), Is.True);
+    }
+
+    [Test]
+    public void ShouldHaltOnDispose()
+    {
+        _disruptor.HandleEventsWith(new TestEventHandler<TestEvent>());
+        _disruptor.Start();
+
+        Assert.That(_disruptor.IsRunning);
+
+        _disruptor.Dispose();
+
+        Assert.That(!_disruptor.IsRunning);
+        Assert.That(_taskScheduler.JoinAllThreads(500));
     }
 
     private TestWorkHandler CreateTestWorkHandler()

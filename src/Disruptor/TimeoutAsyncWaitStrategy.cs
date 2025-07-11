@@ -21,10 +21,10 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncWaitStrategy
     private readonly object _gate = new();
     private readonly int _timeoutMilliseconds;
     private readonly List<SequenceWaiter> _waitList = [];
-    private SequenceWaiter[] _sequenceWaiters = [];
+    private volatile SequenceWaiter[] _sequenceWaiters = [];
     private bool _hasSyncWaiter;
     private int _asyncWaiterCount;
-    private ThreadSate _threadState = new(false);
+    private ThreadState _threadState = new();
 
     public TimeoutAsyncWaitStrategy(TimeSpan timeout)
     {
@@ -50,6 +50,14 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncWaitStrategy
         var sequenceWaiter = new SequenceWaiter(this, dependentSequences);
         OnAsyncWaiterAdded(sequenceWaiter);
         return sequenceWaiter;
+    }
+
+    public bool IsThreadRunning()
+    {
+        lock (_gate)
+        {
+            return _threadState.IsRunning;
+        }
     }
 
     public void SignalAllWhenBlocking()
@@ -82,12 +90,12 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncWaitStrategy
             _asyncWaiterCount++;
             if (_asyncWaiterCount == 1)
             {
-                _threadState = new ThreadSate(true);
+                _threadState = _threadState.StartNew();
 
                 var thread = new Thread(() => TimeoutProc(_threadState)) { IsBackground = true };
                 thread.Start();
 
-                _threadState.Started.Wait();
+                // _threadState.Started.Wait();
             }
         }
     }
@@ -96,21 +104,38 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncWaitStrategy
     {
         lock (_gate)
         {
+            if (Array.IndexOf(_sequenceWaiters, sequenceWaiter) < 0)
+                return;
+
             _sequenceWaiters = _sequenceWaiters.Except([sequenceWaiter]).ToArray();
             _waitList.Remove(sequenceWaiter);
             _asyncWaiterCount--;
             if (_asyncWaiterCount == 0)
             {
                 _threadState.IsRunning = false;
-                _threadState = new ThreadSate(false);
             }
         }
     }
 
-    private void TimeoutProc(ThreadSate state)
+    private void TimeoutProc(ThreadState state)
     {
+        // Prevents multiple threads from running concurrently.
+        state.PreviousStateCompleted.Wait();
+
         state.Started.Set();
 
+        try
+        {
+            RunTimeoutLoop(state);
+        }
+        finally
+        {
+            state.Completed.Set();
+        }
+    }
+
+    private void RunTimeoutLoop(ThreadState state)
+    {
         var maximumWaitTimeout = Math.Min(50, _timeoutMilliseconds);
         var waitTimeout = maximumWaitTimeout;
 
@@ -300,15 +325,30 @@ public sealed class TimeoutAsyncWaitStrategy : IAsyncWaitStrategy
         }
     }
 
-    private class ThreadSate
+    private class ThreadState
     {
-        public ThreadSate(bool isRunning)
+        public ThreadState()
+        {
+            PreviousStateCompleted = new(true);
+            Completed = new(true);
+        }
+
+        private ThreadState(bool isRunning, ThreadState previous)
         {
             IsRunning = isRunning;
+            PreviousStateCompleted = previous.Completed;
+            Completed = new(false);
         }
 
         public volatile bool IsRunning;
-        public readonly ManualResetEventSlim Started = new(false);
+        public readonly ManualResetEventSlim PreviousStateCompleted;
+        public readonly ManualResetEventSlim Started = new();
+        public readonly ManualResetEventSlim Completed;
+
+        public ThreadState StartNew()
+        {
+            return new ThreadState(true, this);
+        }
     }
 
     private static class TickCount64

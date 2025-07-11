@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
 
 namespace Disruptor.Tests.Dsl.Stubs;
 
@@ -18,7 +16,7 @@ public class StubTaskScheduler : TaskScheduler
 
     protected override IEnumerable<Task> GetScheduledTasks()
     {
-        return Enumerable.Empty<Task>();
+        return [];
     }
 
     protected override void QueueTask(Task task)
@@ -54,16 +52,15 @@ public class StubTaskScheduler : TaskScheduler
         return false;
     }
 
-    public void JoinAllThreads()
+    public bool JoinAllThreads(int millisecondsTimeout)
     {
         while (_threads.TryDequeue(out var thread))
         {
-            if (!thread.Join(5000))
-            {
-                thread.Interrupt();
-                Assert.That(thread.Join(5000), "Failed to stop thread: " + thread);
-            }
+            if (!thread.Join(millisecondsTimeout))
+                return false;
         }
+
+        return true;
     }
 
     public void IgnoreExecutions()

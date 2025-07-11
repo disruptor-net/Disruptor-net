@@ -2,6 +2,8 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Disruptor.Dsl;
+using Disruptor.Tests.Support;
 using NUnit.Framework;
 
 namespace Disruptor.Tests;
@@ -93,5 +95,39 @@ public class TimeoutAsyncWaitStrategyTests : AsyncWaitStrategyFixture
         var tolerance = TimeSpan.FromMilliseconds(50);
 
         Assert.That(stopwatch.Elapsed, Is.GreaterThanOrEqualTo(timeout - tolerance));
+    }
+
+    [Test]
+    public void ShouldStopThreadOnDispose()
+    {
+        var waitStrategy = new TimeoutAsyncWaitStrategy(TimeSpan.FromSeconds(30));
+        Assert.That(!waitStrategy.IsThreadRunning());
+
+        var disruptor = new Disruptor<TestEvent>(() => new TestEvent(), 1024, waitStrategy);
+        disruptor.HandleEventsWith(new TestAsyncBatchEventHandler<TestEvent>());
+
+        Assert.That(waitStrategy.IsThreadRunning());
+
+        disruptor.Dispose();
+
+        Assert.That(!waitStrategy.IsThreadRunning());
+    }
+
+
+    [Test]
+    public void ShouldRestartThreadOnNewDisruptor()
+    {
+        var waitStrategy = new TimeoutAsyncWaitStrategy(TimeSpan.FromSeconds(30));
+
+        using var disruptor1 = new Disruptor<TestEvent>(() => new TestEvent(), 1024, waitStrategy);
+        disruptor1.HandleEventsWith(new TestAsyncBatchEventHandler<TestEvent>());
+        disruptor1.Dispose();
+
+        Assert.That(!waitStrategy.IsThreadRunning());
+
+        using var disruptor2 = new Disruptor<TestEvent>(() => new TestEvent(), 1024, waitStrategy);
+        disruptor2.HandleEventsWith(new TestAsyncBatchEventHandler<TestEvent>());
+
+        Assert.That(waitStrategy.IsThreadRunning());
     }
 }

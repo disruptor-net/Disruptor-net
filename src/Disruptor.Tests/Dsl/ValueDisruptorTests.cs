@@ -31,10 +31,9 @@ public class ValueDisruptorTests : IDisposable
             delayedEventHandler.StopWaiting();
         }
 
-        if (_disruptor.IsRunning)
-            _disruptor.Halt();
+        _disruptor.Dispose();
 
-        _taskScheduler.JoinAllThreads();
+        Assert.That(_taskScheduler.JoinAllThreads(1000));
     }
 
     [Test]
@@ -691,6 +690,20 @@ public class ValueDisruptorTests : IDisposable
 
         shutdownSignal2.Set();
         Assert.That(haltTask.Wait(500), Is.True);
+    }
+
+    [Test]
+    public void ShouldHaltOnDispose()
+    {
+        _disruptor.HandleEventsWith(new TestValueEventHandler<TestValueEvent>());
+        _disruptor.Start();
+
+        Assert.That(_disruptor.IsRunning);
+
+        _disruptor.Dispose();
+
+        Assert.That(!_disruptor.IsRunning);
+        Assert.That(_taskScheduler.JoinAllThreads(500));
     }
 
     private void EnsureTwoEventsProcessedAccordingToDependencies(CountdownEvent countDownLatch, params DelayedEventHandler[] dependencies)

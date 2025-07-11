@@ -14,17 +14,17 @@ internal class ConsumerRepository
 
     public IReadOnlyCollection<IConsumerInfo> Consumers => _consumerInfos;
 
-    public void Add(IEventProcessor eventProcessor, IEventHandler eventHandler, DependentSequenceGroup dependentSequences)
+    public void AddOwnedProcessor(IEventProcessor eventProcessor, IEventHandler eventHandler, DependentSequenceGroup dependentSequences)
     {
-        var consumerInfo = new EventProcessorInfo(eventProcessor, eventHandler, dependentSequences);
+        var consumerInfo = new EventProcessorInfo(eventProcessor, eventHandler, dependentSequences, true);
         _eventProcessorInfoByEventHandler[eventHandler] = consumerInfo;
         _eventProcessorInfoBySequence[eventProcessor.Sequence] = consumerInfo;
         _consumerInfos.Add(consumerInfo);
     }
 
-    public void Add(IEventProcessor processor)
+    public void Add(IEventProcessor processor, bool owned)
     {
-        var consumerInfo = new EventProcessorInfo(processor, null, null);
+        var consumerInfo = new EventProcessorInfo(processor, null, null, owned);
         _eventProcessorInfoBySequence [processor.Sequence] = consumerInfo;
         _consumerInfos.Add(consumerInfo);
     }
@@ -111,6 +111,14 @@ internal class ConsumerRepository
         }
 
         return Task.WhenAll(haltTasks);
+    }
+
+    public void DisposeAll()
+    {
+        foreach (var consumerInfo in _consumerInfos)
+        {
+            consumerInfo.Dispose();
+        }
     }
 
     private class IdentityComparer<TKey> : IEqualityComparer<TKey>

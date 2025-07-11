@@ -97,6 +97,8 @@ public class MultiBufferEventProcessor<T>
     public Task Halt()
     {
         var runState = _state.Halt();
+        if (runState == null)
+            return Task.CompletedTask;
 
         foreach (var barrier in _barriers)
         {

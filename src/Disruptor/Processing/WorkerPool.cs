@@ -14,7 +14,8 @@ namespace Disruptor.Processing;
 /// Once a WorkerPool has been halted it cannot be started again.
 /// </summary>
 /// <typeparam name="T">event to be processed by a pool of workers</typeparam>
-public sealed class WorkerPool<T> where T : class
+public sealed class WorkerPool<T> : IDisposable
+    where T : class
 {
     private readonly EventProcessorState _state = new(restartable: false);
     private readonly Sequence _workSequence = new();
@@ -130,6 +131,16 @@ public sealed class WorkerPool<T> where T : class
         }
 
         return Task.WhenAll(haltTasks);
+    }
+
+    public void Dispose()
+    {
+        _state.Dispose();
+
+        foreach (var workProcessor in _workProcessors)
+        {
+            workProcessor.Dispose();
+        }
     }
 
     public bool IsRunning

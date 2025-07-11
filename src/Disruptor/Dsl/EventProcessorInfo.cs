@@ -10,11 +10,12 @@ namespace Disruptor.Dsl;
 /// </summary>
 internal class EventProcessorInfo : IConsumerInfo
 {
-    public EventProcessorInfo(IEventProcessor eventProcessor, IEventHandler? eventHandler, DependentSequenceGroup? dependentSequences)
+    public EventProcessorInfo(IEventProcessor eventProcessor, IEventHandler? eventHandler, DependentSequenceGroup? dependentSequences, bool owned)
     {
         EventProcessor = eventProcessor;
         Handler = eventHandler;
         DependentSequences = dependentSequences;
+        Owned = owned;
         IsEndOfChain = true;
     }
 
@@ -25,6 +26,12 @@ internal class EventProcessorInfo : IConsumerInfo
     public IEventHandler? Handler { get; }
 
     public DependentSequenceGroup? DependentSequences { get; }
+
+    /// <summary>
+    /// Indicates that the event processor was created by the disruptor and thus can be disposed when
+    /// the disruptor is disposed.
+    /// </summary>
+    public bool Owned { get; }
 
     public bool IsEndOfChain { get; private set; }
 
@@ -44,4 +51,12 @@ internal class EventProcessorInfo : IConsumerInfo
     }
 
     public bool IsRunning => EventProcessor.IsRunning;
+
+    public void Dispose()
+    {
+        if (Owned)
+            EventProcessor.Dispose();
+        else
+            EventProcessor.Halt();
+    }
 }

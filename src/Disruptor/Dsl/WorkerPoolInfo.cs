@@ -36,4 +36,9 @@ internal class WorkerPoolInfo<T> : IConsumerInfo where T : class
     }
 
     public bool IsRunning => _workerPool.IsRunning;
+
+    public void Dispose()
+    {
+        _workerPool.Dispose();
+    }
 }

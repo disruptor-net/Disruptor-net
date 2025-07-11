@@ -45,7 +45,7 @@ public class DisruptorStressTest
 
     private static void ShouldHandleLotsOfThreads<T>(IWaitStrategy waitStrategy, int iterations, TimeoutOptions timeoutOptions) where T : IHandler, new()
     {
-        var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, waitStrategy);
+        using var disruptor = new Disruptor<TestEvent>(TestEvent.Factory, 65_536, TaskScheduler.Current, ProducerType.Multi, waitStrategy);
         var ringBuffer = disruptor.RingBuffer;
         disruptor.SetDefaultExceptionHandler(new FatalExceptionHandler<TestEvent>());
 

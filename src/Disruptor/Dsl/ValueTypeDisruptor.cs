@@ -15,7 +15,7 @@ namespace Disruptor.Dsl;
 /// <typeparam name="T">the type of event used.</typeparam>
 /// <seealso cref="ValueDisruptor{T}"/>
 /// <seealso cref="UnmanagedDisruptor{T}"/>.
-public abstract class ValueTypeDisruptor<T>
+public abstract class ValueTypeDisruptor<T> : IDisposable
     where T : struct
 {
     private readonly IValueRingBuffer<T> _ringBuffer;
@@ -63,9 +63,14 @@ public abstract class ValueTypeDisruptor<T>
     /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public ValueEventHandlerGroup<T> HandleEventsWith(params IEventProcessor[] processors)
     {
+        return HandleEventsWith(processors, false);
+    }
+
+    private ValueEventHandlerGroup<T> HandleEventsWith(IEventProcessor[] processors, bool owned)
+    {
         foreach (var processor in processors)
         {
-            _consumerRepository.Add(processor);
+            _consumerRepository.Add(processor, owned);
         }
 
         var sequences = new Sequence[processors.Length];
@@ -86,7 +91,7 @@ public abstract class ValueTypeDisruptor<T>
     /// <param name="exceptionHandler">the exception handler to use</param>
     public void SetDefaultExceptionHandler(IValueExceptionHandler<T> exceptionHandler)
     {
-        _state.ThrowIfStarted();
+        _state.ThrowIfStartedOrDisposed();
         _exceptionHandler.SwitchTo(exceptionHandler);
     }
 
@@ -230,6 +235,13 @@ public abstract class ValueTypeDisruptor<T>
         return Halt();
     }
 
+    public void Dispose()
+    {
+        _state.Dispose();
+
+        _consumerRepository.DisposeAll();
+    }
+
     /// <summary>
     /// Get the <see cref="DependentSequenceGroup"/> used by a specific handler. Note that the <see cref="DependentSequenceGroup"/>
     /// may be shared by multiple event handlers.
@@ -267,7 +279,7 @@ public abstract class ValueTypeDisruptor<T>
 
     internal ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
     {
-        _state.ThrowIfStarted();
+        _state.ThrowIfStartedOrDisposed();
 
         var processorSequences = new Sequence[eventHandlers.Length];
 
@@ -281,7 +293,7 @@ public abstract class ValueTypeDisruptor<T>
 
             eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-            _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
+            _consumerRepository.AddOwnedProcessor(eventProcessor, eventHandler, barrier.DependentSequences);
             processorSequences[i] = eventProcessor.Sequence;
         }
 
@@ -308,7 +320,7 @@ public abstract class ValueTypeDisruptor<T>
     {
         var eventProcessors = processorFactories.Select(p => CreateEventProcessor(p)).ToArray();
 
-        return HandleEventsWith(eventProcessors);
+        return HandleEventsWith(eventProcessors, true);
 
         IEventProcessor CreateEventProcessor(ValueEventProcessorCreator<T> processorFactory)
         {

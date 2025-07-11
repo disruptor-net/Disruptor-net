@@ -22,7 +22,7 @@ public class ShutdownOnFatalExceptionTest : IDisposable
 
     public void Dispose()
     {
-        _disruptor.Shutdown();
+        _disruptor.Dispose();
     }
 
     [Test]

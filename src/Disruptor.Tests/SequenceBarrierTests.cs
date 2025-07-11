@@ -181,7 +181,12 @@ public abstract class SequenceBarrierTests : IDisposable
         public Task Halt()
         {
             var runState = _state.Halt();
-            return runState.ShutdownTask;
+            return runState != null ? runState.ShutdownTask : Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            _state.Dispose();
         }
     }
 }

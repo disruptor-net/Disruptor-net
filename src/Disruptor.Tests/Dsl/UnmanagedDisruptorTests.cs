@@ -23,11 +23,9 @@ public class UnmanagedDisruptorTests : IDisposable
 
     public void Dispose()
     {
-        if (_disruptor.IsRunning)
-            _disruptor.Halt();
-
-        _taskScheduler.JoinAllThreads();
+        _disruptor.Dispose();
         _memory.Dispose();
+        Assert.That(_taskScheduler.JoinAllThreads(1000));
     }
 
     [Test]
