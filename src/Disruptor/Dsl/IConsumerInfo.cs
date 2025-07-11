@@ -10,9 +10,9 @@ internal interface IConsumerInfo
 
     bool IsEndOfChain { get; }
 
-    void Start(TaskScheduler taskScheduler);
+    Task Start(TaskScheduler taskScheduler);
 
-    void Halt();
+    Task Halt();
 
     void MarkAsUsedInBarrier();
 

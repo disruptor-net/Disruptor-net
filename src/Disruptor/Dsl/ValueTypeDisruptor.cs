@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Processing;
+using Disruptor.Util;
 
 namespace Disruptor.Dsl;
 
@@ -20,7 +22,7 @@ public abstract class ValueTypeDisruptor<T>
     private readonly TaskScheduler _taskScheduler;
     private readonly ConsumerRepository _consumerRepository = new();
     private readonly ValueExceptionHandlerWrapper<T> _exceptionHandler = new();
-    private volatile int _started;
+    private readonly DisruptorState _state = new();
 
     protected ValueTypeDisruptor(IValueRingBuffer<T> ringBuffer, TaskScheduler taskScheduler)
     {
@@ -84,7 +86,7 @@ public abstract class ValueTypeDisruptor<T>
     /// <param name="exceptionHandler">the exception handler to use</param>
     public void SetDefaultExceptionHandler(IValueExceptionHandler<T> exceptionHandler)
     {
-        CheckNotStarted();
+        _state.ThrowIfStarted();
         _exceptionHandler.SwitchTo(exceptionHandler);
     }
 
@@ -147,78 +149,85 @@ public abstract class ValueTypeDisruptor<T>
     }
 
     /// <summary>
-    /// Starts the event processors and returns the fully configured ring buffer.
-    ///
-    /// The ring buffer is set up to prevent overwriting any entry that is yet to
-    /// be processed by the slowest event processor.
-    ///
-    /// This method must only be called once after all event processors have been added.
+    /// Starts the disruptor.
     /// </summary>
-    public void Start()
+    /// <remarks>
+    /// This method must only be called once after all event processors have been configured.
+    /// </remarks>
+    /// <returns>
+    /// A task that represents the startup of the disruptor.
+    /// The task completes after <c>OnStart</c> is invoked on every handler.
+    /// </returns>
+    public Task Start()
     {
-        CheckOnlyStartedOnce();
-        foreach (var consumerInfo in _consumerRepository.Consumers)
-        {
-            consumerInfo.Start(_taskScheduler);
-        }
+        _state.Start();
+
+        return _consumerRepository.StartAll(_taskScheduler);
     }
 
     /// <summary>
-    /// Calls <see cref="IEventProcessor.Halt"/> on all the event processors created via this disruptor.
+    /// Halts the disruptor.
     /// </summary>
-    public void Halt()
+    /// <returns>
+    /// A task that represents the shutdown of the disruptor.
+    /// The task completes after <c>OnShutdown</c> is invoked on every handler.
+    /// </returns>
+    public Task Halt()
     {
-        if (_started == 0)
-        {
-            // Preserve previous behavior: ignore Halt if the Disruptor is not started
-            return;
-        }
+        _state.Halt();
 
-        foreach (var consumerInfo in _consumerRepository.Consumers)
-        {
-            consumerInfo.Halt();
-        }
+        return _consumerRepository.HaltAll();
     }
 
     /// <summary>
     /// Waits until all events currently in the disruptor have been processed by all event processors
-    /// and then halts the processors.It is critical that publishing to the ring buffer has stopped
+    /// and then halts the disruptor. It is critical that publishing to the ring buffer has stopped
     /// before calling this method, otherwise it may never return.
-    ///
-    /// This method will not await the final termination of the processor threads.
     /// </summary>
-    public void Shutdown()
+    /// <returns>
+    /// A task that represents the shutdown of the disruptor.
+    /// The task completes after <c>OnShutdown</c> is invoked on every handler.
+    /// </returns>
+    public Task Shutdown()
     {
-        try
-        {
-            Shutdown(TimeSpan.FromMilliseconds(-1)); // do not wait
-        }
-        catch (TimeoutException e)
-        {
-            _exceptionHandler.HandleOnShutdownException(e);
-        }
+        return Shutdown(Timeout.Infinite);
     }
 
     /// <summary>
     /// Waits until all events currently in the disruptor have been processed by all event processors
-    /// and then halts the processors.
-    ///
-    /// This method will not await the final termination of the processor threads.
+    /// and then halts the disruptor.
     /// </summary>
     /// <param name="timeout">the amount of time to wait for all events to be processed. <code>TimeSpan.MaxValue</code> will give an infinite timeout</param>
-    /// <exception cref="TimeoutException">if a timeout occurs before shutdown completes.</exception>
-    public void Shutdown(TimeSpan timeout)
+    /// <returns>
+    /// A task that represents the shutdown of the disruptor.
+    /// The task completes after <c>OnShutdown</c> is invoked on every handler.
+    /// </returns>
+    public Task Shutdown(TimeSpan timeout)
     {
-        var timeoutAt = DateTime.UtcNow.Add(timeout);
+        var totalMilliseconds = (long)timeout.TotalMilliseconds;
+        if (totalMilliseconds < -1 || totalMilliseconds > int.MaxValue)
+        {
+            ThrowHelper.ThrowArgumentOutOfRangeException();
+        }
+
+        return Shutdown((int)totalMilliseconds);
+    }
+
+    private Task Shutdown(int millisecondsTimeout)
+    {
+        var timeout = millisecondsTimeout == Timeout.Infinite ? DateTime.MaxValue : DateTime.UtcNow.AddMilliseconds(millisecondsTimeout);
+        var spinWait = new SpinWait();
         while (HasBacklog())
         {
-            if (timeout.Ticks >= 0 && DateTime.UtcNow > timeoutAt)
+            if (DateTime.UtcNow > timeout)
             {
                 throw new TimeoutException();
             }
-            // Busy spin
+
+            spinWait.SpinOnce();
         }
-        Halt();
+
+        return Halt();
     }
 
     /// <summary>
@@ -247,14 +256,18 @@ public abstract class ValueTypeDisruptor<T>
     }
 
     /// <summary>
-    /// Checks if disruptor has been started.
+    /// Indicates whether the disruptor has been started.
     /// </summary>
-    /// <value>true when start has been called on this instance; otherwise false</value>
-    public bool HasStarted => _started == 1;
+    public bool HasStarted => _state.HasStarted;
+
+    /// <summary>
+    /// Indicates whether the disruptor is running.
+    /// </summary>
+    public bool IsRunning => _state.IsRunning;
 
     internal ValueEventHandlerGroup<T> CreateEventProcessors(Sequence[] barrierSequences, IValueEventHandler<T>[] eventHandlers)
     {
-        CheckNotStarted();
+        _state.ThrowIfStarted();
 
         var processorSequences = new Sequence[eventHandlers.Length];
 
@@ -304,24 +317,8 @@ public abstract class ValueTypeDisruptor<T>
         }
     }
 
-    private void CheckNotStarted()
-    {
-        if (_started == 1)
-        {
-            throw new InvalidOperationException("All event handlers must be added before calling starts.");
-        }
-    }
-
-    private void CheckOnlyStartedOnce()
-    {
-        if (Interlocked.Exchange(ref _started, 1) != 0)
-        {
-            throw new InvalidOperationException("ValueDisruptor.start() must only be called once.");
-        }
-    }
-
     public override string ToString()
     {
-        return $"ValueDisruptor {{RingBuffer={_ringBuffer}, Started={_started}}}";
+        return $"ValueTypeDisruptor {{RingBuffer={_ringBuffer}, State={_state}}}";
     }
 }

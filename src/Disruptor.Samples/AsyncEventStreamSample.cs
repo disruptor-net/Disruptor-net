@@ -20,7 +20,7 @@ public class AsyncEventStreamSample
 
         Console.WriteLine("Starting disruptor");
 
-        disruptor.Start();
+        await disruptor.Start();
 
         var random = new Random();
 
@@ -37,7 +37,7 @@ public class AsyncEventStreamSample
 
         Console.WriteLine("Stopping disruptor");
 
-        disruptor.Shutdown();
+        await disruptor.Shutdown();
 
         // AsyncEventStream instances are not part of the Disruptor (for now), they must be explicitly disposed.
 

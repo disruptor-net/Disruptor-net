@@ -20,14 +20,14 @@ internal class WorkerPoolInfo<T> : IConsumerInfo where T : class
 
     public bool IsEndOfChain { get; private set; }
 
-    public void Start(TaskScheduler taskScheduler)
+    public Task Start(TaskScheduler taskScheduler)
     {
-        _workerPool.Start(taskScheduler);
+        return _workerPool.Start(taskScheduler);
     }
 
-    public void Halt()
+    public Task Halt()
     {
-        _workerPool.Halt();
+        return _workerPool.Halt();
     }
 
     public void MarkAsUsedInBarrier()

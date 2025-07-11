@@ -28,14 +28,14 @@ internal class EventProcessorInfo : IConsumerInfo
 
     public bool IsEndOfChain { get; private set; }
 
-    public void Start(TaskScheduler taskScheduler)
+    public Task Start(TaskScheduler taskScheduler)
     {
-        EventProcessor.Start(taskScheduler);
+        return EventProcessor.Start(taskScheduler);
     }
 
-    public void Halt()
+    public Task Halt()
     {
-        EventProcessor.Halt();
+        return EventProcessor.Halt();
     }
 
     public void MarkAsUsedInBarrier()

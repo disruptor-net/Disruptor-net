@@ -31,18 +31,38 @@ public class ValueDisruptorTests : IDisposable
             delayedEventHandler.StopWaiting();
         }
 
-        _disruptor.Halt();
+        if (_disruptor.IsRunning)
+            _disruptor.Halt();
+
         _taskScheduler.JoinAllThreads();
     }
 
     [Test]
     public void ShouldHaveStartedAfterStartCalled()
     {
-        Assert.That(!_disruptor.HasStarted, "Should only be set to started after start is called");
+        Assert.That(!_disruptor.HasStarted, "Should only be set to started after Start is called");
 
         _disruptor.Start();
 
-        Assert.That(_disruptor.HasStarted, "Should be set to started after start is called");
+        Assert.That(_disruptor.HasStarted, "Should be set to started after Start is called");
+
+        _disruptor.Halt();
+
+        Assert.That(_disruptor.HasStarted, "Should be still be started after Halt is called");
+    }
+
+    [Test]
+    public void ShouldBeRunningAfterStartCalled()
+    {
+        Assert.That(!_disruptor.IsRunning, "Should only be set to running after Start is called");
+
+        _disruptor.Start();
+
+        Assert.That(_disruptor.IsRunning, "Should be set to running after Start is called");
+
+        _disruptor.Halt();
+
+        Assert.That(!_disruptor.IsRunning, "Should no longer be running after Halt is called");
     }
 
     [Test]
@@ -630,6 +650,47 @@ public class ValueDisruptorTests : IDisposable
         Assert.That(s1, Is.Not.Null);
         Assert.That(s2, Is.Not.Null);
         Assert.That(s1!.SequenceBarrier, Is.Not.SameAs(s2!.SequenceBarrier));
+    }
+
+
+    [Test]
+    public void ShouldWaitForHandlerStartBeforeCompletingStartTask()
+    {
+        var startSignal1 = new ManualResetEventSlim();
+        var startSignal2 = new ManualResetEventSlim();
+        var handler1 = new TestValueEventHandler<TestValueEvent> { OnStartAction = () => startSignal1.Wait() };
+        var handler2 = new TestValueEventHandler<TestValueEvent> { OnStartAction = () => startSignal2.Wait() };
+        _disruptor.HandleEventsWith(handler1, handler2);
+
+        var startTask = _disruptor.Start();
+        Assert.That(startTask.Wait(50), Is.False);
+
+        startSignal1.Set();
+        Assert.That(startTask.Wait(50), Is.False);
+
+        startSignal2.Set();
+        Assert.That(startTask.Wait(500), Is.True);
+    }
+
+    [Test]
+    public void ShouldWaitForHandlerShutdownBeforeCompletingHaltTask()
+    {
+        var shutdownSignal1 = new ManualResetEventSlim();
+        var shutdownSignal2 = new ManualResetEventSlim();
+        var handler1 = new TestValueEventHandler<TestValueEvent> { OnShutdownAction = () => shutdownSignal1.Wait() };
+        var handler2 = new TestValueEventHandler<TestValueEvent> { OnShutdownAction = () => shutdownSignal2.Wait() };
+        _disruptor.HandleEventsWith(handler1, handler2);
+
+        _disruptor.Start().Wait();
+
+        var haltTask = _disruptor.Halt();
+        Assert.That(haltTask.Wait(50), Is.False);
+
+        shutdownSignal1.Set();
+        Assert.That(haltTask.Wait(50), Is.False);
+
+        shutdownSignal2.Set();
+        Assert.That(haltTask.Wait(500), Is.True);
     }
 
     private void EnsureTwoEventsProcessedAccordingToDependencies(CountdownEvent countDownLatch, params DelayedEventHandler[] dependencies)

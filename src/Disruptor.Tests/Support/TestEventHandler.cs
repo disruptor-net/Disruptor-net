@@ -5,26 +5,36 @@ namespace Disruptor.Tests.Support;
 public class TestEventHandler<T> : IEventHandler<T>
 {
     public TestEventHandler()
-        : this(_ => { })
     {
     }
 
     public TestEventHandler(Action<T> onEventAction)
     {
         OnEventAction = onEventAction;
-        OnTimeoutAction = () => { };
     }
 
-    public Action<T> OnEventAction { get; set; }
-    public Action OnTimeoutAction { get; set; }
+    public Action<T>? OnEventAction { get; }
+    public Action? OnTimeoutAction { get; init; }
+    public Action? OnStartAction { get; init; }
+    public Action? OnShutdownAction { get; init; }
 
     public void OnEvent(T data, long sequence, bool endOfBatch)
     {
-        OnEventAction.Invoke(data);
+        OnEventAction?.Invoke(data);
     }
 
     public void OnTimeout(long sequence)
     {
-        OnTimeoutAction.Invoke();
+        OnTimeoutAction?.Invoke();
+    }
+
+    public void OnStart()
+    {
+        OnStartAction?.Invoke();
+    }
+
+    public void OnShutdown()
+    {
+        OnShutdownAction?.Invoke();
     }
 }

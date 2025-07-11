@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Disruptor.Processing;
 
 namespace Disruptor.Dsl;
@@ -12,7 +12,7 @@ internal class ConsumerRepository
     private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence = new(new IdentityComparer<Sequence>());
     private readonly List<IConsumerInfo> _consumerInfos = new();
 
-    public IEnumerable<IConsumerInfo> Consumers => _consumerInfos;
+    public IReadOnlyCollection<IConsumerInfo> Consumers => _consumerInfos;
 
     public void Add(IEventProcessor eventProcessor, IEventHandler eventHandler, DependentSequenceGroup dependentSequences)
     {
@@ -89,6 +89,28 @@ internal class ConsumerRepository
     public DependentSequenceGroup? GetDependentSequencesFor(IEventHandler eventHandler)
     {
         return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo) ? eventProcessorInfo.DependentSequences : null;
+    }
+
+    public Task StartAll(TaskScheduler taskScheduler)
+    {
+        var startTasks = new List<Task>(_consumerInfos.Count);
+        foreach (var consumerInfo in _consumerInfos)
+        {
+            startTasks.Add(consumerInfo.Start(taskScheduler));
+        }
+
+        return Task.WhenAll(startTasks);
+    }
+
+    public Task HaltAll()
+    {
+        var haltTasks = new List<Task>(_consumerInfos.Count);
+        foreach (var consumerInfo in _consumerInfos)
+        {
+            haltTasks.Add(consumerInfo.Halt());
+        }
+
+        return Task.WhenAll(haltTasks);
     }
 
     private class IdentityComparer<TKey> : IEqualityComparer<TKey>

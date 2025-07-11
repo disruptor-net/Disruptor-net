@@ -6,26 +6,36 @@ public class TestValueEventHandler<T> : IValueEventHandler<T>
     where T : struct
 {
     public TestValueEventHandler()
-        : this(_ => { })
     {
     }
 
     public TestValueEventHandler(Action<T> onEventAction)
     {
         OnEventAction = onEventAction;
-        OnTimeoutAction = () => { };
     }
 
-    public Action<T> OnEventAction { get; set; }
-    public Action OnTimeoutAction { get; set; }
+    public Action<T>? OnEventAction { get; }
+    public Action? OnTimeoutAction { get; init; }
+    public Action? OnStartAction { get; init; }
+    public Action? OnShutdownAction { get; init; }
 
     public void OnEvent(ref T data, long sequence, bool endOfBatch)
     {
-        OnEventAction.Invoke(data);
+        OnEventAction?.Invoke(data);
     }
 
     public void OnTimeout(long sequence)
     {
-        OnTimeoutAction.Invoke();
+        OnTimeoutAction?.Invoke();
+    }
+
+    public void OnStart()
+    {
+        OnStartAction?.Invoke();
+    }
+
+    public void OnShutdown()
+    {
+        OnShutdownAction?.Invoke();
     }
 }
