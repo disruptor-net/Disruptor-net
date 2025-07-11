@@ -73,11 +73,11 @@ public class EventProcessorState
     {
         private readonly CancellationTokenSource _cancellationTokenSource = new();
 #if NETSTANDARD
-        private readonly TaskCompletionSource<object?> _startCompletionSource = new();
-        private readonly TaskCompletionSource<object?> _shutdownCompletionSource = new();
+        private readonly TaskCompletionSource<object?> _startCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<object?> _shutdownCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
 #else
-        private readonly TaskCompletionSource _startCompletionSource = new();
-        private readonly TaskCompletionSource _shutdownCompletionSource = new();
+        private readonly TaskCompletionSource _startCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _shutdownCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
 #endif
 
         private volatile bool _isHalted;
