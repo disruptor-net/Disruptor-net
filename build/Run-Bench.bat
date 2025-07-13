@@ -1,2 +1,3 @@
-dotnet run --project ../src/Disruptor.Benchmarks/ --configuration Release
+cd ..\src\Disruptor.Benchmarks
+dotnet run --configuration Release
 pause
