@@ -60,6 +60,6 @@ internal class ThroughputTestSessionResult
 
     public override string ToString()
     {
-        return _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Ops: {TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###} - Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2} - Batch %: {BatchPercent:P} - Average Batch Size: {AverageBatchSize:N0}";
+        return _exception != null ? $"Run: FAILED: {_exception.Message}" : $"Run: Ops: {TotalOperationsInRun / Duration.TotalSeconds:### ### ### ###} - Duration: {Duration.TotalMilliseconds:N0} (ms) - GC: {Gen0} - {Gen1} - {Gen2} - Batch %: {BatchPercent:P} - Average Batch Size: {AverageBatchSize:N1}";
     }
 }
