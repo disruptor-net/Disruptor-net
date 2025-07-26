@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Disruptor.Dsl;
 using Disruptor.Util;
@@ -24,8 +25,6 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
 
     // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
     private Sequence[] _gatingSequences = Array.Empty<Sequence>();
-
-    private readonly Sequence _gatingSequenceCache = new();
 
     [SuppressMessage("ReSharper", "PrivateFieldCanBeConvertedToLocalVariable", Justification = "Prevents the GC from collecting the array")]
     // availableBuffer tracks the state of each ringbuffer slot
@@ -54,6 +53,10 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
 
     private readonly int _indexMask;
     private readonly int _indexShift;
+
+    // Java uses a reference type here, but it is not required because _gatingSequenceCache is not exposed
+    // outside MultiProducerSequencer, so a value type is more efficient.
+    private SequenceCache _gatingSequenceCache;
 
     public MultiProducerSequencer(int bufferSize)
         : this(bufferSize, SequencerFactory.DefaultWaitStrategy())
@@ -368,4 +371,23 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
     internal Sequence GetCursorSequence() => _cursor;
 
     internal IWaitStrategy GetWaitStrategy() => _waitStrategy;
+
+    [StructLayout(LayoutKind.Explicit, Size = 128)]
+    private struct SequenceCache
+    {
+        [FieldOffset(64)]
+        private long _value;
+
+        public long Value
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Volatile.Read(ref _value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetValue(long value)
+        {
+            Volatile.Write(ref _value, value);
+        }
+    }
 }
