@@ -4,38 +4,18 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Disruptor.Dsl;
 using Disruptor.Util;
-using static Disruptor.Util.Constants;
 
 namespace Disruptor;
 
-[StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 48)]
 public sealed class SingleProducerSequencer : ISequencer
 {
-    // padding: DefaultPadding
-
-    [FieldOffset(DefaultPadding)]
     private readonly IWaitStrategy _waitStrategy;
-
-    [FieldOffset(DefaultPadding + 8)]
     private readonly Sequence _cursor = new();
-
-    [FieldOffset(DefaultPadding + 16)]
     // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
     private Sequence[] _gatingSequences = Array.Empty<Sequence>();
-
-    [FieldOffset(DefaultPadding + 24)]
     private readonly int _bufferSize;
-
-    [FieldOffset(DefaultPadding + 28)]
     private readonly bool _isBlockingWaitStrategy;
-
-    [FieldOffset(DefaultPadding + 32)]
-    private long _nextValue = Sequence.InitialCursorValue;
-
-    [FieldOffset(DefaultPadding + 40)]
-    private long _cachedValue = Sequence.InitialCursorValue;
-
-    // padding: DefaultPadding
+    private PaddedSequences _sequences;
 
     public SingleProducerSequencer(int bufferSize)
         : this(bufferSize, SequencerFactory.DefaultWaitStrategy())
@@ -56,6 +36,11 @@ public sealed class SingleProducerSequencer : ISequencer
         _bufferSize = bufferSize;
         _waitStrategy = waitStrategy;
         _isBlockingWaitStrategy = waitStrategy.IsBlockingStrategy;
+        _sequences = new PaddedSequences
+        {
+            NextValue = Sequence.InitialCursorValue,
+            GatingSequenceCache = Sequence.InitialCursorValue,
+        };
     }
 
     /// <inheritdoc cref="ISequencer.NewBarrier"/>
@@ -93,10 +78,10 @@ public sealed class SingleProducerSequencer : ISequencer
 
     private bool HasAvailableCapacity(int requiredCapacity, bool doStore)
     {
-        long nextValue = _nextValue;
+        long nextValue = _sequences.NextValue;
 
         long wrapPoint = (nextValue + requiredCapacity) - _bufferSize;
-        long cachedGatingSequence = _cachedValue;
+        long cachedGatingSequence = _sequences.GatingSequenceCache;
 
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
         {
@@ -106,7 +91,7 @@ public sealed class SingleProducerSequencer : ISequencer
             }
 
             long minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
-            _cachedValue = minSequence;
+            _sequences.GatingSequenceCache = minSequence;
 
             if (wrapPoint > minSequence)
             {
@@ -139,18 +124,18 @@ public sealed class SingleProducerSequencer : ISequencer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal long NextInternal(int n)
     {
-        var current = _nextValue;
+        var current = _sequences.NextValue;
 
         var next = current + n;
         var wrapPoint = next - _bufferSize;
-        var cachedGatingSequence = _cachedValue;
+        var cachedGatingSequence = _sequences.GatingSequenceCache;
 
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
         {
             NextInternalOnWrapPointReached(current, wrapPoint);
         }
 
-        _nextValue = next;
+        _sequences.NextValue = next;
 
         return next;
     }
@@ -167,7 +152,7 @@ public sealed class SingleProducerSequencer : ISequencer
             spinWait.SpinOnce();
         }
 
-        _cachedValue = minSequence;
+        _sequences.GatingSequenceCache = minSequence;
     }
 
     /// <inheritdoc/>
@@ -198,8 +183,8 @@ public sealed class SingleProducerSequencer : ISequencer
             return false;
         }
 
-        var nextSequence = _nextValue + n;
-        _nextValue = nextSequence;
+        var nextSequence = _sequences.NextValue + n;
+        _sequences.NextValue = nextSequence;
 
         sequence = nextSequence;
         return true;
@@ -209,7 +194,7 @@ public sealed class SingleProducerSequencer : ISequencer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetRemainingCapacity()
     {
-        var nextValue = _nextValue;
+        var nextValue = _sequences.NextValue;
 
         var consumed = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
         var produced = nextValue;
@@ -220,7 +205,7 @@ public sealed class SingleProducerSequencer : ISequencer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Claim(long sequence)
     {
-        _nextValue = sequence;
+        _sequences.NextValue = sequence;
     }
 
     /// <inheritdoc/>
@@ -300,5 +285,14 @@ public sealed class SingleProducerSequencer : ISequencer
         var sequenceWaiter = asyncWaitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, dependentSequences);
 
         return new AsyncEventStream<T>(provider, sequenceWaiter, this);
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 128 + 8)]
+    private struct PaddedSequences
+    {
+        [FieldOffset(64)]
+        public long NextValue;
+        [FieldOffset(64 + 8)]
+        public long GatingSequenceCache;
     }
 }

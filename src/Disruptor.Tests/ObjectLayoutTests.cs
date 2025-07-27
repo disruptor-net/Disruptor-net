@@ -7,6 +7,12 @@ namespace Disruptor.Tests;
 public class ObjectLayoutTests
 {
     [Test]
+    public void PrintSingleProducerSequencerLayout()
+    {
+        TypeLayout.PrintLayout<SingleProducerSequencer>();
+    }
+
+    [Test]
     public void PrintMultiProducerSequencerLayout()
     {
         TypeLayout.PrintLayout<MultiProducerSequencer>();
