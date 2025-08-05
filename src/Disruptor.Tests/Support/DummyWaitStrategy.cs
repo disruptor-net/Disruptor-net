@@ -12,7 +12,7 @@ public class DummyWaitStrategy : IWaitStrategy
     public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
         LastSequenceWaiterOwner = owner;
-        LastSequenceWaiter = new DummySequenceWaiter(dependentSequences);
+        LastSequenceWaiter = new DummySequenceWaiter();
 
         return LastSequenceWaiter;
     }

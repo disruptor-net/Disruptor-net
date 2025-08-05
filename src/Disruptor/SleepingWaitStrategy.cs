@@ -42,8 +42,6 @@ public sealed class SleepingWaitStrategy : IWaitStrategy
 
     private class SequenceWaiter(DependentSequenceGroup dependentSequences, int yieldIndex, int sleepIndex) : ISequenceWaiter
     {
-        public DependentSequenceGroup DependentSequences => dependentSequences;
-
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
             long availableSequence;

@@ -126,8 +126,6 @@ public sealed class TimeoutAsyncWaitStrategyV1 : IAsyncWaitStrategy
 
     private class SequenceWaiter(TimeoutAsyncWaitStrategyV1 waitStrategy, DependentSequenceGroup dependentSequences) : ISequenceWaiter, IAsyncSequenceWaiter
     {
-        public DependentSequenceGroup DependentSequences => dependentSequences;
-
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
             return waitStrategy.WaitFor(sequence, dependentSequences, cancellationToken);

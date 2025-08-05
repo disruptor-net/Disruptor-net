@@ -40,8 +40,6 @@ public class HybridSpinWaitStrategy : IWaitStrategy
 
     private class SequenceWaiter(DependentSequenceGroup dependentSequences) : ISequenceWaiter
     {
-        public DependentSequenceGroup DependentSequences => dependentSequences;
-
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
             return dependentSequences.Tag == AggressiveSpinWaitTag

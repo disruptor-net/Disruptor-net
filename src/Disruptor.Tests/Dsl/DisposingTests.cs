@@ -122,8 +122,6 @@ public class DisposingTests
                 waitStrategy.OnWaiterDisposed(owner);
             }
 
-            public DependentSequenceGroup DependentSequences => innerWaiter.DependentSequences;
-
             public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
             {
                 return innerWaiter.WaitFor(sequence, cancellationToken);

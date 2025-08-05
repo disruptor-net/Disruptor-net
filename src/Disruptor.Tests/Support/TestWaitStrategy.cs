@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Disruptor.Tests.Support;
 
-public class TestWaitStrategy : IWaitStrategy, IAsyncWaitStrategy
+public class TestWaitStrategy : IAsyncWaitStrategy
 {
     private readonly Dictionary<IEventHandler, SequenceWaitResult> _nextWaitResults = new();
 
@@ -17,22 +17,20 @@ public class TestWaitStrategy : IWaitStrategy, IAsyncWaitStrategy
 
     public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
-        return new SequenceWaiter(this, owner.Handler as IEventHandler, dependentSequences);
+        return new SequenceWaiter(this, owner.Handler as IEventHandler);
     }
 
     public IAsyncSequenceWaiter NewAsyncSequenceWaiter(SequenceWaiterOwner owner, DependentSequenceGroup dependentSequences)
     {
-        return new SequenceWaiter(this, owner.Handler as IEventHandler, dependentSequences);
+        return new SequenceWaiter(this, owner.Handler as IEventHandler);
     }
 
     public void SignalAllWhenBlocking()
     {
     }
 
-    private class SequenceWaiter(TestWaitStrategy waitStrategy, IEventHandler? eventHandler, DependentSequenceGroup dependentSequences) : ISequenceWaiter, IAsyncSequenceWaiter
+    private class SequenceWaiter(TestWaitStrategy waitStrategy, IEventHandler? eventHandler) : ISequenceWaiter, IAsyncSequenceWaiter
     {
-        public DependentSequenceGroup DependentSequences => dependentSequences;
-
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
             return eventHandler != null

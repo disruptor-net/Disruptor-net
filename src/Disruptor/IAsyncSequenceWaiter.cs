@@ -16,8 +16,6 @@ namespace Disruptor;
 /// </remarks>
 public interface IAsyncSequenceWaiter : IDisposable
 {
-    DependentSequenceGroup DependentSequences { get; }
-
     /// <summary>
     /// Wait for the given sequence to be available. It is possible for this method to return a value
     /// less than the sequence number supplied depending on the implementation of the wait strategy. A common

@@ -214,8 +214,7 @@ public class ValueEventProcessorTests
     {
         var waitStrategy = new BusySpinWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
-        var sequenceWaiter = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, new DependentSequenceGroup(new Sequence()));
-        var barrier = new SequenceBarrier(sequencer, sequenceWaiter);
+        var barrier = sequencer.NewBarrier(SequenceWaiterOwner.Unknown, new Sequence());
         var dp = new ArrayValueDataProvider<StubValueEvent>(sequencer.BufferSize);
         var delayedTaskScheduler = new DelayedTaskScheduler();
 

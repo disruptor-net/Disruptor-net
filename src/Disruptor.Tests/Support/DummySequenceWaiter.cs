@@ -2,10 +2,8 @@
 
 namespace Disruptor.Tests.Support;
 
-public class DummySequenceWaiter(DependentSequenceGroup dependentSequences) : ISequenceWaiter
+public class DummySequenceWaiter : ISequenceWaiter
 {
-    public DependentSequenceGroup DependentSequences => dependentSequences;
-
     public SequenceWaitResult WaitForResult { get; set; }
 
     public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)

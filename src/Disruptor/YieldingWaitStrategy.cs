@@ -35,8 +35,6 @@ public sealed class YieldingWaitStrategy : IWaitStrategy
 
     private class SequenceWaiter(DependentSequenceGroup dependentSequences, int yieldIndex) : ISequenceWaiter
     {
-        public DependentSequenceGroup DependentSequences => dependentSequences;
-
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
             long availableSequence;

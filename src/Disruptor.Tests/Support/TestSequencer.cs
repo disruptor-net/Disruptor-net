@@ -155,7 +155,8 @@ public class TestSequencer : ISequencer
 
     public SequenceBarrier NewBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack)
     {
-        return new SequenceBarrier(this, _waitStrategy.NewSequenceWaiter(owner, new DependentSequenceGroup(_cursor, sequencesToTrack)));
+        var dependentSequences = new DependentSequenceGroup(_cursor, sequencesToTrack);
+        return new SequenceBarrier(this, _waitStrategy.NewSequenceWaiter(owner, dependentSequences), dependentSequences);
     }
 
     public AsyncSequenceBarrier NewAsyncBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack)
@@ -163,7 +164,8 @@ public class TestSequencer : ISequencer
         if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
             throw new InvalidOperationException($"Unable to create an async event stream: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
 
-        return new AsyncSequenceBarrier(this, asyncWaitStrategy.NewAsyncSequenceWaiter(owner, new DependentSequenceGroup(_cursor, sequencesToTrack)));
+        var dependentSequences = new DependentSequenceGroup(_cursor, sequencesToTrack);
+        return new AsyncSequenceBarrier(this, asyncWaitStrategy.NewAsyncSequenceWaiter(owner, dependentSequences), dependentSequences);
     }
 
     public long GetMinimumSequence()

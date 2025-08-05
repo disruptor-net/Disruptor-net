@@ -17,7 +17,7 @@ internal class EventProcessorBenchmarks_WaitRaw
     public EventProcessorBenchmarks_WaitRaw()
     {
         var sequencer = new SingleProducerSequencer(1024, new YieldingWaitStrategy());
-        _sequenceBarrier = sequencer.NewBarrier(null);
+        _sequenceBarrier = sequencer.NewBarrier(SequenceWaiterOwner.Unknown);
         sequencer.Publish(42);
     }
 

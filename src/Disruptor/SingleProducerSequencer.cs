@@ -49,7 +49,7 @@ public sealed class SingleProducerSequencer : ISequencer
         var dependentSequences = new DependentSequenceGroup(_cursor, sequencesToTrack);
         var sequenceWaiter = _waitStrategy.NewSequenceWaiter(owner, dependentSequences);
 
-        return new SequenceBarrier(this, sequenceWaiter);
+        return new SequenceBarrier(this, sequenceWaiter, dependentSequences);
     }
 
     /// <inheritdoc cref="ISequencer.NewAsyncBarrier"/>
@@ -61,7 +61,7 @@ public sealed class SingleProducerSequencer : ISequencer
         var dependentSequences = new DependentSequenceGroup(_cursor, sequencesToTrack);
         var sequenceWaiter = asyncWaitStrategy.NewAsyncSequenceWaiter(owner, dependentSequences);
 
-        return new AsyncSequenceBarrier(this, sequenceWaiter);
+        return new AsyncSequenceBarrier(this, sequenceWaiter, dependentSequences);
     }
 
     /// <inheritdoc/>

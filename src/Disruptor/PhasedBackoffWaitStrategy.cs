@@ -84,8 +84,6 @@ public sealed class PhasedBackoffWaitStrategy : IWaitStrategy
             _yieldTimeout = yieldTimeout;
         }
 
-        public DependentSequenceGroup DependentSequences => _dependentSequences;
-
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
             var startTime = 0L;

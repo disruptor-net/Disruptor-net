@@ -18,8 +18,8 @@ public class SequenceBarrierBenchmarksV2 : SequenceBarrierBenchmarks, IDisposabl
 
     public SequenceBarrierBenchmarksV2()
     {
-        _requesterSequenceBarrier = new SequenceBarrier(_requesterSequencer, _requesterSequencer.GetWaitStrategy().NewSequenceWaiter(null, new DependentSequenceGroup(_requesterSequencer.GetCursorSequence())));
-        _replierSequenceBarrier = new SequenceBarrier(_replierSequencer, _replierSequencer.GetWaitStrategy().NewSequenceWaiter(null, new DependentSequenceGroup(_replierSequencer.GetCursorSequence())));
+        _requesterSequenceBarrier = _requesterSequencer.NewBarrier(null, _requesterSequencer.GetCursorSequence());
+        _replierSequenceBarrier = _replierSequencer.NewBarrier(null, _replierSequencer.GetCursorSequence());
         _replierCancellationTokenSource = new CancellationTokenSource();
 
         _replierTask = Task.Run(RunReplier);

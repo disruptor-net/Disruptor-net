@@ -19,11 +19,11 @@ public sealed class SequenceBarrier : IDisposable
     private readonly ISequenceWaiter _sequenceWaiter;
     private readonly DependentSequenceGroup _dependentSequences;
 
-    public SequenceBarrier(ISequencer sequencer, ISequenceWaiter sequenceWaiter)
+    public SequenceBarrier(ISequencer sequencer, ISequenceWaiter sequenceWaiter, DependentSequenceGroup dependentSequences)
     {
         _sequencer = sequencer;
         _sequenceWaiter = sequenceWaiter;
-        _dependentSequences = sequenceWaiter.DependentSequences;
+        _dependentSequences = dependentSequences;
     }
 
     internal ISequencer Sequencer => _sequencer;

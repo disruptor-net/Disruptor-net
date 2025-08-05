@@ -32,8 +32,6 @@ public sealed class BlockingWaitStrategy : IWaitStrategy
 
     private class SequenceWaiter(object gate, DependentSequenceGroup dependentSequences) : ISequenceWaiter
     {
-        public DependentSequenceGroup DependentSequences => dependentSequences;
-
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
             if (dependentSequences.CursorValue < sequence)

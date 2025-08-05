@@ -24,8 +24,6 @@ public sealed class SpinWaitWaitStrategy : IWaitStrategy
 
     private class SequenceWaiter(DependentSequenceGroup dependentSequences) : ISequenceWaiter
     {
-        public DependentSequenceGroup DependentSequences => dependentSequences;
-
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
             return dependentSequences.SpinWaitFor(sequence, cancellationToken);

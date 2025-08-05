@@ -46,8 +46,6 @@ public sealed class TimeoutBlockingWaitStrategy : IWaitStrategy
 
     private class SequenceWaiter(object gate, int timeoutMilliseconds, DependentSequenceGroup dependentSequences) : ISequenceWaiter
     {
-        public DependentSequenceGroup DependentSequences => dependentSequences;
-
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
             var timeout = timeoutMilliseconds;

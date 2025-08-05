@@ -18,13 +18,12 @@ public class EventProcessorBenchmarks_Wait
     {
         var waitStrategy = new YieldingWaitStrategy();
         var sequencer = new SingleProducerSequencer(64, waitStrategy);
-        var cursorSequence = new Sequence();
-        var sequenceWaiter = waitStrategy.NewSequenceWaiter(null, new DependentSequenceGroup(cursorSequence));
-        var sequenceBarrier = new SequenceBarrier(sequencer, sequenceWaiter);
+        var sequence = new Sequence();
+        var sequenceBarrier = sequencer.NewBarrier(SequenceWaiterOwner.Unknown, sequence);
         _processor1 = new PartialEventProcessor<EventProcessorHelpers.NoopPublishedSequenceReader>(sequenceBarrier, new EventProcessorHelpers.NoopPublishedSequenceReader());
 
         sequencer.Publish(42);
-        cursorSequence.SetValue(42);
+        sequence.SetValue(42);
     }
 
     [Benchmark(Baseline = true, OperationsPerInvoke = _operationsPerInvoke)]

@@ -20,11 +20,11 @@ public sealed class AsyncSequenceBarrier : IDisposable
     private readonly IAsyncSequenceWaiter _sequenceWaiter;
     private readonly DependentSequenceGroup _dependentSequences;
 
-    public AsyncSequenceBarrier(ISequencer sequencer, IAsyncSequenceWaiter sequenceWaiter)
+    public AsyncSequenceBarrier(ISequencer sequencer, IAsyncSequenceWaiter sequenceWaiter, DependentSequenceGroup dependentSequences)
     {
         _sequencer = sequencer;
         _sequenceWaiter = sequenceWaiter;
-        _dependentSequences = sequenceWaiter.DependentSequences;
+        _dependentSequences = dependentSequences;
     }
 
     internal ISequencer Sequencer => _sequencer;

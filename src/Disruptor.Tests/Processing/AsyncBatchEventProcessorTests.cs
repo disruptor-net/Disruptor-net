@@ -189,8 +189,7 @@ public class AsyncBatchEventProcessorTests
     {
         var waitStrategy = new AsyncWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
-        var sequenceWaiter = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, new DependentSequenceGroup(new Sequence()));
-        var barrier = new AsyncSequenceBarrier(sequencer, sequenceWaiter);
+        var barrier = sequencer.NewAsyncBarrier(SequenceWaiterOwner.Unknown, new Sequence());
         var dp = new ArrayDataProvider<StubEvent>(sequencer.BufferSize);
         var delayedTaskScheduler = new DelayedTaskScheduler();
 

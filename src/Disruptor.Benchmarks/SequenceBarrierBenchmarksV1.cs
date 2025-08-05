@@ -16,8 +16,10 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
 
     public SequenceBarrierBenchmarksV1()
     {
-        _requesterSequenceBarrier = new SequenceBarrierV1(_requesterSequencer, _requesterSequencer.GetWaitStrategy().NewSequenceWaiter(null, new DependentSequenceGroup(_requesterSequencer.GetCursorSequence())));
-        _replierSequenceBarrier = new SequenceBarrierV1(_replierSequencer, _replierSequencer.GetWaitStrategy().NewSequenceWaiter(null, new DependentSequenceGroup(_replierSequencer.GetCursorSequence())));
+        var requesterDependentSequences = new DependentSequenceGroup(_requesterSequencer.GetCursorSequence());
+        _requesterSequenceBarrier = new SequenceBarrierV1(_requesterSequencer, _requesterSequencer.GetWaitStrategy().NewSequenceWaiter(SequenceWaiterOwner.Unknown, requesterDependentSequences), requesterDependentSequences);
+        var replierDependentSequences = new DependentSequenceGroup(_replierSequencer.GetCursorSequence());
+        _replierSequenceBarrier = new SequenceBarrierV1(_replierSequencer, _replierSequencer.GetWaitStrategy().NewSequenceWaiter(SequenceWaiterOwner.Unknown, replierDependentSequences), replierDependentSequences);
 
         _replierTask = Task.Run(RunReplier);
         _replierStarted.Wait();
@@ -128,16 +130,16 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
     {
         private readonly ISequencer _sequencer;
         private readonly ISequenceWaiter _waitStrategy;
+        private readonly DependentSequenceGroup _dependentSequences;
         private CancellationTokenSource _cancellationTokenSource;
 
-        public SequenceBarrierV1(ISequencer sequencer, ISequenceWaiter waitStrategy)
+        public SequenceBarrierV1(ISequencer sequencer, ISequenceWaiter waitStrategy, DependentSequenceGroup dependentSequences)
         {
             _sequencer = sequencer;
             _waitStrategy = waitStrategy;
+            _dependentSequences = dependentSequences;
             _cancellationTokenSource = new CancellationTokenSource();
         }
-
-        public DependentSequenceGroup DependentSequences => _waitStrategy.DependentSequences;
 
         public bool IsCancellationRequested => _cancellationTokenSource.IsCancellationRequested;
 
@@ -151,7 +153,7 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
 
         public ISequenceBarrierOptions GetSequencerOptions()
         {
-            return ISequenceBarrierOptions.Get(_sequencer, _waitStrategy.DependentSequences);
+            return ISequenceBarrierOptions.Get(_sequencer, _dependentSequences);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | Constants.AggressiveOptimization)]
@@ -166,7 +168,7 @@ public class SequenceBarrierBenchmarksV1 : SequenceBarrierBenchmarks, IDisposabl
         {
             _cancellationTokenSource.Token.ThrowIfCancellationRequested();
 
-            var availableSequence = _waitStrategy.DependentSequences.Value;
+            var availableSequence = _dependentSequences.Value;
             if (availableSequence >= sequence)
             {
                 if (typeof(TSequenceBarrierOptions) == typeof(ISequenceBarrierOptions.IsDependentSequencePublished))
