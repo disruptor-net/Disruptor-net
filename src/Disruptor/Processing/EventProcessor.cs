@@ -126,7 +126,9 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
     [MethodImpl(Constants.AggressiveOptimization)]
     private void ProcessEvents(CancellationToken cancellationToken)
     {
-        var nextSequence = _sequence.Value + 1L;
+        // Sequence cannot be disposed while ProcessEvents is running => use the sequence pointer for performance.
+        var sequencePointer = _sequence.GetPointer();
+        var nextSequence = sequencePointer.Value + 1L;
 
         while (true)
         {
@@ -152,7 +154,7 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
                     nextSequence++;
                 }
 
-                _sequence.SetValue(availableSequence);
+                sequencePointer.SetValue(availableSequence);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -162,7 +164,7 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
             {
                 var evt = _dataProvider[nextSequence];
                 _exceptionHandler.HandleEventException(ex, nextSequence, evt);
-                _sequence.SetValue(nextSequence);
+                sequencePointer.SetValue(nextSequence);
                 nextSequence++;
             }
         }

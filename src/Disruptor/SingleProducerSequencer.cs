@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Disruptor.Dsl;
@@ -9,12 +8,7 @@ namespace Disruptor;
 
 public sealed class SingleProducerSequencer : ISequencer
 {
-    private readonly IWaitStrategy _waitStrategy;
-    private readonly Sequence _cursor = new();
-    // volatile in the Java version => always use Volatile.Read/Write or Interlocked methods to access this field
-    private Sequence[] _gatingSequences = Array.Empty<Sequence>();
-    private readonly int _bufferSize;
-    private readonly bool _isBlockingWaitStrategy;
+    private SequencerCore _sequencerCore;
     private PaddedSequences _sequences;
 
     public SingleProducerSequencer(int bufferSize)
@@ -24,18 +18,7 @@ public sealed class SingleProducerSequencer : ISequencer
 
     public SingleProducerSequencer(int bufferSize, IWaitStrategy waitStrategy)
     {
-        if (bufferSize < 1)
-        {
-            throw new ArgumentException("bufferSize must not be less than 1");
-        }
-        if (!bufferSize.IsPowerOf2())
-        {
-            throw new ArgumentException("bufferSize must be a power of 2");
-        }
-
-        _bufferSize = bufferSize;
-        _waitStrategy = waitStrategy;
-        _isBlockingWaitStrategy = waitStrategy.IsBlockingStrategy;
+        _sequencerCore = new SequencerCore(bufferSize, waitStrategy);
         _sequences = new PaddedSequences
         {
             NextValue = Sequence.InitialCursorValue,
@@ -46,8 +29,7 @@ public sealed class SingleProducerSequencer : ISequencer
     /// <inheritdoc cref="ISequencer.NewBarrier"/>
     public SequenceBarrier NewBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack)
     {
-        var dependentSequences = new DependentSequenceGroup(_cursor, sequencesToTrack);
-        var sequenceWaiter = _waitStrategy.NewSequenceWaiter(owner, dependentSequences);
+        var sequenceWaiter = _sequencerCore.NewSequenceWaiter(owner, sequencesToTrack);
 
         return new SequenceBarrier(this, sequenceWaiter);
     }
@@ -55,20 +37,16 @@ public sealed class SingleProducerSequencer : ISequencer
     /// <inheritdoc cref="ISequencer.NewAsyncBarrier"/>
     public AsyncSequenceBarrier NewAsyncBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack)
     {
-        if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
-            throw new InvalidOperationException($"Unable to create an async barrier: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
-
-        var dependentSequences = new DependentSequenceGroup(_cursor, sequencesToTrack);
-        var sequenceWaiter = asyncWaitStrategy.NewAsyncSequenceWaiter(owner, dependentSequences);
+        var sequenceWaiter = _sequencerCore.NewAsyncSequenceWaiter(owner, sequencesToTrack);
 
         return new AsyncSequenceBarrier(this, sequenceWaiter);
     }
 
     /// <inheritdoc/>
-    public int BufferSize => _bufferSize;
+    public int BufferSize => _sequencerCore.BufferSize;
 
     /// <inheritdoc/>
-    public long Cursor => _cursor.Value;
+    public long Cursor => _sequencerCore.CursorPointer.Value;
 
     /// <inheritdoc/>
     public bool HasAvailableCapacity(int requiredCapacity)
@@ -80,17 +58,17 @@ public sealed class SingleProducerSequencer : ISequencer
     {
         long nextValue = _sequences.NextValue;
 
-        long wrapPoint = (nextValue + requiredCapacity) - _bufferSize;
+        long wrapPoint = (nextValue + requiredCapacity) - _sequencerCore.BufferSize;
         long cachedGatingSequence = _sequences.GatingSequenceCache;
 
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
         {
             if (doStore)
             {
-                _cursor.SetValueVolatile(nextValue);
+                _sequencerCore.CursorPointer.SetValueVolatile(nextValue);
             }
 
-            long minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
+            long minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _sequencerCore.GatingSequencePointers), nextValue);
             _sequences.GatingSequenceCache = minSequence;
 
             if (wrapPoint > minSequence)
@@ -113,7 +91,7 @@ public sealed class SingleProducerSequencer : ISequencer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Next(int n)
     {
-        if ((uint)(n - 1) >= _bufferSize)
+        if ((uint)(n - 1) >= _sequencerCore.BufferSize)
         {
             ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
         }
@@ -127,7 +105,7 @@ public sealed class SingleProducerSequencer : ISequencer
         var current = _sequences.NextValue;
 
         var next = current + n;
-        var wrapPoint = next - _bufferSize;
+        var wrapPoint = next - _sequencerCore.BufferSize;
         var cachedGatingSequence = _sequences.GatingSequenceCache;
 
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
@@ -143,11 +121,11 @@ public sealed class SingleProducerSequencer : ISequencer
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void NextInternalOnWrapPointReached(long current, long wrapPoint)
     {
-        _cursor.SetValueVolatile(current);
+        _sequencerCore.CursorPointer.SetValueVolatile(current);
 
         var spinWait = default(AggressiveSpinWait);
         long minSequence;
-        while (wrapPoint > (minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), current)))
+        while (wrapPoint > (minSequence = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _sequencerCore.GatingSequencePointers), current)))
         {
             spinWait.SpinOnce();
         }
@@ -166,7 +144,7 @@ public sealed class SingleProducerSequencer : ISequencer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryNext(int n, out long sequence)
     {
-        if (n < 1 || n > _bufferSize)
+        if (n < 1 || n > _sequencerCore.BufferSize)
         {
             ThrowHelper.ThrowArgMustBeGreaterThanZeroAndLessThanBufferSize();
         }
@@ -196,7 +174,7 @@ public sealed class SingleProducerSequencer : ISequencer
     {
         var nextValue = _sequences.NextValue;
 
-        var consumed = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), nextValue);
+        var consumed = DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _sequencerCore.GatingSequencePointers), nextValue);
         var produced = nextValue;
         return BufferSize - (produced - consumed);
     }
@@ -212,11 +190,11 @@ public sealed class SingleProducerSequencer : ISequencer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long sequence)
     {
-        _cursor.SetValue(sequence);
+        _sequencerCore.CursorPointer.SetValue(sequence);
 
-        if (_isBlockingWaitStrategy)
+        if (_sequencerCore.IsBlockingWaitStrategy)
         {
-            _waitStrategy.SignalAllWhenBlocking();
+            _sequencerCore.WaitStrategy.SignalAllWhenBlocking();
         }
     }
 
@@ -231,8 +209,8 @@ public sealed class SingleProducerSequencer : ISequencer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsAvailable(long sequence)
     {
-        var currentSequence = _cursor.Value;
-        return sequence <= currentSequence && sequence > currentSequence - _bufferSize;
+        var currentSequence = _sequencerCore.CursorPointer.Value;
+        return sequence <= currentSequence && sequence > currentSequence - _sequencerCore.BufferSize;
     }
 
     /// <inheritdoc/>
@@ -245,44 +223,40 @@ public sealed class SingleProducerSequencer : ISequencer
     /// <inheritdoc/>
     public void AddGatingSequences(params Sequence[] gatingSequences)
     {
-        SequenceGroups.AddSequences(ref _gatingSequences, this, gatingSequences);
+        _sequencerCore.AddGatingSequences(gatingSequences);
     }
 
     /// <inheritdoc/>
     public bool RemoveGatingSequence(Sequence sequence)
     {
-        return SequenceGroups.RemoveSequence(ref _gatingSequences, sequence);
+        return _sequencerCore.RemoveGatingSequence(sequence);
     }
 
     /// <inheritdoc/>
     public long GetMinimumSequence()
     {
-        return DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _gatingSequences), _cursor.Value);
+        return DisruptorUtil.GetMinimumSequence(Volatile.Read(ref _sequencerCore.GatingSequencePointers), _sequencerCore.CursorPointer.Value);
     }
 
     /// <inheritdoc cref="ISequencer.NewPoller{T}(IDataProvider{T}, Sequence[])"/>.
     public EventPoller<T> NewPoller<T>(IDataProvider<T> provider, params Sequence[] gatingSequences)
         where T : class
     {
-        return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
+        return EventPoller.Create(provider, this, new Sequence(), _sequencerCore.Cursor, gatingSequences);
     }
 
     /// <inheritdoc cref="ISequencer.NewPoller{T}(IValueDataProvider{T}, Sequence[])"/>.
     public ValueEventPoller<T> NewPoller<T>(IValueDataProvider<T> provider, params Sequence[] gatingSequences)
         where T : struct
     {
-        return EventPoller.Create(provider, this, new Sequence(), _cursor, gatingSequences);
+        return EventPoller.Create(provider, this, new Sequence(), _sequencerCore.Cursor, gatingSequences);
     }
 
     /// <inheritdoc cref="ISequencer.NewAsyncEventStream{T}(IDataProvider{T}, Sequence[])"/>.
     public AsyncEventStream<T> NewAsyncEventStream<T>(IDataProvider<T> provider, Sequence[] gatingSequences)
         where T : class
     {
-        if (_waitStrategy is not IAsyncWaitStrategy asyncWaitStrategy)
-            throw new InvalidOperationException($"Unable to create an async event stream: the disruptor must be configured with an async wait strategy (e.g.: {nameof(AsyncWaitStrategy)}");
-
-        var dependentSequences = new DependentSequenceGroup(_cursor, gatingSequences);
-        var sequenceWaiter = asyncWaitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, dependentSequences);
+        var sequenceWaiter = _sequencerCore.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, gatingSequences);
 
         return new AsyncEventStream<T>(provider, sequenceWaiter, this);
     }

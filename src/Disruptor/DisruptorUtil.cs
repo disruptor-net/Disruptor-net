@@ -71,6 +71,18 @@ public static class DisruptorUtil
         return minimum;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static long GetMinimumSequence(SequencePointer[] sequencePointers, long minimum = long.MaxValue)
+    {
+        for (var i = 0; i < sequencePointers.Length; i++)
+        {
+            var sequence = sequencePointers[i].Value;
+            if (sequence < minimum)
+                minimum = sequence;
+        }
+        return minimum;
+    }
+
     /// <summary>
     /// Get an array of <see cref="Sequence"/>s for the passed <see cref="IEventProcessor"/>s
     /// </summary>

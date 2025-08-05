@@ -30,7 +30,7 @@ public class AsyncBatchEventProcessorTests
     public void ShouldThrowExceptionOnSettingNullExceptionHandler()
     {
         var eventHandler = new TestAsyncBatchEventHandler<StubEvent>(x => throw new NullReferenceException());
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
         Assert.Throws<ArgumentNullException>(() => eventProcessor.SetExceptionHandler(null!));
     }
@@ -40,7 +40,7 @@ public class AsyncBatchEventProcessorTests
     {
         var eventSignal = new CountdownEvent(3);
         var eventHandler = new TestAsyncBatchEventHandler<StubEvent>(x => eventSignal.Signal());
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
 
         _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
@@ -66,7 +66,7 @@ public class AsyncBatchEventProcessorTests
 
         var onTimeoutSignal = new ManualResetEvent(false);
         var eventHandler = new TestAsyncBatchEventHandler<StubEvent> { OnTimeoutAction = () => onTimeoutSignal.Set() };
-        var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         var task = eventProcessor.Start();
@@ -88,7 +88,7 @@ public class AsyncBatchEventProcessorTests
         var exception = new TaskCompletionSource<Exception>();
         var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exception.TrySetResult(x.ex));
         var eventHandler = new TestAsyncBatchEventHandler<StubEvent> { OnTimeoutAction = TestException.ThrowOnce() };
-        var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         eventProcessor.SetExceptionHandler(exceptionHandler);
@@ -111,7 +111,7 @@ public class AsyncBatchEventProcessorTests
         var exceptionSignal = new CountdownEvent(1);
         var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
         var eventHandler = new TestAsyncBatchEventHandler<StubEvent>(x => throw new NullReferenceException());
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
         _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         eventProcessor.SetExceptionHandler(exceptionHandler);
@@ -142,7 +142,7 @@ public class AsyncBatchEventProcessorTests
 
             processingSignal.Set();
         });
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
         _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         eventProcessor.SetExceptionHandler(exceptionHandler);
@@ -195,7 +195,7 @@ public class AsyncBatchEventProcessorTests
         var delayedTaskScheduler = new DelayedTaskScheduler();
 
         var h1 = new LifeCycleHandler();
-        var p1 = CreateEventProcessor(dp, barrier, h1);
+        using var p1 = CreateEventProcessor(dp, barrier, h1);
 
         p1.Start(delayedTaskScheduler);
         p1.Halt();
@@ -207,7 +207,7 @@ public class AsyncBatchEventProcessorTests
         for (int i = 0; i < 1000; i++)
         {
             var h2 = new LifeCycleHandler();
-            var p2 =  CreateEventProcessor(dp, barrier, h2);
+            using var p2 =  CreateEventProcessor(dp, barrier, h2);
             p2.Start();
 
             p2.Halt();
@@ -219,7 +219,7 @@ public class AsyncBatchEventProcessorTests
         for (int i = 0; i < 1000; i++)
         {
             var h2 = new LifeCycleHandler();
-            var p2 =  CreateEventProcessor(dp, barrier, h2);
+            using var p2 =  CreateEventProcessor(dp, barrier, h2);
 
             p2.Start();
             Thread.Yield();
@@ -234,7 +234,7 @@ public class AsyncBatchEventProcessorTests
     public void ShouldInvokeOnStartAndOnShutdown()
     {
         var handler = new LifeCycleHandler();
-        var processor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, handler);
+        using var processor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, handler);
 
         var task = processor.Start();
 
@@ -261,7 +261,7 @@ public class AsyncBatchEventProcessorTests
         var eventSignal = new CountdownEvent(eventCountCount);
         var eventHandler = new LimitedBatchSizeEventHandler(6, eventSignal);
 
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
         _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         for (var i = 0; i < eventCountCount; i++)

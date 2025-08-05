@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -8,13 +9,17 @@ namespace Disruptor;
 /// Represents a group a sequences that are the dependencies for an event processor.
 /// </summary>
 /// <remarks>
-/// For a given event processors P, the dependencies are the sequences of the processors that must run before P.
+/// For a given event processor P, the dependencies are the sequences of the processors that must run before P.
 /// If P is an initial processor of the disruptor processors graph, then the only dependency is the ring buffer cursor.
 /// </remarks>
 public class DependentSequenceGroup
 {
+    // ReSharper disable NotAccessedField.Local
     private readonly Sequence _cursor;
     private readonly Sequence[] _dependencies;
+    // ReSharper restore NotAccessedField.Local
+    private readonly SequencePointer _cursorPointer;
+    private readonly SequencePointer[] _dependencyPointers;
     private object? _tag;
 
     /// <summary>
@@ -25,19 +30,22 @@ public class DependentSequenceGroup
     public DependentSequenceGroup(Sequence cursor, params Sequence[] dependencies)
     {
         _cursor = cursor;
-        _dependencies = dependencies.Length == 0 ? new[] { cursor } : dependencies;
+        _dependencies = dependencies;
+
+        _cursorPointer = cursor.GetPointer();
+        _dependencyPointers = dependencies.Length == 0 ? [cursor.GetPointer()] : dependencies.Select(x => x.GetPointer()).ToArray();
     }
 
     /// <summary>
     /// Gets a value indicating whether the ring buffer cursor is the only dependency (i.e.: the event processors
     /// that use this <see cref="DependentSequenceGroup"/> are the first processors of the disruptor).
     /// </summary>
-    public bool DependsOnCursor => _dependencies.Length == 1 && _dependencies[0] == _cursor;
+    public bool DependsOnCursor => _dependencyPointers.Length == 1 && _dependencyPointers[0].PointerEquals(_cursorPointer);
 
     /// <summary>
     /// Gets the count of dependencies.
     /// </summary>
-    public int DependentSequenceCount => _dependencies.Length;
+    public int DependentSequenceCount => _dependencyPointers.Length;
 
     /// <summary>
     /// Gets the value of the ring buffer cursor.
@@ -45,7 +53,7 @@ public class DependentSequenceGroup
     public long CursorValue
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _cursor.Value;
+        get => _cursorPointer.Value;
     }
 
     /// <summary>
@@ -57,7 +65,7 @@ public class DependentSequenceGroup
         get
         {
             var minimum = long.MaxValue;
-            foreach (var sequence in _dependencies)
+            foreach (var sequence in _dependencyPointers)
             {
                 var sequenceValue = sequence.Value;
                 if (sequenceValue < minimum)
@@ -86,15 +94,15 @@ public class DependentSequenceGroup
     /// </summary>
     public bool HasSameDependencies(DependentSequenceGroup dependentSequenceGroup)
     {
-        if (!ReferenceEquals(_cursor, dependentSequenceGroup._cursor))
+        if (!_cursorPointer.PointerEquals(dependentSequenceGroup._cursorPointer))
             return false;
 
-        if (_dependencies.Length != dependentSequenceGroup._dependencies.Length)
+        if (_dependencyPointers.Length != dependentSequenceGroup._dependencyPointers.Length)
             return false;
 
-        for (var index = 0; index < _dependencies.Length; index++)
+        for (var index = 0; index < _dependencyPointers.Length; index++)
         {
-            if (!ReferenceEquals(_dependencies[index], dependentSequenceGroup._dependencies[index]))
+            if (!_dependencyPointers[index].PointerEquals(dependentSequenceGroup._dependencyPointers[index]))
                 return false;
         }
 

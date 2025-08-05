@@ -12,12 +12,10 @@ namespace Disruptor.Tests.Processing;
 public class EventProcessorTests
 {
     private readonly RingBuffer<StubEvent> _ringBuffer;
-    private readonly SequenceBarrier _sequenceBarrier;
 
     public EventProcessorTests()
     {
         _ringBuffer = new RingBuffer<StubEvent>(() => new StubEvent(-1), 16);
-        _sequenceBarrier = _ringBuffer.NewBarrier();
     }
 
     private static IEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IEventHandler<T> eventHandler)
@@ -30,7 +28,7 @@ public class EventProcessorTests
     public void ShouldThrowExceptionOnSettingNullExceptionHandler()
     {
         var eventHandler = new TestEventHandler<StubEvent>(x => throw new NullReferenceException());
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _ringBuffer.NewBarrier(), eventHandler);
 
         Assert.Throws<ArgumentNullException>(() => eventProcessor.SetExceptionHandler(null!));
     }
@@ -40,7 +38,7 @@ public class EventProcessorTests
     {
         var eventSignal = new CountdownEvent(3);
         var eventHandler = new TestEventHandler<StubEvent>(x => eventSignal.Signal());
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _ringBuffer.NewBarrier(), eventHandler);
 
         _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
@@ -66,7 +64,7 @@ public class EventProcessorTests
 
         var onTimeoutSignal = new ManualResetEvent(false);
         var eventHandler = new TestEventHandler<StubEvent> { OnTimeoutAction = () => onTimeoutSignal.Set() };
-        var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         var task = eventProcessor.Start();
@@ -88,7 +86,7 @@ public class EventProcessorTests
         var exception = new TaskCompletionSource<Exception>();
         var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exception.TrySetResult(x.ex));
         var eventHandler = new TestEventHandler<StubEvent> { OnTimeoutAction = TestException.ThrowOnce() };
-        var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         eventProcessor.SetExceptionHandler(exceptionHandler);
@@ -111,7 +109,7 @@ public class EventProcessorTests
         var exceptionSignal = new CountdownEvent(1);
         var exceptionHandler = new TestExceptionHandler<StubEvent>(x => exceptionSignal.Signal());
         var eventHandler = new TestEventHandler<StubEvent>(x => throw new NullReferenceException());
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _ringBuffer.NewBarrier(), eventHandler);
         _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         eventProcessor.SetExceptionHandler(exceptionHandler);
@@ -142,7 +140,7 @@ public class EventProcessorTests
 
             processingSignal.Signal();
         });
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _ringBuffer.NewBarrier(), eventHandler);
         _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         eventProcessor.SetExceptionHandler(exceptionHandler);
@@ -171,7 +169,7 @@ public class EventProcessorTests
         var batchSizes = new List<long>();
         var signal = new CountdownEvent(6);
 
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, new LoopbackEventHandler(_ringBuffer, batchSizes, signal));
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _ringBuffer.NewBarrier(), new LoopbackEventHandler(_ringBuffer, batchSizes, signal));
 
         _ringBuffer.PublishStubEvent(0);
         _ringBuffer.PublishStubEvent(0);
@@ -204,7 +202,7 @@ public class EventProcessorTests
                 completed.Set();
         });
 
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _ringBuffer.NewBarrier(), eventHandler);
         _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         var task = eventProcessor.Start();
@@ -251,13 +249,11 @@ public class EventProcessorTests
     {
         var waitStrategy = new BusySpinWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
-        var sequenceWaiter = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, new DependentSequenceGroup(new Sequence()));
-        var barrier = new SequenceBarrier(sequencer, sequenceWaiter);
         var dp = new ArrayDataProvider<StubEvent>(sequencer.BufferSize);
         var delayedTaskScheduler = new DelayedTaskScheduler();
 
         var h1 = new LifeCycleHandler();
-        var p1 = CreateEventProcessor(dp, barrier, h1);
+        using var p1 = CreateEventProcessor(dp, sequencer.NewBarrier(SequenceWaiterOwner.Unknown), h1);
 
         p1.Start(delayedTaskScheduler);
         p1.Halt();
@@ -269,7 +265,7 @@ public class EventProcessorTests
         for (int i = 0; i < 1000; i++)
         {
             var h2 = new LifeCycleHandler();
-            var p2 = CreateEventProcessor(dp, barrier, h2);
+            using var p2 = CreateEventProcessor(dp, sequencer.NewBarrier(SequenceWaiterOwner.Unknown), h2);
             p2.Start();
 
             p2.Halt();
@@ -281,7 +277,7 @@ public class EventProcessorTests
         for (int i = 0; i < 1000; i++)
         {
             var h2 = new LifeCycleHandler();
-            var p2 = CreateEventProcessor(dp, barrier, h2);
+            using var p2 = CreateEventProcessor(dp, sequencer.NewBarrier(SequenceWaiterOwner.Unknown), h2);
 
             p2.Start();
             Thread.Yield();
@@ -296,7 +292,7 @@ public class EventProcessorTests
     public void ShouldInvokeOnStartAndOnShutdown()
     {
         var handler = new LifeCycleHandler();
-        var processor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, handler);
+        using var processor = CreateEventProcessor(_ringBuffer, _ringBuffer.NewBarrier(), handler);
 
         var task = processor.Start();
 
@@ -354,7 +350,7 @@ public class EventProcessorTests
 
         var eventHandler = (BatchAwareEventHandler)Activator.CreateInstance(eventHandlerType)!;
 
-        var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(ringBuffer, sequenceBarrier, eventHandler);
 
         ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
@@ -381,7 +377,7 @@ public class EventProcessorTests
         var signal = new CountdownEvent(1);
 
         var eventHandler = new ExplicitBatchStartImplementationEventHandler(signal);
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _ringBuffer.NewBarrier(), eventHandler);
 
         _ringBuffer.PublishStubEvent(0);
 
@@ -402,7 +398,7 @@ public class EventProcessorTests
         var eventSignal = new CountdownEvent(eventCountCount);
         var eventHandler = new LimitedBatchSizeEventHandler(6, eventSignal);
 
-        var eventProcessor = CreateEventProcessor(_ringBuffer, _sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, _ringBuffer.NewBarrier(), eventHandler);
         _ringBuffer.AddGatingSequences(eventProcessor.Sequence);
 
         for (var i = 0; i < eventCountCount; i++)

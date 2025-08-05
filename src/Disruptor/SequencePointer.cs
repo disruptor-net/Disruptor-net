@@ -1,41 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Disruptor;
 
-/// <summary>
-/// <para>Concurrent sequence class used for tracking the progress of
-/// the ring buffer and event processors. Supports a number
-/// of concurrent operations including CAS and order writes.
-/// </para>
-/// <para>
-/// Also attempts to be more efficient in regard to false
-/// sharing by adding padding around the volatile field.
-/// </para>
-/// </summary>
-public unsafe class Sequence
+internal readonly unsafe struct SequencePointer
 {
-    public const long InitialCursorValue = -1;
+    private readonly long* _value;
 
-    private long* _value;
-
-    /// <summary>
-    /// Construct a new sequence counter that can be tracked across threads.
-    /// </summary>
-    /// <param name="initialValue">initial value for the counter</param>
-    public Sequence(long initialValue = InitialCursorValue)
+    public SequencePointer(long* value)
     {
-        _value = PointerPool.Rent();
-        *_value = initialValue;
-    }
-
-    ~Sequence()
-    {
-        PointerPool.Return(_value);
+        _value = value;
     }
 
     /// <summary>
@@ -119,59 +93,8 @@ public unsafe class Sequence
         return Interlocked.Add(ref Unsafe.AsRef<long>(_value), value);
     }
 
-    internal SequencePointer GetPointer() => new SequencePointer(_value);
-
-    [StructLayout(LayoutKind.Explicit, Size = 64)]
-    private struct SequenceBlock
+    public bool PointerEquals(SequencePointer other)
     {
-        [FieldOffset(0)]
-        public long SequenceValue;
-    }
-
-    private static class PointerPool
-    {
-        private static int _nextPoolSize = 64;
-        private static readonly List<GCHandle> _blockPools = new();
-        private static readonly Stack<IntPtr> _availablePointers = new();
-        private static readonly object _lock = new();
-
-        static PointerPool()
-        {
-            Grow();
-        }
-
-        public static long* Rent()
-        {
-            lock (_lock)
-            {
-                if (_availablePointers.Count == 0)
-                    Grow();
-
-                return (long*)_availablePointers.Pop();
-            }
-        }
-
-        public static void Return(long* pointer)
-        {
-            lock (_lock)
-            {
-                _availablePointers.Push((IntPtr)pointer);
-            }
-        }
-
-        private static void Grow()
-        {
-            var poolSize = _nextPoolSize;
-            var blockPool = GCHandle.Alloc(new SequenceBlock[poolSize], GCHandleType.Pinned);
-            _blockPools.Add(blockPool);
-
-            var poolPointer = blockPool.AddrOfPinnedObject();
-            for (var i = 1; i < poolSize - 1; i++)
-            {
-                _availablePointers.Push(poolPointer + i * sizeof(SequenceBlock));
-            }
-
-            _nextPoolSize = poolSize * 2;
-        }
+        return _value == other._value;
     }
 }
