@@ -85,6 +85,7 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
 #endif
         _indexMask = bufferSize - 1;
         _indexShift = DisruptorUtil.Log2(bufferSize);
+        _gatingSequenceCache = new SequenceCache(Sequence.InitialCursorValue);
 
         _availableBuffer.AsSpan().Fill(-1);
     }
@@ -377,6 +378,11 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
     {
         [FieldOffset(64)]
         private long _value;
+
+        public SequenceCache(long value)
+        {
+            _value = value;
+        }
 
         public long Value
         {
