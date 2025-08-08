@@ -108,7 +108,7 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
         public int SequencePoolOffset => GatingSequenceBufferOffset + GatingSequenceBufferSize + Padding;
         public int SequencePoolSize => SequenceCapacity * sizeof(SequenceBlock);
 
-        public int AvailabilityBufferOffset => SequencePoolOffset * SequencePoolSize + Padding;
+        public int AvailabilityBufferOffset => SequencePoolOffset + SequencePoolSize + Padding;
         public int AvailabilityBufferSize => EventCount * sizeof(int);
 
         public int RingBufferOffset => AvailabilityBufferOffset + AvailabilityBufferSize + Padding;
