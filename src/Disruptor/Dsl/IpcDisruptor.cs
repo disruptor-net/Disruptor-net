@@ -1,7 +1,5 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Processing;
@@ -26,21 +24,21 @@ public class IpcDisruptor<T> : IAsyncDisposable
     }
 
     public IpcDisruptor(int ringBufferSize, IIpcWaitStrategy waitStrategy)
-        : this(IpcRingBufferMemory.CreateTemporary<T>(ringBufferSize), true, waitStrategy)
+        : this(IpcRingBufferMemory.CreateTemporary<T>(ringBufferSize), waitStrategy, true)
     {
     }
 
     public IpcDisruptor(int ringBufferSize, IIpcWaitStrategy waitStrategy, TaskScheduler taskScheduler)
-        : this(IpcRingBufferMemory.CreateTemporary<T>(ringBufferSize), true, waitStrategy, taskScheduler)
+        : this(IpcRingBufferMemory.CreateTemporary<T>(ringBufferSize), waitStrategy, taskScheduler, true)
     {
     }
 
-    public IpcDisruptor(IpcRingBufferMemory memory, bool ownsMemory, IIpcWaitStrategy waitStrategy)
-        : this(memory, ownsMemory, waitStrategy, TaskScheduler.Default)
+    public IpcDisruptor(IpcRingBufferMemory memory, IIpcWaitStrategy waitStrategy, bool ownsMemory = false)
+        : this(memory, waitStrategy, TaskScheduler.Default, ownsMemory)
     {
     }
 
-    public IpcDisruptor(IpcRingBufferMemory memory, bool ownsMemory, IIpcWaitStrategy waitStrategy, TaskScheduler taskScheduler)
+    public IpcDisruptor(IpcRingBufferMemory memory, IIpcWaitStrategy waitStrategy, TaskScheduler taskScheduler, bool ownsMemory = false)
     {
         _memory = memory;
         _ringBuffer = new IpcRingBuffer<T>(memory, waitStrategy);
@@ -65,13 +63,6 @@ public class IpcDisruptor<T> : IAsyncDisposable
     /// The capacity of the data structure to hold entries.
     /// </summary>
     public long BufferSize => _ringBuffer.BufferSize;
-
-    /// <summary>
-    /// Get the event for a given sequence in the RingBuffer.
-    /// </summary>
-    /// <param name="sequence">sequence for the event</param>
-    /// <returns>event for the sequence</returns>
-    public ref T this[long sequence] => ref _ringBuffer[sequence];
 
     /// <inheritdoc cref="ValueRingBuffer{T}.PublishEvent"/>
     public IpcRingBuffer<T>.UnpublishedEventScope PublishEvent() => RingBuffer.PublishEvent();

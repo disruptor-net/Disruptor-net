@@ -1,7 +1,6 @@
-﻿using System;
+﻿#if NET8_0_OR_GREATER
+using System;
 using System.Threading;
-
-#if NET8_0_OR_GREATER
 using System.Diagnostics;
 using ConsoleAppFramework;
 using Disruptor;
@@ -20,14 +19,36 @@ public class Commands
 
         using (var scope = publisher.PublishEvent())
         {
-            scope.Event().Value = (int)scope.Sequence;
             scope.Event().Key = 101;
+            scope.Event().Value = (int)scope.Sequence;
         }
 
         using (var scope = publisher.PublishEvent())
         {
-            scope.Event().Value = (int)scope.Sequence;
             scope.Event().Key = 102;
+            scope.Event().Value = (int)scope.Sequence;
+        }
+    }
+
+    public void PublishEventsBatch(string ipcDirectoryPath)
+    {
+        using var memory = IpcRingBufferMemory.Open<StubUnmanagedEvent>(ipcDirectoryPath);
+        var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
+
+        using (var scope = publisher.PublishEvents(2))
+        {
+            scope.Event(0).Key = 101;
+            scope.Event(0).Value = (int)scope.StartSequence;
+            scope.Event(1).Key = 102;
+            scope.Event(1).Value = (int)scope.StartSequence + 1;
+        }
+
+        using (var scope = publisher.PublishEvents(2))
+        {
+            scope.Event(0).Key = 103;
+            scope.Event(0).Value = (int)scope.StartSequence;
+            scope.Event(1).Key = 104;
+            scope.Event(1).Value = (int)scope.StartSequence + 1;
         }
     }
 
@@ -58,6 +79,6 @@ public class Commands
     }
 }
 #else
-Console.Error.WriteLine($"IpcPublisher only supported on .NET 8 and above.");
+Console.Error.WriteLine($"IpcPublisher is only supported on .NET 8 and above.");
 return 1;
 #endif

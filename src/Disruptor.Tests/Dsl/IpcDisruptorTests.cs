@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
-using Disruptor.Processing;
 using Disruptor.Tests.Dsl.Stubs;
 using Disruptor.Tests.Support;
 using NUnit.Framework;

@@ -12,6 +12,9 @@ using NUnit.Framework;
 
 namespace Disruptor.Tests;
 
+/// <summary>
+/// IpcPublisher tests using a remote (inter-process) IPC publisher.
+/// </summary>
 [TestFixture]
 public class IpcPublisherRemoteTests : IDisposable
 {
@@ -32,13 +35,14 @@ public class IpcPublisherRemoteTests : IDisposable
     public void Dispose()
     {
         _cursorFollower.Dispose();
+        _sequenceBarrier.Dispose();
         _memory.Dispose();
     }
 
     [Test]
     public void ShouldPublishEvents()
     {
-        RunPublisher($"publish-events --ipc-directory-path \"{_memory.IpcDirectoryPath}\"");
+        RemoteIpcPublisher.Run("publish-events", $"--ipc-directory-path \"{_memory.IpcDirectoryPath}\"");
 
         Assert.That(_ringBuffer, IsIpcRingBuffer.WithEvents(new StubUnmanagedEvent(0, 101), new StubUnmanagedEvent(1, 102)));;
     }
@@ -46,7 +50,7 @@ public class IpcPublisherRemoteTests : IDisposable
     [Test]
     public void ShouldPublishManyEvents()
     {
-        RunPublisher($"publish-many-events --ipc-directory-path \"{_memory.IpcDirectoryPath}\" --event-count 500");
+        RemoteIpcPublisher.Run("publish-many-events", $"--ipc-directory-path \"{_memory.IpcDirectoryPath}\" --event-count 500");
 
         var expectedEvents = Enumerable.Range(0, 500).Select(i => new StubUnmanagedEvent(i, 101)).ToArray();
 
@@ -59,8 +63,8 @@ public class IpcPublisherRemoteTests : IDisposable
         var mutexName = $"Ipc-{Path.GetRandomFileName()}";
         using var mutex = new Mutex(true, mutexName);
 
-        var p1 = Task.Run(() => RunPublisher($"publish-many-events --ipc-directory-path \"{_memory.IpcDirectoryPath}\" --event-count 500 --key 101 --mutex-name \"{mutexName}\""));
-        var p2 = Task.Run(() => RunPublisher($"publish-many-events --ipc-directory-path \"{_memory.IpcDirectoryPath}\" --event-count 500 --key 102 --mutex-name \"{mutexName}\""));
+        var p1 = Task.Run(() => RemoteIpcPublisher.Run("publish-many-events", $"--ipc-directory-path \"{_memory.IpcDirectoryPath}\" --event-count 500 --key 101 --mutex-name \"{mutexName}\""));
+        var p2 = Task.Run(() => RemoteIpcPublisher.Run("publish-many-events", $"--ipc-directory-path \"{_memory.IpcDirectoryPath}\" --event-count 500 --key 102 --mutex-name \"{mutexName}\""));
 
         Thread.Sleep(200);
 
@@ -92,34 +96,6 @@ public class IpcPublisherRemoteTests : IDisposable
 
         Assert.That(nextValueForP1, Is.EqualTo(500));
         Assert.That(nextValueForP2, Is.EqualTo(500));
-    }
-
-    private static void RunPublisher(string arguments)
-    {
-        var process = Process.Start(new ProcessStartInfo($"dotnet", "Disruptor.Tests.IpcPublisher.dll " + arguments)
-        {
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
-        })!;
-
-        Forward(process.StandardOutput, Console.Out);
-        Forward(process.StandardError, Console.Out);
-
-        Assert.That(process.WaitForExit(5000));
-        Assert.That(process.ExitCode, Is.EqualTo(0));
-
-        static void Forward(StreamReader reader, TextWriter writer)
-        {
-            ForwardImpl(reader, writer).ContinueWith(t => Console.Error.WriteLine(t.Exception!.ToString()), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
-
-            static async Task ForwardImpl(StreamReader reader, TextWriter writer)
-            {
-                while (await reader.ReadLineAsync() is { } s)
-                {
-                    await writer.WriteLineAsync(s);
-                }
-            }
-        }
     }
 }
 #endif
