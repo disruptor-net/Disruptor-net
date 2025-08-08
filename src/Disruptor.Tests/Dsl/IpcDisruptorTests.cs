@@ -12,26 +12,26 @@ using NUnit.Framework;
 namespace Disruptor.Tests.Dsl;
 
 [TestFixture]
-public class ValueDisruptorTests : IDisposable
+public class IpcDisruptorTests : IAsyncDisposable
 {
     private const int _timeoutInSeconds = 2;
-    private readonly ValueDisruptor<TestValueEvent> _disruptor;
+    private readonly IpcDisruptor<TestValueEvent> _disruptor;
     private readonly StubTaskScheduler _taskScheduler = new();
     private readonly List<DelayedEventHandler> _delayedEventHandlers = new();
 
-    public ValueDisruptorTests()
+    public IpcDisruptorTests()
     {
-        _disruptor = new ValueDisruptor<TestValueEvent>(() => new TestValueEvent(), 4, _taskScheduler);
+        _disruptor = new IpcDisruptor<TestValueEvent>(4, new YieldingWaitStrategy(), _taskScheduler);
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         foreach (var delayedEventHandler in _delayedEventHandlers)
         {
             delayedEventHandler.StopWaiting();
         }
 
-        _disruptor.Dispose();
+        await _disruptor.DisposeAsync();
 
         Assert.That(_taskScheduler.JoinAllThreads(1000));
     }
@@ -134,13 +134,9 @@ public class ValueDisruptorTests : IDisposable
     public void ShouldAddEventProcessorsAfterPublishing()
     {
         var rb = _disruptor.RingBuffer;
-        var b1 = EventProcessorFactory.Create(rb, rb.NewBarrier(), new SleepingEventHandler());
-        var b2 = EventProcessorFactory.Create(rb, rb.NewBarrier(b1.Sequence), new SleepingEventHandler());
-        var b3 = EventProcessorFactory.Create(rb, rb.NewBarrier(b2.Sequence), new SleepingEventHandler());
-
-        Assert.That(b1.Sequence.Value, Is.EqualTo(-1L));
-        Assert.That(b2.Sequence.Value, Is.EqualTo(-1L));
-        Assert.That(b3.Sequence.Value, Is.EqualTo(-1L));
+        var h1 = new SleepingEventHandler();
+        var h2 = new SleepingEventHandler();
+        var h3 = new SleepingEventHandler();
 
         rb.Publish(rb.Next());
         rb.Publish(rb.Next());
@@ -149,11 +145,11 @@ public class ValueDisruptorTests : IDisposable
         rb.Publish(rb.Next());
         rb.Publish(rb.Next());
 
-        _disruptor.HandleEventsWith(b1, b2, b3);
+        _disruptor.HandleEventsWith(h1).Then(h2).Then(h3);
 
-        Assert.That(b1.Sequence.Value, Is.EqualTo(5L));
-        Assert.That(b2.Sequence.Value, Is.EqualTo(5L));
-        Assert.That(b3.Sequence.Value, Is.EqualTo(5L));
+        Assert.That(_disruptor.GetSequenceValueFor(h1), Is.EqualTo(5L));
+        Assert.That(_disruptor.GetSequenceValueFor(h2), Is.EqualTo(5L));
+        Assert.That(_disruptor.GetSequenceValueFor(h3), Is.EqualTo(5L));
     }
 
     [Test]
@@ -178,91 +174,6 @@ public class ValueDisruptorTests : IDisposable
         Assert.That(_disruptor.GetSequenceValueFor(b3), Is.EqualTo(5L));
     }
 
-
-    [Test]
-    public void ShouldGetDependentSequencesForHandler()
-    {
-        var rb = _disruptor.RingBuffer;
-        var handler = new TestValueEventHandler<TestValueEvent>();
-
-        _disruptor.HandleEventsWith(handler);
-        _disruptor.Start();
-
-        rb.Publish(rb.Next());
-        rb.Publish(rb.Next());
-        rb.Publish(rb.Next());
-        rb.Publish(rb.Next());
-        rb.Publish(rb.Next());
-        rb.Publish(rb.Next());
-
-        var sequenceGroup = _disruptor.GetDependentSequencesFor(handler);
-        Assert.That(sequenceGroup, Is.Not.Null);
-        Assert.That(sequenceGroup!.CursorValue, Is.EqualTo(5L));
-        Assert.That(sequenceGroup!.DependsOnCursor, Is.True);
-        Assert.That(sequenceGroup!.DependentSequenceCount, Is.EqualTo(1));
-    }
-
-    [Test]
-    public void ShouldGetDependentSequencesForHandlerIfAddedAfterPublish()
-    {
-        var rb = _disruptor.RingBuffer;
-        var handler = new TestValueEventHandler<TestValueEvent>();
-
-        rb.Publish(rb.Next());
-        rb.Publish(rb.Next());
-        rb.Publish(rb.Next());
-        rb.Publish(rb.Next());
-        rb.Publish(rb.Next());
-        rb.Publish(rb.Next());
-
-        _disruptor.HandleEventsWith(handler);
-        _disruptor.Start();
-
-        var sequenceGroup = _disruptor.GetDependentSequencesFor(handler);
-        Assert.That(sequenceGroup, Is.Not.Null);
-        Assert.That(sequenceGroup!.CursorValue, Is.EqualTo(5L));
-        Assert.That(sequenceGroup!.DependsOnCursor, Is.True);
-        Assert.That(sequenceGroup!.DependentSequenceCount, Is.EqualTo(1));
-    }
-
-    [Test]
-    public void ShouldGetDependentSequencesForMultipleHandlers()
-    {
-        var h1 = new TestValueEventHandler<TestValueEvent>();
-        var h2 = new TestValueEventHandler<TestValueEvent>();
-        var h3 = new TestValueEventHandler<TestValueEvent>();
-
-        _disruptor.HandleEventsWith(h1).Then(h2, h3);
-
-        var sequenceGroup1 = _disruptor.GetDependentSequencesFor(h1)!;
-        var sequenceGroup2 = _disruptor.GetDependentSequencesFor(h2)!;
-        var sequenceGroup3 = _disruptor.GetDependentSequencesFor(h3)!;
-
-        Assert.That(sequenceGroup1.HasSameDependencies(sequenceGroup2), Is.False);
-        Assert.That(sequenceGroup2.HasSameDependencies(sequenceGroup3), Is.True);
-        Assert.That(sequenceGroup1.DependsOnCursor, Is.True); ;
-        Assert.That(sequenceGroup2.DependsOnCursor, Is.False);
-        Assert.That(sequenceGroup3.DependsOnCursor, Is.False);
-    }
-
-    [Test]
-    public void ShouldConfigureDependentSequencesTags()
-    {
-        var h1 = new TestValueEventHandler<TestValueEvent>();
-        var h2 = new TestValueEventHandler<TestValueEvent>();
-        var h3 = new TestValueEventHandler<TestValueEvent>();
-
-        _disruptor.HandleEventsWith(h1).Then(h2, h3);
-
-        _disruptor.GetDependentSequencesFor(h1)!.Tag = "1";
-        _disruptor.GetDependentSequencesFor(h2)!.Tag = "2";
-        _disruptor.GetDependentSequencesFor(h3)!.Tag = "3";
-
-        Assert.That(_disruptor.GetDependentSequencesFor(h1)!.Tag, Is.EqualTo("1"));
-        Assert.That(_disruptor.GetDependentSequencesFor(h2)!.Tag, Is.EqualTo("2"));
-        Assert.That(_disruptor.GetDependentSequencesFor(h3)!.Tag, Is.EqualTo("3"));
-    }
-
     [Test]
     public void ShouldCreateEventProcessorGroupForFirstEventProcessors()
     {
@@ -271,11 +182,10 @@ public class ValueDisruptorTests : IDisposable
         var eventHandler1 = new SleepingEventHandler();
         var eventHandler2 = new SleepingEventHandler();
 
-        var eventHandlerGroup =
-            _disruptor.HandleEventsWith(eventHandler1, eventHandler2);
-        _disruptor.Start();
-
+        var eventHandlerGroup = _disruptor.HandleEventsWith(eventHandler1, eventHandler2);
         Assert.That(eventHandlerGroup, Is.Not.Null);
+
+        _disruptor.Start();
         Assert.That(_taskScheduler.TaskCount, Is.EqualTo(2));
     }
 
@@ -301,20 +211,6 @@ public class ValueDisruptorTests : IDisposable
         _disruptor.HandleEventsWith(eventHandler1).Then(eventHandler2);
 
         EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, eventHandler1);
-    }
-
-    [Test]
-    public void ShouldSupportAddingCustomEventProcessorWithFactory()
-    {
-        var rb = _disruptor.RingBuffer;
-        var b1 = EventProcessorFactory.Create(rb, rb.NewBarrier(), new SleepingEventHandler());
-        var b2 = new ValueEventProcessorCreator<TestValueEvent>((ringBuffer, sequenceBarrier) => EventProcessorFactory.Create(ringBuffer, sequenceBarrier, new SleepingEventHandler()));
-
-        _disruptor.HandleEventsWith(b1).Then(b2);
-
-        _disruptor.Start();
-
-        Assert.That(_taskScheduler.TaskCount, Is.EqualTo(2));
     }
 
     [Test]
@@ -444,7 +340,7 @@ public class ValueDisruptorTests : IDisposable
 
         var reference = new AtomicReference<Exception>();
         var exceptionHandler = new StubExceptionHandler(reference);
-        _disruptor.HandleExceptionsFor(eventHandler).With(exceptionHandler);
+        _disruptor.SetExceptionHandler(eventHandler, exceptionHandler);
 
         PublishEvent();
 
@@ -471,83 +367,6 @@ public class ValueDisruptorTests : IDisposable
         _disruptor.Start();
 
         Assert.Throws<InvalidOperationException>(() => _disruptor.Start());
-    }
-
-    [Test]
-    public void ShouldSupportCustomProcessorsAsDependencies()
-    {
-        var ringBuffer = _disruptor.RingBuffer;
-
-        var delayedEventHandler = CreateDelayedEventHandler();
-
-        var countDownLatch = new CountdownEvent(2);
-        var handlerWithBarrier = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
-
-        var processor = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), delayedEventHandler);
-        _disruptor.HandleEventsWith(processor).Then(handlerWithBarrier);
-
-        EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
-
-        Assert.That(_taskScheduler.TaskCount, Is.EqualTo(2));
-    }
-
-    [Test]
-    public void ShouldSupportHandlersAsDependenciesToCustomProcessors()
-    {
-        var delayedEventHandler = CreateDelayedEventHandler();
-        _disruptor.HandleEventsWith(delayedEventHandler);
-
-        var ringBuffer = _disruptor.RingBuffer;
-        var countDownLatch = new CountdownEvent(2);
-        var handlerWithBarrier = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
-
-        var sequenceBarrier = _disruptor.After(delayedEventHandler).AsSequenceBarrier();
-        var processor = EventProcessorFactory.Create(ringBuffer, sequenceBarrier, handlerWithBarrier);
-        _disruptor.HandleEventsWith(processor);
-
-        EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
-
-        Assert.That(_taskScheduler.TaskCount, Is.EqualTo(2));
-    }
-
-    [Test]
-    public void ShouldSupportCustomProcessorsAndHandlersAsDependencies()
-    {
-        var delayedEventHandler1 = CreateDelayedEventHandler();
-        var delayedEventHandler2 = CreateDelayedEventHandler();
-        _disruptor.HandleEventsWith(delayedEventHandler1);
-
-        var ringBuffer = _disruptor.RingBuffer;
-        var countDownLatch = new CountdownEvent(2);
-        var handlerWithBarrier = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
-
-        var sequenceBarrier = _disruptor.After(delayedEventHandler1).AsSequenceBarrier();
-        var processor = EventProcessorFactory.Create(ringBuffer, sequenceBarrier, delayedEventHandler2);
-
-        _disruptor.After(delayedEventHandler1).And(processor).HandleEventsWith(handlerWithBarrier);
-
-        EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler1, delayedEventHandler2);
-    }
-
-    [Test]
-    public void ShouldSupportMultipleCustomProcessorsAndHandlersAsDependencies()
-    {
-        var ringBuffer = _disruptor.RingBuffer;
-        var countDownLatch = new CountdownEvent(2);
-        var handlerWithBarrier = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
-
-        var delayedEventHandler1 = CreateDelayedEventHandler();
-        var processor1 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), delayedEventHandler1);
-
-        var delayedEventHandler2 = CreateDelayedEventHandler();
-        var processor2 = EventProcessorFactory.Create(ringBuffer, ringBuffer.NewBarrier(), delayedEventHandler2);
-
-        _disruptor.HandleEventsWith(processor1, processor2);
-        _disruptor.After(processor1, processor2).HandleEventsWith(handlerWithBarrier);
-
-        EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler1, delayedEventHandler2);
-
-        Assert.That(_taskScheduler.TaskCount, Is.EqualTo(3));
     }
 
     [Test]
@@ -607,55 +426,6 @@ public class ValueDisruptorTests : IDisposable
     }
 
     [Test]
-    public void ShouldMakeEntriesAvailableToFirstCustomProcessorsImmediately()
-    {
-        var countDownLatch = new CountdownEvent(2);
-        var eventHandler = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
-
-        _disruptor.HandleEventsWith((ringBuffer, sequenceBarrier) =>
-        {
-            Assert.That(sequenceBarrier.DependentSequences.DependsOnCursor, "Should depend on cursor");
-            return EventProcessorFactory.Create(ringBuffer, sequenceBarrier, eventHandler);
-        });
-
-        EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch);
-    }
-
-    [Test]
-    public void ShouldHonorDependenciesForCustomProcessors()
-    {
-        var countDownLatch = new CountdownEvent(2);
-        var eventHandler = new CountDownValueEventHandler<TestValueEvent>(countDownLatch);
-        var delayedEventHandler = CreateDelayedEventHandler();
-
-        _disruptor.HandleEventsWith(delayedEventHandler).Then((ringBuffer, sequenceBarrier) =>
-        {
-            Assert.That(!sequenceBarrier.DependentSequences.DependsOnCursor, "Should not depend on cursor");
-            Assert.That(sequenceBarrier.DependentSequences.DependentSequenceCount, Is.EqualTo(1), "Should have had a barrier sequence");
-            return EventProcessorFactory.Create(ringBuffer, sequenceBarrier, eventHandler);
-        });
-
-        EnsureTwoEventsProcessedAccordingToDependencies(countDownLatch, delayedEventHandler);
-    }
-
-    [Test]
-    public void ShouldCreateDedicatedSequenceBarriersForCustomEventProcessors()
-    {
-        TestEventProcessor? s1 = null;
-        TestEventProcessor? s2 = null;
-
-        _disruptor.HandleEventsWith(
-            (_, sb) => s1 = new TestEventProcessor(sb),
-            (_, sb) => s2 = new TestEventProcessor(sb)
-        );
-
-        Assert.That(s1, Is.Not.Null);
-        Assert.That(s2, Is.Not.Null);
-        Assert.That(s1!.SequenceBarrier, Is.Not.SameAs(s2!.SequenceBarrier));
-    }
-
-
-    [Test]
     public void ShouldWaitForHandlerStartBeforeCompletingStartTask()
     {
         var startSignal1 = new ManualResetEventSlim();
@@ -696,14 +466,14 @@ public class ValueDisruptorTests : IDisposable
     }
 
     [Test]
-    public void ShouldHaltOnDispose()
+    public async Task ShouldHaltOnDispose()
     {
         _disruptor.HandleEventsWith(new TestValueEventHandler<TestValueEvent>());
-        _disruptor.Start();
+        await _disruptor.Start();
 
         Assert.That(_disruptor.IsRunning);
 
-        _disruptor.Dispose();
+        await _disruptor.DisposeAsync();
 
         Assert.That(!_disruptor.IsRunning);
         Assert.That(_taskScheduler.JoinAllThreads(500));

@@ -7,6 +7,12 @@ public static class RingBufferExtensions
         return ringBuffer.NewBarrier(SequenceWaiterOwner.Unknown, sequencesToTrack);
     }
 
+    internal static IpcSequenceBarrier NewBarrier<T>(this IpcRingBuffer<T> ringBuffer, params SequencePointer[] sequencesToTrack)
+        where T : unmanaged
+    {
+        return ringBuffer.NewBarrier(SequenceWaiterOwner.Unknown, sequencesToTrack);
+    }
+
     public static AsyncSequenceBarrier NewAsyncBarrier<T>(this RingBuffer<T> ringBuffer, params Sequence[] sequencesToTrack)
         where T : class
     {

@@ -9,7 +9,7 @@ namespace Disruptor.Tests.Dsl.Stubs;
 public class StubTaskScheduler : TaskScheduler
 {
     private readonly ConcurrentQueue<Thread> _threads = new();
-    private bool _ignoreTasks;
+    private ManualResetEvent _executionSignal = new(true);
     private int _taskCount;
 
     public int TaskCount => _taskCount;
@@ -23,8 +23,7 @@ public class StubTaskScheduler : TaskScheduler
     {
         Interlocked.Increment(ref _taskCount);
 
-        if (Volatile.Read(ref _ignoreTasks))
-            return;
+        var executionSignal = Volatile.Read(ref _executionSignal);
 
         var thread = new Thread(ExecuteTask);
         thread.Start();
@@ -32,6 +31,7 @@ public class StubTaskScheduler : TaskScheduler
 
         void ExecuteTask()
         {
+            executionSignal.WaitOne();
             try
             {
                 TryExecuteTask(task);
@@ -63,8 +63,19 @@ public class StubTaskScheduler : TaskScheduler
         return true;
     }
 
-    public void IgnoreExecutions()
+    public IDisposable SuspendExecutions()
     {
-        _ignoreTasks = true;
+        var executionSignal = new ManualResetEvent(false);
+        _executionSignal = executionSignal;
+
+        return new SuspendExecutionsScope(executionSignal);
+    }
+
+    private class SuspendExecutionsScope(ManualResetEvent executionSignal) : IDisposable
+    {
+        public void Dispose()
+        {
+            executionSignal.Set();
+        }
     }
 }

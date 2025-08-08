@@ -9,6 +9,7 @@ namespace Disruptor.Tests.Support;
 /// </summary>
 public class CursorFollower : IDisposable
 {
+    private readonly UnmanagedSequence _unmanagedSequence = new();
     private readonly ICursored _sequencer;
     private volatile bool _running;
     private Task? _runTask;
@@ -16,9 +17,11 @@ public class CursorFollower : IDisposable
     private CursorFollower(ICursored sequencer)
     {
         _sequencer = sequencer;
+        SequencePointer = _unmanagedSequence.Pointer;
     }
 
     public Sequence Sequence { get; } = new();
+    public SequencePointer SequencePointer { get; }
 
     public static CursorFollower StartNew(ICursored sequencer)
     {
@@ -48,6 +51,7 @@ public class CursorFollower : IDisposable
                 {
                     spinWait.Reset();
                     Sequence.SetValue(cursor);
+                    SequencePointer.SetValue(cursor);
                 }
             }
         }

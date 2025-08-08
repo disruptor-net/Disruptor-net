@@ -126,6 +126,17 @@ public static class EventProcessorFactory
         return new EventProcessorHelpers.UnknownSequencerPublishedSequenceReader(sequencer);
     }
 
+    private static IPublishedSequenceReader CreatePublishedSequenceReader(IpcSequenceBarrier sequenceBarrier)
+    {
+        if (!sequenceBarrier.DependentSequences.DependsOnCursor)
+            // When the sequence barrier does not directly depend on the ring buffer cursor, the dependent sequence
+            // is always published (the value is derived from other event processors which cannot process unpublished
+            // sequences).
+            return new EventProcessorHelpers.NoopPublishedSequenceReader();
+
+        return new EventProcessorHelpers.IpcSequencerPublishedSequenceReader(sequenceBarrier.Sequencer);
+    }
+
     private static IBatchSizeLimiter CreateBatchSizeLimiter<T>(IAsyncBatchEventHandler<T> eventHandler)
         where T : class
     {
@@ -158,6 +169,22 @@ public static class EventProcessorFactory
 
         var eventProcessorType = processorType.MakeGenericType(typeof(T), dataProviderProxy.GetType(), publishedSequenceReader.GetType(), eventHandlerProxy.GetType(), onBatchStartInvoker.GetType(), batchSizeLimiter.GetType());
         return (IValueEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProviderProxy, sequenceBarrier, publishedSequenceReader, eventHandlerProxy, onBatchStartInvoker, batchSizeLimiter)!;
+    }
+
+    /// <summary>
+    /// Create a new <see cref="IIpcEventProcessor{T}"/> with dedicated generic arguments.
+    /// </summary>
+    /// <typeparam name="T">the type of event used.</typeparam>
+    internal static IIpcEventProcessor<T> Create<T>(IpcRingBuffer<T> dataProvider, SequencePointer sequence, IpcSequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
+        where T : unmanaged
+    {
+        var publishedSequenceReader = CreatePublishedSequenceReader(sequenceBarrier);
+        var eventHandlerProxy = StructProxy.CreateProxyInstance(eventHandler);
+        var onBatchStartInvoker = CreateOnBatchStartEvaluator(eventHandler);
+        var batchSizeLimiter = CreateBatchSizeLimiter(eventHandler);
+
+        var eventProcessorType = typeof(IpcEventProcessor<,,,,>).MakeGenericType(typeof(T), publishedSequenceReader.GetType(), eventHandlerProxy.GetType(), onBatchStartInvoker.GetType(), batchSizeLimiter.GetType());
+        return (IIpcEventProcessor<T>)Activator.CreateInstance(eventProcessorType, dataProvider, sequence, sequenceBarrier, publishedSequenceReader, eventHandlerProxy, onBatchStartInvoker, batchSizeLimiter)!;
     }
 
     private static IOnBatchStartEvaluator CreateOnBatchStartEvaluator<T>(IValueEventHandler<T> eventHandler)
