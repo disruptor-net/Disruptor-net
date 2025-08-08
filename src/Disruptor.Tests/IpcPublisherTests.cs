@@ -8,29 +8,39 @@ using NUnit.Framework;
 
 namespace Disruptor.Tests;
 
-[TestFixture]
+[TestFixture(true)]
+[TestFixture(false)]
 public class IpcPublisherTests : IDisposable
 {
     private readonly IpcRingBufferMemory _memory;
     private readonly IpcRingBuffer<StubUnmanagedEvent> _ringBuffer;
     private readonly IpcSequenceBarrier _sequenceBarrier;
     private readonly CursorFollower _cursorFollower;
+    private readonly IpcRingBufferMemory? _publisherMemory;
     private readonly IpcPublisher<StubUnmanagedEvent> _publisher;
 
-    public IpcPublisherTests()
+    public IpcPublisherTests(bool shareMemory)
     {
         _memory = IpcRingBufferMemory.CreateTemporary(32, initializer: _ => new StubUnmanagedEvent(-1));
         _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(_memory, new YieldingWaitStrategy());
         _sequenceBarrier = _ringBuffer.NewBarrier();
         _cursorFollower = CursorFollower.StartNew(_ringBuffer);
         _ringBuffer.SetGatingSequences(_cursorFollower.SequencePointer);
+        _publisherMemory = shareMemory ? null : IpcRingBufferMemory.Open<StubUnmanagedEvent>(_memory.IpcDirectoryPath);
+        _publisher = CreatePublisher();
+    }
 
-        _publisher = new IpcPublisher<StubUnmanagedEvent>(_memory);
+    private IpcPublisher<StubUnmanagedEvent> CreatePublisher()
+    {
+        return _publisherMemory != null
+            ? new IpcPublisher<StubUnmanagedEvent>(_publisherMemory)
+            : new IpcPublisher<StubUnmanagedEvent>(_memory);
     }
 
     public void Dispose()
     {
         _cursorFollower.Dispose();
+        _publisherMemory?.Dispose();
         _memory.Dispose();
     }
 
@@ -228,8 +238,8 @@ public class IpcPublisherTests : IDisposable
     [Test]
     public void ShouldPublishEventFromMultiplePublishers()
     {
-        var publisher1 = new IpcPublisher<StubUnmanagedEvent>(_memory);
-        var publisher2 = new IpcPublisher<StubUnmanagedEvent>(_memory);
+        var publisher1 = CreatePublisher();
+        var publisher2 = CreatePublisher();
 
         using (var scope = publisher1.PublishEvent())
         {
@@ -241,7 +251,7 @@ public class IpcPublisherTests : IDisposable
             scope.Event().Value = (int)scope.Sequence;
         }
 
-        var publisher3 = new IpcPublisher<StubUnmanagedEvent>(_memory);
+        var publisher3 = CreatePublisher();
 
         using (var scope = publisher3.PublishEvent())
         {
@@ -281,7 +291,7 @@ public class IpcPublisherTests : IDisposable
     {
         try
         {
-            Assert.Throws<ArgumentException>(() => _publisher.PublishEvents(_ringBuffer.BufferSize + 1));
+            Assert.Throws<ArgumentException>(() => _publisher.PublishEvents(_publisher.BufferSize + 1));
         }
         finally
         {
@@ -324,7 +334,7 @@ public class IpcPublisherTests : IDisposable
 
         for (var i = 0; i < 10; i++)
         {
-            _publisher.Publish(_ringBuffer.Next());
+            _publisher.Publish(_publisher.Next());
         }
 
         sequenceThree.SetValue(3);
@@ -350,6 +360,34 @@ public class IpcPublisherTests : IDisposable
 
         var expectedIndex = sequence % 32;
         Assert.That(evt.Value, Is.EqualTo(expectedIndex));
+    }
+
+    [Test]
+    public void ShouldSetAndGetGatingSequences()
+    {
+        var sequence = _ringBuffer.NewSequence();
+        sequence.SetValue(100);
+
+        _ringBuffer.SetGatingSequences(sequence);
+
+        var sequences = _publisher.GetGatingSequences();
+        Assert.That(sequences, Is.EqualTo(new[] { sequence }));
+    }
+
+    [Test]
+    public void ShouldGetMinimumGatingSequences()
+    {
+        var sequence = _ringBuffer.NewSequence();
+        _ringBuffer.SetGatingSequences(sequence);
+
+        for (var i = 0; i < 10; i++)
+        {
+            _ringBuffer.Publish(_ringBuffer.Next());
+        }
+
+        sequence.SetValue(4);
+
+        Assert.That(_publisher.GetMinimumGatingSequence(), Is.EqualTo(4));
     }
 
     private static void AssertEmptyRingBuffer(IpcRingBuffer<StubUnmanagedEvent> ringBuffer)

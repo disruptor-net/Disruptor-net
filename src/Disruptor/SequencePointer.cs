@@ -87,4 +87,9 @@ public readonly unsafe struct SequencePointer : IEquatable<SequencePointer>
     {
         return Interlocked.Add(ref Unsafe.AsRef<long>(_value), value);
     }
+
+    public static explicit operator long*(SequencePointer sequencePointer)
+    {
+        return sequencePointer._value;
+    }
 }

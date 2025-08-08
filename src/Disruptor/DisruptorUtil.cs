@@ -71,18 +71,6 @@ public static class DisruptorUtil
         return minimum;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static unsafe long GetMinimumSequence(SequencePointer* sequences, int sequenceCount, long minimum = long.MaxValue)
-    {
-        for (var i = 0; i < sequenceCount; i++)
-        {
-            var sequence = sequences[i].Value;
-            if (sequence < minimum)
-                minimum = sequence;
-        }
-        return minimum;
-    }
-
     /// <summary>
     /// Get an array of <see cref="Sequence"/>s for the passed <see cref="IEventProcessor"/>s
     /// </summary>

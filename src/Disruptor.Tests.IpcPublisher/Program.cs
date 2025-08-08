@@ -4,6 +4,7 @@ using System.Threading;
 using System.Diagnostics;
 using ConsoleAppFramework;
 using Disruptor;
+using Disruptor.PerfTests.Support;
 using Disruptor.Tests.Support;
 
 var app = ConsoleApp.Create();
@@ -75,6 +76,36 @@ public class Commands
                 scope.Event().Value = i;
                 scope.Event().Key = key;
             }
+        }
+    }
+
+    public void ReadMinimumGatingSequence(string ipcDirectoryPath, long expectedValue)
+    {
+        using var memory = IpcRingBufferMemory.Open<PerfValueEvent>(ipcDirectoryPath);
+
+        var publisher = new IpcPublisher<PerfValueEvent>(memory);
+
+        var minimumGatingSequence = publisher.GetMinimumGatingSequence();
+        if (minimumGatingSequence != expectedValue)
+            throw new InvalidOperationException($"Invalid minimum gating sequence, expected {expectedValue} but was {minimumGatingSequence}");
+    }
+
+    public void ThroughputTest(string ipcDirectoryPath, int iterations, string mutexName, int? cpu)
+    {
+        using var _ = ThreadAffinityUtil.SetThreadAffinity(cpu, ThreadPriority.Highest);
+
+        using var memory = IpcRingBufferMemory.Open<PerfValueEvent>(ipcDirectoryPath);
+
+        var publisher = new IpcPublisher<PerfValueEvent>(memory);
+
+        using var mutex = Mutex.OpenExisting(mutexName);
+        mutex.WaitOne();
+
+        for (long i = 0; i < iterations; i++)
+        {
+            var sequence = publisher.Next();
+            publisher[sequence].Value = i;
+            publisher.Publish(sequence);
         }
     }
 }

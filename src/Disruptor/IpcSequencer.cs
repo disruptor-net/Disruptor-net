@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -20,8 +21,9 @@ internal sealed unsafe class IpcSequencer
     private readonly IIpcWaitStrategy _waitStrategy;
     private readonly int _bufferSize;
     private readonly SequencePointer _cursor;
-    private readonly SequencePointer* _gatingSequences;
-    private volatile int* _gatingSequenceCountPointer;
+    private readonly IpcSequenceBlock* _sequenceBlocks;
+    private readonly int* _gatingSequenceIndexArray;
+    private volatile int* _gatingSequenceIndexCount;
     private readonly int* _availableBufferPointer;
     private readonly int _indexMask;
     private readonly int _indexShift;
@@ -33,8 +35,9 @@ internal sealed unsafe class IpcSequencer
         _ringBufferMemory = ringBufferMemory;
         _waitStrategy = waitStrategy;
         _cursor = ringBufferMemory.Cursor;
-        _gatingSequences = ringBufferMemory.GatingSequences;
-        _gatingSequenceCountPointer = ringBufferMemory.GatingSequenceCountPointer;
+        _sequenceBlocks = ringBufferMemory.SequenceBlocks;
+        _gatingSequenceIndexArray = ringBufferMemory.GatingSequenceIndexArray;
+        _gatingSequenceIndexCount = ringBufferMemory.GatingSequenceIndexCountPointer;
         _availableBufferPointer = ringBufferMemory.AvailabilityBuffer;
         _indexMask = ringBufferMemory.BufferSize - 1;
         _indexShift = DisruptorUtil.Log2(ringBufferMemory.BufferSize);
@@ -66,7 +69,7 @@ internal sealed unsafe class IpcSequencer
 
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > cursorValue)
         {
-            var minSequence = DisruptorUtil.GetMinimumSequence(_gatingSequences, *_gatingSequenceCountPointer, cursorValue);
+            var minSequence = GetMinimumSequence(_sequenceBlocks, _gatingSequenceIndexArray, *_gatingSequenceIndexCount, cursorValue);
             _gatingSequenceCache.SetValue(minSequence);
 
             if (wrapPoint > minSequence)
@@ -114,9 +117,11 @@ internal sealed unsafe class IpcSequencer
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void NextInternalOnWrapPointReached(long wrapPoint, long current)
     {
+        Debugger.Break();
+
         var spinWait = default(AggressiveSpinWait);
         long minSequence;
-        while (wrapPoint > (minSequence = DisruptorUtil.GetMinimumSequence(_gatingSequences, *_gatingSequenceCountPointer, current)))
+        while (wrapPoint > (minSequence = GetMinimumSequence(_sequenceBlocks, _gatingSequenceIndexArray, *_gatingSequenceIndexCount, current)))
         {
             spinWait.SpinOnce();
         }
@@ -166,7 +171,7 @@ internal sealed unsafe class IpcSequencer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetRemainingCapacity()
     {
-        var consumed = DisruptorUtil.GetMinimumSequence(_gatingSequences, *_gatingSequenceCountPointer, _cursor.Value);
+        var consumed = GetMinimumSequence(_sequenceBlocks, _gatingSequenceIndexArray, *_gatingSequenceIndexCount, _cursor.Value);
         var produced = _cursor.Value;
         return BufferSize - (produced - consumed);
     }
@@ -227,11 +232,30 @@ internal sealed unsafe class IpcSequencer
 
     internal void SetGatingSequences(SequencePointer[] gatingSequences)
     {
-        gatingSequences.CopyTo(new Span<SequencePointer>(_gatingSequences, _ringBufferMemory.GatingSequenceCapacity));
-        Volatile.Write(ref Unsafe.AsRef<int>(_ringBufferMemory.GatingSequenceCountPointer), gatingSequences.Length);
+        for (var i = 0; i < gatingSequences.Length; i++)
+        {
+            var sequenceBlock = (IpcSequenceBlock*)(long*)gatingSequences[i];
+            var index = (int)(sequenceBlock - _sequenceBlocks);
+            _gatingSequenceIndexArray[i] = index;
+        }
+
         // Caching gatingSequenceCount in a field would not be particularly useful because there is already a gating sequence cache.
         // Also, IpcSequencer is used in the IpcPublisher, which needs to read the latest value from the shared memory.
-        *_gatingSequenceCountPointer = gatingSequences.Length;
+        *_gatingSequenceIndexCount = gatingSequences.Length;
+    }
+
+    internal SequencePointer[] GetGatingSequences()
+    {
+        var sequenceCount = *_gatingSequenceIndexCount;
+        var sequences = new SequencePointer[sequenceCount];
+
+        for (var i = 0; i < sequenceCount; i++)
+        {
+            var index = _gatingSequenceIndexArray[i];
+            sequences[i] = new SequencePointer(&_sequenceBlocks[index].SequenceValue);
+        }
+
+        return sequences;
     }
 
     internal SequencePointer NewSequence()
@@ -241,7 +265,20 @@ internal sealed unsafe class IpcSequencer
 
     public long GetMinimumSequence()
     {
-        return DisruptorUtil.GetMinimumSequence(_gatingSequences, *_gatingSequenceCountPointer, _cursor.Value);
+        return GetMinimumSequence(_sequenceBlocks, _gatingSequenceIndexArray, *_gatingSequenceIndexCount, _cursor.Value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static long GetMinimumSequence(IpcSequenceBlock* sequenceBlocks, int* indexArray, int indexCount, long minimum = long.MaxValue)
+    {
+        for (var i = 0; i < indexCount; i++)
+        {
+            var sequenceIndex = indexArray[i];
+            var sequence = sequenceBlocks[sequenceIndex].SequenceValue;
+            if (sequence < minimum)
+                minimum = sequence;
+        }
+        return minimum;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 128)]

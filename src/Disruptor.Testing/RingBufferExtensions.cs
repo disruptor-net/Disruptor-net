@@ -1,4 +1,6 @@
-﻿namespace Disruptor;
+﻿using Disruptor.Processing;
+
+namespace Disruptor;
 
 public static class RingBufferExtensions
 {
@@ -35,5 +37,18 @@ public static class RingBufferExtensions
         where T : struct
     {
         return ringBuffer.NewBarrier(SequenceWaiterOwner.Unknown, sequencesToTrack);
+    }
+
+    public static PerfTestIpcEventProcessor<T> CreatePerfTestEventProcessor<T>(this IpcRingBuffer<T> ringBuffer, IValueEventHandler<T> handler)
+        where T : unmanaged
+    {
+        var sequence = ringBuffer.NewSequence();
+        var sequenceBarrier = ringBuffer.NewBarrier();
+
+        var eventProcessor = EventProcessorFactory.Create(ringBuffer, sequence, sequenceBarrier, handler);
+
+        ringBuffer.SetGatingSequences(eventProcessor.SequencePointer);
+
+        return new PerfTestIpcEventProcessor<T>(eventProcessor);
     }
 }

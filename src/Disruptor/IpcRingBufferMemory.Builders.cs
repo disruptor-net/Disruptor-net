@@ -68,7 +68,7 @@ unsafe partial class IpcRingBufferMemory
             EventSize = sizeof(T),
             SequenceCapacity = sequencerCapacity,
             SequenceCount = 1,
-            GatingSequenceCount = 0,
+            GatingSequenceIndexCount = 0,
         };
 
         var filePath = GetRingBufferFile(ipcDirectoryPath);

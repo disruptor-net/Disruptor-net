@@ -330,6 +330,11 @@ public sealed unsafe class IpcPublisher<T>
         return _fields.Sequencer.GetRemainingCapacity();
     }
 
+    internal SequencePointer[] GetGatingSequences()
+    {
+        return _fields.Sequencer.GetGatingSequences();
+    }
+
         /// <summary>
     /// Holds an unpublished sequence number.
     /// Publishes the sequence number on disposing.

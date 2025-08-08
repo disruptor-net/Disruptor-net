@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Dsl;
+using Disruptor.Tests.IpcPublisher;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
@@ -38,7 +39,7 @@ public class IpcDisruptorRemoteTests : IAsyncDisposable
 
         _disruptor.Start();
 
-        RemoteIpcPublisher.Run("publish-events", $"--ipc-directory-path \"{_disruptor.IpcDirectoryPath}\"");
+        RunRemotePublisher("publish-events", $"--ipc-directory-path \"{_disruptor.IpcDirectoryPath}\"");
 
         Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
         Assert.That(values, Is.EqualTo(new List<StubUnmanagedEvent> { new(0, 101), new(1, 102) }));
@@ -55,7 +56,7 @@ public class IpcDisruptorRemoteTests : IAsyncDisposable
 
         _disruptor.Start();
 
-        RemoteIpcPublisher.Run("publish-events-batch", $"--ipc-directory-path \"{_disruptor.IpcDirectoryPath}\"");
+        RunRemotePublisher("publish-events-batch", $"--ipc-directory-path \"{_disruptor.IpcDirectoryPath}\"");
 
         Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
         Assert.That(values, Is.EqualTo(new List<StubUnmanagedEvent> { new(0, 101), new(1, 102), new(2, 103), new(3, 104) }));
@@ -67,14 +68,22 @@ public class IpcDisruptorRemoteTests : IAsyncDisposable
         var eventCounter = new CountdownEvent(2);
         _disruptor.HandleEventsWith(new TestValueEventHandler<StubUnmanagedEvent>(e => eventCounter.Signal()));
 
-        RemoteIpcPublisher.Run("publish-many-events", $"--ipc-directory-path \"{_disruptor.IpcDirectoryPath}\" --event-count 1");
+        RunRemotePublisher("publish-many-events", $"--ipc-directory-path \"{_disruptor.IpcDirectoryPath}\" --event-count 1");
 
         _disruptor.Start();
 
-        RemoteIpcPublisher.Run("publish-many-events", $"--ipc-directory-path \"{_disruptor.IpcDirectoryPath}\" --event-count 1");
+        RunRemotePublisher("publish-many-events", $"--ipc-directory-path \"{_disruptor.IpcDirectoryPath}\" --event-count 1");
 
         if (!eventCounter.Wait(TimeSpan.FromSeconds(5)))
             Assert.Fail("Did not process event published before start was called. Missed events: " + eventCounter.CurrentCount);
+    }
+
+    private static void RunRemotePublisher(string command, string commandArguments)
+    {
+        var process = RemoteIpcPublisher.Start(command, commandArguments);
+
+        Assert.That(process.WaitForExit(5000));
+        Assert.That(process.ExitCode, Is.EqualTo(0));
     }
 }
 #endif

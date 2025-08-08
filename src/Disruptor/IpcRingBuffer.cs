@@ -323,6 +323,11 @@ public sealed unsafe class IpcRingBuffer<T> : ISequenced, ICursored
         _fields.Sequencer.SetGatingSequences(gatingSequences);
     }
 
+    internal SequencePointer[] GetGatingSequences()
+    {
+        return _fields.Sequencer.GetGatingSequences();
+    }
+
     /// <summary>
     /// Get the minimum sequence value from all of the gating sequences
     /// added to this ringBuffer.

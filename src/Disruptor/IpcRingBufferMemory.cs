@@ -31,9 +31,10 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
     public int BufferSize => HeaderPointer->EventCount;
 
     internal SequencePointer Cursor => GetSequencePointer(0);
-    internal SequencePointer* GatingSequences => (SequencePointer*)(_dataPointer + HeaderPointer->GatingSequenceBufferOffset);
-    internal int GatingSequenceCapacity => HeaderPointer->GatingSequenceBufferSize;
-    internal int* GatingSequenceCountPointer => &HeaderPointer->GatingSequenceCount;
+    internal IpcSequenceBlock* SequenceBlocks => (IpcSequenceBlock*)(_dataPointer + HeaderPointer->SequencePoolOffset);
+    internal int* GatingSequenceIndexArray => (int*)(_dataPointer + HeaderPointer->GatingSequenceIndexArrayOffset);
+    internal int GatingSequenceIndexCapacity => HeaderPointer->GatingSequenceIndexCapacity;
+    internal int* GatingSequenceIndexCountPointer => &HeaderPointer->GatingSequenceIndexCount;
     internal int* AvailabilityBuffer => (int*)(_dataPointer + HeaderPointer->AvailabilityBufferOffset);
     internal byte* RingBuffer => _dataPointer + HeaderPointer->RingBufferOffset;
 
@@ -41,7 +42,7 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
 
     internal SequencePointer NewSequence()
     {
-        var sequenceIndex = Interlocked.Increment(ref HeaderPointer->SequenceCount);
+        var sequenceIndex = Interlocked.Increment(ref HeaderPointer->SequenceCount) - 1;
         if (sequenceIndex >= HeaderPointer->SequenceCapacity)
         {
             throw new InvalidOperationException("Sequence capacity reached");
@@ -66,15 +67,8 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
 
     private SequencePointer GetSequencePointer(int sequenceIndex)
     {
-        var sequenceBlock = (SequenceBlock*)(_dataPointer + HeaderPointer->SequencePoolOffset + sequenceIndex * sizeof(SequenceBlock));
+        var sequenceBlock = (IpcSequenceBlock*)(_dataPointer + HeaderPointer->SequencePoolOffset + sequenceIndex * sizeof(IpcSequenceBlock));
         return new SequencePointer((long*)sequenceBlock);
-    }
-
-    [StructLayout(LayoutKind.Explicit, Size = 64)]
-    private struct SequenceBlock
-    {
-        [FieldOffset(0)]
-        public long SequenceValue;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 32)]
@@ -98,15 +92,16 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
         public int SequenceCount;
 
         [FieldOffset(20)]
-        public int GatingSequenceCount;
+        public int GatingSequenceIndexCount;
 
-        public int GatingSequenceBufferOffset => sizeof(Header);
-        public int GatingSequenceBufferSize => SequenceCapacity * sizeof(long*);
+        public int GatingSequenceIndexCapacity => SequenceCapacity;
+        public int GatingSequenceIndexArrayOffset => Padding;
+        public int GatingSequenceIndexArraySize => GatingSequenceIndexCapacity * sizeof(int);
 
         public int CursorOffset => SequencePoolOffset;
 
-        public int SequencePoolOffset => GatingSequenceBufferOffset + GatingSequenceBufferSize + Padding;
-        public int SequencePoolSize => SequenceCapacity * sizeof(SequenceBlock);
+        public int SequencePoolOffset => GatingSequenceIndexArrayOffset + GatingSequenceIndexArraySize + Padding;
+        public int SequencePoolSize => SequenceCapacity * sizeof(IpcSequenceBlock);
 
         public int AvailabilityBufferOffset => SequencePoolOffset + SequencePoolSize + Padding;
         public int AvailabilityBufferSize => EventCount * sizeof(int);

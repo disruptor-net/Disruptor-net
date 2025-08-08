@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Disruptor.Testing\Disruptor.Testing.csproj" />
+    <ProjectReference Include="..\Disruptor.Tests.IpcPublisher\Disruptor.Tests.IpcPublisher.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,5 +23,5 @@
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1"/>
     <PackageReference Include="System.Threading.Channels" Version="7.0.0" />
   </ItemGroup>
-
+  
 </Project>

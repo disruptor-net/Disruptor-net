@@ -1,26 +1,15 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
-using NUnit.Framework;
+﻿using System.Diagnostics;
 
-namespace Disruptor.Tests;
+namespace Disruptor.Tests.IpcPublisher;
 
 public static class RemoteIpcPublisher
 {
-    public static void Run(string command, string commandArguments)
-    {
-        var process = Start(command, commandArguments);
-
-        Assert.That(process.WaitForExit(5000));
-        Assert.That(process.ExitCode, Is.EqualTo(0));
-    }
-
     public static Process Start(string command, string commandArguments)
     {
-        var arguments = $"Disruptor.Tests.IpcPublisher.dll {command} {commandArguments}";
+        var dllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Disruptor.Tests.IpcPublisher.dll");
+        var arguments = $"{dllPath} {command} {commandArguments}";
 
-        var process = Process.Start(new ProcessStartInfo($"dotnet", arguments)
+        var process = Process.Start(new ProcessStartInfo("dotnet", arguments)
         {
             RedirectStandardError = true,
             RedirectStandardOutput = true,

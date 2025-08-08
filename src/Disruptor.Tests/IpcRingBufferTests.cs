@@ -314,6 +314,18 @@ public class IpcRingBufferTests : IDisposable
         Assert.That(evt.Value, Is.EqualTo(expectedIndex));
     }
 
+    [Test]
+    public void ShouldSetAndGetGatingSequences()
+    {
+        var sequence = _ringBuffer.NewSequence();
+        sequence.SetValue(100);
+
+        _ringBuffer.SetGatingSequences(sequence);
+
+        var sequences = _ringBuffer.GetGatingSequences();
+        Assert.That(sequences, Is.EqualTo(new[] { sequence }));
+    }
+
     private static void AssertEmptyRingBuffer(IpcRingBuffer<StubUnmanagedEvent> ringBuffer)
     {
         for (var i = 0; i < ringBuffer.BufferSize; i++)
