@@ -354,7 +354,13 @@ public class IpcRingBufferTests : IDisposable
         public List<StubUnmanagedEvent> Call()
         {
             _barrier.SignalAndWait();
-            _sequenceBarrier.WaitForPublishedSequence(_toWaitForSequence);
+
+            // Because the wait strategy is non-blocking, the consumer must ensure that the sequence is published.
+            var spinWait = new SpinWait();
+            while (_sequenceBarrier.WaitForPublishedSequence(_toWaitForSequence).UnsafeAvailableSequence < _toWaitForSequence)
+            {
+                spinWait.SpinOnce();
+            }
 
             var events = new List<StubUnmanagedEvent>();
             for (var l = _initialSequence; l <= _toWaitForSequence; l++)
