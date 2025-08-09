@@ -164,8 +164,8 @@ public class IpcPublisherTests : IDisposable
     [Test]
     public void ShouldReturnFalseIfBufferIsFull()
     {
-        var sequence = _ringBuffer.NewSequence(_ringBuffer.BufferSize);
-        _ringBuffer.SetGatingSequences(_cursorFollower.SequencePointer, sequence);
+        var sequence = _ringBuffer.NewSequence();
+        _ringBuffer.SetGatingSequences(sequence);
 
         for (var i = 0; i < _publisher.BufferSize; i++)
         {

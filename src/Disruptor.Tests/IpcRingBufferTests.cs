@@ -149,7 +149,7 @@ public class IpcRingBufferTests : IDisposable
     [Test]
     public void ShouldReturnFalseIfBufferIsFull()
     {
-        var sequence = _ringBuffer.NewSequence(_ringBuffer.BufferSize);
+        var sequence = _ringBuffer.NewSequence();
         _ringBuffer.SetGatingSequences(_cursorFollower.SequencePointer, sequence);
 
         for (var i = 0; i < _ringBuffer.BufferSize; i++)

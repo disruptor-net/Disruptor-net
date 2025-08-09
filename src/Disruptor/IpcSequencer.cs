@@ -234,7 +234,8 @@ internal sealed unsafe class IpcSequencer
     {
         for (var i = 0; i < gatingSequences.Length; i++)
         {
-            var sequenceBlock = (IpcSequenceBlock*)(long*)gatingSequences[i];
+            var sequencePointer = gatingSequences[i];
+            var sequenceBlock = (IpcSequenceBlock*)(long*)sequencePointer;
             var index = (int)(sequenceBlock - _sequenceBlocks);
             _gatingSequenceIndexArray[i] = index;
         }
@@ -260,7 +261,10 @@ internal sealed unsafe class IpcSequencer
 
     internal SequencePointer NewSequence()
     {
-        return _ringBufferMemory.NewSequence();
+        var sequence = _ringBufferMemory.NewSequence();
+        sequence.SetValue(_cursor.Value);
+
+        return sequence;
     }
 
     public long GetMinimumSequence()
