@@ -370,8 +370,11 @@ public class IpcPublisherTests : IDisposable
 
         _ringBuffer.SetGatingSequences(sequence);
 
+        // The sequence pointer differs if the publisher has its own memory.
+
         var sequences = _publisher.GetGatingSequences();
-        Assert.That(sequences, Is.EqualTo(new[] { sequence }));
+        Assert.That(sequences, Has.Length.EqualTo(1));
+        Assert.That(sequences[0].Value, Is.EqualTo(100));
     }
 
     [Test]
