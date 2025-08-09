@@ -146,10 +146,10 @@ public class IpcPublisherTests : IDisposable
     [Test]
     public void ShouldPreventWrapping()
     {
-        var sequence = new UnmanagedSequence();
         using var memory = IpcRingBufferMemory.CreateTemporary<StubUnmanagedEvent>(4);
         var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy());
-        ringBuffer.SetGatingSequences(sequence.Pointer);
+        var sequence = ringBuffer.NewSequence();
+        ringBuffer.SetGatingSequences(sequence);
 
         var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
 
@@ -164,8 +164,8 @@ public class IpcPublisherTests : IDisposable
     [Test]
     public void ShouldReturnFalseIfBufferIsFull()
     {
-        var sequence = new UnmanagedSequence(_ringBuffer.BufferSize);
-        _ringBuffer.SetGatingSequences(_cursorFollower.SequencePointer, sequence.Pointer);
+        var sequence = _ringBuffer.NewSequence(_ringBuffer.BufferSize);
+        _ringBuffer.SetGatingSequences(_cursorFollower.SequencePointer, sequence);
 
         for (var i = 0; i < _publisher.BufferSize; i++)
         {
@@ -328,9 +328,9 @@ public class IpcPublisherTests : IDisposable
     [Test]
     public void ShouldAddAndRemoveSequences()
     {
-        var sequenceThree = new UnmanagedSequence();
-        var sequenceSeven = new UnmanagedSequence();
-        _ringBuffer.SetGatingSequences(sequenceThree.Pointer, sequenceSeven.Pointer);
+        var sequenceThree = _ringBuffer.NewSequence();
+        var sequenceSeven = _ringBuffer.NewSequence();
+        _ringBuffer.SetGatingSequences(sequenceThree, sequenceSeven);
 
         for (var i = 0; i < 10; i++)
         {
@@ -341,7 +341,7 @@ public class IpcPublisherTests : IDisposable
         sequenceSeven.SetValue(7);
         Assert.That(_publisher.GetMinimumGatingSequence(), Is.EqualTo(3L));
 
-        _ringBuffer.SetGatingSequences(sequenceSeven.Pointer);
+        _ringBuffer.SetGatingSequences(sequenceSeven);
         Assert.That(_publisher.GetMinimumGatingSequence(), Is.EqualTo(7L));
     }
 

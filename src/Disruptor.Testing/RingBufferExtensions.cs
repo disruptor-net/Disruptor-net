@@ -39,6 +39,15 @@ public static class RingBufferExtensions
         return ringBuffer.NewBarrier(SequenceWaiterOwner.Unknown, sequencesToTrack);
     }
 
+    internal static SequencePointer NewSequence<T>(this IpcRingBuffer<T> ringBuffer, long value)
+        where T : unmanaged
+    {
+        var sequence = ringBuffer.NewSequence();
+        sequence.SetValue(value);
+
+        return sequence;
+    }
+
     public static PerfTestIpcEventProcessor<T> CreatePerfTestEventProcessor<T>(this IpcRingBuffer<T> ringBuffer, IValueEventHandler<T> handler)
         where T : unmanaged
     {
