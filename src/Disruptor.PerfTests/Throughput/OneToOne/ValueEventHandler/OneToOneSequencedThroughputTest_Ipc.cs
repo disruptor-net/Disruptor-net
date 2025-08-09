@@ -52,7 +52,7 @@ public class OneToOneSequencedThroughputTest_Ipc : IThroughputTest, IDisposable
         _options = options;
         _memory = IpcRingBufferMemory.CreateTemporary<PerfValueEvent>(_bufferSize);
         _ringBuffer = new IpcRingBuffer<PerfValueEvent>(_memory, (IIpcWaitStrategy)options.GetWaitStrategy());
-        _eventHandler = new AdditionEventHandler(_options.GetCustomCpu(1));
+        _eventHandler = new AdditionEventHandler(options.GetCustomCpu(1));
         _eventProcessor = _ringBuffer.CreatePerfTestEventProcessor(_eventHandler);
     }
 

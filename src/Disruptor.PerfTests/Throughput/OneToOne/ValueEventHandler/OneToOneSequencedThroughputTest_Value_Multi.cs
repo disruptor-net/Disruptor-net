@@ -32,7 +32,7 @@ namespace Disruptor.PerfTests.Throughput.OneToOne.ValueEventHandler;
 /// SB  - SequenceBarrier
 /// EP1 - EventProcessor 1
 /// </summary>
-public class OneToOneSequencedThroughputTest_Value : IThroughputTest
+public class OneToOneSequencedThroughputTest_Value_Multi : IThroughputTest
 {
     private readonly ProgramOptions _options;
     private const int _bufferSize = 1024 * 64;
@@ -43,11 +43,11 @@ public class OneToOneSequencedThroughputTest_Value : IThroughputTest
     private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
     private readonly IValueEventProcessor<PerfValueEvent> _eventProcessor;
 
-    public OneToOneSequencedThroughputTest_Value(ProgramOptions options)
+    public OneToOneSequencedThroughputTest_Value_Multi(ProgramOptions options)
     {
         _options = options;
         _eventHandler = new AdditionEventHandler(options.GetCustomCpu(1));
-        _ringBuffer = ValueRingBuffer<PerfValueEvent>.CreateSingleProducer(PerfValueEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
+        _ringBuffer = ValueRingBuffer<PerfValueEvent>.CreateMultiProducer(PerfValueEvent.EventFactory, _bufferSize, options.GetWaitStrategy());
         var sequenceBarrier = _ringBuffer.NewBarrier();
         _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _eventHandler);
         _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);
