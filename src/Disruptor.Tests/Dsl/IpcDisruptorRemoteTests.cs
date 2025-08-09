@@ -63,6 +63,19 @@ public class IpcDisruptorRemoteTests : IAsyncDisposable
     }
 
     [Test]
+    public void ShouldPublishAndHandleManyEvents()
+    {
+        var eventCount = 3000;
+        var eventCounter = new CountdownEvent(eventCount);
+        _disruptor.HandleEventsWith(new TestValueEventHandler<StubUnmanagedEvent>(e => eventCounter.Signal()));
+        _disruptor.Start();
+
+        RunRemotePublisher("publish-many-events", $"--ipc-directory-path \"{_disruptor.IpcDirectoryPath}\" --event-count {eventCount}");
+
+        Assert.That(eventCounter.Wait(TimeSpan.FromSeconds(5)));
+    }
+
+    [Test]
     public void ShouldProcessMessagesPublishedBeforeStartIsCalled()
     {
         var eventCounter = new CountdownEvent(2);
