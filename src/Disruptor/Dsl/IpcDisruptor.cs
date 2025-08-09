@@ -33,6 +33,11 @@ public class IpcDisruptor<T> : IAsyncDisposable
     {
     }
 
+    public IpcDisruptor(IpcRingBufferMemory memory, bool ownsMemory = false)
+        : this(memory, new YieldingWaitStrategy(), TaskScheduler.Default, ownsMemory)
+    {
+    }
+
     public IpcDisruptor(IpcRingBufferMemory memory, IIpcWaitStrategy waitStrategy, bool ownsMemory = false)
         : this(memory, waitStrategy, TaskScheduler.Default, ownsMemory)
     {
