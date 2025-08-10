@@ -18,7 +18,7 @@ public sealed class BusySpinWaitStrategy : IWaitStrategy, IIpcWaitStrategy
         return new SequenceWaiter(dependentSequences);
     }
 
-    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences)
+    public IIpcSequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences)
     {
         return new IpcSequenceWaiter(dependentSequences);
     }
@@ -50,7 +50,7 @@ public sealed class BusySpinWaitStrategy : IWaitStrategy, IIpcWaitStrategy
         }
     }
 
-    private class IpcSequenceWaiter(IpcDependentSequenceGroup dependentSequences) : ISequenceWaiter
+    private class IpcSequenceWaiter(IpcDependentSequenceGroup dependentSequences) : IIpcSequenceWaiter
     {
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
@@ -62,14 +62,6 @@ public sealed class BusySpinWaitStrategy : IWaitStrategy, IIpcWaitStrategy
             }
 
             return availableSequence;
-        }
-
-        public void Cancel()
-        {
-        }
-
-        public void Dispose()
-        {
         }
     }
 }

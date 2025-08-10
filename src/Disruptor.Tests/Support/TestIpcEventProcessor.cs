@@ -1,8 +1,5 @@
-using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.Processing;
-using Disruptor.Util;
 
 namespace Disruptor.Tests.Support;
 
@@ -27,7 +24,6 @@ internal class TestIpcEventProcessor<T> : IIpcEventProcessor<T>
         var runState = _state.Halt();
         if (runState != null)
         {
-            SequenceBarrier.CancelProcessing();
             return runState.ShutdownTask;
         }
 
@@ -39,11 +35,9 @@ internal class TestIpcEventProcessor<T> : IIpcEventProcessor<T>
         var runState = _state.Dispose();
         if (runState != null)
         {
-            SequenceBarrier.CancelProcessing();
-            return new ValueTask(runState.ShutdownTask.ContinueWith(_ => SequenceBarrier.Dispose()));
+            return new ValueTask(runState.ShutdownTask);
         }
 
-        SequenceBarrier.Dispose();
         return default;
     }
 

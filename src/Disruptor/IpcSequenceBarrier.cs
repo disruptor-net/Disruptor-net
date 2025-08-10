@@ -13,13 +13,13 @@ namespace Disruptor;
 /// <see cref="IDisposable.Dispose"/> should be used to release the sequence barrier, which should only
 /// be required for dynamic event processor removal.
 /// </remarks>
-internal sealed class IpcSequenceBarrier : IDisposable
+internal sealed class IpcSequenceBarrier
 {
     private readonly IpcSequencer _sequencer;
-    private readonly ISequenceWaiter _sequenceWaiter;
+    private readonly IIpcSequenceWaiter _sequenceWaiter;
     private readonly IpcDependentSequenceGroup _dependentSequences;
 
-    public IpcSequenceBarrier(IpcSequencer sequencer, ISequenceWaiter sequenceWaiter, IpcDependentSequenceGroup dependentSequences)
+    public IpcSequenceBarrier(IpcSequencer sequencer, IIpcSequenceWaiter sequenceWaiter, IpcDependentSequenceGroup dependentSequences)
     {
         _sequencer = sequencer;
         _sequenceWaiter = sequenceWaiter;
@@ -74,15 +74,5 @@ internal sealed class IpcSequenceBarrier : IDisposable
     private SequenceWaitResult InvokeWaitStrategy(long sequence, CancellationToken cancellationToken)
     {
         return _sequenceWaiter.WaitFor(sequence, cancellationToken);
-    }
-
-    public void CancelProcessing()
-    {
-        _sequenceWaiter.Cancel();
-    }
-
-    public void Dispose()
-    {
-        _sequenceWaiter.Dispose();
     }
 }

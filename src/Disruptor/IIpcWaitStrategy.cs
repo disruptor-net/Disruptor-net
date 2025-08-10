@@ -19,5 +19,5 @@ public interface IIpcWaitStrategy
     /// <param name="owner">The owner of the sequence waiter.</param>
     /// <param name="dependentSequences">The dependent sequences of the target event processor.</param>
     /// <returns>The sequence waiter.</returns>
-    ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences);
+    IIpcSequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences);
 }

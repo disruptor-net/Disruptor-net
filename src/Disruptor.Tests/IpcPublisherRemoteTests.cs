@@ -36,7 +36,6 @@ public class IpcPublisherRemoteTests : IDisposable
     public void Dispose()
     {
         _cursorFollower.Dispose();
-        _sequenceBarrier.Dispose();
         _memory.Dispose();
     }
 

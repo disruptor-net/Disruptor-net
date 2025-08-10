@@ -61,7 +61,6 @@ internal class IpcEventProcessor<T, TPublishedSequenceReader, TEventHandler, TOn
         var runState = _state.Halt();
         if (runState != null)
         {
-            _sequenceBarrier.CancelProcessing();
             return runState.ShutdownTask;
         }
 
@@ -73,11 +72,9 @@ internal class IpcEventProcessor<T, TPublishedSequenceReader, TEventHandler, TOn
         var runState = _state.Dispose();
         if (runState != null)
         {
-            _sequenceBarrier.CancelProcessing();
-            return new ValueTask(runState.ShutdownTask.ContinueWith(_ => _sequenceBarrier.Dispose()));
+            return new ValueTask(runState.ShutdownTask);
         }
 
-        _sequenceBarrier.Dispose();
         return default;
     }
 

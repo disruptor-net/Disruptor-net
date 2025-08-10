@@ -39,7 +39,7 @@ public sealed class TimeoutYieldingWaitStrategy : IWaitStrategy, IIpcWaitStrateg
     {
     }
 
-    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences)
+    public IIpcSequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences)
     {
         return new IpcSequenceWaiter(dependentSequences, _timeout, _yieldIndex);
     }
@@ -81,7 +81,7 @@ public sealed class TimeoutYieldingWaitStrategy : IWaitStrategy, IIpcWaitStrateg
         }
     }
 
-    private class IpcSequenceWaiter(IpcDependentSequenceGroup dependentSequences, long timeout, int yieldIndex) : ISequenceWaiter
+    private class IpcSequenceWaiter(IpcDependentSequenceGroup dependentSequences, long timeout, int yieldIndex) : IIpcSequenceWaiter
     {
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {
@@ -107,14 +107,6 @@ public sealed class TimeoutYieldingWaitStrategy : IWaitStrategy, IIpcWaitStrateg
             }
 
             return availableSequence;
-        }
-
-        public void Cancel()
-        {
-        }
-
-        public void Dispose()
-        {
         }
     }
 }

@@ -400,7 +400,7 @@ public sealed unsafe class IpcPublisher<T>
 
     private class InvalidIpcWaitStrategy : IIpcWaitStrategy
     {
-        public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences)
+        public IIpcSequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences)
         {
             throw new InvalidOperationException($"{nameof(NewSequenceWaiter)} cannot be called in {nameof(IpcPublisher<T>)}.");
         }
