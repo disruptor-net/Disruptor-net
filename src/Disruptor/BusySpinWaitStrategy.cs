@@ -9,7 +9,7 @@ namespace Disruptor;
 /// This strategy will use CPU resources to avoid system calls which can introduce latency jitter. It is best
 /// used when threads can be bound to specific CPU cores.
 /// </remarks>
-public sealed class BusySpinWaitStrategy : IWaitStrategy
+public sealed class BusySpinWaitStrategy : IWaitStrategy, IIpcWaitStrategy
 {
     public bool IsBlockingStrategy => false;
 
@@ -18,11 +18,39 @@ public sealed class BusySpinWaitStrategy : IWaitStrategy
         return new SequenceWaiter(dependentSequences);
     }
 
+    public ISequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences)
+    {
+        return new IpcSequenceWaiter(dependentSequences);
+    }
+
     public void SignalAllWhenBlocking()
     {
     }
 
     private class SequenceWaiter(DependentSequenceGroup dependentSequences) : ISequenceWaiter
+    {
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            long availableSequence;
+
+            while ((availableSequence = dependentSequences.Value) < sequence)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            return availableSequence;
+        }
+
+        public void Cancel()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private class IpcSequenceWaiter(IpcDependentSequenceGroup dependentSequences) : ISequenceWaiter
     {
         public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
         {

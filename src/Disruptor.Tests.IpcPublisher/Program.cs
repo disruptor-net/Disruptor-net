@@ -5,6 +5,7 @@ using System.Diagnostics;
 using ConsoleAppFramework;
 using Disruptor;
 using Disruptor.PerfTests.Support;
+using Disruptor.Tests.IpcPublisher;
 using Disruptor.Tests.Support;
 
 var app = ConsoleApp.Create();
@@ -107,6 +108,42 @@ public class Commands
             publisher[sequence].Value = i;
             publisher.Publish(sequence);
         }
+    }
+
+    public int StressTest(string ipcDirectoryPath, int iterations, string mutexName)
+    {
+        using var memory = IpcRingBufferMemory.Open<IpcStressTestEvent>(ipcDirectoryPath);
+        var publisher = new IpcPublisher<IpcStressTestEvent>(memory);
+
+        var publisherCount = Math.Clamp(Environment.ProcessorCount / 2, 1, 8);
+
+        var start = new CountdownEvent(publisherCount);
+        var end = new CountdownEvent(publisherCount);
+
+        var testPublishers = new IpcStressTestPublisher[publisherCount];
+        for (var i = 0; i < testPublishers.Length; i++)
+        {
+            testPublishers[i] = new IpcStressTestPublisher(publisher, iterations, start, end);
+        }
+
+        using var mutex = Mutex.OpenExisting(mutexName);
+        mutex.WaitOne();
+
+        foreach (var testPublisher in testPublishers)
+        {
+            Task.Run(testPublisher.Run);
+        }
+
+        end.Wait();
+
+        var spinWait = new SpinWait();
+
+        while (publisher.Cursor < (iterations - 1))
+        {
+            spinWait.SpinOnce();
+        }
+
+        return testPublishers.Any(x => x.Failed) ? 1 : 0;
     }
 }
 #else
