@@ -16,8 +16,7 @@ public class Commands
 {
     public void PublishEvents(string ipcDirectoryPath)
     {
-        using var memory = IpcRingBufferMemory.Open<StubUnmanagedEvent>(ipcDirectoryPath);
-        var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
+        using var publisher = new IpcPublisher<StubUnmanagedEvent>(ipcDirectoryPath);
 
         using (var scope = publisher.PublishEvent())
         {
@@ -34,8 +33,7 @@ public class Commands
 
     public void PublishEventsBatch(string ipcDirectoryPath)
     {
-        using var memory = IpcRingBufferMemory.Open<StubUnmanagedEvent>(ipcDirectoryPath);
-        var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
+        using var publisher = new IpcPublisher<StubUnmanagedEvent>(ipcDirectoryPath);
 
         using (var scope = publisher.PublishEvents(2))
         {
@@ -56,8 +54,7 @@ public class Commands
 
     public void PublishManyEvents(string ipcDirectoryPath, int eventCount, int key = 101, string? mutexName = null)
     {
-        using var memory = IpcRingBufferMemory.Open<StubUnmanagedEvent>(ipcDirectoryPath);
-        var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
+        using var publisher = new IpcPublisher<StubUnmanagedEvent>(ipcDirectoryPath);
 
         if (mutexName != null)
         {
@@ -82,9 +79,7 @@ public class Commands
 
     public void ReadMinimumGatingSequence(string ipcDirectoryPath, long expectedValue)
     {
-        using var memory = IpcRingBufferMemory.Open<PerfValueEvent>(ipcDirectoryPath);
-
-        var publisher = new IpcPublisher<PerfValueEvent>(memory);
+        using var publisher = new IpcPublisher<PerfValueEvent>(ipcDirectoryPath);
 
         var minimumGatingSequence = publisher.GetMinimumGatingSequence();
         if (minimumGatingSequence != expectedValue)
@@ -95,9 +90,7 @@ public class Commands
     {
         using var _ = ThreadAffinityUtil.SetThreadAffinity(cpu, ThreadPriority.Highest);
 
-        using var memory = IpcRingBufferMemory.Open<PerfValueEvent>(ipcDirectoryPath);
-
-        var publisher = new IpcPublisher<PerfValueEvent>(memory);
+        using var publisher = new IpcPublisher<PerfValueEvent>(ipcDirectoryPath);
 
         using var mutex = Mutex.OpenExisting(mutexName);
         mutex.WaitOne();
@@ -112,8 +105,7 @@ public class Commands
 
     public int StressTest(string ipcDirectoryPath, int iterations, string mutexName)
     {
-        using var memory = IpcRingBufferMemory.Open<IpcStressTestEvent>(ipcDirectoryPath);
-        var publisher = new IpcPublisher<IpcStressTestEvent>(memory);
+        using var publisher = new IpcPublisher<IpcStressTestEvent>(ipcDirectoryPath);
 
         var publisherCount = Math.Clamp(Environment.ProcessorCount / 2, 1, 8);
 

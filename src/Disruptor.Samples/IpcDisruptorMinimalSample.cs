@@ -6,15 +6,13 @@ using Disruptor.Dsl;
 
 namespace Disruptor.Samples;
 
-public class IpcDisruptorSample
+public class IpcDisruptorMinimalSample
 {
     public static async Task Main(string[] args)
     {
         // 1: Disruptor setup
 
-        using var memory = IpcRingBufferMemory.CreateTemporary<IpcEvent>(1024);
-
-        await using var disruptor = new IpcDisruptor<IpcEvent>(memory);
+        await using var disruptor = new IpcDisruptor<IpcEvent>(1024);
 
         disruptor.HandleEventsWith(new Handler());
 
@@ -22,16 +20,10 @@ public class IpcDisruptorSample
 
         // 2: Publisher setup
 
-        // An intra-process publisher can be directly created from the disruptor memory.
-        // IpcRingBufferMemory.Open is required for inter-process publishers, but it can
-        // also be used intra-process.
-
         // The publisher can be created before the disruptor start, but publishing events
         // before start is dangerous because the events might be lost.
 
-        using var publisherMemory = IpcRingBufferMemory.Open<IpcEvent>(memory.IpcDirectoryPath);
-
-        using var publisher = new IpcPublisher<IpcEvent>(publisherMemory);
+        using var publisher = new IpcPublisher<IpcEvent>(disruptor.IpcDirectoryPath);
 
         using (var scope = publisher.PublishEvent())
         {

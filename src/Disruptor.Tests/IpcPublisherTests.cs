@@ -40,6 +40,7 @@ public class IpcPublisherTests : IDisposable
     public void Dispose()
     {
         _cursorFollower.Dispose();
+        _publisher.Dispose();
         _publisherMemory?.Dispose();
         _memory.Dispose();
     }
@@ -238,8 +239,8 @@ public class IpcPublisherTests : IDisposable
     [Test]
     public void ShouldPublishEventFromMultiplePublishers()
     {
-        var publisher1 = CreatePublisher();
-        var publisher2 = CreatePublisher();
+        using var publisher1 = CreatePublisher();
+        using var publisher2 = CreatePublisher();
 
         using (var scope = publisher1.PublishEvent())
         {
@@ -251,7 +252,7 @@ public class IpcPublisherTests : IDisposable
             scope.Event().Value = (int)scope.Sequence;
         }
 
-        var publisher3 = CreatePublisher();
+        using var publisher3 = CreatePublisher();
 
         using (var scope = publisher3.PublishEvent())
         {
