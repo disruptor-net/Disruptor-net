@@ -9,7 +9,7 @@ namespace Disruptor;
 /// This strategy is a good compromise between performance and CPU resources.
 /// Latency spikes can occur after quiet periods.
 /// </remarks>
-public sealed class SpinWaitWaitStrategy : IWaitStrategy
+public sealed class SpinWaitWaitStrategy : IWaitStrategy, IIpcWaitStrategy
 {
     public bool IsBlockingStrategy => false;
 
@@ -20,6 +20,11 @@ public sealed class SpinWaitWaitStrategy : IWaitStrategy
 
     public void SignalAllWhenBlocking()
     {
+    }
+
+    public IIpcSequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences)
+    {
+        return new IpcSequenceWaiter(dependentSequences);
     }
 
     private class SequenceWaiter(DependentSequenceGroup dependentSequences) : ISequenceWaiter
@@ -35,6 +40,14 @@ public sealed class SpinWaitWaitStrategy : IWaitStrategy
 
         public void Dispose()
         {
+        }
+    }
+
+    private class IpcSequenceWaiter(IpcDependentSequenceGroup dependentSequences) : IIpcSequenceWaiter
+    {
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            return dependentSequences.SpinWaitFor(sequence, cancellationToken);
         }
     }
 }
