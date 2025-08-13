@@ -9,12 +9,12 @@ using static Disruptor.Util.Constants;
 namespace Disruptor;
 
 [StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 40)]
-internal struct IpcRingBufferFields
+internal unsafe struct IpcRingBufferFields
 {
     // padding: DefaultPadding
 
     [FieldOffset(DefaultPadding)]
-    public IntPtr Entries;
+    public byte* RingBuffer;
 
     [FieldOffset(DefaultPadding + 8)]
     public long IndexMask;
@@ -54,7 +54,7 @@ public sealed unsafe class IpcRingBuffer<T> : ISequenced, ICursored
     {
         _fields = new IpcRingBufferFields
         {
-            Entries = (IntPtr)memory.RingBuffer,
+            RingBuffer = memory.RingBuffer,
             IndexMask = memory.BufferSize - 1,
             BufferSize = memory.BufferSize,
             Sequencer = new IpcSequencer(memory, waitStrategy),
@@ -91,10 +91,7 @@ public sealed unsafe class IpcRingBuffer<T> : ISequenced, ICursored
     public ref T this[long sequence]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get
-        {
-            return ref InternalUtil.ReadValue<T>(_fields.Entries, (int)(sequence & _fields.IndexMask));
-        }
+        get => ref Unsafe.AsRef<T>((T*)(_fields.RingBuffer + (int)(sequence & _fields.IndexMask) * sizeof(T)));
     }
 
     public override string ToString()

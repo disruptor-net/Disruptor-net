@@ -104,23 +104,6 @@ public class InternalUtilTests
     }
 
     [Test]
-    public unsafe void ShouldReadValueFromPointer2()
-    {
-        var buffer = stackalloc StubUnmanagedEvent[32];
-        for (var i = 0; i < 32; i++)
-        {
-            buffer[i] = new StubUnmanagedEvent(i);
-        }
-
-        for (var i = 0; i < 32; i++)
-        {
-            var evt = InternalUtil.ReadValue<StubUnmanagedEvent>((IntPtr)buffer, i);
-
-            Assert.That(evt, Is.EqualTo(new StubUnmanagedEvent(i)));
-        }
-    }
-
-    [Test]
     public void ShouldMutateValueFromArray()
     {
         var array = Enumerable.Range(0, 2000).Select(x => new StubValueEvent(x)).ToArray();

@@ -126,29 +126,6 @@ internal static class InternalUtil
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ref T ReadValue<T>(IntPtr pointer, int index)
-        where T : struct
-    {
-        IL.DeclareLocals(false, typeof(byte).MakeByRefType());
-
-        Ldarg(nameof(pointer));
-        Stloc_0(); // convert the object pointer to a byref
-        Ldloc_0(); // load the object pointer as a byref
-
-        Ldarg(nameof(index));
-        Conv_U(); // zero extend
-
-        Sizeof(typeof(T));
-        Mul(); // index x sizeof(T)
-
-        Add(); // pointer + index x size
-
-        Ret();
-
-        throw IL.Unreachable();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ref T ReadValue<T>(IntPtr pointer, int index, int size)
         where T : struct
     {
