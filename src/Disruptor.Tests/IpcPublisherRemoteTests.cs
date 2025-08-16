@@ -19,16 +19,13 @@ namespace Disruptor.Tests;
 [TestFixture]
 public class IpcPublisherRemoteTests : IDisposable
 {
-    private readonly IpcRingBufferMemory _memory;
     private readonly IpcRingBuffer<StubUnmanagedEvent> _ringBuffer;
-    private readonly IpcSequenceBarrier _sequenceBarrier;
     private readonly CursorFollower _cursorFollower;
 
     public IpcPublisherRemoteTests()
     {
-        _memory = IpcRingBufferMemory.CreateTemporary(1024, initializer: _ => new StubUnmanagedEvent(-1));
-        _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(_memory, new YieldingWaitStrategy());
-        _sequenceBarrier = _ringBuffer.NewBarrier();
+        var memory = IpcRingBufferMemory.CreateTemporary(1024, initializer: _ => new StubUnmanagedEvent(-1));
+        _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
         _cursorFollower = CursorFollower.StartNew(_ringBuffer);
         _ringBuffer.SetGatingSequences(_cursorFollower.SequencePointer);
     }
@@ -36,13 +33,13 @@ public class IpcPublisherRemoteTests : IDisposable
     public void Dispose()
     {
         _cursorFollower.Dispose();
-        _memory.Dispose();
+        _ringBuffer.Dispose();
     }
 
     [Test]
     public void ShouldPublishEvents()
     {
-        RunRemotePublisher("publish-events", $"--ipc-directory-path \"{_memory.IpcDirectoryPath}\"");
+        RunRemotePublisher("publish-events", $"--ipc-directory-path \"{_ringBuffer.IpcDirectoryPath}\"");
 
         Assert.That(_ringBuffer, IsIpcRingBuffer.WithEvents(new StubUnmanagedEvent(0, 101), new StubUnmanagedEvent(1, 102)));;
     }
@@ -50,7 +47,7 @@ public class IpcPublisherRemoteTests : IDisposable
     [Test]
     public void ShouldPublishManyEvents()
     {
-        RunRemotePublisher("publish-many-events", $"--ipc-directory-path \"{_memory.IpcDirectoryPath}\" --event-count 500");
+        RunRemotePublisher("publish-many-events", $"--ipc-directory-path \"{_ringBuffer.IpcDirectoryPath}\" --event-count 500");
 
         var expectedEvents = Enumerable.Range(0, 500).Select(i => new StubUnmanagedEvent(i, 101)).ToArray();
 
@@ -63,8 +60,8 @@ public class IpcPublisherRemoteTests : IDisposable
         var mutexName = $"Ipc-{Path.GetRandomFileName()}";
         using var mutex = new Mutex(true, mutexName);
 
-        var p1 = Task.Run(() => RunRemotePublisher("publish-many-events", $"--ipc-directory-path \"{_memory.IpcDirectoryPath}\" --event-count 500 --key 101 --mutex-name \"{mutexName}\""));
-        var p2 = Task.Run(() => RunRemotePublisher("publish-many-events", $"--ipc-directory-path \"{_memory.IpcDirectoryPath}\" --event-count 500 --key 102 --mutex-name \"{mutexName}\""));
+        var p1 = Task.Run(() => RunRemotePublisher("publish-many-events", $"--ipc-directory-path \"{_ringBuffer.IpcDirectoryPath}\" --event-count 500 --key 101 --mutex-name \"{mutexName}\""));
+        var p2 = Task.Run(() => RunRemotePublisher("publish-many-events", $"--ipc-directory-path \"{_ringBuffer.IpcDirectoryPath}\" --event-count 500 --key 102 --mutex-name \"{mutexName}\""));
 
         Thread.Sleep(200);
 
@@ -111,7 +108,7 @@ public class IpcPublisherRemoteTests : IDisposable
 
         sequence.SetValue(4);
 
-        RunRemotePublisher("read-minimum-gating-sequence", $"--ipc-directory-path \"{_memory.IpcDirectoryPath}\" --expected-value {4}");
+        RunRemotePublisher("read-minimum-gating-sequence", $"--ipc-directory-path \"{_ringBuffer.IpcDirectoryPath}\" --expected-value {4}");
     }
 
     private static void RunRemotePublisher(string command, string commandArguments)

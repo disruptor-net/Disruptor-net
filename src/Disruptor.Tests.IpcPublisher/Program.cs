@@ -77,6 +77,25 @@ public class Commands
         }
     }
 
+    public int TryCreateRingBuffer(string ipcDirectoryPath)
+    {
+        try
+        {
+            using var memory = IpcRingBufferMemory.Open<StubUnmanagedEvent>(ipcDirectoryPath);
+            using var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new BusySpinWaitStrategy(), false);
+        }
+        catch (InvalidOperationException)
+        {
+            return 0; // OK
+        }
+        catch (Exception)
+        {
+            return 2;
+        }
+
+        return 1;
+    }
+
     public void ReadMinimumGatingSequence(string ipcDirectoryPath, long expectedValue)
     {
         using var publisher = new IpcPublisher<PerfValueEvent>(ipcDirectoryPath);

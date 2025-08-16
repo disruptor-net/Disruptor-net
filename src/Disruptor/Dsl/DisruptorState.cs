@@ -82,8 +82,8 @@ internal class DisruptorState
         };
     }
 
-    public void Dispose()
+    public bool TryDispose()
     {
-        _state = Disposed;
+        return Interlocked.Exchange(ref _state, Disposed) != Disposed;
     }
 }

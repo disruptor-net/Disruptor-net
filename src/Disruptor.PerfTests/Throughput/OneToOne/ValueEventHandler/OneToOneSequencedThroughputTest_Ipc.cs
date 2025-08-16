@@ -41,7 +41,6 @@ public class OneToOneSequencedThroughputTest_Ipc : IThroughputTest, IDisposable
     private const long _iterations = 1000L * 1000L * 100L;
 
     private readonly ProgramOptions _options;
-    private readonly IpcRingBufferMemory _memory;
     private readonly IpcRingBuffer<PerfValueEvent> _ringBuffer;
     private readonly AdditionEventHandler _eventHandler;
     private readonly long _expectedResult = PerfTestUtil.AccumulatedAddition(_iterations);
@@ -50,8 +49,8 @@ public class OneToOneSequencedThroughputTest_Ipc : IThroughputTest, IDisposable
     public OneToOneSequencedThroughputTest_Ipc(ProgramOptions options)
     {
         _options = options;
-        _memory = IpcRingBufferMemory.CreateTemporary<PerfValueEvent>(_bufferSize);
-        _ringBuffer = new IpcRingBuffer<PerfValueEvent>(_memory, (IIpcWaitStrategy)options.GetWaitStrategy());
+        var memory = IpcRingBufferMemory.CreateTemporary<PerfValueEvent>(_bufferSize);
+        _ringBuffer = new IpcRingBuffer<PerfValueEvent>(memory, (IIpcWaitStrategy)options.GetWaitStrategy(), true);
         _eventHandler = new AdditionEventHandler(options.GetCustomCpu(1));
         _eventProcessor = _ringBuffer.CreatePerfTestEventProcessor(_eventHandler);
     }
@@ -60,7 +59,7 @@ public class OneToOneSequencedThroughputTest_Ipc : IThroughputTest, IDisposable
 
     public void Dispose()
     {
-        _memory.Dispose();
+        _ringBuffer.Dispose();
     }
 
     public long Run(ThroughputSessionContext sessionContext)
@@ -76,7 +75,7 @@ public class OneToOneSequencedThroughputTest_Ipc : IThroughputTest, IDisposable
 
         var publisherCpu = _options.GetCustomCpu(0);
 
-        var publisher = RemoteIpcPublisher.Start("throughput-test", $"--ipc-directory-path \"{_memory.IpcDirectoryPath}\" --iterations {_iterations} --mutex-name \"{mutexName}\" --cpu \"{publisherCpu}\"");
+        var publisher = RemoteIpcPublisher.Start("throughput-test", $"--ipc-directory-path \"{_ringBuffer.IpcDirectoryPath}\" --iterations {_iterations} --mutex-name \"{mutexName}\" --cpu \"{publisherCpu}\"");
 
         Thread.Sleep(500);
 

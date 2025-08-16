@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Disruptor.Dsl;
 using Disruptor.Processing;
 using Disruptor.Util;
@@ -8,7 +9,7 @@ using static Disruptor.Util.Constants;
 
 namespace Disruptor;
 
-[StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 40)]
+[StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 48)]
 internal unsafe struct IpcRingBufferFields
 {
     // padding: DefaultPadding
@@ -22,11 +23,17 @@ internal unsafe struct IpcRingBufferFields
     [FieldOffset(DefaultPadding + 16)]
     public int BufferSize;
 
+    [FieldOffset(DefaultPadding + 20)]
+    public bool OwnsMemory;
+
     [FieldOffset(DefaultPadding + 24)]
     public IpcSequencer Sequencer;
 
     [FieldOffset(DefaultPadding + 32)]
     public string IpcDirectoryPath;
+
+    [FieldOffset(DefaultPadding + 40)]
+    public IpcRingBufferMemory? Memory;
 
     // padding: DefaultPadding
 }
@@ -38,7 +45,7 @@ internal unsafe struct IpcRingBufferFields
 /// The underlying storage is an unmanaged buffer. The buffer must be preallocated.
 /// </summary>
 /// <typeparam name="T">implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
-public sealed unsafe class IpcRingBuffer<T> : ISequenced, ICursored
+public sealed unsafe class IpcRingBuffer<T> : ISequenced, ICursored, IDisposable
     where T : unmanaged
 {
     private IpcRingBufferFields _fields;
@@ -49,9 +56,11 @@ public sealed unsafe class IpcRingBuffer<T> : ISequenced, ICursored
     /// </summary>
     /// <param name="memory">block of memory that will store the events</param>
     /// <param name="waitStrategy">used to determine how to wait for new elements to become available.</param>
-    /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-    public IpcRingBuffer(IpcRingBufferMemory memory, IIpcWaitStrategy waitStrategy)
+    /// <param name="ownsMemory">TODO</param>
+    public IpcRingBuffer(IpcRingBufferMemory memory, IIpcWaitStrategy waitStrategy, bool ownsMemory)
     {
+        memory.RegisterRingBuffer();
+
         _fields = new IpcRingBufferFields
         {
             RingBuffer = memory.RingBuffer,
@@ -59,7 +68,23 @@ public sealed unsafe class IpcRingBuffer<T> : ISequenced, ICursored
             BufferSize = memory.BufferSize,
             Sequencer = new IpcSequencer(memory, waitStrategy),
             IpcDirectoryPath = memory.IpcDirectoryPath,
+            Memory = memory,
+            OwnsMemory = ownsMemory,
         };
+    }
+
+    public void Dispose()
+    {
+        var memory = Interlocked.Exchange(ref _fields.Memory, null);
+        if (memory == null)
+            return;
+
+        memory.UnregisterRingBuffer();
+
+        if (_fields.OwnsMemory)
+        {
+            memory.Dispose();
+        }
     }
 
     public string IpcDirectoryPath => _fields.IpcDirectoryPath;

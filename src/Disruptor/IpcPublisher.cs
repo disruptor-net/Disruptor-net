@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Disruptor.Processing;
 using Disruptor.Util;
 using static Disruptor.Util.Constants;
 
 namespace Disruptor;
 
-[StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 40)]
+[StructLayout(LayoutKind.Explicit, Size = DefaultPadding * 2 + 48)]
 internal unsafe struct IpcPublisherFields
 {
     // padding: DefaultPadding
@@ -25,7 +26,10 @@ internal unsafe struct IpcPublisherFields
     public string IpcDirectoryPath;
 
     [FieldOffset(DefaultPadding + 32)]
-    public IpcRingBufferMemory? OwnedMemory;
+    public IpcRingBufferMemory? Memory;
+
+    [FieldOffset(DefaultPadding + 40)]
+    public bool OwnsMemory;
 
     // padding: DefaultPadding
 }
@@ -42,20 +46,31 @@ public sealed unsafe class IpcPublisher<T> : IDisposable
 
     public IpcPublisher(IpcRingBufferMemory memory, bool ownsMemory = false)
     {
+        memory.RegisterPublisher();
+
         _fields = new IpcPublisherFields
         {
             RingBuffer = memory.RingBuffer,
             IndexMask = memory.BufferSize - 1,
             Sequencer = new IpcSequencer(memory, new InvalidIpcWaitStrategy()),
             IpcDirectoryPath = memory.IpcDirectoryPath,
-            OwnedMemory = ownsMemory ? memory : null,
+            Memory = memory,
+            OwnsMemory = ownsMemory
         };
     }
 
     public void Dispose()
     {
-        _fields.OwnedMemory?.Dispose();
-        _fields.OwnedMemory = null;
+        var memory = Interlocked.Exchange(ref _fields.Memory, null);
+        if (memory == null)
+            return;
+
+        memory.UnregisterPublisher();
+
+        if (_fields.OwnsMemory)
+        {
+            memory.Dispose();
+        }
     }
 
     public int BufferSize => _fields.Sequencer.BufferSize;

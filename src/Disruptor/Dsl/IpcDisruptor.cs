@@ -12,11 +12,9 @@ public class IpcDisruptor<T> : IAsyncDisposable
 {
     private readonly IpcRingBuffer<T> _ringBuffer;
     private readonly TaskScheduler _taskScheduler;
-    private readonly bool _ownsMemory;
     private readonly IpcConsumerRepository<T> _consumerRepository = new();
     private readonly ValueExceptionHandlerWrapper<T> _exceptionHandler = new();
     private readonly DisruptorState _state = new();
-    private readonly IDisposable _memory;
 
     public IpcDisruptor(int ringBufferSize)
         : this(ringBufferSize, new YieldingWaitStrategy())
@@ -45,10 +43,8 @@ public class IpcDisruptor<T> : IAsyncDisposable
 
     public IpcDisruptor(IpcRingBufferMemory memory, IIpcWaitStrategy waitStrategy, TaskScheduler taskScheduler, bool ownsMemory = false)
     {
-        _memory = memory;
-        _ringBuffer = new IpcRingBuffer<T>(memory, waitStrategy);
+        _ringBuffer = new IpcRingBuffer<T>(memory, waitStrategy, ownsMemory);
         _taskScheduler = taskScheduler;
-        _ownsMemory = ownsMemory;
     }
 
     /// <summary>
@@ -210,12 +206,12 @@ public class IpcDisruptor<T> : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        _state.Dispose();
+        if (!_state.TryDispose())
+            return;
 
         await _consumerRepository.DisposeAll().ConfigureAwait(false);
 
-        if (_ownsMemory)
-            _memory.Dispose();
+        _ringBuffer.Dispose();
     }
 
     /// <summary>

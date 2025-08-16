@@ -11,15 +11,14 @@ namespace Disruptor.Tests;
 [TestFixture]
 public class IpcRingBufferTests : IDisposable
 {
-    private readonly IpcRingBufferMemory _memory;
     private readonly IpcRingBuffer<StubUnmanagedEvent> _ringBuffer;
     private readonly IpcSequenceBarrier _sequenceBarrier;
     private readonly CursorFollower _cursorFollower;
 
     public IpcRingBufferTests()
     {
-        _memory = IpcRingBufferMemory.CreateTemporary(32, initializer: _ => new StubUnmanagedEvent(-1));
-        _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(_memory, new YieldingWaitStrategy());
+        var memory = IpcRingBufferMemory.CreateTemporary(32, initializer: _ => new StubUnmanagedEvent(-1));
+        _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
         _sequenceBarrier = _ringBuffer.NewBarrier();
         _cursorFollower = CursorFollower.StartNew(_ringBuffer);
         _ringBuffer.SetGatingSequences(_cursorFollower.SequencePointer);
@@ -28,7 +27,7 @@ public class IpcRingBufferTests : IDisposable
     public void Dispose()
     {
         _cursorFollower.Dispose();
-        _memory.Dispose();
+        _ringBuffer.Dispose();
     }
 
     [Test]
@@ -133,8 +132,8 @@ public class IpcRingBufferTests : IDisposable
     [Test]
     public void ShouldPreventWrapping()
     {
-        using var memory = IpcRingBufferMemory.CreateTemporary(4, initializer: _ => new StubUnmanagedEvent(-1));
-        var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy());
+        var memory = IpcRingBufferMemory.CreateTemporary(4, initializer: _ => new StubUnmanagedEvent(-1));
+        using var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
         var sequence = ringBuffer.NewSequence();
         ringBuffer.SetGatingSequences(sequence);
 
@@ -168,8 +167,8 @@ public class IpcRingBufferTests : IDisposable
     {
         const int ringBufferSize = 4;
         var mre = new ManualResetEvent(false);
-        using var memory = IpcRingBufferMemory.CreateTemporary(ringBufferSize, initializer: _ => new StubUnmanagedEvent(-1));
-        var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy());
+        var memory = IpcRingBufferMemory.CreateTemporary(ringBufferSize, initializer: _ => new StubUnmanagedEvent(-1));
+        using var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
         var processor = new TestIpcEventProcessor<StubUnmanagedEvent>(ringBuffer.NewBarrier(), ringBuffer.NewSequence());
         ringBuffer.SetGatingSequences(processor.SequencePointer);
 
@@ -305,8 +304,8 @@ public class IpcRingBufferTests : IDisposable
     [TestCase(int.MaxValue +1L)]
     public void ShouldGetEventFromSequence(long sequence)
     {
-        using var memory = IpcRingBufferMemory.CreateTemporary(32, initializer: x => new StubUnmanagedEvent(x));
-        var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy());
+        var memory = IpcRingBufferMemory.CreateTemporary(32, initializer: x => new StubUnmanagedEvent(x));
+        using var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
 
         var evt = ringBuffer[sequence];
 

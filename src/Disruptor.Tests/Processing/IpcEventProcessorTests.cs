@@ -10,18 +10,17 @@ namespace Disruptor.Tests.Processing;
 [TestFixture]
 public class IpcEventProcessorTests : IDisposable
 {
-    private readonly IpcRingBufferMemory _memory;
     private readonly IpcRingBuffer<StubUnmanagedEvent> _ringBuffer;
 
     public IpcEventProcessorTests()
     {
-        _memory = IpcRingBufferMemory.CreateTemporary(16, sequencerCapacity: 2048, initializer: _ => new StubUnmanagedEvent(-1));
-        _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(_memory, new YieldingWaitStrategy());
+        var memory = IpcRingBufferMemory.CreateTemporary(16, sequencerCapacity: 2048, initializer: _ => new StubUnmanagedEvent(-1));
+        _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
     }
 
     public void Dispose()
     {
-        _memory.Dispose();
+        _ringBuffer.Dispose();
     }
 
     private static IIpcEventProcessor<T> CreateEventProcessor<T>(IpcRingBuffer<T> dataProvider, SequencePointer sequencePointer, IpcSequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
@@ -68,9 +67,8 @@ public class IpcEventProcessorTests : IDisposable
     [Test]
     public void ShouldCallOnTimeout()
     {
-        using var memory = IpcRingBufferMemory.CreateTemporary(16, initializer: _ => new StubUnmanagedEvent(-1));
-
-        var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new TimeoutYieldingWaitStrategy(TimeSpan.FromMilliseconds(1)));
+        var memory = IpcRingBufferMemory.CreateTemporary(16, initializer: _ => new StubUnmanagedEvent(-1));
+        using var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new TimeoutYieldingWaitStrategy(TimeSpan.FromMilliseconds(1)), true);
         var sequence = ringBuffer.NewSequence();
         var sequenceBarrier = ringBuffer.NewBarrier();
 
@@ -91,9 +89,8 @@ public class IpcEventProcessorTests : IDisposable
     [Test]
     public void ShouldCallExceptionHandlerOnTimeoutException()
     {
-        using var memory = IpcRingBufferMemory.CreateTemporary(16, initializer: _ => new StubUnmanagedEvent(-1));
-
-        var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new TimeoutYieldingWaitStrategy(TimeSpan.FromMilliseconds(1)));
+        var memory = IpcRingBufferMemory.CreateTemporary(16, initializer: _ => new StubUnmanagedEvent(-1));
+        using var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new TimeoutYieldingWaitStrategy(TimeSpan.FromMilliseconds(1)), true);
         var sequence = ringBuffer.NewSequence();
         var sequenceBarrier = ringBuffer.NewBarrier();
 

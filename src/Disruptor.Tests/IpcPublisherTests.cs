@@ -22,7 +22,7 @@ public class IpcPublisherTests : IDisposable
     public IpcPublisherTests(bool shareMemory)
     {
         _memory = IpcRingBufferMemory.CreateTemporary(32, initializer: _ => new StubUnmanagedEvent(-1));
-        _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(_memory, new YieldingWaitStrategy());
+        _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(_memory, new YieldingWaitStrategy(), false);
         _sequenceBarrier = _ringBuffer.NewBarrier();
         _cursorFollower = CursorFollower.StartNew(_ringBuffer);
         _ringBuffer.SetGatingSequences(_cursorFollower.SequencePointer);
@@ -42,6 +42,7 @@ public class IpcPublisherTests : IDisposable
         _cursorFollower.Dispose();
         _publisher.Dispose();
         _publisherMemory?.Dispose();
+        _ringBuffer.Dispose();
         _memory.Dispose();
     }
 
@@ -147,12 +148,12 @@ public class IpcPublisherTests : IDisposable
     [Test]
     public void ShouldPreventWrapping()
     {
-        using var memory = IpcRingBufferMemory.CreateTemporary<StubUnmanagedEvent>(4);
-        var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy());
+        var memory = IpcRingBufferMemory.CreateTemporary<StubUnmanagedEvent>(4);
+        using var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
         var sequence = ringBuffer.NewSequence();
         ringBuffer.SetGatingSequences(sequence);
 
-        var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
+        using var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
 
         for (var i = 0; i <= 3; i++)
         {
@@ -184,12 +185,12 @@ public class IpcPublisherTests : IDisposable
     {
         const int ringBufferSize = 4;
         var mre = new ManualResetEvent(false);
-        using var memory = IpcRingBufferMemory.CreateTemporary(ringBufferSize, initializer: _ => new StubUnmanagedEvent(-1));
-        var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy());
+        var memory = IpcRingBufferMemory.CreateTemporary(ringBufferSize, initializer: _ => new StubUnmanagedEvent(-1));
+        using var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
         var processor = new TestIpcEventProcessor<StubUnmanagedEvent>(ringBuffer.NewBarrier(), ringBuffer.NewSequence());
         ringBuffer.SetGatingSequences(processor.SequencePointer);
 
-        var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
+        using var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
 
         var task = Task.Run(() =>
         {
@@ -355,7 +356,7 @@ public class IpcPublisherTests : IDisposable
     public void ShouldGetEventFromSequence(long sequence)
     {
         using var memory = IpcRingBufferMemory.CreateTemporary(32, initializer: x => new StubUnmanagedEvent(x));
-        var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
+        using var publisher = new IpcPublisher<StubUnmanagedEvent>(memory);
 
         var evt = publisher[sequence];
 

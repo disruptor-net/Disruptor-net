@@ -1,7 +1,5 @@
 ﻿using System;
-using System.IO;
 using System.IO.MemoryMappedFiles;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -11,23 +9,24 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
 {
     public const int Version = 1;
 
+    private readonly object _lock = new();
     private readonly MemoryMappedFile _mappedFile;
     private readonly MemoryMappedViewAccessor _accessor;
     private byte* _dataPointer;
+    private bool _instanceHasRingBuffer;
+    private int _instancePublisherCount;
+    private bool _disposed;
 
-    private IpcRingBufferMemory(string ipcDirectoryPath, MemoryMappedFile mappedFile, MemoryMappedViewAccessor accessor, byte* dataPointer, bool isOwner)
+    private IpcRingBufferMemory(string ipcDirectoryPath, MemoryMappedFile mappedFile, MemoryMappedViewAccessor accessor, byte* dataPointer)
     {
         _mappedFile = mappedFile;
         _accessor = accessor;
         _dataPointer = dataPointer;
 
         IpcDirectoryPath = ipcDirectoryPath;
-        IsOwner = isOwner;
     }
 
     public string IpcDirectoryPath { get; }
-    public bool IsOwner { get; }
-
     public int BufferSize => HeaderPointer->EventCount;
 
     internal SequencePointer Cursor => GetSequencePointer(0);
@@ -39,6 +38,54 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
     internal byte* RingBuffer => _dataPointer + HeaderPointer->RingBufferOffset;
 
     private Header* HeaderPointer => (Header*)_dataPointer;
+
+    internal void RegisterPublisher()
+    {
+        lock (_lock)
+        {
+            if (_disposed)
+            {
+                throw new InvalidOperationException("The ring buffer memory is disposed.");
+            }
+
+            _instancePublisherCount++;
+        }
+    }
+
+    internal void UnregisterPublisher()
+    {
+        lock (_lock)
+        {
+            _instancePublisherCount--;
+        }
+    }
+
+    internal void RegisterRingBuffer()
+    {
+        lock (_lock)
+        {
+            if (_disposed)
+            {
+                throw new InvalidOperationException("The ring buffer memory is disposed.");
+            }
+
+            if (Interlocked.Exchange(ref HeaderPointer->HasRingBuffer, 1) != 0)
+            {
+                throw new InvalidOperationException($"The ring buffer memory is already owned by another ring buffer.");
+            }
+
+            _instanceHasRingBuffer = true;
+        }
+    }
+
+    internal void UnregisterRingBuffer()
+    {
+        lock (_lock)
+        {
+            Volatile.Write(ref HeaderPointer->HasRingBuffer, 0);
+            _instanceHasRingBuffer = false;
+        }
+    }
 
     internal SequencePointer NewSequence()
     {
@@ -56,13 +103,28 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
 
     public void Dispose()
     {
-        if (_dataPointer != null)
+        lock (_lock)
         {
-            _accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-            _dataPointer = null;
-            _accessor.Dispose();
-            _mappedFile.Dispose();
+            if (_disposed)
+                return;
+
+            if (_instanceHasRingBuffer)
+            {
+                throw new InvalidOperationException("Unable to dispose ring buffer memory before disruptor");
+            }
+
+            if (_instancePublisherCount != 0)
+            {
+                throw new InvalidOperationException("Unable to dispose ring buffer memory before publishers");
+            }
+
+            _disposed = true;
         }
+
+        _accessor.SafeMemoryMappedViewHandle.ReleasePointer();
+        _dataPointer = null;
+        _accessor.Dispose();
+        _mappedFile.Dispose();
     }
 
     private SequencePointer GetSequencePointer(int sequenceIndex)
@@ -93,6 +155,9 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
 
         [FieldOffset(20)]
         public int GatingSequenceIndexCount;
+
+        [FieldOffset(24)]
+        public int HasRingBuffer;
 
         public int GatingSequenceIndexCapacity => SequenceCapacity;
         public int GatingSequenceIndexArrayOffset => Padding;

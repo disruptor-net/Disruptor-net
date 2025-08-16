@@ -102,7 +102,7 @@ unsafe partial class IpcRingBufferMemory
             }
         }
 
-        return new IpcRingBufferMemory(ipcDirectoryPath, mappedFile, accessor, dataPointer, true);
+        return new IpcRingBufferMemory(ipcDirectoryPath, mappedFile, accessor, dataPointer);
     }
 
     public static IpcRingBufferMemory Open<T>(string ipcDirectoryPath)
@@ -150,7 +150,7 @@ unsafe partial class IpcRingBufferMemory
             throw new InvalidOperationException("Invalid ring buffer file event size");
         }
 
-        return new IpcRingBufferMemory(ipcDirectoryPath, mappedFile, accessor, dataPointer, false);
+        return new IpcRingBufferMemory(ipcDirectoryPath, mappedFile, accessor, dataPointer);
     }
 
     private static string GetRingBufferFile(string ringBufferDirectoryPath)
