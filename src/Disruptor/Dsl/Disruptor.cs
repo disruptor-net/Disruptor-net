@@ -8,19 +8,25 @@ using Disruptor.Util;
 namespace Disruptor.Dsl;
 
 /// <summary>
-/// A DSL-style API for setting up the disruptor pattern around a ring buffer
-/// (aka the Builder pattern).
-///
-/// A simple example of setting up the disruptor with two event handlers that
-/// must process events in order:
-/// <code>var disruptor = new Disruptor{MyEvent}(() => new MyEvent(), 32, TaskScheduler.Default);
-/// var handler1 = new EventHandler1() { ... };
-/// var handler2 = new EventHandler2() { ... };
-/// disruptor.HandleEventsWith(handler1).Then(handler2);
-///
-/// var ringBuffer = disruptor.Start();</code>
+/// Represents a startable component that manages a ring buffer (see <see cref="RingBuffer{T}"/>) and
+/// a graph of consumers (see <see cref="IEventHandler{T}"/>).
 /// </summary>
-/// <typeparam name="T">the type of event used.</typeparam>
+/// <typeparam name="T">the type of the events, which must be a reference type.</typeparam>
+/// <example>
+/// <code>
+/// using var disruptor = new Disruptor&lt;MyEvent&gt;(() => new MyEvent(), 1024);
+///
+/// var handler1 = new EventHandler1();
+/// var handler2 = new EventHandler2();
+/// disruptor.HandleEventsWith(handler1).Then(handler2);
+/// disruptor.Start();
+///
+/// using (var scope = disruptor.PublishEvent())
+/// {
+///     scope.Event().Value = 1;
+/// }
+/// </code>
+/// </example>
 public class Disruptor<T> : IDisposable
     where T : class
 {
@@ -373,7 +379,8 @@ public class Disruptor<T> : IDisposable
 
     public void Dispose()
     {
-        _state.Dispose();
+        if (!_state.TryDispose())
+            return;
 
         _consumerRepository.DisposeAll();
     }

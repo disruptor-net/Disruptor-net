@@ -237,7 +237,8 @@ public abstract class ValueTypeDisruptor<T> : IDisposable
 
     public void Dispose()
     {
-        _state.Dispose();
+        if (!_state.TryDispose())
+            return;
 
         _consumerRepository.DisposeAll();
     }

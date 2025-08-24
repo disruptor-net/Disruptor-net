@@ -13,16 +13,27 @@ public class CursorFollower : IDisposable
     private volatile bool _running;
     private Task? _runTask;
 
-    private CursorFollower(ICursored sequencer)
+    private CursorFollower(ICursored sequencer, SequencePointer sequencePointer)
     {
         _sequencer = sequencer;
+        SequencePointer = sequencePointer;
     }
 
     public Sequence Sequence { get; } = new();
+    public SequencePointer SequencePointer { get; }
 
     public static CursorFollower StartNew(ICursored sequencer)
     {
-        var cursorFollower = new CursorFollower(sequencer);
+        var cursorFollower = new CursorFollower(sequencer, default);
+        cursorFollower.Start();
+
+        return cursorFollower;
+    }
+
+    public static CursorFollower StartNew<T>(IpcRingBuffer<T> sequencer)
+        where T : unmanaged
+    {
+        var cursorFollower = new CursorFollower(sequencer, sequencer.NewSequence());
         cursorFollower.Start();
 
         return cursorFollower;
@@ -48,6 +59,8 @@ public class CursorFollower : IDisposable
                 {
                     spinWait.Reset();
                     Sequence.SetValue(cursor);
+                    if (SequencePointer != default)
+                        SequencePointer.SetValue(cursor);
                 }
             }
         }

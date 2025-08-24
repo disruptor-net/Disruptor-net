@@ -90,7 +90,12 @@ public class EventProcessorState
             }
 
             _disposed = true;
-            _disposeTask = HaltImpl().ContinueWith(_ => _sequenceBarrier.Dispose(), TaskContinuationOptions.ExecuteSynchronously);
+
+            var haltTask = HaltImpl();
+
+            _disposeTask = _sequenceBarrier is IDisposable disposableBarrier
+                ? haltTask.ContinueWith(_ => disposableBarrier.Dispose(), TaskContinuationOptions.ExecuteSynchronously)
+                : haltTask;
 
             return _disposeTask;
         }

@@ -150,14 +150,14 @@ public class InternalUtilTests
             for (var i = 0; i < memory.EventCount; i++)
             {
                 ref var evt = ref InternalUtil.ReadValue<StubUnmanagedEvent>(memory.PointerToFirstEvent, i, memory.EventSize);
-                evt.DoubleValue = evt.Value + 0.1;
+                evt.Key = evt.Value +100;
             }
 
             for (var i = 0; i < memory.EventCount; i++)
             {
                 var evt = InternalUtil.ReadValue<StubUnmanagedEvent>(memory.PointerToFirstEvent, i, memory.EventSize);
 
-                Assert.That(evt.DoubleValue, Is.EqualTo(evt.Value + 0.1));
+                Assert.That(evt.Key, Is.EqualTo(evt.Value + 100));
             }
         }
     }

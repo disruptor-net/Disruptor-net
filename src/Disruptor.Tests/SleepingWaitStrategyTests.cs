@@ -7,3 +7,11 @@ public class SleepingWaitStrategyTests : WaitStrategyFixture<SleepingWaitStrateg
         return new SleepingWaitStrategy();
     }
 }
+
+public class SleepingWaitStrategyTests_Ipc : IpcWaitStrategyFixture<SleepingWaitStrategy>
+{
+    protected override SleepingWaitStrategy CreateWaitStrategy()
+    {
+        return new SleepingWaitStrategy();
+    }
+}

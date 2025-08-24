@@ -6,10 +6,27 @@ using Disruptor.Processing;
 namespace Disruptor.Dsl;
 
 /// <summary>
-/// A DSL-style API for setting up the disruptor pattern around a ring buffer
-/// (aka the Builder pattern).
+/// Represents a startable component that manages a ring buffer (see <see cref="UnmanagedRingBuffer{T}"/>) and
+/// a graph of consumers (see <see cref="IValueEventHandler{T}"/>). The disruptor does not own the underlying
+/// ring buffer memory; it operates on a buffer provided via an <see cref="IntPtr"/>, which can point to unmanaged
+/// memory.
 /// </summary>
-/// <typeparam name="T">the type of event used.</typeparam>
+/// <typeparam name="T">the type of the events, which must be an unmanaged value type.</typeparam>
+/// <example>
+/// <code>
+/// using var disruptor = new UnmanagedDisruptor&lt;MyEvent&gt;(() => new MyEvent(), 1024);
+///
+/// var handler1 = new EventHandler1();
+/// var handler2 = new EventHandler2();
+/// disruptor.HandleEventsWith(handler1).Then(handler2);
+/// disruptor.Start();
+///
+/// using (var scope = disruptor.PublishEvent())
+/// {
+///     scope.Event().Value = 1;
+/// }
+/// </code>
+/// </example>
 public class UnmanagedDisruptor<T> : ValueTypeDisruptor<T>
     where T : unmanaged
 {

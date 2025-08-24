@@ -7,3 +7,11 @@ public class BusySpinWaitStrategyTests : WaitStrategyFixture<BusySpinWaitStrateg
         return new BusySpinWaitStrategy();
     }
 }
+
+public class BusySpinWaitStrategyTests_Ipc : IpcWaitStrategyFixture<BusySpinWaitStrategy>
+{
+    protected override BusySpinWaitStrategy CreateWaitStrategy()
+    {
+        return new BusySpinWaitStrategy();
+    }
+}

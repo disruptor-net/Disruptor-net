@@ -7,3 +7,11 @@ public class SpinWaitWaitStrategyTests : WaitStrategyFixture<SpinWaitWaitStrateg
         return new SpinWaitWaitStrategy();
     }
 }
+
+public class SpinWaitWaitStrategyTests_Ipc : IpcWaitStrategyFixture<SpinWaitWaitStrategy>
+{
+    protected override SpinWaitWaitStrategy CreateWaitStrategy()
+    {
+        return new SpinWaitWaitStrategy();
+    }
+}

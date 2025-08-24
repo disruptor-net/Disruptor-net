@@ -8,7 +8,7 @@ namespace Disruptor;
 /// <remarks>
 /// This strategy is a good compromise between performance and CPU resources without incurring significant latency spikes.
 /// </remarks>
-public sealed class YieldingWaitStrategy : IWaitStrategy
+public sealed class YieldingWaitStrategy : IWaitStrategy, IIpcWaitStrategy
 {
     private readonly int _yieldIndex;
 
@@ -31,6 +31,11 @@ public sealed class YieldingWaitStrategy : IWaitStrategy
 
     public void SignalAllWhenBlocking()
     {
+    }
+
+    public IIpcSequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences)
+    {
+        return new IpcSequenceWaiter(dependentSequences, _yieldIndex);
     }
 
     private class SequenceWaiter(DependentSequenceGroup dependentSequences, int yieldIndex) : ISequenceWaiter
@@ -61,6 +66,29 @@ public sealed class YieldingWaitStrategy : IWaitStrategy
 
         public void Dispose()
         {
+        }
+    }
+
+    private class IpcSequenceWaiter(IpcDependentSequenceGroup dependentSequences, int yieldIndex) : IIpcSequenceWaiter
+    {
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            long availableSequence;
+            var counter = 0;
+
+            while ((availableSequence = dependentSequences.Value) < sequence)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (counter >= yieldIndex)
+                {
+                    Thread.Yield();
+                }
+
+                counter++;
+            }
+
+            return availableSequence;
         }
     }
 }

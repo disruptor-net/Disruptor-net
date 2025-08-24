@@ -32,6 +32,32 @@ public static class TestsExtensions
         }
     }
 
+    public static void PublishStubEvent(this IpcRingBuffer<StubUnmanagedEvent> ringBuffer, int value)
+    {
+        var sequence = ringBuffer.Next();
+        try
+        {
+            ringBuffer[sequence].Value = value;
+        }
+        finally
+        {
+            ringBuffer.Publish(sequence);
+        }
+    }
+
+    public static void PublishStubEvent(this IpcPublisher<StubUnmanagedEvent> ringBuffer, int value)
+    {
+        var sequence = ringBuffer.Next();
+        try
+        {
+            ringBuffer[sequence].Value = value;
+        }
+        finally
+        {
+            ringBuffer.Publish(sequence);
+        }
+    }
+
     public static async IAsyncEnumerable<EventBatch<StubEvent>> TakeEvents(this IAsyncEnumerable<EventBatch<StubEvent>> enumerable, int breakAfterCount)
     {
         var processedCount = 0;

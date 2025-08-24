@@ -103,7 +103,7 @@ public class MultiBufferEventProcessor<T>
 
     public bool IsRunning => _state.IsRunning;
 
-    private class MultiBufferSequenceBarrier(SequenceBarrier[] barriers) : ICancellableBarrier
+    private class MultiBufferSequenceBarrier(SequenceBarrier[] barriers) : ICancellableBarrier, IDisposable
     {
         public void Dispose()
         {

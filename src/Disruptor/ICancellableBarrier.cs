@@ -2,7 +2,7 @@
 
 namespace Disruptor;
 
-public interface ICancellableBarrier : IDisposable
+public interface ICancellableBarrier
 {
     void CancelProcessing();
 }

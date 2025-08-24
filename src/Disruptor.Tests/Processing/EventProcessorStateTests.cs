@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Disruptor.Processing;
 using NUnit.Framework;
 
@@ -24,7 +25,7 @@ public class EventProcessorStateTests
         Assert.That(waiter.Disposed.Wait(100), Is.True);
     }
 
-    private class TestSequenceBarrier : ICancellableBarrier
+    private class TestSequenceBarrier : ICancellableBarrier, IDisposable
     {
         private readonly TaskCompletionSource _canceled = new();
         private readonly TaskCompletionSource _disposed = new();

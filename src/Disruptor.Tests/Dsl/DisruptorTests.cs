@@ -390,7 +390,8 @@ public class DisruptorTests : IDisposable
     [Test]
     public void ShouldCreateEventProcessorGroupForFirstEventProcessors()
     {
-        _taskScheduler.IgnoreExecutions();
+        using var _ = _taskScheduler.SuspendExecutions();
+
         var eventHandler1 = new SleepingEventHandler();
         var eventHandler2 = new SleepingEventHandler();
 
@@ -677,7 +678,8 @@ public class DisruptorTests : IDisposable
     [Test]
     public void ShouldThrowExceptionWhenAddingEventProcessorsAfterTheProducerBarrierHasBeenCreated()
     {
-        _taskScheduler.IgnoreExecutions();
+        using var _ = _taskScheduler.SuspendExecutions();
+
         _disruptor.HandleEventsWith(new SleepingEventHandler());
         _disruptor.Start();
 
@@ -687,7 +689,8 @@ public class DisruptorTests : IDisposable
     [Test]
     public void ShouldThrowExceptionIfStartIsCalledTwice()
     {
-        _taskScheduler.IgnoreExecutions();
+        using var _ = _taskScheduler.SuspendExecutions();
+
         _disruptor.HandleEventsWith(new SleepingEventHandler());
         _disruptor.Start();
 

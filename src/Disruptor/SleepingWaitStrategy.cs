@@ -13,7 +13,7 @@ namespace Disruptor;
 /// on the producing thread as it will not need signal any conditional variables
 /// to wake up the event handling thread.
 /// </remarks>
-public sealed class SleepingWaitStrategy : IWaitStrategy
+public sealed class SleepingWaitStrategy : IWaitStrategy, IIpcWaitStrategy
 {
     private readonly int _yieldIndex;
     private readonly int _sleepIndex;
@@ -38,6 +38,11 @@ public sealed class SleepingWaitStrategy : IWaitStrategy
 
     public void SignalAllWhenBlocking()
     {
+    }
+
+    public IIpcSequenceWaiter NewSequenceWaiter(SequenceWaiterOwner owner, IpcDependentSequenceGroup dependentSequences)
+    {
+        return new IpcSequenceWaiter(dependentSequences, _yieldIndex, _sleepIndex);
     }
 
     private class SequenceWaiter(DependentSequenceGroup dependentSequences, int yieldIndex, int sleepIndex) : ISequenceWaiter
@@ -72,6 +77,33 @@ public sealed class SleepingWaitStrategy : IWaitStrategy
 
         public void Dispose()
         {
+        }
+    }
+
+    private class IpcSequenceWaiter(IpcDependentSequenceGroup dependentSequences, int yieldIndex, int sleepIndex) : IIpcSequenceWaiter
+    {
+        public SequenceWaitResult WaitFor(long sequence, CancellationToken cancellationToken)
+        {
+            long availableSequence;
+            var counter = 0;
+
+            while ((availableSequence = dependentSequences.Value) < sequence)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (counter >= sleepIndex)
+                {
+                    Thread.Sleep(0);
+                }
+                else if (counter >= yieldIndex)
+                {
+                    Thread.Yield();
+                }
+
+                counter++;
+            }
+
+            return availableSequence;
         }
     }
 }

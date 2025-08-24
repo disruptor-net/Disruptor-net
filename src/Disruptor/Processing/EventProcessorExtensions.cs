@@ -15,6 +15,12 @@ public static class EventProcessorExtensions
         return eventProcessor.Start(TaskScheduler.Default);
     }
 
+    internal static Task Start<T>(this IIpcEventProcessor<T> eventProcessor)
+        where T : unmanaged
+    {
+        return eventProcessor.Start(TaskScheduler.Default);
+    }
+
     internal static Task StartLongRunningTask(this TaskScheduler taskScheduler, Action action)
     {
         return Task.Factory.StartNew(action, CancellationToken.None, TaskCreationOptions.LongRunning, taskScheduler);

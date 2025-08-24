@@ -7,3 +7,11 @@ public class YieldingWaitStrategyTests : WaitStrategyFixture<YieldingWaitStrateg
         return new YieldingWaitStrategy();
     }
 }
+
+public class YieldingWaitStrategyTests_Ipc : IpcWaitStrategyFixture<YieldingWaitStrategy>
+{
+    protected override YieldingWaitStrategy CreateWaitStrategy()
+    {
+        return new YieldingWaitStrategy();
+    }
+}

@@ -61,6 +61,15 @@ public static class EventProcessorHelpers
         }
     }
 
+    internal readonly struct IpcSequencerPublishedSequenceReader(IpcSequencer sequencer) : IPublishedSequenceReader
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public long GetHighestPublishedSequence(long nextSequence, long availableSequence)
+        {
+            return sequencer.GetHighestPublishedSequence(nextSequence, availableSequence);
+        }
+    }
+
     public readonly struct UnknownSequencerPublishedSequenceReader(ISequencer sequencer) : IPublishedSequenceReader
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

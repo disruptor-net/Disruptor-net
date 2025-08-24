@@ -13,7 +13,7 @@ namespace Disruptor;
 /// <see cref="IDisposable.Dispose"/> should be used to release the sequence barrier, which should only
 /// be required for dynamic event processor removal.
 /// </remarks>
-public sealed class SequenceBarrier : ICancellableBarrier
+public sealed class SequenceBarrier : ICancellableBarrier, IDisposable
 {
     private readonly ISequencer _sequencer;
     private readonly ISequenceWaiter _sequenceWaiter;

@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <OutputType>exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Disruptor.Testing\Disruptor.Testing.csproj" />
+    <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ConsoleAppFramework" Version="5.5.0" Condition="'$(TargetFramework)' == 'net8.0'">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

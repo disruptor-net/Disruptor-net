@@ -1,6 +1,8 @@
-﻿namespace Disruptor.Tests.Support;
+﻿using System;
 
-public class DummySequenceBarrier : ICancellableBarrier
+namespace Disruptor.Tests.Support;
+
+public class DummySequenceBarrier : ICancellableBarrier, IDisposable
 {
     public void Dispose()
     {
