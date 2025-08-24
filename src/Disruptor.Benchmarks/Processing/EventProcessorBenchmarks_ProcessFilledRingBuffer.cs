@@ -35,17 +35,17 @@ public class EventProcessorBenchmarks_ProcessFilledRingBuffer
         _batchProcessor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XBatchEventHandler(() => _batchProcessor.Halt()));
     }
 
-    [Benchmark(OperationsPerInvoke = _ringBufferSize)]
-    public void Run()
-    {
-        _processor.Run();
-    }
-
-    [Benchmark(OperationsPerInvoke = _ringBufferSize)]
-    public void RunBach()
-    {
-        _batchProcessor.Run();
-    }
+    // [Benchmark(OperationsPerInvoke = _ringBufferSize)]
+    // public void Run()
+    // {
+    //     _processor.Run();
+    // }
+    //
+    // [Benchmark(OperationsPerInvoke = _ringBufferSize)]
+    // public void RunBach()
+    // {
+    //     _batchProcessor.Run();
+    // }
 
     public class XEvent
     {

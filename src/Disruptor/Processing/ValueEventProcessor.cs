@@ -89,17 +89,6 @@ public class ValueEventProcessor<T, TDataProvider, TPublishedSequenceReader, TEv
         return runState.StartTask;
     }
 
-    /// <inheritdoc/>
-    /// <remarks>
-    /// It is ok to have another thread rerun this method after a halt().
-    /// </remarks>
-    /// <exception cref="InvalidOperationException">if this object instance is already running in a thread</exception>
-    public void Run()
-    {
-        var runState = _state.Start();
-        Run(runState);
-    }
-
     private void Run(EventProcessorState.RunState runState)
     {
         NotifyStart(runState);

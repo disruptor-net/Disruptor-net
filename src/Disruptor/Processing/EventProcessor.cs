@@ -88,13 +88,6 @@ public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHa
         return runState.StartTask;
     }
 
-    /// <inheritdoc/>
-    public void Run()
-    {
-        var runState = _state.Start();
-        Run(runState);
-    }
-
     private void Run(EventProcessorState.RunState runState)
     {
         NotifyStart(runState);

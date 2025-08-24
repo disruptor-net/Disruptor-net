@@ -28,11 +28,11 @@ public class ValueEventProcessorBenchmarks
         _processor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), new XEventHandler(() => _processor.Halt()));
     }
 
-    [Benchmark(OperationsPerInvoke = _ringBufferSize)]
-    public void Run()
-    {
-        _processor.Run();
-    }
+    // [Benchmark(OperationsPerInvoke = _ringBufferSize)]
+    // public void Run()
+    // {
+    //     _processor.Run();
+    // }
 
     public struct XEvent
     {

@@ -31,12 +31,12 @@ public class EventProcessorBenchmarks_ProcessFilledRingBufferWithMaxBatchSize
         _processor = EventProcessorFactory.Create(_ringBuffer, _ringBuffer.NewBarrier(), _eventHandler);
     }
 
-    [Benchmark(OperationsPerInvoke = _ringBufferSize / _maxBatchSize)]
-    public void Run()
-    {
-        _processor.Run();
-        _eventHandler.SequenceCallback.SetValue(-1); // Reset processor
-    }
+    // [Benchmark(OperationsPerInvoke = _ringBufferSize / _maxBatchSize)]
+    // public void Run()
+    // {
+    //     _processor.Run();
+    //     _eventHandler.SequenceCallback.SetValue(-1); // Reset processor
+    // }
 
     public class XEvent
     {
