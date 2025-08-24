@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace Disruptor.Tests;
 
 [TestFixture]
-public class DisruptorStressTest
+public class DisruptorStressTests
 {
     [Test]
     public void ShouldHandleLotsOfThreads_EventHandler()
@@ -96,9 +96,8 @@ public class DisruptorStressTest
 
         foreach (var handler in handlers)
         {
-            // TimerCount is off on macOS, possibly due to a timer resolution or a thread scheduling issue. It would be nice to fix it because
-            // it could imply that low resolution timeouts are broken on macOS.
-            var expectedTimeoutCount = OperatingSystem.IsMacOS() ? timeoutOptions.TimoutCount * 0.1 : timeoutOptions.TimoutCount * 0.5;
+            // TimerCount is off on GitHub macOS and Windows image builds because the default timer resolution is too large.
+            var expectedTimeoutCount = OperatingSystem.IsLinux() ? timeoutOptions.TimoutCount * 0.5 : timeoutOptions.TimoutCount * 0.1;
             Assert.That(handler.TimeoutCount, Is.GreaterThanOrEqualTo(expectedTimeoutCount));
 
             Assert.That(handler.MessagesSeen, Is.Not.EqualTo(0));
