@@ -73,6 +73,14 @@ public class IpcPublisherTests : IDisposable
         Assert.Throws<ArgumentException>(() => _publisher.TryNext(_publisher.BufferSize + 1, out _));
     }
 
+    [TestCase(0)]
+    [TestCase(-1)]
+    public void ShouldNotClaimLessThanOneEvent(int count)
+    {
+        Assert.Throws<ArgumentException>(() => _publisher.Next(count));
+        Assert.Throws<ArgumentException>(() => _publisher.TryNext(count, out _));
+    }
+
     [Test]
     public void ShouldClaimAndGetInSeparateThread()
     {

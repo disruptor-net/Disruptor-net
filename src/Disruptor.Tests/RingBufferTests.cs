@@ -56,6 +56,14 @@ public class RingBufferTests : IDisposable
         Assert.Throws<ArgumentException>(() => _ringBuffer.TryNext(_ringBuffer.BufferSize + 1, out _));
     }
 
+    [TestCase(0)]
+    [TestCase(-1)]
+    public void ShouldNotClaimLessThanOneEvent(int count)
+    {
+        Assert.Throws<ArgumentException>(() => _ringBuffer.Next(count));
+        Assert.Throws<ArgumentException>(() => _ringBuffer.TryNext(count, out _));
+    }
+
     [Test]
     public void ShouldClaimAndGetInSeparateThread()
     {
