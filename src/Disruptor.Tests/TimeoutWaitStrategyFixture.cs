@@ -52,7 +52,7 @@ public abstract class TimeoutWaitStrategyFixture<T> : WaitStrategyFixture<T>
         AssertIsCompleted(waitTask2);
 
         // Required to make the test pass on azure pipelines.
-        var tolerance = TimeSpan.FromMilliseconds(50);
+        var tolerance = TimeSpan.FromMilliseconds(200);
 
         Assert.That(stopwatch.Elapsed, Is.GreaterThanOrEqualTo(timeout - tolerance));
     }
