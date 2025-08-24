@@ -36,7 +36,7 @@ public class BatchEventProcessor<T, TDataProvider, TPublishedSequenceReader, TEv
     // ReSharper restore FieldCanBeMadeReadOnly.Local
 
     private readonly Sequence _sequence = new();
-    private readonly EventProcessorState _state = new EventProcessorState(restartable: true);
+    private readonly EventProcessorState _state;
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
 
     public BatchEventProcessor(TDataProvider dataProvider, SequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TBatchSizeLimiter batchSizeLimiter)
@@ -46,6 +46,7 @@ public class BatchEventProcessor<T, TDataProvider, TPublishedSequenceReader, TEv
         _publishedSequenceReader = publishedSequenceReader;
         _eventHandler = eventHandler;
         _batchSizeLimiter = batchSizeLimiter;
+        _state = new EventProcessorState(sequenceBarrier, restartable: true);
 
         if (eventHandler is IEventProcessorSequenceAware sequenceAware)
             sequenceAware.SetSequenceCallback(_sequence);
@@ -57,28 +58,12 @@ public class BatchEventProcessor<T, TDataProvider, TPublishedSequenceReader, TEv
     /// <inheritdoc/>
     public Task Halt()
     {
-        var runState = _state.Halt();
-        if (runState != null)
-        {
-            _sequenceBarrier.CancelProcessing();
-            return runState.ShutdownTask;
-        }
-
-        return Task.CompletedTask;
+        return _state.Halt();
     }
 
     public void Dispose()
     {
-        var runState = _state.Dispose();
-        if (runState != null)
-        {
-            _sequenceBarrier.CancelProcessing();
-            runState.ShutdownTask.ContinueWith(_ => _sequenceBarrier.Dispose());
-        }
-        else
-        {
-            _sequenceBarrier.Dispose();
-        }
+        _state.Dispose();
     }
 
     /// <inheritdoc/>

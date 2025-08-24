@@ -17,10 +17,10 @@ namespace Disruptor.Processing;
 public sealed class WorkerPool<T> : IDisposable
     where T : class
 {
-    private readonly EventProcessorState _state = new(restartable: false);
     private readonly Sequence _workSequence = new();
     private readonly RingBuffer<T> _ringBuffer;
     private readonly WorkProcessor<T>[] _workProcessors;
+    private int _state;
 
     /// <summary>
     /// Create a worker pool to enable an array of <see cref="IWorkHandler{T}"/>s to consume published sequences.
@@ -100,7 +100,11 @@ public sealed class WorkerPool<T> : IDisposable
     /// <exception cref="InvalidOperationException">if the pool is already started or halted</exception>
     public Task Start(TaskScheduler taskScheduler)
     {
-        _state.Start();
+        var previousState = Interlocked.CompareExchange(ref _state, (int)State.Running, (int)State.Ready);
+        if (previousState != (int)State.Ready)
+        {
+            throw new InvalidOperationException($"WorkerPool cannot be started in the {(State)previousState} state.");
+        }
 
         var cursor = _ringBuffer.Cursor;
         _workSequence.SetValue(cursor);
@@ -121,7 +125,11 @@ public sealed class WorkerPool<T> : IDisposable
     /// </summary>
     public Task Halt()
     {
-        _state.Halt();
+        var previousState = Interlocked.CompareExchange(ref _state, (int)State.Halted, (int)State.Running);
+        if (previousState != (int)State.Running)
+        {
+            throw new InvalidOperationException($"WorkerPool cannot be halted in the {(State)previousState} state.");
+        }
 
         var haltTasks = new List<Task>(_workProcessors.Length);
 
@@ -135,7 +143,10 @@ public sealed class WorkerPool<T> : IDisposable
 
     public void Dispose()
     {
-        _state.Dispose();
+        if (Interlocked.Exchange(ref _state, (int)State.Disposed) == (int)State.Disposed)
+        {
+            return;
+        }
 
         foreach (var workProcessor in _workProcessors)
         {
@@ -172,5 +183,13 @@ public sealed class WorkerPool<T> : IDisposable
         }
 
         return false;
+    }
+
+    private enum State
+    {
+        Ready,
+        Running,
+        Halted,
+        Disposed,
     }
 }

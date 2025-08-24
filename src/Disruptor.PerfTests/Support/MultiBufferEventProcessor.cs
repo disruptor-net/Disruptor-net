@@ -8,11 +8,11 @@ namespace Disruptor.PerfTests.Support;
 public class MultiBufferEventProcessor<T>
     where T : class
 {
-    private readonly EventProcessorState _state = new EventProcessorState(restartable: true);
     private readonly RingBuffer<T>[] _providers;
     private readonly SequenceBarrier[] _barriers;
     private readonly IEventHandler<T> _handler;
     private readonly Sequence[] _sequences;
+    private readonly EventProcessorState _state;
     private long _count;
 
     public MultiBufferEventProcessor(RingBuffer<T>[] providers, SequenceBarrier[] barriers, IEventHandler<T> handler)
@@ -29,6 +29,8 @@ public class MultiBufferEventProcessor<T>
         {
             _sequences[i] = new Sequence();
         }
+
+        _state = new EventProcessorState(new MultiBufferSequenceBarrier(barriers), restartable: true);
     }
 
     public Task StartLongRunning()
@@ -96,17 +98,27 @@ public class MultiBufferEventProcessor<T>
 
     public Task Halt()
     {
-        var runState = _state.Halt();
-        if (runState == null)
-            return Task.CompletedTask;
-
-        foreach (var barrier in _barriers)
-        {
-            barrier.CancelProcessing();
-        }
-
-        return runState.ShutdownTask;
+        return _state.Halt();
     }
 
     public bool IsRunning => _state.IsRunning;
+
+    private class MultiBufferSequenceBarrier(SequenceBarrier[] barriers) : ICancellableBarrier
+    {
+        public void Dispose()
+        {
+            foreach (var barrier in barriers)
+            {
+                barrier.Dispose();
+            }
+        }
+
+        public void CancelProcessing()
+        {
+            foreach (var barrier in barriers)
+            {
+                barrier.CancelProcessing();
+            }
+        }
+    }
 }

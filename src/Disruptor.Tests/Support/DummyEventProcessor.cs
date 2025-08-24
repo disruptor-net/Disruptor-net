@@ -7,7 +7,7 @@ namespace Disruptor.Tests.Support;
 
 public class DummyEventProcessor : IEventProcessor
 {
-    private readonly EventProcessorState _state = new(restartable: true);
+    private readonly EventProcessorState _state = new(new DummySequenceBarrier(), restartable: true);
 
     public DummyEventProcessor()
         : this(new Sequence())
@@ -23,8 +23,7 @@ public class DummyEventProcessor : IEventProcessor
 
     public Task Halt()
     {
-        var runState = _state.Halt();
-        return runState != null ? runState.ShutdownTask : Task.CompletedTask;
+        return _state.Halt();
     }
 
     public void Dispose()

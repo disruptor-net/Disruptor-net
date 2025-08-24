@@ -153,7 +153,7 @@ public abstract class SequenceBarrierTests : IDisposable
     private class StubEventProcessor : IEventProcessor
     {
         private readonly Sequence _sequence = new();
-        private readonly EventProcessorState _state = new(restartable: true);
+        private readonly EventProcessorState _state = new(new DummySequenceBarrier(), restartable: true);
 
         public StubEventProcessor(long sequence)
         {
@@ -180,8 +180,7 @@ public abstract class SequenceBarrierTests : IDisposable
 
         public Task Halt()
         {
-            var runState = _state.Halt();
-            return runState != null ? runState.ShutdownTask : Task.CompletedTask;
+            return _state.Halt();
         }
 
         public void Dispose()

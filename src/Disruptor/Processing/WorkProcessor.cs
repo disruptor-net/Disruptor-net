@@ -20,7 +20,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
     private readonly IWorkHandler<T> _workHandler;
     private readonly IExceptionHandler<T> _exceptionHandler;
     private readonly Sequence _workSequence;
-    private readonly EventProcessorState _state = new(restartable: false);
+    private readonly EventProcessorState _state;
 
     /// <summary>
     /// Construct a <see cref="WorkProcessor{T}"/>.
@@ -37,6 +37,7 @@ public sealed class WorkProcessor<T> : IEventProcessor
         _workHandler = workHandler;
         _exceptionHandler = exceptionHandler;
         _workSequence = workSequence;
+        _state = new EventProcessorState(sequenceBarrier, restartable: false);
 
         // TODO: Move to IWorkHandler with default implementation.
         if (_workHandler is IEventReleaseAware eventReleaseAware)
@@ -51,28 +52,12 @@ public sealed class WorkProcessor<T> : IEventProcessor
     /// <inheritdoc/>
     public Task Halt()
     {
-        var runState = _state.Halt();
-        if (runState != null)
-        {
-            _sequenceBarrier.CancelProcessing();
-            return runState.ShutdownTask;
-        }
-
-        return Task.CompletedTask;
+        return _state.Halt();
     }
 
     public void Dispose()
     {
-        var runState = _state.Dispose();
-        if (runState != null)
-        {
-            _sequenceBarrier.CancelProcessing();
-            runState.ShutdownTask.ContinueWith(_ => _sequenceBarrier.Dispose());
-        }
-        else
-        {
-            _sequenceBarrier.Dispose();
-        }
+        _state.Dispose();
     }
 
     /// <inheritdoc/>

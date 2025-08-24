@@ -8,10 +8,11 @@ namespace Disruptor.Tests.Support;
 
 public class TestEventProcessor : IEventProcessor
 {
-    private readonly EventProcessorState _state = new(restartable: true);
+    private readonly EventProcessorState _state;
 
     public TestEventProcessor(SequenceBarrier sequenceBarrier)
     {
+        _state = new(sequenceBarrier, restartable: true);
         SequenceBarrier = sequenceBarrier;
     }
 
@@ -22,28 +23,12 @@ public class TestEventProcessor : IEventProcessor
 
     public Task Halt()
     {
-        var runState = _state.Halt();
-        if (runState != null)
-        {
-            SequenceBarrier.CancelProcessing();
-            return runState.ShutdownTask;
-        }
-
-        return Task.CompletedTask;
+        return _state.Halt();
     }
 
     public void Dispose()
     {
-        var runState = _state.Dispose();
-        if (runState != null)
-        {
-            SequenceBarrier.CancelProcessing();
-            runState.ShutdownTask.ContinueWith(_ => SequenceBarrier.Dispose());
-        }
-        else
-        {
-            SequenceBarrier.Dispose();
-        }
+        _state.Dispose();
     }
 
     public Task Start(TaskScheduler taskScheduler)

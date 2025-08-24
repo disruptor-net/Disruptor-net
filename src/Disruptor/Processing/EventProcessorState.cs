@@ -14,12 +14,16 @@ namespace Disruptor.Processing;
 public class EventProcessorState
 {
     private readonly object _lock = new();
+    private readonly ICancellableBarrier _sequenceBarrier;
     private readonly bool _restartable;
     private bool _disposed;
     private RunState? _currentRunState;
+    private Task _haltTask = Task.CompletedTask;
+    private Task _disposeTask = Task.CompletedTask;
 
-    public EventProcessorState(bool restartable)
+    public EventProcessorState(ICancellableBarrier sequenceBarrier, bool restartable)
     {
+        _sequenceBarrier = sequenceBarrier;
         _restartable = restartable;
     }
 
@@ -40,16 +44,22 @@ public class EventProcessorState
         lock (_lock)
         {
             if (_disposed)
+            {
                 throw new InvalidOperationException("Event processor is disposed");
+            }
 
             var runState = _currentRunState;
             if (runState != null)
             {
-                if (!_restartable)
-                    throw new InvalidOperationException("Event processor was started once and cannot be restarted");
-
                 if (!runState.IsShutdown)
+                {
                     throw new InvalidOperationException("Event processor is already running");
+                }
+
+                if (!_restartable)
+                {
+                    throw new InvalidOperationException("Event processor was started once and cannot be restarted");
+                }
             }
 
             _currentRunState = new RunState();
@@ -57,37 +67,49 @@ public class EventProcessorState
         }
     }
 
-    public RunState? Halt()
+    public Task Halt()
     {
         lock (_lock)
         {
             if (_disposed)
-                return null;
+            {
+                return _disposeTask;
+            }
 
-            var runState = _currentRunState;
-            if (runState == null || runState.IsHalted)
-                return null;
-
-            runState.Halt();
-            return runState;
+            return HaltImpl();
         }
     }
 
-    public RunState? Dispose()
+    public Task Dispose()
     {
         lock (_lock)
         {
             if (_disposed)
-                return null;
-
-            var runState = _currentRunState;
-            if (runState is { IsHalted: false })
-                runState.Halt();
+            {
+                return _disposeTask;
+            }
 
             _disposed = true;
+            _disposeTask = HaltImpl().ContinueWith(_ => _sequenceBarrier.Dispose(), TaskContinuationOptions.ExecuteSynchronously);
 
-            return runState;
+            return _disposeTask;
         }
+    }
+
+    private Task HaltImpl()
+    {
+        var runState = _currentRunState;
+        if (runState == null || runState.IsHalted)
+        {
+            return _haltTask;
+        }
+
+        runState.Halt();
+
+        _sequenceBarrier.CancelProcessing();
+        _haltTask = Task.WhenAll(_haltTask, runState.ShutdownTask);
+
+        return _haltTask;
     }
 
     public class RunState
