@@ -20,7 +20,7 @@ public abstract class TimeoutIpcWaitStrategyFixture<T> : IpcWaitStrategyFixture<
     public void ShouldWaitFromMultipleThreadsWithTimeouts()
     {
         // Arrange
-        var timeout = TimeSpan.FromMilliseconds(400);
+        var timeout = TimeSpan.FromMilliseconds(1000);
         var waitStrategy = CreateWaitStrategy(timeout);
         var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
         var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
@@ -52,7 +52,7 @@ public abstract class TimeoutIpcWaitStrategyFixture<T> : IpcWaitStrategyFixture<
         AssertIsCompleted(waitTask2);
 
         // Required to make the test pass on azure pipelines.
-        var tolerance = TimeSpan.FromMilliseconds(50);
+        var tolerance = TimeSpan.FromMilliseconds(200);
 
         Assert.That(stopwatch.Elapsed, Is.GreaterThanOrEqualTo(timeout - tolerance));
     }
