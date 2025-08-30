@@ -11,13 +11,10 @@ internal class IpcConsumerRepository<T>
     where T : unmanaged
 {
     private readonly Dictionary<IEventHandler, IIpcEventProcessor<T>> _eventProcessorInfoByEventHandler = new(new IdentityComparer<IEventHandler>());
-    // private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence = new(new IdentityComparer<Sequence>());
     private readonly List<IIpcEventProcessor<T>> _consumerInfos = new();
     private readonly HashSet<IIpcEventProcessor<T>> _endOfChainConsumers = new();
 
-    public IReadOnlyCollection<IIpcEventProcessor<T>> Consumers => _consumerInfos;
-
-    public void Add(IIpcEventProcessor<T> eventProcessor, IEventHandler eventHandler, IpcDependentSequenceGroup dependentSequences)
+    public void Add(IIpcEventProcessor<T> eventProcessor, IEventHandler eventHandler)
     {
         _eventProcessorInfoByEventHandler[eventHandler] = eventProcessor;
         _consumerInfos.Add(eventProcessor);
@@ -56,11 +53,6 @@ internal class IpcConsumerRepository<T>
         return eventProcessor!;
     }
 
-    // public Sequence GetSequenceFor(IEventHandler eventHandler)
-    // {
-    //     return GetEventProcessorFor(eventHandler).Sequence;
-    // }
-
     public void UnMarkEventProcessorsAsEndOfChain(IIpcEventProcessor<T>[] eventProcessors)
     {
         foreach (var eventProcessor in eventProcessors)
@@ -68,11 +60,6 @@ internal class IpcConsumerRepository<T>
             _endOfChainConsumers.Remove(eventProcessor);
         }
     }
-
-    // public DependentSequenceGroup? GetDependentSequencesFor(IEventHandler eventHandler)
-    // {
-    //     return _eventProcessorInfoByEventHandler.TryGetValue(eventHandler, out var eventProcessorInfo) ? eventProcessorInfo.DependentSequences : null;
-    // }
 
     public Task StartAll(TaskScheduler taskScheduler)
     {
@@ -103,8 +90,7 @@ internal class IpcConsumerRepository<T>
         foreach (var consumerInfo in _consumerInfos)
         {
             var disposeTask = consumerInfo.DisposeAsync();
-            if (!disposeTask.IsCompleted)
-                tasks.Add(disposeTask.AsTask());
+            tasks.Add(disposeTask.AsTask());
         }
 
         return Task.WhenAll(tasks);
