@@ -32,6 +32,14 @@ internal class DisruptorState
         }
     }
 
+    public void ThrowIfDisposed()
+    {
+        if (_state == Disposed)
+        {
+            throw new InvalidOperationException($"The disruptor is disposed.");
+        }
+    }
+
     public void Start()
     {
         var previousState = Interlocked.CompareExchange(ref _state, Started, Created);

@@ -214,6 +214,8 @@ public class IpcDisruptor<T> : IDisposable, IAsyncDisposable
 
     private Task Shutdown(int millisecondsTimeout)
     {
+        _state.ThrowIfDisposed();
+
         var timeout = millisecondsTimeout == Timeout.Infinite ? DateTime.MaxValue : DateTime.UtcNow.AddMilliseconds(millisecondsTimeout);
         var spinWait = new SpinWait();
         while (HasBacklog())
@@ -257,7 +259,11 @@ public class IpcDisruptor<T> : IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="handler">eventHandler to get the sequence for</param>
     /// <returns>eventHandler's sequence</returns>
-    public long GetSequenceValueFor(IValueEventHandler<T> handler) => _consumerRepository.GetEventProcessorFor(handler).SequencePointer.Value;
+    public long GetSequenceValueFor(IValueEventHandler<T> handler)
+    {
+        _state.ThrowIfDisposed();
+        return _consumerRepository.GetEventProcessorFor(handler).SequencePointer.Value;
+    }
 
     /// <summary>
     /// Confirms if all messages have been consumed by all event processors.
