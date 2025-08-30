@@ -93,7 +93,7 @@ public class ValueDisruptor<T> : ValueTypeDisruptor<T>
     public long Cursor => RingBuffer.Cursor;
 
     /// <summary>
-    /// The capacity of the data structure to hold entries.
+    /// Gets the ring buffer capacity (number of events).
     /// </summary>
     public long BufferSize => RingBuffer.BufferSize;
 

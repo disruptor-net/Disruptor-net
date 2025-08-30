@@ -2,9 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Disruptor.Dsl;
 using Disruptor.Processing;
-using Disruptor.Util;
 using static Disruptor.Util.Constants;
 
 namespace Disruptor;
@@ -86,8 +84,14 @@ public sealed unsafe class IpcRingBuffer<T> : ISequenced, ICursored, IDisposable
         }
     }
 
+    /// <summary>
+    /// Gets the base directory of the ring buffer memory.
+    /// </summary>
     public string IpcDirectoryPath => _fields.IpcDirectoryPath;
 
+    /// <summary>
+    /// Gets the ring buffer capacity (number of events).
+    /// </summary>
     public int BufferSize => _fields.BufferSize;
 
     /// <summary>

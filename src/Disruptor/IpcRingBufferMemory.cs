@@ -55,7 +55,7 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
     public string IpcDirectoryPath { get; }
 
     /// <summary>
-    /// Gets the ring buffer size (number of events).
+    /// Gets the ring buffer capacity (number of events).
     /// </summary>
     public int BufferSize { get; }
 

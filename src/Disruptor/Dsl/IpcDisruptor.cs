@@ -78,6 +78,9 @@ public class IpcDisruptor<T> : IDisposable, IAsyncDisposable
     /// </summary>
     public IpcRingBuffer<T> RingBuffer => _ringBuffer;
 
+    /// <summary>
+    /// Gets the base directory of the ring buffer memory.
+    /// </summary>
     public string IpcDirectoryPath => _ringBuffer.IpcDirectoryPath;
 
     /// <summary>
@@ -86,7 +89,7 @@ public class IpcDisruptor<T> : IDisposable, IAsyncDisposable
     public long Cursor => _ringBuffer.Cursor;
 
     /// <summary>
-    /// The capacity of the data structure to hold entries.
+    /// Gets the ring buffer capacity (number of events).
     /// </summary>
     public long BufferSize => _ringBuffer.BufferSize;
 

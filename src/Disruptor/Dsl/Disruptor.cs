@@ -396,7 +396,7 @@ public class Disruptor<T> : IDisposable
     public long Cursor => _ringBuffer.Cursor;
 
     /// <summary>
-    /// The capacity of the data structure to hold entries.
+    /// Gets the ring buffer capacity (number of events).
     /// </summary>
     public long BufferSize => _ringBuffer.BufferSize;
 
