@@ -39,6 +39,17 @@ public class EventProcessorState
         }
     }
 
+    public bool IsDisposed
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _disposed;
+            }
+        }
+    }
+
     public RunState Start()
     {
         lock (_lock)

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Dsl;
 using Disruptor.Processing;
 using Disruptor.Tests.Dsl.Stubs;
@@ -11,12 +13,10 @@ namespace Disruptor.Tests.Dsl;
 public class ConsumerRepositoryTests
 {
     private readonly ConsumerRepository _consumerRepository = new();
-    private readonly DummyEventProcessor _eventProcessor1 = new();
-    private readonly DummyEventProcessor _eventProcessor2 = new();
+    private readonly EventProcessor _eventProcessor1 = new();
+    private readonly EventProcessor _eventProcessor2 = new();
     private readonly DummyEventHandler<TestEvent> _handler1 = new();
-    private readonly DummyEventHandler<TestEvent> _handler2 = new();
     private readonly DependentSequenceGroup _dependentSequenceGroup1 = new(new Sequence());
-    private readonly DependentSequenceGroup _dependentSequenceGroup2 = new(new Sequence());
 
     [Test]
     public void ShouldGetDependentSequenceGroupByHandler()
@@ -46,31 +46,63 @@ public class ConsumerRepositoryTests
     }
 
     [Test]
-    public void ShouldIterateAllEventProcessors()
+    public async Task ShouldStartAndHaltProcessors()
     {
         _consumerRepository.AddOwnedProcessor(_eventProcessor1, _handler1, _dependentSequenceGroup1);
-        _consumerRepository.AddOwnedProcessor(_eventProcessor2, _handler2, _dependentSequenceGroup2);
 
-        var seen1 = false;
-        var seen2 = false;
-        foreach (var testEntryEventProcessorInfo in _consumerRepository.Consumers)
+        await _consumerRepository.StartAll(TaskScheduler.Default);
+
+        Assert.That(_eventProcessor1.IsRunning, Is.True);
+
+        await _consumerRepository.HaltAll();
+
+        Assert.That(_eventProcessor1.IsRunning, Is.False);
+    }
+
+    [Test]
+    public void ShouldDisposeOwnedEventProcessorOnDispose()
+    {
+        _consumerRepository.AddOwnedProcessor(_eventProcessor1, _handler1, _dependentSequenceGroup1);
+        _consumerRepository.Add(_eventProcessor1, owned: false);
+
+        _consumerRepository.DisposeAll();
+
+        Assert.That(_eventProcessor1.IsDisposed, Is.True);
+        Assert.That(_eventProcessor2.IsDisposed, Is.False);
+    }
+
+    private class EventProcessor : IEventProcessor
+    {
+        private readonly EventProcessorState _state = new(new DummySequenceBarrier(), restartable: true);
+
+        public Sequence Sequence { get; } = new();
+
+        public Task Halt() => _state.Halt();
+
+        public void Dispose() => _state.Dispose();
+
+        public Task Start(TaskScheduler taskScheduler)
         {
-            var eventProcessorInfo = (EventProcessorInfo)testEntryEventProcessorInfo;
-            if (!seen1 && eventProcessorInfo.EventProcessor == _eventProcessor1 && eventProcessorInfo.Handler == _handler1)
-            {
-                seen1 = true;
-            }
-            else if (!seen2 && eventProcessorInfo.EventProcessor == _eventProcessor2 && eventProcessorInfo.Handler == _handler2)
-            {
-                seen2 = true;
-            }
-            else
-            {
-                Assert.Fail("Unexpected eventProcessor info: " + testEntryEventProcessorInfo);
-            }
+            var runState = _state.Start();
+            taskScheduler.StartLongRunningTask(() => Run(runState));
+            return runState.StartTask;
         }
 
-        Assert.That(seen1, "Included eventProcessor 1");
-        Assert.That(seen2, "Included eventProcessor 2");
+        public bool IsRunning => _state.IsRunning;
+
+        public bool IsDisposed => _state.IsDisposed;
+
+        private void Run(EventProcessorState.RunState runState)
+        {
+            runState.OnStarted();
+
+            var spinWait = new SpinWait();
+            while (!runState.CancellationToken.IsCancellationRequested)
+            {
+                spinWait.SpinOnce();
+            }
+
+            runState.OnShutdown();
+        }
     }
 }

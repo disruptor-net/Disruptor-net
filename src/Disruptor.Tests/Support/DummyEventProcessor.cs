@@ -20,6 +20,7 @@ public class DummyEventProcessor : IEventProcessor
     }
 
     public Sequence Sequence { get; }
+    public TaskCompletionSource? RunTaskCompletionSource { get; set; }
 
     public Task Halt()
     {
@@ -40,9 +41,14 @@ public class DummyEventProcessor : IEventProcessor
 
     public bool IsRunning => _state.IsRunning;
 
+    public bool IsDisposed => _state.IsDisposed;
+
     private void Run(EventProcessorState.RunState runState)
     {
         runState.OnStarted();
+
+        RunTaskCompletionSource?.Task.Wait();
+
         runState.OnShutdown();
     }
 }

@@ -12,8 +12,6 @@ internal class ConsumerRepository
     private readonly Dictionary<Sequence, IConsumerInfo> _eventProcessorInfoBySequence = new(new IdentityComparer<Sequence>());
     private readonly List<IConsumerInfo> _consumerInfos = new();
 
-    public IReadOnlyCollection<IConsumerInfo> Consumers => _consumerInfos;
-
     public void AddOwnedProcessor(IEventProcessor eventProcessor, IEventHandler eventHandler, DependentSequenceGroup dependentSequences)
     {
         var consumerInfo = new EventProcessorInfo(eventProcessor, eventHandler, dependentSequences, true);
