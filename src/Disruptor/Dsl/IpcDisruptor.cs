@@ -34,7 +34,7 @@ namespace Disruptor.Dsl;
 /// }
 /// </code>
 /// </example>
-public class IpcDisruptor<T> : IAsyncDisposable
+public class IpcDisruptor<T> : IDisposable, IAsyncDisposable
     where T : unmanaged
 {
     private readonly IpcRingBuffer<T> _ringBuffer;
@@ -229,6 +229,19 @@ public class IpcDisruptor<T> : IAsyncDisposable
         }
 
         return Halt();
+    }
+
+    public void Dispose()
+    {
+        if (!_state.TryDispose())
+            return;
+
+        // The ring buffer cannot be disposed until all event processors have stopped running,
+        // because the event processors could still be processing events.
+
+        _consumerRepository.DisposeAll().Wait();
+
+        _ringBuffer.Dispose();
     }
 
     public async ValueTask DisposeAsync()

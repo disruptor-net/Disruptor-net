@@ -464,7 +464,23 @@ public class IpcDisruptorTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task ShouldHaltOnDispose()
+    public async Task ShouldHaltAndDisposeMemoryOnDispose()
+    {
+        _disruptor.HandleEventsWith(new TestValueEventHandler<TestValueEvent>());
+        await _disruptor.Start();
+
+        Assert.That(_disruptor.IsRunning);
+
+        // ReSharper disable once MethodHasAsyncOverload
+        _disruptor.Dispose();
+
+        Assert.That(!_disruptor.IsRunning);
+        Assert.That(_taskScheduler.JoinAllThreads(500));
+        Assert.That(_disruptor.IpcDirectoryPath, Does.Not.Exist);
+    }
+
+    [Test]
+    public async Task ShouldHaltAndDisposeMemoryOnDisposeAsync()
     {
         _disruptor.HandleEventsWith(new TestValueEventHandler<TestValueEvent>());
         await _disruptor.Start();
@@ -475,6 +491,7 @@ public class IpcDisruptorTests : IAsyncDisposable
 
         Assert.That(!_disruptor.IsRunning);
         Assert.That(_taskScheduler.JoinAllThreads(500));
+        Assert.That(_disruptor.IpcDirectoryPath, Does.Not.Exist);
     }
 
     private void EnsureTwoEventsProcessedAccordingToDependencies(CountdownEvent countDownLatch, params DelayedEventHandler[] dependencies)
