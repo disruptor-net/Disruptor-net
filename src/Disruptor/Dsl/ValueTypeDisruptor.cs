@@ -101,9 +101,20 @@ public abstract class ValueTypeDisruptor<T> : IDisposable
     /// </summary>
     /// <param name="eventHandler">eventHandler the event handler to set a different exception handler for</param>
     /// <returns>an <see cref="ValueExceptionHandlerSetting{T}"/> dsl object - intended to be used by chaining the with method call</returns>
+    [Obsolete("Use " + nameof(SetExceptionHandler) + " instead")]
     public ValueExceptionHandlerSetting<T> HandleExceptionsFor(IValueEventHandler<T> eventHandler)
     {
         return new ValueExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
+    }
+
+    /// <summary>
+    /// Override the default exception handler for a specific handler.
+    /// </summary>
+    /// <param name="eventHandler">eventHandler the event handler to set a different exception handler for</param>
+    /// <param name="exceptionHandler">exceptionHandler the exception handler to use.</param>
+    public void SetExceptionHandler(IValueEventHandler<T> eventHandler, IValueExceptionHandler<T> exceptionHandler)
+    {
+        ((IValueEventProcessor<T>)_consumerRepository.GetEventProcessorFor(eventHandler)).SetExceptionHandler(exceptionHandler);
     }
 
     /// <summary>

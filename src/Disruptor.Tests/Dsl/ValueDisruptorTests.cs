@@ -436,7 +436,8 @@ public class ValueDisruptorTests : IDisposable
     }
 
     [Test]
-    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor()
+    [Obsolete("Target method is obsolete")]
+    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessorV1()
     {
         var testException = new Exception();
         var eventHandler = new ExceptionThrowingEventHandler(testException);
@@ -445,6 +446,22 @@ public class ValueDisruptorTests : IDisposable
         var reference = new AtomicReference<Exception>();
         var exceptionHandler = new StubExceptionHandler(reference);
         _disruptor.HandleExceptionsFor(eventHandler).With(exceptionHandler);
+
+        PublishEvent();
+
+        WaitFor(reference);
+    }
+
+    [Test]
+    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessorV2()
+    {
+        var testException = new Exception();
+        var eventHandler = new ExceptionThrowingEventHandler(testException);
+        _disruptor.HandleEventsWith(eventHandler);
+
+        var reference = new AtomicReference<Exception>();
+        var exceptionHandler = new StubExceptionHandler(reference);
+        _disruptor.SetExceptionHandler(eventHandler, exceptionHandler);
 
         PublishEvent();
 

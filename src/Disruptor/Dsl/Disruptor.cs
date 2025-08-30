@@ -211,6 +211,7 @@ public class Disruptor<T> : IDisposable
     /// </summary>
     /// <param name="eventHandler">eventHandler the event handler to set a different exception handler for</param>
     /// <returns>an <see cref="ExceptionHandlerSetting{T}"/> dsl object - intended to be used by chaining the with method call</returns>
+    [Obsolete("Use " + nameof(SetExceptionHandler) + " instead", true)]
     public ExceptionHandlerSetting<T> HandleExceptionsFor(IEventHandler<T> eventHandler)
     {
         return new ExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
@@ -218,13 +219,12 @@ public class Disruptor<T> : IDisposable
 
     /// <summary>
     /// Override the default exception handler for a specific handler.
-    /// <code>disruptorWizard.HandleExceptionsIn(eventHandler).With(exceptionHandler);</code>
     /// </summary>
     /// <param name="eventHandler">eventHandler the event handler to set a different exception handler for</param>
-    /// <returns>an <see cref="ExceptionHandlerSetting{T}"/> dsl object - intended to be used by chaining the with method call</returns>
-    public ExceptionHandlerSetting<T> HandleExceptionsFor(IBatchEventHandler<T> eventHandler)
+    /// <param name="exceptionHandler">exceptionHandler the exception handler to use.</param>
+    public void SetExceptionHandler(IEventHandler<T> eventHandler, IExceptionHandler<T> exceptionHandler)
     {
-        return new ExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
+        ((IEventProcessor<T>)_consumerRepository.GetEventProcessorFor(eventHandler)).SetExceptionHandler(exceptionHandler);
     }
 
     /// <summary>
@@ -233,9 +233,42 @@ public class Disruptor<T> : IDisposable
     /// </summary>
     /// <param name="eventHandler">eventHandler the event handler to set a different exception handler for</param>
     /// <returns>an <see cref="ExceptionHandlerSetting{T}"/> dsl object - intended to be used by chaining the with method call</returns>
+    [Obsolete("Use " + nameof(SetExceptionHandler) + " instead", true)]
+    public ExceptionHandlerSetting<T> HandleExceptionsFor(IBatchEventHandler<T> eventHandler)
+    {
+        return new ExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
+    }
+
+    /// <summary>
+    /// Override the default exception handler for a specific handler.
+    /// </summary>
+    /// <param name="eventHandler">eventHandler the event handler to set a different exception handler for</param>
+    /// <param name="exceptionHandler">exceptionHandler the exception handler to use.</param>
+    public void SetExceptionHandler(IBatchEventHandler<T> eventHandler, IExceptionHandler<T> exceptionHandler)
+    {
+        ((IEventProcessor<T>)_consumerRepository.GetEventProcessorFor(eventHandler)).SetExceptionHandler(exceptionHandler);
+    }
+
+    /// <summary>
+    /// Override the default exception handler for a specific handler.
+    /// <code>disruptorWizard.HandleExceptionsIn(eventHandler).With(exceptionHandler);</code>
+    /// </summary>
+    /// <param name="eventHandler">eventHandler the event handler to set a different exception handler for</param>
+    /// <returns>an <see cref="ExceptionHandlerSetting{T}"/> dsl object - intended to be used by chaining the with method call</returns>
+    [Obsolete("Use " + nameof(SetExceptionHandler) + " instead", true)]
     public ExceptionHandlerSetting<T> HandleExceptionsFor(IAsyncBatchEventHandler<T> eventHandler)
     {
         return new ExceptionHandlerSetting<T>(eventHandler, _consumerRepository);
+    }
+
+    /// <summary>
+    /// Override the default exception handler for a specific handler.
+    /// </summary>
+    /// <param name="eventHandler">eventHandler the event handler to set a different exception handler for</param>
+    /// <param name="exceptionHandler">exceptionHandler the exception handler to use.</param>
+    public void SetExceptionHandler(IAsyncBatchEventHandler<T> eventHandler, IExceptionHandler<T> exceptionHandler)
+    {
+        ((IAsyncEventProcessor<T>)_consumerRepository.GetEventProcessorFor(eventHandler)).SetExceptionHandler(exceptionHandler);
     }
 
     /// <summary>

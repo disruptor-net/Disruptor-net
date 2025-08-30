@@ -628,7 +628,8 @@ public class DisruptorTests : IDisposable
     }
 
     [Test]
-    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor()
+    [Obsolete("Target method is obsolete")]
+    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessorV1()
     {
         var testException = new Exception();
         var eventHandler = new ExceptionThrowingEventHandler(testException);
@@ -644,7 +645,24 @@ public class DisruptorTests : IDisposable
     }
 
     [Test]
-    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor_BatchHandler()
+    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessorV2()
+    {
+        var testException = new Exception();
+        var eventHandler = new ExceptionThrowingEventHandler(testException);
+        _disruptor.HandleEventsWith(eventHandler);
+
+        var reference = new AtomicReference<Exception>();
+        var exceptionHandler = new StubExceptionHandler(reference);
+        _disruptor.SetExceptionHandler(eventHandler, exceptionHandler);
+
+        PublishEvent();
+
+        WaitFor(reference);
+    }
+
+    [Test]
+    [Obsolete("Target method is obsolete")]
+    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor_BatchHandlerV1()
     {
         var testException = new Exception();
         var eventHandler = new TestBatchEventHandler<TestEvent>(_ => throw testException);
@@ -660,7 +678,24 @@ public class DisruptorTests : IDisposable
     }
 
     [Test]
-    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor_AsyncBatchHandler()
+    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor_BatchHandlerV2()
+    {
+        var testException = new Exception();
+        var eventHandler = new TestBatchEventHandler<TestEvent>(_ => throw testException);
+        _disruptor.HandleEventsWith(eventHandler);
+
+        var reference = new AtomicReference<Exception>();
+        var exceptionHandler = new StubExceptionHandler(reference);
+        _disruptor.SetExceptionHandler(eventHandler, exceptionHandler);
+
+        PublishEvent();
+
+        WaitFor(reference);
+    }
+
+    [Test]
+    [Obsolete("Target method is obsolete")]
+    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor_AsyncBatchHandlerV1()
     {
         var testException = new Exception();
         var eventHandler = new TestAsyncBatchEventHandler<TestEvent>(_ => throw testException);
@@ -669,6 +704,22 @@ public class DisruptorTests : IDisposable
         var reference = new AtomicReference<Exception>();
         var exceptionHandler = new StubExceptionHandler(reference);
         _disruptor.HandleExceptionsFor(eventHandler).With(exceptionHandler);
+
+        PublishEvent();
+
+        WaitFor(reference);
+    }
+
+    [Test]
+    public void ShouldBeAbleToOverrideTheExceptionHandlerForAEventProcessor_AsyncBatchHandlerV2()
+    {
+        var testException = new Exception();
+        var eventHandler = new TestAsyncBatchEventHandler<TestEvent>(_ => throw testException);
+        _disruptor.HandleEventsWith(eventHandler);
+
+        var reference = new AtomicReference<Exception>();
+        var exceptionHandler = new StubExceptionHandler(reference);
+        _disruptor.SetExceptionHandler(eventHandler, exceptionHandler);
 
         PublishEvent();
 
