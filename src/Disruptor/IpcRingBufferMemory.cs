@@ -16,12 +16,12 @@ namespace Disruptor;
 /// </remarks>
 /// <example>
 /// <code>
-/// // In first process:
+/// // In the first process:
 /// using var memory = IpcRingBufferMemory.Create&lt;MyEvent&gt;(path, 1024);
 /// await using var disruptor = new IpcDisruptor&lt;MyEvent&gt;(memory, new YieldingWaitStrategy());
 /// </code>
 /// <code>
-/// // In second process:
+/// // In the second process:
 /// using var memory = IpcRingBufferMemory.Open&lt;MyEvent&gt;(path);
 /// var publisher = new IpcPublisher&lt;MyEvent&gt;(memory);
 /// </code>
@@ -45,6 +45,8 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
         _dataPointer = dataPointer;
 
         IpcDirectoryPath = ipcDirectoryPath;
+        // Store the value in a field to prevent null-pointer exceptions after dispose.
+        BufferSize = HeaderPointer->EventCount;
     }
 
     /// <summary>
@@ -55,7 +57,7 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
     /// <summary>
     /// Gets the ring buffer size (number of events).
     /// </summary>
-    public int BufferSize => HeaderPointer->EventCount;
+    public int BufferSize { get; }
 
     internal SequencePointer Cursor => GetSequencePointer(0);
     internal IpcSequenceBlock* SequenceBlocks => (IpcSequenceBlock*)(_dataPointer + HeaderPointer->SequencePoolOffset);

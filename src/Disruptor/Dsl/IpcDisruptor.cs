@@ -16,17 +16,16 @@ namespace Disruptor.Dsl;
 /// <typeparam name="T">the type of the events, which must be an unmanaged value type.</typeparam>
 /// <example>
 /// <code>
-/// // In first process:
+/// // In the first process:
 /// await using var disruptor = new IpcDisruptor&lt;MyEvent&gt;(1024);
-///
+/// var ipcDirectoryPath = disruptor.IpcDirectoryPath;
 /// var handler1 = new EventHandler1();
 /// var handler2 = new EventHandler2();
 /// disruptor.HandleEventsWith(handler1).Then(handler2);
 /// await disruptor.Start();
-///
-/// Console.WriteLine(disruptor.IpcDirectoryPath);
-///
-/// // In second process:
+/// </code>
+/// <code>
+/// // In the second process:
 /// using var publisher = new IpcPublisher&lt;MyEvent&gt;(ipcDirectoryPath);
 /// using (var scope = publisher.PublishEvent())
 /// {
@@ -75,8 +74,7 @@ public class IpcDisruptor<T> : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// The <see cref="ValueRingBuffer{T}"/> used by this disruptor. This is useful for creating custom
-    /// event processors if the behaviour of <see cref="IValueEventProcessor{T}"/> is not suitable.
+    /// The <see cref="IpcRingBuffer{T}"/> used by this disruptor.
     /// </summary>
     public IpcRingBuffer<T> RingBuffer => _ringBuffer;
 
@@ -92,22 +90,22 @@ public class IpcDisruptor<T> : IDisposable, IAsyncDisposable
     /// </summary>
     public long BufferSize => _ringBuffer.BufferSize;
 
-    /// <inheritdoc cref="ValueRingBuffer{T}.PublishEvent"/>
+    /// <inheritdoc cref="IpcRingBuffer{T}.PublishEvent"/>
     public IpcRingBuffer<T>.UnpublishedEventScope PublishEvent() => RingBuffer.PublishEvent();
 
-    /// <inheritdoc cref="ValueRingBuffer{T}.PublishEvents"/>
+    /// <inheritdoc cref="IpcRingBuffer{T}.PublishEvents"/>
     public IpcRingBuffer<T>.UnpublishedEventBatchScope PublishEvents(int count) => RingBuffer.PublishEvents(count);
 
     /// <summary>
     /// Set up event handlers to handle events from the ring buffer. These handlers will process events
     /// as soon as they become available, in parallel.
     ///
-    /// <code>dw.HandleEventsWith(A).Then(B);</code>
+    /// <code>disruptor.HandleEventsWith(A).Then(B);</code>
     ///
     /// This call is additive, but generally should only be called once when setting up the disruptor instance.
     /// </summary>
     /// <param name="handlers">the event handlers that will process events</param>
-    /// <returns>a <see cref="ValueEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
+    /// <returns>a <see cref="IpcEventHandlerGroup{T}"/> that can be used to chain dependencies.</returns>
     public IpcEventHandlerGroup<T> HandleEventsWith(params IValueEventHandler<T>[] handlers)
     {
         return CreateEventProcessors([], handlers);
@@ -136,11 +134,11 @@ public class IpcDisruptor<T> : IDisposable, IAsyncDisposable
     /// <summary>
     /// Create a group of event handlers to be used as a dependency.
     /// For example if the handler <code>A</code> must process events before handler <code>B</code>:
-    /// <code>dw.After(A).HandleEventsWith(B);</code>
+    /// <code>disruptor.After(A).HandleEventsWith(B);</code>
     /// </summary>
     /// <param name="handlers">handlers the event handlers, previously set up with <see cref="HandleEventsWith(IValueEventHandler{T}[])"/>,
     /// that will form the barrier for subsequent handlers or processors.</param>
-    /// <returns>an <see cref="ValueEventHandlerGroup{T}"/> that can be used to setup a dependency barrier over the specified event handlers.</returns>
+    /// <returns>an <see cref="IpcEventHandlerGroup{T}"/> that can be used to setup a dependency barrier over the specified event handlers.</returns>
     public IpcEventHandlerGroup<T> After(params IValueEventHandler<T>[] handlers)
     {
         return new IpcEventHandlerGroup<T>(this, _consumerRepository, handlers.Select(h => _consumerRepository.GetEventProcessorFor(h)).ToArray());
@@ -301,7 +299,7 @@ public class IpcDisruptor<T> : IDisposable, IAsyncDisposable
             var eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequence, barrier, eventHandler);
             eventProcessor.SetExceptionHandler(_exceptionHandler);
 
-            _consumerRepository.Add(eventProcessor, eventHandler, barrier.DependentSequences);
+            _consumerRepository.Add(eventProcessor, eventHandler);
             eventProcessors[i] = eventProcessor;
         }
 
