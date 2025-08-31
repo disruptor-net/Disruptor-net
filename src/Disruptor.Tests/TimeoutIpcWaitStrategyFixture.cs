@@ -20,26 +20,25 @@ public abstract class TimeoutIpcWaitStrategyFixture<T> : IpcWaitStrategyFixture<
     {
         var timeout = TimeSpan.FromMilliseconds(500);
         var waitStrategy = CreateWaitStrategy(timeout);
-        var waitResult = new TaskCompletionSource<SequenceWaitResult>();
 
         var sequenceWaiter = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
         var stopwatch = new Stopwatch();
 
-        var waitTask = Task.Run(() =>
-        {
-            stopwatch.Start();
-            var sequenceWaitResult = sequenceWaiter.WaitFor(10, CancellationToken);
-            stopwatch.Stop();
-            waitResult.SetResult(sequenceWaitResult);
-        });
-
-        Assert.That(waitTask.Wait(50), Is.False);
-
-        AssertHasResult(waitResult.Task, SequenceWaitResult.Timeout);
-        AssertIsCompleted(waitTask);
+        Cursor.SetValue(0);
 
         // Required to make the test pass on GitHub builds.
         var tolerance = TimeSpan.FromMilliseconds(200);
+
+        stopwatch.Start();
+        var sequenceWaitResult1 = sequenceWaiter.WaitFor(0, CancellationToken);
+        stopwatch.Stop();
+        Assert.That(sequenceWaitResult1, Is.EqualTo(new SequenceWaitResult(0)));;
+        Assert.That(stopwatch.Elapsed, Is.LessThanOrEqualTo(tolerance));
+
+        stopwatch.Restart();
+        var sequenceWaitResult2 = sequenceWaiter.WaitFor(1, CancellationToken);
+        stopwatch.Stop();
+        Assert.That(sequenceWaitResult2, Is.EqualTo(SequenceWaitResult.Timeout));
         Assert.That(stopwatch.Elapsed, Is.GreaterThanOrEqualTo(timeout - tolerance));
     }
 }
