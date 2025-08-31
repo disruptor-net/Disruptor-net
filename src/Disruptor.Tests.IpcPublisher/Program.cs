@@ -105,9 +105,10 @@ public class Commands
             throw new InvalidOperationException($"Invalid minimum gating sequence, expected {expectedValue} but was {minimumGatingSequence}");
     }
 
-    public void ThroughputTest(string ipcDirectoryPath, int iterations, string mutexName, int? cpu)
+    public void ThroughputTest(string ipcDirectoryPath, int iterations, string mutexName, string cpu)
     {
-        using var _ = ThreadAffinityUtil.SetThreadAffinity(cpu, ThreadPriority.Highest);
+        var cpuId = string.IsNullOrEmpty(cpu) ? (int?)null : int.Parse(cpu);
+        using var _ = ThreadAffinityUtil.SetThreadAffinity(cpuId, ThreadPriority.Highest);
 
         using var publisher = new IpcPublisher<PerfValueEvent>(ipcDirectoryPath);
 
