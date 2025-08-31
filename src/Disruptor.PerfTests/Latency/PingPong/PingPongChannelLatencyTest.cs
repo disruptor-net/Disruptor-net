@@ -54,6 +54,8 @@ public class PingPongChannelLatencyTest : ILatencyTest, IExternalTest
         pingerTask.Wait();
         pongerTask.Wait();
         sessionContext.Stop();
+
+        PerfTestUtil.FailIf(pingerTask.Result, "Pinger processed an invalid value");
     }
 
     public int RequiredProcessorCount => 2;
@@ -78,20 +80,23 @@ public class PingPongChannelLatencyTest : ILatencyTest, IExternalTest
             _pauseDurationInStopwatchTicks = StopwatchUtil.GetTimestampFromNanoseconds(pauseTimeInNano);
         }
 
-        private async Task Run()
+        private async Task<bool> Run()
         {
             _globalSignal.Signal();
             _globalSignal.Wait();
 
             Thread.Sleep(1000);
             long counter = 0;
+            var hasInvalidValue = false;
 
             while (counter < _maxEvents)
             {
                 var t0 = Stopwatch.GetTimestamp();
-                await _pingChannel.Writer.WriteAsync(new PerfEvent { Value = 1 }).ConfigureAwait(false);
-                await _pongChannel.Reader.ReadAsync().ConfigureAwait(false);
+                await _pingChannel.Writer.WriteAsync(new PerfEvent { Value = counter }).ConfigureAwait(false);
+                var result = await _pongChannel.Reader.ReadAsync().ConfigureAwait(false);
                 var t1 = Stopwatch.GetTimestamp();
+
+                hasInvalidValue |= result.Value != counter;
 
                 counter++;
 
@@ -104,6 +109,8 @@ public class PingPongChannelLatencyTest : ILatencyTest, IExternalTest
             }
 
             await _pingChannel.Writer.WriteAsync(new PerfEvent { Value = -1 }).ConfigureAwait(false);
+
+            return hasInvalidValue;
         }
 
         public void Reset(CountdownEvent globalSignal, HistogramBase histogram)
@@ -112,7 +119,7 @@ public class PingPongChannelLatencyTest : ILatencyTest, IExternalTest
             _histogram = histogram;
         }
 
-        public Task Start()
+        public Task<bool> Start()
         {
             return Task.Run(Run);
         }
@@ -137,12 +144,13 @@ public class PingPongChannelLatencyTest : ILatencyTest, IExternalTest
 
             while (await _pingChannel.Reader.WaitToReadAsync().ConfigureAwait(false))
             {
-                while (_pingChannel.Reader.TryRead(out var perfEvent))
+                while (_pingChannel.Reader.TryRead(out var input))
                 {
-                    if (perfEvent.Value == -1)
+                    if (input.Value == -1)
                         return;
 
-                    await _pongChannel.Writer.WriteAsync(perfEvent).ConfigureAwait(false);
+                    var output = new PerfEvent { Value = input.Value };
+                    await _pongChannel.Writer.WriteAsync(output).ConfigureAwait(false);
                 }
             }
         }

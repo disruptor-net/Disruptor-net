@@ -67,6 +67,8 @@ public class PingPongSequencedLatencyTest : ILatencyTest
         var shutdownTask1 = _pingProcessor.Halt();
         var shutdownTask2 = _pongProcessor.Halt();
         Task.WaitAll(shutdownTask1, shutdownTask2);
+
+        PerfTestUtil.FailIf(_pinger.HasInvalidValue, "Pinger processed an invalid value");
     }
 
     private class Pinger : IEventHandler<PerfEvent>
@@ -77,6 +79,7 @@ public class PingPongSequencedLatencyTest : ILatencyTest
         private HistogramBase _histogram;
         private long _t0;
         private long _counter;
+        private long _expectedValue;
         private CountdownEvent _globalSignal;
         private ManualResetEvent _signal;
         private ThreadAffinityScope _affinityScope;
@@ -88,10 +91,13 @@ public class PingPongSequencedLatencyTest : ILatencyTest
             _pauseTimeTicks = StopwatchUtil.GetTimestampFromNanoseconds(_pauseNanos);
         }
 
+        public bool HasInvalidValue { get; private set; }
+
         public void OnEvent(PerfEvent data, long sequence, bool endOfBatch)
         {
             var t1 = Stopwatch.GetTimestamp();
 
+            HasInvalidValue |= data.Value != _expectedValue;
             _histogram.RecordValueWithExpectedInterval(StopwatchUtil.ToNanoseconds(t1 - _t0), _pauseNanos);
 
             if (data.Value < _iterations)
@@ -111,6 +117,7 @@ public class PingPongSequencedLatencyTest : ILatencyTest
 
         private void Send()
         {
+            _expectedValue = _counter;
             _t0 = Stopwatch.GetTimestamp();
             var next = _buffer.Next();
             _buffer[next].Value = _counter;
@@ -143,6 +150,8 @@ public class PingPongSequencedLatencyTest : ILatencyTest
             _signal = signal;
 
             _counter = 0;
+            _expectedValue = 0;
+            HasInvalidValue = false;
         }
     }
 

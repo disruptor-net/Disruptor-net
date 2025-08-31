@@ -23,6 +23,14 @@ public class PerfTestUtil
         return temp;
     }
 
+    public static void FailIf(bool condition, string message)
+    {
+        if (condition)
+        {
+            throw new Exception(message);
+        }
+    }
+
     public static void FailIf(long a, long b, string message = null)
     {
         if (a == b)
@@ -51,7 +59,6 @@ public class PerfTestUtil
             Thread.Sleep(1);
         }
     }
-
 
     public static void WaitForEventProcessorSequence(long expectedCount, SequencePointer sequence)
     {
