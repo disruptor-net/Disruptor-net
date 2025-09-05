@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Disruptor.Processing;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
@@ -8,8 +9,9 @@ using NUnit.Framework;
 namespace Disruptor.Tests.Processing;
 
 [TestFixture]
-public class IpcEventProcessorTests : IDisposable
+public class IpcEventProcessorTests : IAsyncDisposable
 {
+    private readonly List<IAsyncDisposable> _processors = new();
     private readonly IpcRingBuffer<StubUnmanagedEvent> _ringBuffer;
 
     public IpcEventProcessorTests()
@@ -18,15 +20,22 @@ public class IpcEventProcessorTests : IDisposable
         _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
+        foreach (var processor in _processors)
+        {
+            await processor.DisposeAsync();
+        }
+
         _ringBuffer.Dispose();
     }
 
-    private static IIpcEventProcessor<T> CreateEventProcessor<T>(IpcRingBuffer<T> dataProvider, SequencePointer sequencePointer, IpcSequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
+    private IIpcEventProcessor<T> CreateEventProcessor<T>(IpcRingBuffer<T> dataProvider, SequencePointer sequencePointer, IpcSequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
         where T : unmanaged
     {
-        return EventProcessorFactory.Create(dataProvider, sequencePointer, sequenceBarrier, eventHandler);
+        var processor = EventProcessorFactory.Create(dataProvider, sequencePointer, sequenceBarrier, eventHandler);
+        _processors.Add(processor);
+        return processor;
     }
 
     [Test]
@@ -111,8 +120,6 @@ public class IpcEventProcessorTests : IDisposable
         eventProcessor.Halt();
 
         Assert.That(task.Wait(TimeSpan.FromSeconds(20)));
-
-        Console.WriteLine(1);
     }
 
     [Test]
