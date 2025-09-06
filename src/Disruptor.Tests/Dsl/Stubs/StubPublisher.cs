@@ -9,7 +9,7 @@ namespace Disruptor.Tests.Dsl.Stubs;
 public class StubPublisher
 {
     private readonly ISequenced _ringBuffer;
-    private volatile bool _running = true;
+    private volatile bool _running;
     private volatile int _publicationCount;
 
     public StubPublisher(ISequenced ringBuffer)
@@ -24,9 +24,10 @@ public class StubPublisher
 
     public Task Start()
     {
-        return Task.Factory.StartNew(Run, TaskCreationOptions.LongRunning);
+        _running = true;
+        return Task.Factory.StartNew(RunImpl, TaskCreationOptions.LongRunning);
 
-        void Run()
+        void RunImpl()
         {
             while (_running)
             {

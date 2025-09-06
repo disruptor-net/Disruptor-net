@@ -415,10 +415,9 @@ public class ValueDisruptorTests : IDisposable
         delayedEventHandler.AwaitStart();
 
         var stubPublisher = new StubPublisher(ringBuffer);
+        var publisherTask = stubPublisher.Start();
         try
         {
-            stubPublisher.Start();
-
             stubPublisher.AssertProducerReaches(4, true);
 
             delayedEventHandler.ProcessEvent();
@@ -432,6 +431,45 @@ public class ValueDisruptorTests : IDisposable
         finally
         {
             stubPublisher.Halt();
+            while (!publisherTask.Wait(1))
+            {
+                delayedEventHandler.TryProcessEvent();
+            }
+        }
+    }
+
+    [Test]
+    public void ShouldBlockProducerUntilAllEventProcessorsHaveAdvancedWithMaxBatchSize()
+    {
+        var delayedEventHandler = CreateDelayedEventHandler(1);
+        _disruptor.HandleEventsWith(delayedEventHandler);
+        _disruptor.Start();
+
+        var ringBuffer = _disruptor.RingBuffer;
+        delayedEventHandler.AwaitStart();
+
+        var stubPublisher = new StubPublisher(ringBuffer);
+        var publisherTask = stubPublisher.Start();
+        try
+        {
+            stubPublisher.AssertProducerReaches(4, true);
+
+            delayedEventHandler.ProcessEvent();
+
+            stubPublisher.AssertProducerReaches(5, true);
+
+            delayedEventHandler.ProcessEvent();
+            delayedEventHandler.ProcessEvent();
+
+            stubPublisher.AssertProducerReaches(7, true);
+        }
+        finally
+        {
+            stubPublisher.Halt();
+            while (!publisherTask.Wait(1))
+            {
+                delayedEventHandler.TryProcessEvent();
+            }
         }
     }
 
@@ -767,9 +805,9 @@ public class ValueDisruptorTests : IDisposable
         }
     }
 
-    private DelayedEventHandler CreateDelayedEventHandler()
+    private DelayedEventHandler CreateDelayedEventHandler(int? maxBatchSize = null)
     {
-        var delayedEventHandler = new DelayedEventHandler();
+        var delayedEventHandler = new DelayedEventHandler { MaxBatchSize = maxBatchSize };
         _delayedEventHandlers.Add(delayedEventHandler);
         return delayedEventHandler;
     }

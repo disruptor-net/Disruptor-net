@@ -19,6 +19,8 @@ public class DelayedEventHandler : IEventHandler<TestEvent>, IValueEventHandler<
     {
     }
 
+    public int? MaxBatchSize { get; init; }
+
     public void OnEvent(TestEvent entry, long sequence, bool endOfBatch)
     {
         WaitForAndSetFlag(0);
@@ -37,6 +39,11 @@ public class DelayedEventHandler : IEventHandler<TestEvent>, IValueEventHandler<
     public void StopWaiting()
     {
         _stopped = true;
+    }
+
+    public bool TryProcessEvent()
+    {
+        return Interlocked.Exchange(ref _readyToProcessEvent, 1) != 1;
     }
 
     private void WaitForAndSetFlag(int newValue)
