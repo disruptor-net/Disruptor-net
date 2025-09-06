@@ -12,14 +12,14 @@ unsafe partial class IpcRingBufferMemory
     /// Creates a new ring buffer memory in a temporary directory.
     /// </summary>
     /// <param name="bufferSize">size of the ring buffer</param>
-    /// <param name="sequencerCapacity">maximum number of sequences that can be allocated from the memory</param>
+    /// <param name="sequencePoolCapacity">maximum number of sequences that can be allocated from the memory</param>
     /// <param name="initializer">event initializer</param>
     /// <typeparam name="T">type of the ring buffer events</typeparam>
-    public static IpcRingBufferMemory CreateTemporary<T>(int bufferSize, int sequencerCapacity = 64, Func<int, T>? initializer = null)
+    public static IpcRingBufferMemory CreateTemporary<T>(int bufferSize, int sequencePoolCapacity = 64, Func<int, T>? initializer = null)
         where T : unmanaged
     {
         var ipcDirectoryPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-        return CreateNew<T>(ipcDirectoryPath, bufferSize, sequencerCapacity, initializer, autoDeleteDirectory: true);
+        return CreateNew<T>(ipcDirectoryPath, bufferSize, sequencePoolCapacity, initializer, autoDeleteDirectory: true);
     }
 
     /// <summary>
@@ -28,11 +28,11 @@ unsafe partial class IpcRingBufferMemory
     /// </summary>
     /// <param name="ipcDirectoryPath">base directory of the ring buffer memory</param>
     /// <param name="bufferSize">size of the ring buffer; must be a power of 2</param>
-    /// <param name="sequencerCapacity">maximum number of sequences that can be allocated from the memory</param>
+    /// <param name="sequencePoolCapacity">maximum number of sequences that can be allocated from the memory</param>
     /// <param name="initializer">event initializer</param>
     /// <param name="autoDeleteDirectory">indicates whether the directory must be deleted on dispose</param>
     /// <typeparam name="T">type of the ring buffer events</typeparam>
-    public static IpcRingBufferMemory Create<T>(string ipcDirectoryPath, int bufferSize, int sequencerCapacity = 64, Func<int, T>? initializer = null, bool autoDeleteDirectory = false)
+    public static IpcRingBufferMemory Create<T>(string ipcDirectoryPath, int bufferSize, int sequencePoolCapacity = 64, Func<int, T>? initializer = null, bool autoDeleteDirectory = false)
         where T : unmanaged
     {
         if (bufferSize < 1)
@@ -50,7 +50,7 @@ unsafe partial class IpcRingBufferMemory
             Directory.Delete(ipcDirectoryPath, true);
         }
 
-        return CreateImpl<T>(ipcDirectoryPath, bufferSize, sequencerCapacity, initializer, autoDeleteDirectory);
+        return CreateImpl<T>(ipcDirectoryPath, bufferSize, sequencePoolCapacity, initializer, autoDeleteDirectory);
     }
 
     /// <summary>
@@ -59,11 +59,11 @@ unsafe partial class IpcRingBufferMemory
     /// <throws cref="InvalidOperationException">if the directory already exists</throws>
     /// <param name="ipcDirectoryPath">base directory of the ring buffer memory</param>
     /// <param name="bufferSize">size of the ring buffer; must be a power of 2</param>
-    /// <param name="sequencerCapacity">maximum number of sequences that can be allocated from the memory</param>
+    /// <param name="sequencePoolCapacity">maximum number of sequences that can be allocated from the memory</param>
     /// <param name="initializer">event initializer</param>
     /// <param name="autoDeleteDirectory">indicates whether the directory must be deleted on dispose</param>
     /// <typeparam name="T">type of the ring buffer events</typeparam>
-    public static IpcRingBufferMemory CreateNew<T>(string ipcDirectoryPath, int bufferSize, int sequencerCapacity = 64, Func<int, T>? initializer = null, bool autoDeleteDirectory = false)
+    public static IpcRingBufferMemory CreateNew<T>(string ipcDirectoryPath, int bufferSize, int sequencePoolCapacity = 64, Func<int, T>? initializer = null, bool autoDeleteDirectory = false)
         where T : unmanaged
     {
         if (bufferSize < 1)
@@ -81,10 +81,10 @@ unsafe partial class IpcRingBufferMemory
             throw new InvalidOperationException("Ring buffer directory already exists");
         }
 
-        return CreateImpl<T>(ipcDirectoryPath, bufferSize, sequencerCapacity, initializer, autoDeleteDirectory);
+        return CreateImpl<T>(ipcDirectoryPath, bufferSize, sequencePoolCapacity, initializer, autoDeleteDirectory);
     }
 
-    private static IpcRingBufferMemory CreateImpl<T>(string ipcDirectoryPath, int bufferSize, int sequencerCapacity, Func<int, T>? initializer, bool autoDeleteDirectory)
+    private static IpcRingBufferMemory CreateImpl<T>(string ipcDirectoryPath, int bufferSize, int sequencePoolCapacity, Func<int, T>? initializer, bool autoDeleteDirectory)
         where T : unmanaged
     {
         Directory.CreateDirectory(ipcDirectoryPath);
@@ -94,8 +94,8 @@ unsafe partial class IpcRingBufferMemory
             Version = Version,
             EventCount = bufferSize,
             EventSize = sizeof(T),
-            SequenceCapacity = sequencerCapacity,
-            SequenceCount = 1,
+            SequenceCapacity = sequencePoolCapacity,
+            SequenceCount = 1, // The first sequence is reserved for the cursor.
             GatingSequenceIndexCount = 0,
             AutoDeleteDirectory = true,
             MemoryCount = 1,

@@ -16,7 +16,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
 
     public IpcEventProcessorTests()
     {
-        var memory = IpcRingBufferMemory.CreateTemporary(16, sequencerCapacity: 2048, initializer: _ => new StubUnmanagedEvent(-1));
+        var memory = IpcRingBufferMemory.CreateTemporary(16, sequencePoolCapacity: 2048, initializer: _ => new StubUnmanagedEvent(-1));
         _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
     }
 

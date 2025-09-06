@@ -212,14 +212,14 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
         [FieldOffset(32)]
         public bool AutoDeleteDirectory;
 
-        public int GatingSequenceIndexCapacity => SequenceCapacity;
+        public int GatingSequenceIndexCapacity => SequenceCapacity; // Reserve enough space to store all sequences.
         public int GatingSequenceIndexArrayOffset => Padding;
         public int GatingSequenceIndexArraySize => GatingSequenceIndexCapacity * sizeof(int);
 
-        public int CursorOffset => SequencePoolOffset;
-
         public int SequencePoolOffset => Align(GatingSequenceIndexArrayOffset + GatingSequenceIndexArraySize, 8) + Padding;
         public int SequencePoolSize => SequenceCapacity * sizeof(IpcSequenceBlock);
+
+        public int CursorOffset => SequencePoolOffset; // The cursor is always the first sequence of the pool.
 
         public int AvailabilityBufferOffset => SequencePoolOffset + SequencePoolSize + Padding;
         public int AvailabilityBufferSize => EventCount * sizeof(int);

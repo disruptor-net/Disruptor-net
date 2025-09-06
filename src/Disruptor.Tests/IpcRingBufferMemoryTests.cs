@@ -132,7 +132,7 @@ public class IpcRingBufferMemoryTests
     [TestCase(64)]
     public unsafe void ShouldAlignSequenceBlocks(int sequenceCapacity)
     {
-        using var memory = IpcRingBufferMemory.CreateTemporary<E1>(16, sequencerCapacity: sequenceCapacity);
+        using var memory = IpcRingBufferMemory.CreateTemporary<E1>(16, sequencePoolCapacity: sequenceCapacity);
 
         var aligned = ((long)memory.SequenceBlocks) % 8 == 0;
 
