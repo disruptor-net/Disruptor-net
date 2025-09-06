@@ -171,15 +171,11 @@ public class Disruptor<T> : IDisposable
             _consumerRepository.Add(processor, owned);
         }
 
-        var sequences = new Sequence[processors.Length];
-        for (int i = 0; i < processors.Length; i++)
-        {
-            sequences[i] = processors[i].Sequence;
-        }
+        var sequences = DisruptorUtil.GetSequencesFor(processors);
 
         _ringBuffer.AddGatingSequences(sequences);
 
-        return new EventHandlerGroup<T>(this, _consumerRepository, DisruptorUtil.GetSequencesFor(processors));
+        return new EventHandlerGroup<T>(this, _consumerRepository, sequences);
     }
 
     /// <summary>

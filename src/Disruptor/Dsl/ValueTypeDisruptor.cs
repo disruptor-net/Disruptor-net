@@ -73,15 +73,11 @@ public abstract class ValueTypeDisruptor<T> : IDisposable
             _consumerRepository.Add(processor, owned);
         }
 
-        var sequences = new Sequence[processors.Length];
-        for (int i = 0; i < processors.Length; i++)
-        {
-            sequences[i] = processors[i].Sequence;
-        }
+        var sequences = DisruptorUtil.GetSequencesFor(processors);
 
         _ringBuffer.AddGatingSequences(sequences);
 
-        return new ValueEventHandlerGroup<T>(this, _consumerRepository, DisruptorUtil.GetSequencesFor(processors));
+        return new ValueEventHandlerGroup<T>(this, _consumerRepository, sequences);
     }
 
     /// <summary>
