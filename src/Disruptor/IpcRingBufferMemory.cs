@@ -172,6 +172,11 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
         return new SequencePointer((long*)sequenceBlock);
     }
 
+    private static int Align(int value, int alignment)
+    {
+        return (value + (alignment - 1)) & ~(alignment - 1);
+    }
+
     [StructLayout(LayoutKind.Explicit, Size = 32)]
     private struct Header
     {
@@ -213,7 +218,7 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
 
         public int CursorOffset => SequencePoolOffset;
 
-        public int SequencePoolOffset => GatingSequenceIndexArrayOffset + GatingSequenceIndexArraySize + Padding;
+        public int SequencePoolOffset => Align(GatingSequenceIndexArrayOffset + GatingSequenceIndexArraySize, 8) + Padding;
         public int SequencePoolSize => SequenceCapacity * sizeof(IpcSequenceBlock);
 
         public int AvailabilityBufferOffset => SequencePoolOffset + SequencePoolSize + Padding;

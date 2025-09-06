@@ -109,21 +109,34 @@ public class IpcRingBufferMemoryTests
     [Test]
     public unsafe void ShouldThrowWhenOpeningMemoryWithInvalidVersion()
     {
-        using var memory1 = IpcRingBufferMemory.CreateTemporary<StubUnmanagedEvent>(16);
+        using var memory = IpcRingBufferMemory.CreateTemporary<StubUnmanagedEvent>(16);
 
-        *memory1.VersionPointer = IpcRingBufferMemory.Version + 1;
+        *memory.VersionPointer = IpcRingBufferMemory.Version + 1;
 
-        var error = Assert.Throws<InvalidOperationException>(() => _ = IpcRingBufferMemory.Open<StubUnmanagedEvent>(memory1.IpcDirectoryPath))!;
+        var error = Assert.Throws<InvalidOperationException>(() => _ = IpcRingBufferMemory.Open<StubUnmanagedEvent>(memory.IpcDirectoryPath))!;
         Assert.That(error.Message, Is.EqualTo("Invalid ring buffer memory version"));
     }
 
     [Test]
     public void ShouldThrowWhenOpeningMemoryWithInvalidEventSize()
     {
-        using var memory1 = IpcRingBufferMemory.CreateTemporary<E1>(16);
+        using var memory = IpcRingBufferMemory.CreateTemporary<E1>(16);
 
-        var error = Assert.Throws<InvalidOperationException>(() => _ = IpcRingBufferMemory.Open<StubUnmanagedEvent>(memory1.IpcDirectoryPath))!;
+        var error = Assert.Throws<InvalidOperationException>(() => _ = IpcRingBufferMemory.Open<StubUnmanagedEvent>(memory.IpcDirectoryPath))!;
         Assert.That(error.Message, Is.EqualTo("Invalid ring buffer memory event size"));
+    }
+
+    [TestCase(1)]
+    [TestCase(2)]
+    [TestCase(3)]
+    [TestCase(64)]
+    public unsafe void ShouldAlignSequenceBlocks(int sequenceCapacity)
+    {
+        using var memory = IpcRingBufferMemory.CreateTemporary<E1>(16, sequencerCapacity: sequenceCapacity);
+
+        var aligned = ((long)memory.SequenceBlocks) % 8 == 0;
+
+        Assert.That(aligned, Is.True);
     }
 
     [StructLayout(LayoutKind.Sequential)]
