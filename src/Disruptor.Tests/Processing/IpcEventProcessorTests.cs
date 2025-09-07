@@ -9,9 +9,8 @@ using NUnit.Framework;
 namespace Disruptor.Tests.Processing;
 
 [TestFixture]
-public class IpcEventProcessorTests : IAsyncDisposable
+public class IpcEventProcessorTests : IDisposable
 {
-    private readonly List<IAsyncDisposable> _processors = new();
     private readonly IpcRingBuffer<StubUnmanagedEvent> _ringBuffer;
 
     public IpcEventProcessorTests()
@@ -20,13 +19,8 @@ public class IpcEventProcessorTests : IAsyncDisposable
         _ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
-        foreach (var processor in _processors)
-        {
-            await processor.DisposeAsync();
-        }
-
         _ringBuffer.Dispose();
     }
 
@@ -34,7 +28,6 @@ public class IpcEventProcessorTests : IAsyncDisposable
         where T : unmanaged
     {
         var processor = EventProcessorFactory.Create(dataProvider, sequencePointer, sequenceBarrier, eventHandler);
-        _processors.Add(processor);
         return processor;
     }
 
@@ -44,7 +37,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
         var eventHandler = new TestValueEventHandler<StubUnmanagedEvent>(x => throw new NullReferenceException());
         var sequence = _ringBuffer.NewSequence();
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
 
         Assert.Throws<ArgumentNullException>(() => eventProcessor.SetExceptionHandler(null!));
     }
@@ -56,7 +49,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
         var eventHandler = new TestValueEventHandler<StubUnmanagedEvent>(x => eventSignal.Signal());
         var sequence = _ringBuffer.NewSequence();
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
 
         _ringBuffer.SetGatingSequences(eventProcessor.SequencePointer);
 
@@ -83,7 +76,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
 
         var onTimeoutSignal = new ManualResetEvent(false);
         var eventHandler = new TestValueEventHandler<StubUnmanagedEvent> { OnTimeoutAction = () => onTimeoutSignal.Set() };
-        var eventProcessor = CreateEventProcessor(ringBuffer, sequence, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(ringBuffer, sequence, sequenceBarrier, eventHandler);
         ringBuffer.SetGatingSequences(eventProcessor.SequencePointer);
 
         var task = eventProcessor.Start();
@@ -106,7 +99,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
         var exceptionSignal = new CountdownEvent(1);
         var exceptionHandler = new TestValueExceptionHandler<StubUnmanagedEvent>(x => exceptionSignal.Signal());
         var eventHandler = new TestValueEventHandler<StubUnmanagedEvent> { OnTimeoutAction = TestException.ThrowOnce() };
-        var eventProcessor = CreateEventProcessor(ringBuffer, sequence, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(ringBuffer, sequence, sequenceBarrier, eventHandler);
         ringBuffer.SetGatingSequences(eventProcessor.SequencePointer);
 
         eventProcessor.SetExceptionHandler(exceptionHandler);
@@ -130,7 +123,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
         var eventHandler = new TestValueEventHandler<StubUnmanagedEvent>(x => throw new NullReferenceException());
         var sequence = _ringBuffer.NewSequence();
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
         _ringBuffer.SetGatingSequences(eventProcessor.SequencePointer);
 
         eventProcessor.SetExceptionHandler(exceptionHandler);
@@ -162,7 +155,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
         });
         var sequence = _ringBuffer.NewSequence();
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
         _ringBuffer.SetGatingSequences(eventProcessor.SequencePointer);
 
         eventProcessor.SetExceptionHandler(exceptionHandler);
@@ -191,7 +184,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
         var signal = new CountdownEvent(6);
         var sequence = _ringBuffer.NewSequence();
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, new LoopbackEventHandler(_ringBuffer, batchSizes, signal));
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, new LoopbackEventHandler(_ringBuffer, batchSizes, signal));
 
         _ringBuffer.PublishStubEvent(0);
         _ringBuffer.PublishStubEvent(0);
@@ -241,7 +234,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
 
         var h1 = new LifeCycleHandler();
         var s1 = _ringBuffer.NewSequence();
-        var p1 = CreateEventProcessor(_ringBuffer, s1, barrier, h1);
+        using var p1 = CreateEventProcessor(_ringBuffer, s1, barrier, h1);
 
         p1.Start(delayedTaskScheduler);
         p1.Halt();
@@ -254,7 +247,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
         {
             var h2 = new LifeCycleHandler();
             var s2 = _ringBuffer.NewSequence();
-            var p2 = CreateEventProcessor(_ringBuffer, s2, barrier, h2);
+            using var p2 = CreateEventProcessor(_ringBuffer, s2, barrier, h2);
             p2.Start();
 
             p2.Halt();
@@ -267,7 +260,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
         {
             var h2 = new LifeCycleHandler();
             var s2 = _ringBuffer.NewSequence();
-            var p2 = CreateEventProcessor(_ringBuffer, s2, barrier, h2);
+            using var p2 = CreateEventProcessor(_ringBuffer, s2, barrier, h2);
 
             p2.Start();
             Thread.Yield();
@@ -284,9 +277,9 @@ public class IpcEventProcessorTests : IAsyncDisposable
         var handler = new LifeCycleHandler();
         var sequence = _ringBuffer.NewSequence();
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        var processor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, handler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, handler);
 
-        var task = processor.Start();
+        var task = eventProcessor.Start();
 
         var wasStarted = handler.WaitStart(TimeSpan.FromMilliseconds(500));
         Assert.That(wasStarted);
@@ -294,7 +287,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
         var wasShutdownAfterStart = handler.WaitShutdown(TimeSpan.FromMilliseconds(10));
         Assert.That(!wasShutdownAfterStart);
 
-        processor.Halt();
+        eventProcessor.Halt();
 
         var stopped = task.Wait(TimeSpan.FromMilliseconds(500));
         Assert.That(stopped);
@@ -341,7 +334,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
 
         var sequence = _ringBuffer.NewSequence();
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
 
         _ringBuffer.SetGatingSequences(eventProcessor.SequencePointer);
 
@@ -370,7 +363,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
         var eventHandler = new ExplicitBatchStartImplementationEventHandler(signal);
         var sequence = _ringBuffer.NewSequence();
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
 
         _ringBuffer.PublishStubEvent(0);
 
@@ -393,7 +386,7 @@ public class IpcEventProcessorTests : IAsyncDisposable
 
         var sequence = _ringBuffer.NewSequence();
         var sequenceBarrier = _ringBuffer.NewBarrier();
-        var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
+        using var eventProcessor = CreateEventProcessor(_ringBuffer, sequence, sequenceBarrier, eventHandler);
         _ringBuffer.SetGatingSequences(eventProcessor.SequencePointer);
 
         for (var i = 0; i < eventCountCount; i++)

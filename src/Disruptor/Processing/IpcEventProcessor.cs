@@ -47,6 +47,11 @@ internal class IpcEventProcessor<T, TPublishedSequenceReader, TEventHandler, TOn
         return _state.Halt();
     }
 
+    public void Dispose()
+    {
+        _state.Dispose().Wait();
+    }
+
     public ValueTask DisposeAsync()
     {
         return new ValueTask(_state.Dispose());

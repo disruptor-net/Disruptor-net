@@ -12,7 +12,7 @@ namespace Disruptor.Processing;
 ///
 /// An event process will generally be associated with a thread (long running task) for execution.
 /// </summary>
-internal interface IIpcEventProcessor<T> : IAsyncDisposable
+internal interface IIpcEventProcessor<T> : IDisposable, IAsyncDisposable
     where T : unmanaged
 {
     /// <summary>

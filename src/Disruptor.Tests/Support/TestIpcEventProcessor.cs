@@ -25,6 +25,11 @@ internal class TestIpcEventProcessor<T> : IIpcEventProcessor<T>
         return _state.Halt();
     }
 
+    public void Dispose()
+    {
+        _state.Dispose().Wait();
+    }
+
     public ValueTask DisposeAsync()
     {
         return new ValueTask(_state.Dispose());
