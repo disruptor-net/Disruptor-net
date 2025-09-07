@@ -13,19 +13,21 @@ The Disruptor can be succinctly defined as a circular queue with a configurable 
 - Optionally lock-free.
 - Configurable [wait strategies](https://github.com/disruptor-net/Disruptor-net/wiki/Wait-Strategies).
 
-## Release notes
+Since version 7, the Disruptor also supports inter-process communication using [IpcDisruptor](https://github.com/disruptor-net/Disruptor-net/wiki/IpcDisruptor).
 
-[Version 5.0.0](https://github.com/disruptor-net/Disruptor-net/releases/tag/5.0.0) has been released and is available on [NuGet](https://www.nuget.org/packages/Disruptor).
+## Releases
+
+- Latest stable version is `6.0.1` ([package](https://www.nuget.org/packages/Disruptor/6.0.1), [changes]((https://github.com/disruptor-net/Disruptor-net/releases/tag/6.0.1))).
+- Latest RC version is `7.0.0-rc1` ([package](https://www.nuget.org/packages/Disruptor/7.0.0-rc1), [changes]((https://github.com/disruptor-net/Disruptor-net/releases/tag/7.0.0-rc1))).
 
 ## Supported runtimes
 
-- .NET 5.0+
+- .NET 6.0+
 - .NET Standard 2.1
 
 ## Basic usage
 
 First, you need to define your event (message) type:
-
 ```cs
 public class SampleEvent
 {
@@ -35,7 +37,6 @@ public class SampleEvent
 ```
 
 You also need to create a consumer:
-
 ```cs
 public class SampleEventHandler : IEventHandler<SampleEvent>
 {
@@ -46,8 +47,7 @@ public class SampleEventHandler : IEventHandler<SampleEvent>
 }
 ```
 
-Then you can setup the Disruptor:
-
+Then you can create and setup the Disruptor:
 ```cs
 var disruptor = new Disruptor<SampleEvent>(() => new SampleEvent(), ringBufferSize: 1024);
 
@@ -57,7 +57,6 @@ disruptor.Start();
 ```
 
 Finally, you can publish events:
-
 ```cs
 using (var scope = disruptor.PublishEvent())
 {
