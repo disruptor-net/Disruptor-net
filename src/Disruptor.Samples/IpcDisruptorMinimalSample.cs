@@ -12,11 +12,16 @@ public class IpcDisruptorMinimalSample
     {
         // 1: Disruptor setup
 
+        // Creates an IpcDisruptor based on a shared memory created in a temporary directory.
+        // The shared memory directory is automatically deleted when the disruptor is disposed.
+        
         await using var disruptor = new IpcDisruptor<IpcEvent>(1024);
 
         disruptor.HandleEventsWith(new Handler());
 
         await disruptor.Start();
+
+        Console.WriteLine($"IpcDirectoryPath: {disruptor.IpcDirectoryPath}");
 
         // 2: Publisher setup
 
