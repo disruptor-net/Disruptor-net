@@ -419,9 +419,7 @@ public class Disruptor<T> : IDisposable
     /// </summary>
     public RingBuffer<T> RingBuffer => _ringBuffer;
 
-    /// <summary>
-    /// Get the value of the cursor indicating the published sequence.
-    /// </summary>
+    /// <inheritdoc cref="ICursored.Cursor"/>.
     public long Cursor => _ringBuffer.Cursor;
 
     /// <summary>

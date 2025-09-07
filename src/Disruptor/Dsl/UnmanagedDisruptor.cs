@@ -112,9 +112,7 @@ public class UnmanagedDisruptor<T> : ValueTypeDisruptor<T>
         }
     }
 
-    /// <summary>
-    /// Get the value of the cursor indicating the published sequence.
-    /// </summary>
+    /// <inheritdoc cref="ICursored.Cursor"/>.
     public long Cursor => RingBuffer.Cursor;
 
     /// <summary>

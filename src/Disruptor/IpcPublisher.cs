@@ -75,6 +75,7 @@ public sealed unsafe class IpcPublisher<T> : IDisposable
 
     public int BufferSize => _fields.Sequencer.BufferSize;
 
+    /// <inheritdoc cref="ICursored.Cursor"/>.
     public long Cursor => _fields.Sequencer.Cursor;
 
     public string IpcDirectoryPath => _fields.IpcDirectoryPath;

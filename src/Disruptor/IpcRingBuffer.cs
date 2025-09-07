@@ -42,7 +42,7 @@ internal unsafe struct IpcRingBufferFields
 ///
 /// The underlying storage is a shared memory buffer. The buffer must be preallocated.
 /// </summary>
-/// <typeparam name="T">implementation storing the data for sharing during exchange or parallel coordination of an event.</typeparam>
+/// <typeparam name="T">the type of the events, which must be an unmanaged value type.</typeparam>
 public sealed unsafe class IpcRingBuffer<T> : ISequenced, ICursored, IDisposable
     where T : unmanaged
 {
@@ -364,10 +364,7 @@ public sealed unsafe class IpcRingBuffer<T> : ISequenced, ICursored, IDisposable
         return _fields.Sequencer.NewBarrier(owner, sequencesToTrack);
     }
 
-    /// <summary>
-    /// Get the current cursor value for the ring buffer.  The actual value received
-    /// will depend on the type of <see cref="ISequencer"/> that is being used.
-    /// </summary>
+    /// <inheritdoc cref="ICursored.Cursor"/>.
     public long Cursor => _fields.Sequencer.Cursor;
 
     /// <summary>

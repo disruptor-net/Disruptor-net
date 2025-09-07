@@ -290,10 +290,7 @@ public abstract class RingBuffer : ICursored
         return _sequencerDispatcher.Sequencer.NewBarrier(owner, sequencesToTrack);
     }
 
-    /// <summary>
-    /// Get the current cursor value for the ring buffer.  The actual value received
-    /// will depend on the type of <see cref="ISequencer"/> that is being used.
-    /// </summary>
+    /// <inheritdoc cref="ICursored.Cursor"/>.
     public long Cursor => _sequencerDispatcher.Sequencer.Cursor;
 
     /// <summary>
