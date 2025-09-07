@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Disruptor.Processing;
-using Disruptor.Util;
 using static Disruptor.Util.Constants;
 
 namespace Disruptor;
@@ -34,6 +33,13 @@ internal unsafe struct IpcPublisherFields
     // padding: DefaultPadding
 }
 
+/// <summary>
+/// Allows publishing of events to an <see cref="IpcRingBufferMemory"/>.
+/// </summary>
+/// <typeparam name="T">the type of the events, which must be an unmanaged value type.</typeparam>
+/// <remarks>
+/// Multiple instances of <see cref="IpcPublisher{T}"/> can be created for the same IPC ring buffer.
+/// </remarks>
 public sealed unsafe class IpcPublisher<T> : IDisposable
     where T : unmanaged
 {
@@ -73,11 +79,17 @@ public sealed unsafe class IpcPublisher<T> : IDisposable
         }
     }
 
+    /// <summary>
+    /// Gets the ring buffer capacity (number of events).
+    /// </summary>
     public int BufferSize => _fields.Sequencer.BufferSize;
 
     /// <inheritdoc cref="ICursored.Cursor"/>.
     public long Cursor => _fields.Sequencer.Cursor;
 
+    /// <summary>
+    /// Gets the base directory of the ring buffer memory.
+    /// </summary>
     public string IpcDirectoryPath => _fields.IpcDirectoryPath;
 
     /// <summary>
