@@ -3,22 +3,30 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1;net6.0;net8.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <IsPackable>true</IsPackable>
-    <PackageId>Disruptor</PackageId>
     <NoWarn>1701;1702;1591</NoWarn>
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>Disruptor</PackageId>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  
   <ItemGroup>
-    <PackageReference Include="Fody" Version="6.6.4" PrivateAssets="all" />
-    <PackageReference Include="InlineIL.Fody" Version="1.7.3" PrivateAssets="all" />
+    <PackageReference Include="Fody" Version="6.6.4" PrivateAssets="all"/>
+    <PackageReference Include="InlineIL.Fody" Version="1.7.3" PrivateAssets="all"/>
   </ItemGroup>
-
+  
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
-    <PackageReference Include="System.Memory" Version="4.5.4" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+    <PackageReference Include="System.Memory" Version="4.5.4"/>
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0"/>
   </ItemGroup>
-
+  
+  <ItemGroup>
+    <None Include="Package.md" Pack="true" PackagePath="\README.md" />
+  </ItemGroup>
+  
 </Project>

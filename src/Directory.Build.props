@@ -25,7 +25,6 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\build\nuget</PackageOutputPath>
-    <PackageReadmeFile>$(MSBuildThisFileDirectory)PACKAGE_README.md</PackageReadmeFile>
     <ContinuousIntegrationBuild Condition="'$(TF_BUILD)' != ''">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
