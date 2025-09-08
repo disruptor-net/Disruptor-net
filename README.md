@@ -17,7 +17,7 @@ Since version 7, the Disruptor also supports inter-process communication using [
 
 ## Releases
 
-- Latest stable version is `6.0.1` ([package](https://www.nuget.org/packages/Disruptor/6.0.1), [changes](https://github.com/disruptor-net/Disruptor-net/releases?q=tag%3A6.0&expanded=true)).
+- Latest stable version is `6.0.1` ([package](https://www.nuget.org/packages/Disruptor/6.0.1), [changes](https://github.com/disruptor-net/Disruptor-net/releases?q=6.*&expanded=true)).
 - Latest RC version is `7.0.0-rc1` ([package](https://www.nuget.org/packages/Disruptor/7.0.0-rc1), [changes](https://github.com/disruptor-net/Disruptor-net/releases/tag/7.0.0-rc1)).
 
 ## Supported runtimes
