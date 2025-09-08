@@ -21,39 +21,42 @@ public class TimeoutAsyncWaitStrategyTests : AsyncWaitStrategyFixture
         // Arrange
         var timeout = TimeSpan.FromMilliseconds(400);
         var waitStrategy = new TimeoutAsyncWaitStrategy(timeout);
-        var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
-        var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
-        var sequence1 = new Sequence();
         var sequenceWaiter1 = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
-        var stopwatch = Stopwatch.StartNew();
+        var sequenceWaiter2 = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
 
-        var waitTask1 = Task.Run(() =>
-        {
-            waitResult1.SetResult(sequenceWaiter1.WaitFor(10, CancellationToken));
-            Thread.Sleep(1);
-            sequence1.SetValue(10);
-        });
-
-        var sequenceWaiter2 = waitStrategy.NewSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence1));
-        var waitTask2 = Task.Run(() => waitResult2.SetResult(sequenceWaiter1.WaitFor(10, CancellationToken)));
-
-        // Ensure waiting tasks are blocked
-        AssertIsNotCompleted(waitResult1.Task);
-        AssertIsNotCompleted(waitResult2.Task);
+        var stopwatch1 = new Stopwatch();
+        var stopwatch2 = new Stopwatch();
 
         // Act
+        var waitTask1 = Task.Run(() =>
+        {
+            stopwatch1.Start();
+            var waitResult = sequenceWaiter1.WaitFor(10, CancellationToken);
+            stopwatch1.Stop();
+
+            return waitResult;
+        });
+
+        var waitTask2 = Task.Run(() =>
+        {
+            stopwatch2.Start();
+            var waitResult = sequenceWaiter2.WaitFor(10, CancellationToken);
+            stopwatch2.Stop();
+
+            return waitResult;
+        });
 
         // Assert
-        AssertHasResult(waitResult1.Task, SequenceWaitResult.Timeout);
-        AssertHasResult(waitResult2.Task, SequenceWaitResult.Timeout);
+        AssertHasResult(waitTask1, SequenceWaitResult.Timeout);
+        AssertHasResult(waitTask2, SequenceWaitResult.Timeout);
         AssertIsCompleted(waitTask1);
         AssertIsCompleted(waitTask2);
 
         // Required to make the test pass on azure pipelines.
         var tolerance = TimeSpan.FromMilliseconds(50);
-
-        Assert.That(stopwatch.Elapsed, Is.GreaterThanOrEqualTo(timeout - tolerance));
+        Assert.That(stopwatch1.Elapsed, Is.GreaterThanOrEqualTo(timeout - tolerance));
+        Assert.That(stopwatch2.Elapsed, Is.GreaterThanOrEqualTo(timeout - tolerance));
     }
 
     [Test]
@@ -62,39 +65,40 @@ public class TimeoutAsyncWaitStrategyTests : AsyncWaitStrategyFixture
         // Arrange
         var timeout = TimeSpan.FromMilliseconds(400);
         var waitStrategy = new TimeoutAsyncWaitStrategy(timeout);
-        var waitResult1 = new TaskCompletionSource<SequenceWaitResult>();
-        var waitResult2 = new TaskCompletionSource<SequenceWaitResult>();
 
-        var sequence1 = new Sequence();
         var sequenceWaiter1 = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
-        var stopwatch = Stopwatch.StartNew();
+        var sequenceWaiter2 = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences());
 
-        var waitTask1 = Task.Run(async () =>
-        {
-            waitResult1.SetResult(await sequenceWaiter1.WaitForAsync(10, CancellationToken));
-            Thread.Sleep(1);
-            sequence1.SetValue(10);
-        });
-
-        var sequenceWaiter2 = waitStrategy.NewAsyncSequenceWaiter(SequenceWaiterOwner.Unknown, CreateDependentSequences(sequence1));
-        var waitTask2 = Task.Run(async () => waitResult2.SetResult(await sequenceWaiter2.WaitForAsync(10, CancellationToken)));
-
-        // Ensure waiting tasks are blocked
-        AssertIsNotCompleted(waitResult1.Task);
-        AssertIsNotCompleted(waitResult2.Task);
+        var stopwatch1 = new Stopwatch();
+        var stopwatch2 = new Stopwatch();
 
         // Act
+        var waitTask1 = Task.Run(async () =>
+        {
+            stopwatch1.Start();
+            var waitResult = await sequenceWaiter1.WaitForAsync(10, CancellationToken);
+            stopwatch1.Stop();
+            return waitResult;
+        });
+
+        var waitTask2 = Task.Run(async () =>
+        {
+            stopwatch2.Start();
+            var waitResult = await sequenceWaiter2.WaitForAsync(10, CancellationToken);
+            stopwatch2.Stop();
+            return waitResult;
+        });
 
         // Assert
-        AssertHasResult(waitResult1.Task, SequenceWaitResult.Timeout);
-        AssertHasResult(waitResult2.Task, SequenceWaitResult.Timeout);
+        AssertHasResult(waitTask1, SequenceWaitResult.Timeout);
+        AssertHasResult(waitTask2, SequenceWaitResult.Timeout);
         AssertIsCompleted(waitTask1);
         AssertIsCompleted(waitTask2);
 
         // Required to make the test pass on azure pipelines.
         var tolerance = TimeSpan.FromMilliseconds(50);
-
-        Assert.That(stopwatch.Elapsed, Is.GreaterThanOrEqualTo(timeout - tolerance));
+        Assert.That(stopwatch1.Elapsed, Is.GreaterThanOrEqualTo(timeout - tolerance));
+        Assert.That(stopwatch2.Elapsed, Is.GreaterThanOrEqualTo(timeout - tolerance));
     }
 
     [Test]
