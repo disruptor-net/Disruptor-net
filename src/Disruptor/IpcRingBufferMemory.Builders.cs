@@ -104,35 +104,46 @@ unsafe partial class IpcRingBufferMemory
         var filePath = GetRingBufferFile(ipcDirectoryPath);
         var fileStream = File.Open(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
         var mappedFile = MemoryMappedFile.CreateFromFile(fileStream, mapName: null, header.FileSize, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: false);
-
         var accessor = mappedFile.CreateViewAccessor();
-        var dataPointer = (byte*)null;
-        accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref dataPointer);
-        if (dataPointer == null)
+
+        var memoryPointer = (byte*)null;
+
+        accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref memoryPointer);
+        if (memoryPointer == null)
         {
-            accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-            accessor.Dispose();
-            mappedFile.Dispose();
-            throw new InvalidOperationException("Could not acquire shared memory pointer");
+            DisposeAndThrow(mappedFile, accessor, "Could not acquire shared memory pointer");
         }
 
-        Unsafe.InitBlock(dataPointer, 0, (uint)bufferSize);
-        *(Header*)dataPointer = header;
+        InitializeMemory(header, memoryPointer, initializer);
 
-        *(long*)(dataPointer + header.CursorOffset) = -1;
+        return new IpcRingBufferMemory(ipcDirectoryPath, mappedFile, accessor, memoryPointer);
+    }
 
-        new Span<int>(dataPointer + header.AvailabilityBufferOffset, bufferSize).Fill(-1);
+    /// <remarks>
+    /// Passing header by ref would be more efficient, but the optimization is not needed in this context.
+    /// </remarks>
+    private static void InitializeMemory<T>(Header header, byte* memoryPointer, Func<int, T>? initializer) where T : unmanaged
+    {
+        Unsafe.InitBlock(memoryPointer, 0, (uint)header.EventCount);
+
+        // Write header.
+        *(Header*)memoryPointer = header;
+
+        // Write initial cursor value.
+        *(long*)(memoryPointer + header.CursorOffset) = -1;
+
+        // Initialize availability buffer.
+        new Span<int>(memoryPointer + header.AvailabilityBufferOffset, header.EventCount).Fill(-1);
 
         if (initializer != null)
         {
-            var ringBuffer = (T*)(dataPointer + header.RingBufferOffset);
-            for (var i = 0; i < bufferSize; i++)
+            // Initialize ring buffer events.
+            var ringBuffer = (T*)(memoryPointer + header.RingBufferOffset);
+            for (var i = 0; i < header.EventCount; i++)
             {
                 ringBuffer[i] = initializer(i);
             }
         }
-
-        return new IpcRingBufferMemory(ipcDirectoryPath, mappedFile, accessor, dataPointer);
     }
 
     /// <summary>
@@ -156,38 +167,39 @@ unsafe partial class IpcRingBufferMemory
 
         var fileStream = File.Open(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
         var mappedFile = MemoryMappedFile.CreateFromFile(fileStream, mapName: null, 0, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: false);
-
         var accessor = mappedFile.CreateViewAccessor();
-        var dataPointer = (byte*)null;
-        accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref dataPointer);
-        if (dataPointer == null)
+
+        var memoryPointer = (byte*)null;
+        accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref memoryPointer);
+
+        if (memoryPointer == null)
         {
-            accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-            accessor.Dispose();
-            mappedFile.Dispose();
-            throw new InvalidOperationException("Could not acquire shared memory pointer");
+            DisposeAndThrow(mappedFile, accessor, "Could not acquire shared memory pointer");
         }
 
-        var headerPointer = (Header*)dataPointer;
+        var headerPointer = (Header*)memoryPointer;
         if (headerPointer->Version != Version)
         {
             accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-            accessor.Dispose();
-            mappedFile.Dispose();
-            throw new InvalidOperationException("Invalid ring buffer memory version");
+            DisposeAndThrow(mappedFile, accessor, "Invalid ring buffer memory version");
         }
 
         if (headerPointer->EventSize != sizeof(T))
         {
             accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-            accessor.Dispose();
-            mappedFile.Dispose();
-            throw new InvalidOperationException("Invalid ring buffer memory event size");
+            DisposeAndThrow(mappedFile, accessor, "Invalid ring buffer memory event size");
         }
 
         Interlocked.Increment(ref headerPointer->MemoryCount);
 
-        return new IpcRingBufferMemory(ipcDirectoryPath, mappedFile, accessor, dataPointer);
+        return new IpcRingBufferMemory(ipcDirectoryPath, mappedFile, accessor, memoryPointer);
+    }
+
+    private static void DisposeAndThrow(MemoryMappedFile mappedFile, MemoryMappedViewAccessor accessor, string message)
+    {
+        accessor.Dispose();
+        mappedFile.Dispose();
+        throw new InvalidOperationException(message);
     }
 
     private static string GetRingBufferFile(string ringBufferDirectoryPath)

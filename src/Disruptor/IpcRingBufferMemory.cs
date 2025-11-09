@@ -33,16 +33,16 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
     private readonly object _lock = new();
     private readonly MemoryMappedFile _mappedFile;
     private readonly MemoryMappedViewAccessor _accessor;
-    private byte* _dataPointer;
+    private byte* _memoryPointer;
     private bool _hasRingBufferOnMemoryInstance;
     private int _publisherCountOnMemoryInstance;
     private bool _disposed;
 
-    private IpcRingBufferMemory(string ipcDirectoryPath, MemoryMappedFile mappedFile, MemoryMappedViewAccessor accessor, byte* dataPointer)
+    private IpcRingBufferMemory(string ipcDirectoryPath, MemoryMappedFile mappedFile, MemoryMappedViewAccessor accessor, byte* memoryPointer)
     {
         _mappedFile = mappedFile;
         _accessor = accessor;
-        _dataPointer = dataPointer;
+        _memoryPointer = memoryPointer;
 
         IpcDirectoryPath = ipcDirectoryPath;
         // Store the value in a field to prevent null-pointer exceptions after dispose.
@@ -60,15 +60,15 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
     public int BufferSize { get; }
 
     internal SequencePointer Cursor => GetSequencePointer(0);
-    internal IpcSequenceBlock* SequenceBlocks => (IpcSequenceBlock*)(_dataPointer + HeaderPointer->SequencePoolOffset);
+    internal IpcSequenceBlock* SequenceBlocks => (IpcSequenceBlock*)(_memoryPointer + HeaderPointer->SequencePoolOffset);
     internal int* VersionPointer => &HeaderPointer->Version;
-    internal int* GatingSequenceIndexArray => (int*)(_dataPointer + HeaderPointer->GatingSequenceIndexArrayOffset);
+    internal int* GatingSequenceIndexArray => (int*)(_memoryPointer + HeaderPointer->GatingSequenceIndexArrayOffset);
     internal int GatingSequenceIndexCapacity => HeaderPointer->GatingSequenceIndexCapacity;
     internal int* GatingSequenceIndexCountPointer => &HeaderPointer->GatingSequenceIndexCount;
-    internal int* AvailabilityBuffer => (int*)(_dataPointer + HeaderPointer->AvailabilityBufferOffset);
-    internal byte* RingBuffer => _dataPointer + HeaderPointer->RingBufferOffset;
+    internal int* AvailabilityBuffer => (int*)(_memoryPointer + HeaderPointer->AvailabilityBufferOffset);
+    internal byte* RingBuffer => _memoryPointer + HeaderPointer->RingBufferOffset;
 
-    private Header* HeaderPointer => (Header*)_dataPointer;
+    private Header* HeaderPointer => (Header*)_memoryPointer;
 
     internal void RegisterPublisher()
     {
@@ -156,7 +156,7 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
         var autoDeleteDirectory = HeaderPointer->AutoDeleteDirectory;
 
         _accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-        _dataPointer = null;
+        _memoryPointer = null;
         _accessor.Dispose();
         _mappedFile.Dispose();
 
@@ -168,7 +168,7 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
 
     private SequencePointer GetSequencePointer(int sequenceIndex)
     {
-        var sequenceBlock = (IpcSequenceBlock*)(_dataPointer + HeaderPointer->SequencePoolOffset + sequenceIndex * sizeof(IpcSequenceBlock));
+        var sequenceBlock = (IpcSequenceBlock*)(_memoryPointer + HeaderPointer->SequencePoolOffset + sequenceIndex * sizeof(IpcSequenceBlock));
         return new SequencePointer((long*)sequenceBlock);
     }
 
