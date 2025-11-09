@@ -107,6 +107,48 @@ public class IpcRingBufferMemoryTests
     }
 
     [Test]
+    public void CreateNewShouldPreserveDirectoryOnDispose()
+    {
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            using var memory = IpcRingBufferMemory.CreateNew<StubUnmanagedEvent>(path, 64);
+
+            Assert.That(memory.IpcDirectoryPath, Is.EqualTo(path));
+            Assert.That(memory.IpcDirectoryPath, Does.Exist);
+
+            memory.Dispose();
+
+            Assert.That(memory.IpcDirectoryPath, Does.Exist);
+        }
+        finally
+        {
+            Directory.Delete(path, true);
+        }
+    }
+
+    [Test]
+    public void CreateShouldPreserveDirectoryOnDispose()
+    {
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            using var memory = IpcRingBufferMemory.Create<StubUnmanagedEvent>(path, 64);
+
+            Assert.That(memory.IpcDirectoryPath, Is.EqualTo(path));
+            Assert.That(memory.IpcDirectoryPath, Does.Exist);
+
+            memory.Dispose();
+
+            Assert.That(memory.IpcDirectoryPath, Does.Exist);
+        }
+        finally
+        {
+            Directory.Delete(path, true);
+        }
+    }
+
+    [Test]
     public unsafe void ShouldThrowWhenOpeningMemoryWithInvalidVersion()
     {
         using var memory = IpcRingBufferMemory.CreateTemporary<StubUnmanagedEvent>(16);

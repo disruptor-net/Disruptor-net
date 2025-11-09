@@ -97,7 +97,7 @@ unsafe partial class IpcRingBufferMemory
             SequenceCapacity = sequencePoolCapacity,
             SequenceCount = 1, // The first sequence is reserved for the cursor.
             GatingSequenceIndexCount = 0,
-            AutoDeleteDirectory = true,
+            AutoDeleteDirectory = autoDeleteDirectory,
             MemoryCount = 1,
         };
 
