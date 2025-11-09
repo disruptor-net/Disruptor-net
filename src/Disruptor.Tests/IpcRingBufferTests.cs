@@ -333,6 +333,30 @@ public class IpcRingBufferTests : IDisposable
         Assert.That(sequences, Is.EqualTo(new[] { sequence }));
     }
 
+    [Test]
+    public void ShouldInitializeEvents()
+    {
+        var memory = IpcRingBufferMemory.CreateTemporary<StubUnmanagedEvent>(1024);
+        using var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
+
+        for (var i = 0; i < ringBuffer.BufferSize; i++)
+        {
+            Assert.That(ringBuffer[i], Is.EqualTo(new StubUnmanagedEvent()));
+        }
+    }
+
+    [Test]
+    public void ShouldInitializeEventsFromFactory()
+    {
+        var memory = IpcRingBufferMemory.CreateTemporary(1024, initializer: x => new StubUnmanagedEvent(x));
+        using var ringBuffer = new IpcRingBuffer<StubUnmanagedEvent>(memory, new YieldingWaitStrategy(), true);
+
+        for (var i = 0; i < ringBuffer.BufferSize; i++)
+        {
+            Assert.That(ringBuffer[i], Is.EqualTo(new StubUnmanagedEvent(i)));
+        }
+    }
+
     private static void AssertEmptyRingBuffer(IpcRingBuffer<StubUnmanagedEvent> ringBuffer)
     {
         for (var i = 0; i < ringBuffer.BufferSize; i++)

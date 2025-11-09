@@ -124,7 +124,7 @@ unsafe partial class IpcRingBufferMemory
     /// </remarks>
     private static void InitializeMemory<T>(Header header, byte* memoryPointer, Func<int, T>? initializer) where T : unmanaged
     {
-        Unsafe.InitBlock(memoryPointer, 0, (uint)header.EventCount);
+        Unsafe.InitBlock(memoryPointer, 0, (uint)header.FileSize);
 
         // Write header.
         *(Header*)memoryPointer = header;
