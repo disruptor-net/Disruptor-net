@@ -178,7 +178,7 @@ public unsafe partial class IpcRingBufferMemory : IDisposable
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 33)]
-    private struct Header
+    internal struct Header
     {
         public const int Padding = 128;
 

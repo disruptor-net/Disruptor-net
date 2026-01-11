@@ -284,7 +284,7 @@ internal sealed unsafe class IpcSequencer
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 128)]
-    private struct SequenceCache
+    internal struct SequenceCache
     {
         [FieldOffset(64)]
         private long _value;

@@ -288,7 +288,7 @@ public sealed class SingleProducerSequencer : ISequencer
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 128 + 8)]
-    private struct PaddedSequences
+    internal struct PaddedSequences
     {
         [FieldOffset(64)]
         public long NextValue;

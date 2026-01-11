@@ -374,7 +374,7 @@ public sealed unsafe class MultiProducerSequencer : ISequencer
     internal IWaitStrategy GetWaitStrategy() => _waitStrategy;
 
     [StructLayout(LayoutKind.Explicit, Size = 128)]
-    private struct SequenceCache
+    internal struct SequenceCache
     {
         [FieldOffset(64)]
         private long _value;
