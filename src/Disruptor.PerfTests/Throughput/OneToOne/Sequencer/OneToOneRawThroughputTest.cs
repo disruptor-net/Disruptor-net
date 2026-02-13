@@ -45,17 +45,17 @@ namespace Disruptor.PerfTests.Throughput.OneToOne.Sequencer;
 /// </summary>
 public class OneToOneRawThroughputTest : IThroughputTest
 {
+    private readonly ProgramOptions _options;
     private const int _bufferSize = 1024 * 64;
     private const long _iterations = 1000L * 1000L * 200L;
 
     private readonly SingleProducerSequencer _sequencer = new(_bufferSize, new YieldingWaitStrategy());
     private readonly MyRunnable _myRunnable;
-    private readonly TaskScheduler _taskScheduler;
 
-    public OneToOneRawThroughputTest()
+    public OneToOneRawThroughputTest(ProgramOptions options)
     {
-        _taskScheduler = RoundRobinThreadAffinedTaskScheduler.IsSupported ? new RoundRobinThreadAffinedTaskScheduler(2) : TaskScheduler.Default;
-        _myRunnable = new MyRunnable(_sequencer);
+        _options = options;
+        _myRunnable = new MyRunnable(_sequencer, _options.GetCustomCpu(0));
         _sequencer.AddGatingSequences(_myRunnable.Sequence);
     }
 
@@ -66,13 +66,14 @@ public class OneToOneRawThroughputTest : IThroughputTest
         var latch = new ManualResetEvent(false);
         var expectedCount = _myRunnable.Sequence.Value + _iterations;
         _myRunnable.Reset(latch, expectedCount);
-        var consumerTask = Task.Factory.StartNew(() => _myRunnable.Run(), CancellationToken.None, TaskCreationOptions.None, _taskScheduler);
-        sessionContext.Start();
+        var consumerTask = Task.Run(() => _myRunnable.Run());
 
-        var sequencer = _sequencer;
-
-        var producerTask = Task.Factory.StartNew(() =>
+        var producerTask = Task.Run(() =>
         {
+            using var _ = ThreadAffinityUtil.SetThreadAffinity(_options.GetCustomCpu(1), ThreadPriority.Highest);
+
+            var sequencer = _sequencer;
+
             for (long i = 0; i < _iterations; i++)
             {
                 var next = sequencer.Next();
@@ -80,10 +81,12 @@ public class OneToOneRawThroughputTest : IThroughputTest
             }
 
             latch.WaitOne();
-        }, CancellationToken.None, TaskCreationOptions.None, _taskScheduler);
+        });
 
+        sessionContext.Start();
         producerTask.Wait();
         sessionContext.Stop();
+
         PerfTestUtil.WaitForEventProcessorSequence(expectedCount, _myRunnable.Sequence);
 
         consumerTask.Wait();
@@ -93,13 +96,15 @@ public class OneToOneRawThroughputTest : IThroughputTest
 
     private class MyRunnable
     {
+        private readonly int? _cpu;
         private ManualResetEvent _latch;
         private long _expectedCount;
         public readonly Sequence Sequence = new(-1);
         private readonly SequenceBarrier _barrier;
 
-        public MyRunnable(ISequencer sequencer)
+        public MyRunnable(ISequencer sequencer, int? cpu)
         {
+            _cpu = cpu;
             _barrier = sequencer.NewBarrier(null);
         }
 
@@ -117,6 +122,8 @@ public class OneToOneRawThroughputTest : IThroughputTest
         private void Run<T>(T publishedSequenceReader)
             where T : struct, IPublishedSequenceReader
         {
+            using var _ = ThreadAffinityUtil.SetThreadAffinity(_cpu, ThreadPriority.Highest);
+
             var expected = _expectedCount;
 
             try

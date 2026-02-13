@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Disruptor.PerfTests.Support;
 using Disruptor.Processing;
-using ValuePublisher = System.Action<System.Threading.CountdownEvent, Disruptor.RingBuffer<Disruptor.PerfTests.Support.PerfEvent>, long>;
 
 namespace Disruptor.PerfTests.Throughput.ThreeToOne;
 
@@ -53,20 +53,15 @@ public class ThreeToOneSequencedThroughputTest : IThroughputTest
 
     private readonly CountdownEvent _cyclicBarrier = new(_numPublishers + 1);
     private readonly RingBuffer<PerfEvent> _ringBuffer = RingBuffer<PerfEvent>.CreateMultiProducer(PerfEvent.EventFactory, _bufferSize, new BusySpinWaitStrategy());
-    private readonly TaskScheduler _scheduler = RoundRobinThreadAffinedTaskScheduler.IsSupported ? new RoundRobinThreadAffinedTaskScheduler(5) : TaskScheduler.Default;
-    private readonly SequenceBarrier _sequenceBarrier;
     private readonly AdditionEventHandler _handler = new();
+    private readonly ProgramOptions _options;
     private readonly IEventProcessor<PerfEvent> _eventProcessor;
-    private readonly ValuePublisher[] _valuePublishers = new ValuePublisher[_numPublishers];
 
-    public ThreeToOneSequencedThroughputTest()
+    public ThreeToOneSequencedThroughputTest(ProgramOptions options)
     {
-        _sequenceBarrier = _ringBuffer.NewBarrier();
-        _eventProcessor = EventProcessorFactory.Create(_ringBuffer, _sequenceBarrier, _handler);
-        for (var i = 0; i < _numPublishers; i++)
-        {
-            _valuePublishers[i] = ValuePublisher;
-        }
+        _options = options;
+        var sequenceBarrier = _ringBuffer.NewBarrier();
+        _eventProcessor = EventProcessorFactory.Create(_ringBuffer, sequenceBarrier, _handler);
         _ringBuffer.AddGatingSequences(_eventProcessor.Sequence);
     }
 
@@ -75,15 +70,13 @@ public class ThreeToOneSequencedThroughputTest : IThroughputTest
     public long Run(ThroughputSessionContext sessionContext)
     {
         _cyclicBarrier.Reset();
-        _handler.Reset(_eventProcessor.Sequence.Value + ((_iterations / _numPublishers) * _numPublishers));
+        _handler.Reset(_eventProcessor.Sequence.Value + (_iterations / _numPublishers) * _numPublishers);
 
-        var futures = new Task[_numPublishers];
-        for (var i = 0; i < _numPublishers; i++)
-        {
-            var index = i;
-            futures[i] = Task.Factory.StartNew(() => _valuePublishers[index](_cyclicBarrier, _ringBuffer, _iterations / _numPublishers), CancellationToken.None, TaskCreationOptions.None, _scheduler);
-        }
-        var startTask = _eventProcessor.Start(_scheduler);
+        var publisherTasks = Enumerable.Range(0, _numPublishers)
+                                       .Select(i => Task.Run(() => PublishValues(i, _cyclicBarrier, _ringBuffer)))
+                                       .ToArray();
+
+        var startTask = _eventProcessor.Start(new BackgroundThreadTaskScheduler(_options.GetCustomCpu(0)));
         startTask.Wait(TimeSpan.FromSeconds(5));
 
         sessionContext.Start();
@@ -92,7 +85,7 @@ public class ThreeToOneSequencedThroughputTest : IThroughputTest
 
         for (var i = 0; i < _numPublishers; i++)
         {
-            futures[i].Wait();
+            publisherTasks[i].Wait();
         }
 
         _handler.WaitForSequence();
@@ -107,8 +100,12 @@ public class ThreeToOneSequencedThroughputTest : IThroughputTest
         return _iterations;
     }
 
-    private static void ValuePublisher(CountdownEvent countdownEvent, RingBuffer<PerfEvent> ringBuffer, long iterations)
+    private void PublishValues(int publisherIndex, CountdownEvent countdownEvent, RingBuffer<PerfEvent> ringBuffer)
     {
+        using var _ = ThreadAffinityUtil.SetThreadAffinity(_options.GetCustomCpu(1 + publisherIndex), ThreadPriority.Highest);
+
+        var iterations = _iterations / _numPublishers;
+
         countdownEvent.Signal();
         countdownEvent.Wait();
 
