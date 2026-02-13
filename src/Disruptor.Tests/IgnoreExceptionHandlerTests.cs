@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Disruptor.Tests.Support;
 using NUnit.Framework;
 
@@ -12,8 +13,12 @@ public class IgnoreExceptionHandlerTests
     {
         var exception = new Exception();
         var stubEvent = new StubEvent(0);
+        var log = new StringWriter();
+        var exceptionHandler = new IgnoreExceptionHandler<StubEvent>(log);
 
-        var exceptionHandler = new IgnoreExceptionHandler<StubEvent>();
-        exceptionHandler.HandleEventException(exception, 0L, stubEvent);
+        Assert.DoesNotThrow(() => exceptionHandler.HandleEventException(exception, 123, stubEvent));
+
+        var logText = log.ToString();
+        Assert.That(logText, Contains.Substring($"Exception processing sequence {123}"));
     }
 }

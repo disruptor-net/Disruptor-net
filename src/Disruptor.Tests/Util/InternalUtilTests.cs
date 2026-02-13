@@ -181,16 +181,12 @@ public class InternalUtilTests
     [Test]
     public void ShouldRecomputeArrayDataOffsetWithInternalUtil()
     {
-        Console.WriteLine(Environment.Is64BitProcess ? "64BIT" : "32BIT");
-
         Assert.That(InternalUtil.ArrayDataOffset, Is.EqualTo(InternalUtil.ComputeArrayDataOffset()));
     }
 
     [Test]
     public void ShouldRecomputeArrayDataOffsetWithMemoryMarshal()
     {
-        Console.WriteLine(Environment.Is64BitProcess ? "64BIT" : "32BIT");
-
         Assert.That(InternalUtil.ArrayDataOffset, Is.EqualTo(ComputeArrayDataOffsetWithMemoryMarshal()));
     }
 

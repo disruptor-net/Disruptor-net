@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 namespace Disruptor;
 
@@ -9,11 +10,23 @@ namespace Disruptor;
 public sealed class FatalExceptionHandler<T> : IExceptionHandler<T>
     where T : class
 {
+    private readonly TextWriter _log;
+
+    public FatalExceptionHandler()
+        : this(Console.Out)
+    {
+    }
+
+    public FatalExceptionHandler(TextWriter log)
+    {
+        _log = log;
+    }
+
     public void HandleEventException(Exception ex, long sequence, T evt)
     {
         var message = $"Exception processing sequence {sequence} for event {evt}: {ex}";
 
-        Console.WriteLine(message);
+        _log.WriteLine(message);
 
         throw new ApplicationException(message, ex);
     }
@@ -22,7 +35,7 @@ public sealed class FatalExceptionHandler<T> : IExceptionHandler<T>
     {
         var message = $"Exception processing timeout for sequence {sequence}: {ex}";
 
-        Console.WriteLine(message);
+        _log.WriteLine(message);
 
         throw new ApplicationException(message, ex);
     }
@@ -31,7 +44,7 @@ public sealed class FatalExceptionHandler<T> : IExceptionHandler<T>
     {
         var message = $"Exception processing sequence {sequence} for batch of {batch.Length} events, first event {batch[0]}: {ex}";
 
-        Console.WriteLine(message);
+        _log.WriteLine(message);
 
         throw new ApplicationException(message, ex);
     }
@@ -40,7 +53,7 @@ public sealed class FatalExceptionHandler<T> : IExceptionHandler<T>
     {
         var message = $"Exception during OnStart(): {ex}";
 
-        Console.WriteLine(message);
+        _log.WriteLine(message);
 
         throw new ApplicationException(message, ex);
     }
@@ -49,7 +62,7 @@ public sealed class FatalExceptionHandler<T> : IExceptionHandler<T>
     {
         var message = $"Exception during OnShutdown(): {ex}";
 
-        Console.WriteLine(message);
+        _log.WriteLine(message);
 
         throw new ApplicationException(message, ex);
     }

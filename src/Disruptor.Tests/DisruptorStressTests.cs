@@ -184,7 +184,6 @@ public class DisruptorStressTests
         public void OnTimeout(long sequence)
         {
             TimeoutCount++;
-            Console.WriteLine($"Timeout! {DateTime.UtcNow:HH:mm:ss.fff}");
         }
 
         public async ValueTask OnBatch(EventBatch<TestEvent> batch, long sequence)
