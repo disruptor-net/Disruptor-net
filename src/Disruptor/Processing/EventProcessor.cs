@@ -16,33 +16,30 @@ namespace Disruptor.Processing;
 /// using <see cref="Disruptor{T}.HandleEventsWith(IEventHandler{T}[])"/>.
 /// </remarks>
 /// <typeparam name="T">the type of event used.</typeparam>
-/// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
 /// <typeparam name="TPublishedSequenceReader">the type of the <see cref="IPublishedSequenceReader"/> used.</typeparam>
 /// <typeparam name="TEventHandler">the type of the <see cref="IEventHandler{T}"/> used.</typeparam>
 /// <typeparam name="TOnBatchStartEvaluator">the type of the <see cref="IOnBatchStartEvaluator"/> used.</typeparam>
 /// <typeparam name="TBatchSizeLimiter">the type of the <see cref="IBatchSizeLimiter"/> used.</typeparam>
-public class EventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHandler, TOnBatchStartEvaluator, TBatchSizeLimiter> : IEventProcessor<T>
+public class EventProcessor<T, TPublishedSequenceReader, TEventHandler, TOnBatchStartEvaluator, TBatchSizeLimiter> : IEventProcessor<T>
     where T : class
-    where TDataProvider : IDataProvider<T>
     where TPublishedSequenceReader : IPublishedSequenceReader
     where TEventHandler : IEventHandler<T>
     where TOnBatchStartEvaluator : IOnBatchStartEvaluator
     where TBatchSizeLimiter : IBatchSizeLimiter
 {
+    private readonly RingBuffer<T> _dataProvider;
+    private readonly SequenceBarrier _sequenceBarrier;
     // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
-    private TDataProvider _dataProvider;
-    private SequenceBarrier _sequenceBarrier;
     private TPublishedSequenceReader _publishedSequenceReader;
     private TEventHandler _eventHandler;
     private TOnBatchStartEvaluator _onBatchStartEvaluator;
     private TBatchSizeLimiter _batchSizeLimiter;
     // ReSharper restore FieldCanBeMadeReadOnly.Local
-
     private readonly Sequence _sequence = new();
     private readonly EventProcessorState _state;
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
 
-    public EventProcessor(TDataProvider dataProvider, SequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TOnBatchStartEvaluator onBatchStartEvaluator, TBatchSizeLimiter batchSizeLimiter)
+    public EventProcessor(RingBuffer<T> dataProvider, SequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TOnBatchStartEvaluator onBatchStartEvaluator, TBatchSizeLimiter batchSizeLimiter)
     {
         _dataProvider = dataProvider;
         _sequenceBarrier = sequenceBarrier;

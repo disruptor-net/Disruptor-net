@@ -22,7 +22,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: | 
+          dotnet-version: |
             3.1.x
             6.0.x
             8.0.x
@@ -31,8 +31,12 @@ jobs:
         run: dotnet restore src/Disruptor-net.sln
       - name: Build
         run: dotnet build --configuration Release --no-restore src/Disruptor-net.sln
-      - name: Test
+      - name: Test (Dynamic Code Enabled)
         run: dotnet test --configuration Release --no-build src/Disruptor-net.sln
+      - name: Test (Dynamic Code Disabled)
+        run: dotnet test --configuration Release --no-build src/Disruptor-net.sln
+        env:
+          DISRUPTOR_DYNAMIC_CODE_DISABLED: 1
   pack:
     name: Pack
     runs-on: ubuntu-latest
@@ -42,7 +46,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: | 
+          dotnet-version: |
             3.1.x
             6.0.x
             8.0.x

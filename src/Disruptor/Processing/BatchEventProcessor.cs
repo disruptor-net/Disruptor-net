@@ -16,19 +16,17 @@ namespace Disruptor.Processing;
 /// using <see cref="Disruptor{T}.HandleEventsWith(IBatchEventHandler{T}[])"/>.
 /// </remarks>
 /// <typeparam name="T">the type of event used.</typeparam>
-/// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
 /// <typeparam name="TPublishedSequenceReader">the type of the <see cref="IPublishedSequenceReader"/> used.</typeparam>
 /// <typeparam name="TEventHandler">the type of the <see cref="IBatchEventHandler{T}"/> used.</typeparam>
 /// <typeparam name="TBatchSizeLimiter">the type of the <see cref="IBatchSizeLimiter"/> used.</typeparam>
-public class BatchEventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHandler, TBatchSizeLimiter> : IEventProcessor<T>
+public class BatchEventProcessor<T, TPublishedSequenceReader, TEventHandler, TBatchSizeLimiter> : IEventProcessor<T>
     where T : class
-    where TDataProvider : IDataProvider<T>
     where TPublishedSequenceReader : IPublishedSequenceReader
     where TEventHandler : IBatchEventHandler<T>
     where TBatchSizeLimiter : IBatchSizeLimiter
 {
     // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
-    private TDataProvider _dataProvider;
+    private RingBuffer<T> _dataProvider;
     private SequenceBarrier _sequenceBarrier;
     private TPublishedSequenceReader _publishedSequenceReader;
     private TEventHandler _eventHandler;
@@ -39,7 +37,7 @@ public class BatchEventProcessor<T, TDataProvider, TPublishedSequenceReader, TEv
     private readonly EventProcessorState _state;
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
 
-    public BatchEventProcessor(TDataProvider dataProvider, SequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TBatchSizeLimiter batchSizeLimiter)
+    public BatchEventProcessor(RingBuffer<T> dataProvider, SequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TBatchSizeLimiter batchSizeLimiter)
     {
         _dataProvider = dataProvider;
         _sequenceBarrier = sequenceBarrier;

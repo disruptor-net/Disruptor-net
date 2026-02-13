@@ -1,3 +1,5 @@
+using Disruptor.Processing;
+
 namespace Disruptor;
 
 public interface IValueRingBuffer<T> : ICursored, ISequenced, IValueDataProvider<T>
@@ -8,4 +10,5 @@ public interface IValueRingBuffer<T> : ICursored, ISequenced, IValueDataProvider
     long GetMinimumGatingSequence();
 
     SequenceBarrier NewBarrier(SequenceWaiterOwner owner, params Sequence[] sequencesToTrack);
+    IValueEventProcessor<T> CreateEventProcessor(SequenceBarrier barrier, IValueEventHandler<T> eventHandler);
 }

@@ -15,9 +15,10 @@ internal class IpcEventProcessor<T, TPublishedSequenceReader, TEventHandler, TOn
     where TOnBatchStartEvaluator : IOnBatchStartEvaluator
     where TBatchSizeLimiter : IBatchSizeLimiter
 {
+    private readonly IpcRingBuffer<T> _dataProvider;
+    private readonly IpcSequenceBarrier _sequenceBarrier;
+
     // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
-    private IpcRingBuffer<T> _dataProvider;
-    private IpcSequenceBarrier _sequenceBarrier;
     private TPublishedSequenceReader _publishedSequenceReader;
     private TEventHandler _eventHandler;
     private TOnBatchStartEvaluator _onBatchStartEvaluator;

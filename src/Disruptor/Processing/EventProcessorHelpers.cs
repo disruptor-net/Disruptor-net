@@ -78,4 +78,24 @@ public static class EventProcessorHelpers
             return sequencer.GetHighestPublishedSequence(nextSequence, availableSequence);
         }
     }
+
+    public readonly struct ValueRingBufferDataProvider<T>(ValueRingBuffer<T> ringBuffer) : IValueDataProvider<T>
+        where T : struct
+    {
+        public ref T this[long sequence]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref ringBuffer[sequence];
+        }
+    }
+
+    public readonly struct UnmanagedRingBufferDataProvider<T>(UnmanagedRingBuffer<T> ringBuffer) : IValueDataProvider<T>
+        where T : unmanaged
+    {
+        public ref T this[long sequence]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref ringBuffer[sequence];
+        }
+    }
 }

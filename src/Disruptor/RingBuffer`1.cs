@@ -21,7 +21,7 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     /// <param name="sequencer">sequencer to handle the ordering of events moving through the RingBuffer.</param>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
     public RingBuffer(Func<T> eventFactory, ISequencer sequencer)
-        : base(sequencer, typeof(T), _bufferPadRef)
+        : base(sequencer, new T[sequencer.BufferSize + 2 * _bufferPadRef])
     {
         Fill(eventFactory);
     }

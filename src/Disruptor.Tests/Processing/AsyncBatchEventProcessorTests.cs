@@ -20,7 +20,7 @@ public class AsyncBatchEventProcessorTests
         _sequenceBarrier = _ringBuffer.NewAsyncBarrier();
     }
 
-    private static IAsyncEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, AsyncSequenceBarrier sequenceBarrier, IAsyncBatchEventHandler<T> eventHandler)
+    private static IAsyncEventProcessor<T> CreateEventProcessor<T>(RingBuffer<T> dataProvider, AsyncSequenceBarrier sequenceBarrier, IAsyncBatchEventHandler<T> eventHandler)
         where T : class
     {
         return EventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
@@ -190,7 +190,7 @@ public class AsyncBatchEventProcessorTests
         var waitStrategy = new AsyncWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
         var barrier = sequencer.NewAsyncBarrier(SequenceWaiterOwner.Unknown, new Sequence());
-        var dp = new ArrayDataProvider<StubEvent>(sequencer.BufferSize);
+        var dp = new RingBuffer<StubEvent>(() => new StubEvent(0), sequencer.BufferSize);
         var delayedTaskScheduler = new DelayedTaskScheduler();
 
         var h1 = new LifeCycleHandler();

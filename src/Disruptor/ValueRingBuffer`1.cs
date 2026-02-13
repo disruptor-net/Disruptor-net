@@ -33,7 +33,7 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     /// <param name="sequencer">sequencer to handle the ordering of events moving through the ring buffer.</param>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
     public ValueRingBuffer(Func<T> eventFactory, ISequencer sequencer)
-        : base(sequencer, typeof(T), _bufferPad)
+        : base(sequencer, new T[sequencer.BufferSize + 2 * _bufferPad])
     {
         Fill(eventFactory);
     }
@@ -180,6 +180,11 @@ public sealed class ValueRingBuffer<T> : RingBuffer, IValueRingBuffer<T>
     public override string ToString()
     {
         return $"ValueRingBuffer {{Type={typeof(T).Name}, BufferSize={_bufferSize}, Sequencer={_sequencerDispatcher.Sequencer.GetType().Name}}}";
+    }
+
+    IValueEventProcessor<T> IValueRingBuffer<T>.CreateEventProcessor(SequenceBarrier barrier, IValueEventHandler<T> eventHandler)
+    {
+        return EventProcessorFactory.Create(this, barrier, eventHandler);
     }
 
     /// <summary>

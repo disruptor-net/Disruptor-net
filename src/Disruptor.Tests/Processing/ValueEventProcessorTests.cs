@@ -20,7 +20,7 @@ public class ValueEventProcessorTests
         _sequenceBarrier = _ringBuffer.NewBarrier();
     }
 
-    private static IValueEventProcessor<T> CreateEventProcessor<T>(IValueDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
+    private static IValueEventProcessor<T> CreateEventProcessor<T>(ValueRingBuffer<T> dataProvider, SequenceBarrier sequenceBarrier, IValueEventHandler<T> eventHandler)
         where T : struct
     {
         return EventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
@@ -215,7 +215,7 @@ public class ValueEventProcessorTests
         var waitStrategy = new BusySpinWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
         var barrier = sequencer.NewBarrier(SequenceWaiterOwner.Unknown, new Sequence());
-        var dp = new ArrayValueDataProvider<StubValueEvent>(sequencer.BufferSize);
+        var dp = new ValueRingBuffer<StubValueEvent>(() => new StubValueEvent(0), sequencer.BufferSize);
         var delayedTaskScheduler = new DelayedTaskScheduler();
 
         var h1 = new LifeCycleHandler();

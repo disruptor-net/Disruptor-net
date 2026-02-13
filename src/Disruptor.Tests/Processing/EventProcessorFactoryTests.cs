@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Disruptor.Processing;
@@ -9,6 +10,11 @@ namespace Disruptor.Tests.Processing;
 [TestFixture]
 public class EventProcessorFactoryTests
 {
+    public EventProcessorFactoryTests()
+    {
+        Console.WriteLine($"EventProcessorFactoryTests || AllowDynamicCode: {EventProcessorFactory.IsDynamicCodeEnabled}");
+    }
+
     [Test]
     public void ShouldCreateValueTypeProxyForEachParameter()
     {
@@ -22,6 +28,10 @@ public class EventProcessorFactoryTests
         // Assert
         foreach (var genericArgument in eventProcessor.GetType().GetGenericArguments().Where(x => x != typeof(TestEvent)))
         {
+            // TEventHandler argument cannot be replaced by a proxy when dynamic code is disabled.
+            if (!EventProcessorFactory.IsDynamicCodeEnabled && typeof(IEventHandler).IsAssignableFrom(genericArgument))
+                continue;
+
             Assert.That(genericArgument.IsValueType, $"Generic argument {genericArgument.Name} is not a value type");
         }
     }

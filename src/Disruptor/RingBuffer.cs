@@ -36,10 +36,9 @@ public abstract class RingBuffer : ICursored
     /// Construct a RingBuffer with the full option set.
     /// </summary>
     /// <param name="sequencer">sequencer to handle the ordering of events moving through the RingBuffer.</param>
-    /// <param name="eventType">type of ring buffer events</param>
-    /// <param name="bufferPad">ring buffer padding  as a number of events</param>
+    /// <param name="entries">underlying ring buffer array.</param>
     /// <exception cref="ArgumentException">if bufferSize is less than 1 or not a power of 2</exception>
-    protected RingBuffer(ISequencer sequencer, Type eventType, int bufferPad)
+    protected RingBuffer(ISequencer sequencer, object entries)
     {
         _sequencerDispatcher = new SequencerDispatcher(sequencer);
         _bufferSize = sequencer.BufferSize;
@@ -53,7 +52,7 @@ public abstract class RingBuffer : ICursored
             throw new ArgumentException("bufferSize must be a power of 2");
         }
 
-        _entries = Array.CreateInstance(eventType, _bufferSize + 2 * bufferPad);
+        _entries = entries;
         _indexMask = _bufferSize - 1;
     }
 

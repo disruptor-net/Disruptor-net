@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿global using static Disruptor.Util.Constants;
+
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 

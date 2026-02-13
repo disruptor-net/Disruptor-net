@@ -20,7 +20,7 @@ public class BatchEventProcessorTests
         _sequenceBarrier = _ringBuffer.NewBarrier();
     }
 
-    private static IEventProcessor<T> CreateEventProcessor<T>(IDataProvider<T> dataProvider, SequenceBarrier sequenceBarrier, IBatchEventHandler<T> eventHandler)
+    private static IEventProcessor<T> CreateEventProcessor<T>(RingBuffer<T> dataProvider, SequenceBarrier sequenceBarrier, IBatchEventHandler<T> eventHandler)
         where T : class
     {
         return EventProcessorFactory.Create(dataProvider, sequenceBarrier, eventHandler);
@@ -191,7 +191,7 @@ public class BatchEventProcessorTests
         var waitStrategy = new BusySpinWaitStrategy();
         var sequencer = new SingleProducerSequencer(8, waitStrategy);
         var barrier = sequencer.NewBarrier(SequenceWaiterOwner.Unknown, new Sequence());
-        var dp = new ArrayDataProvider<StubEvent>(sequencer.BufferSize);
+        var dp = new RingBuffer<StubEvent>(() => new StubEvent(0), sequencer.BufferSize);
         var delayedTaskScheduler = new DelayedTaskScheduler();
 
         var h1 = new LifeCycleHandler();

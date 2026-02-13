@@ -14,19 +14,25 @@
     <PackageId>Disruptor</PackageId>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-  
+
+  <!-- net8.0 or later is required for AOT analysis support -->
+  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+    <IsAotCompatible>true</IsAotCompatible>
+    <VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Fody" Version="6.6.4" PrivateAssets="all"/>
     <PackageReference Include="InlineIL.Fody" Version="1.7.3" PrivateAssets="all"/>
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
     <PackageReference Include="System.Memory" Version="4.5.4"/>
     <PackageReference Include="System.Reflection.Emit" Version="4.7.0"/>
   </ItemGroup>
-  
+
   <ItemGroup>
-    <None Include="Package.md" Pack="true" PackagePath="\README.md" />
+    <None Include="Package.md" Pack="true" PackagePath="\README.md"/>
   </ItemGroup>
-  
+
 </Project>

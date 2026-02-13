@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
 namespace Disruptor.Util;
 
+[RequiresDynamicCode(TypeOrMethodNotReachableForAot)]
+[RequiresUnreferencedCode(TypeOrMethodNotReachableForAot)]
 internal static class StructProxy
 {
     private static readonly ModuleBuilder _moduleBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(nameof(StructProxy) + ".DynamicAssembly"), AssemblyBuilderAccess.Run)

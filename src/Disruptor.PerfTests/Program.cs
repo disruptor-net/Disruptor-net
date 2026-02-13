@@ -25,13 +25,13 @@ public class Program
         }
     }
 
-    private static void RunTestForType(Type perfTestType, ProgramOptions options)
+    private static void RunTestForType(PerfTestType perfTestType, ProgramOptions options)
     {
         var outputDirectoryPath = Path.Combine(AppContext.BaseDirectory, "results");
         if (options.GenerateReport)
             Directory.CreateDirectory(outputDirectoryPath);
 
-        var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType);
+        var isThroughputTest = typeof(IThroughputTest).IsAssignableFrom(perfTestType.Type);
         if (isThroughputTest)
         {
             if (TryCreateTest<IThroughputTest>(perfTestType, options, out var test) && ValidateTest(test.RequiredProcessorCount, options))
@@ -42,7 +42,7 @@ public class Program
             return;
         }
 
-        var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType);
+        var isLatencyTest = typeof(ILatencyTest).IsAssignableFrom(perfTestType.Type);
         if (isLatencyTest)
         {
             if (TryCreateTest<ILatencyTest>(perfTestType, options, out var test) && ValidateTest(test.RequiredProcessorCount, options))
@@ -53,18 +53,18 @@ public class Program
             return;
         }
 
-        throw new NotSupportedException($"Invalid test type: {perfTestType.Name}");
+        throw new NotSupportedException($"Invalid test type: {perfTestType.Type.Name}");
     }
 
-    private static bool TryCreateTest<T>(Type testType, ProgramOptions options, out T test)
+    private static bool TryCreateTest<T>(PerfTestType testType, ProgramOptions options, out T test)
     {
-        if (testType.GetConstructor([typeof(ProgramOptions)]) is { } constructor)
+        if (testType.Type.GetConstructor([typeof(ProgramOptions)]) is { } constructor)
         {
             test = (T)constructor.Invoke([options]);
             return true;
         }
 
-        test = (T)Activator.CreateInstance(testType);
+        test = (T)Activator.CreateInstance(testType.Type);
         return test != null;
     }
 

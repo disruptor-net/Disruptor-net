@@ -16,20 +16,19 @@ namespace Disruptor.Processing;
 /// using <see cref="Disruptor{T}.HandleEventsWith(IBatchEventHandler{T}[])"/>.
 /// </remarks>
 /// <typeparam name="T">the type of event used.</typeparam>
-/// <typeparam name="TDataProvider">the type of the <see cref="IDataProvider{T}"/> used.</typeparam>
 /// <typeparam name="TPublishedSequenceReader">the type of the <see cref="IPublishedSequenceReader"/> used.</typeparam>
 /// <typeparam name="TEventHandler">the type of the <see cref="IBatchEventHandler{T}"/> used.</typeparam>
 /// <typeparam name="TBatchSizeLimiter">the type of the <see cref="IBatchSizeLimiter"/> used.</typeparam>
-public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader, TEventHandler, TBatchSizeLimiter> : IAsyncEventProcessor<T>
+public class AsyncBatchEventProcessor<T, TPublishedSequenceReader, TEventHandler, TBatchSizeLimiter> : IAsyncEventProcessor<T>
     where T : class
-    where TDataProvider : IDataProvider<T>
     where TPublishedSequenceReader : IPublishedSequenceReader
     where TEventHandler : IAsyncBatchEventHandler<T>
     where TBatchSizeLimiter : IBatchSizeLimiter
 {
+    private readonly RingBuffer<T> _dataProvider;
+    private readonly AsyncSequenceBarrier _sequenceBarrier;
+
     // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
-    private TDataProvider _dataProvider;
-    private AsyncSequenceBarrier _sequenceBarrier;
     private TPublishedSequenceReader _publishedSequenceReader;
     private TEventHandler _eventHandler;
     private TBatchSizeLimiter _batchSizeLimiter;
@@ -39,7 +38,7 @@ public class AsyncBatchEventProcessor<T, TDataProvider, TPublishedSequenceReader
     private readonly EventProcessorState _state;
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
 
-    public AsyncBatchEventProcessor(TDataProvider dataProvider, AsyncSequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TBatchSizeLimiter batchSizeLimiter)
+    public AsyncBatchEventProcessor(RingBuffer<T> dataProvider, AsyncSequenceBarrier sequenceBarrier, TPublishedSequenceReader publishedSequenceReader, TEventHandler eventHandler, TBatchSizeLimiter batchSizeLimiter)
     {
         _dataProvider = dataProvider;
         _sequenceBarrier = sequenceBarrier;

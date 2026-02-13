@@ -75,7 +75,11 @@ public class OneToOneSequencedThroughputTest_Ipc : IThroughputTest, IDisposable
 
         var publisherCpu = _options.GetCustomCpu(0);
 
-        var publisher = RemoteIpcPublisher.Start("throughput-test", $"--ipc-directory-path \"{_ringBuffer.IpcDirectoryPath}\" --iterations {_iterations} --mutex-name \"{mutexName}\" --cpu \"{publisherCpu}\"");
+        var publisher = RemoteIpcPublisher.Start(
+            command: "throughput-test",
+            commandArguments: $"--ipc-directory-path \"{_ringBuffer.IpcDirectoryPath}\" --iterations {_iterations} --mutex-name \"{mutexName}\" --cpu \"{publisherCpu}\"",
+            ipcPublisherPath: _options.IpcPublisherPath
+        );
 
         Thread.Sleep(500);
 

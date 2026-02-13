@@ -10,6 +10,16 @@
     <NoWarn>NU1903</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <StartupObject>Disruptor.PerfTests.Program</StartupObject>
+<!--    <StartupObject>Disruptor.PerfTests.PerfTestTypePrinter</StartupObject>-->
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PublishAot>true</PublishAot>
+    <VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Disruptor.Testing\Disruptor.Testing.csproj" />
     <ProjectReference Include="..\Disruptor.Tests.IpcPublisher\Disruptor.Tests.IpcPublisher.csproj" />
@@ -23,5 +33,5 @@
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1"/>
     <PackageReference Include="System.Threading.Channels" Version="7.0.0" />
   </ItemGroup>
-  
+
 </Project>

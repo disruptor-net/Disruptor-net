@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -15,7 +16,7 @@ public class PerfTestTypeSelector
         _options = options;
     }
 
-    public List<Type> GetPerfTestTypes()
+    public List<PerfTestType> GetPerfTestTypes()
     {
         if (_options.Target == null)
             return PrintAndSelectTestTypes();
@@ -23,13 +24,13 @@ public class PerfTestTypeSelector
         if (_options.Target.Equals("all", StringComparison.OrdinalIgnoreCase))
             return GetAllTestTypes();
 
-        return GetMatchingTestTypes(_options.Target, LoadValidTestTypes());
+        return GetMatchingTestTypes(_options.Target, PerfTestType.GeAll());
     }
 
-    private List<Type> PrintAndSelectTestTypes()
+    private List<PerfTestType> PrintAndSelectTestTypes()
     {
         var testTypes = GetIncludedTestTypes();
-        var printableTypes = testTypes.OrderBy(x => x.FullName).Select((x, i) => new PrintableType(i, x)).ToList();
+        var printableTypes = testTypes.OrderBy(x => x.Type.FullName).Select((x, i) => new PrintableType(i, x)).ToList();
 
         PrintGroup(0, printableTypes);
 
@@ -70,39 +71,39 @@ public class PerfTestTypeSelector
         }
     }
 
-    private List<Type> GetAllTestTypes()
+    private List<PerfTestType> GetAllTestTypes()
     {
         var includedTestTypes = GetIncludedTestTypes();
 
         return string.IsNullOrEmpty(_options.From)
             ? includedTestTypes
-            : includedTestTypes.SkipWhile(x => !x.Name.Equals(_options.From)).ToList();
+            : includedTestTypes.SkipWhile(x => !x.Type.Name.Equals(_options.From)).ToList();
     }
 
-    private List<Type> GetIncludedTestTypes()
+    private List<PerfTestType> GetIncludedTestTypes()
     {
-        return LoadValidTestTypes().Where(IsIncluded).ToList();
+        return PerfTestType.GeAll().Where(IsIncluded).ToList();
 
-        bool IsIncluded(Type type)
+        bool IsIncluded(PerfTestType type)
         {
-            if (typeof(IExternalTest).IsAssignableFrom(type) && !_options.IncludeExternal)
+            if (typeof(IExternalTest).IsAssignableFrom(type.Type) && !_options.IncludeExternal)
                 return false;
 
-            if (typeof(IThroughputTest).IsAssignableFrom(type) && _options.IncludeThroughput)
+            if (typeof(IThroughputTest).IsAssignableFrom(type.Type) && _options.IncludeThroughput)
                 return true;
 
-            if (typeof(ILatencyTest).IsAssignableFrom(type) && _options.IncludeLatency)
+            if (typeof(ILatencyTest).IsAssignableFrom(type.Type) && _options.IncludeLatency)
                 return true;
 
             return false;
         }
     }
 
-    private static List<Type> GetMatchingTestTypes(string target, List<Type> testTypes)
+    private static List<PerfTestType> GetMatchingTestTypes(string target, IEnumerable<PerfTestType> testTypes)
     {
         var regex = CreateTargetRegex(target);
 
-        return testTypes.Where(x => regex.IsMatch(x.Name)).ToList();
+        return testTypes.Where(x => regex.IsMatch(x.Type.Name)).ToList();
 
         static Regex CreateTargetRegex(string target)
         {
@@ -113,26 +114,19 @@ public class PerfTestTypeSelector
         }
     }
 
-    private static List<Type> LoadValidTestTypes()
-    {
-        return typeof(Program).Assembly.GetTypes().Where(IsValidPerfTestType).ToList();
-
-        static bool IsValidPerfTestType(Type t) => !t.IsAbstract && (typeof(IThroughputTest).IsAssignableFrom(t) || typeof(ILatencyTest).IsAssignableFrom(t));
-    }
-
     private class PrintableType
     {
-        public PrintableType(int index, Type type)
+        public PrintableType(int index, PerfTestType type)
         {
             Index = index;
             Type = type;
             Namespace = type.Namespace != null ? type.Namespace.Split('.') : Array.Empty<string>();
-            Name = type.Name;
         }
 
         public int Index { get; }
-        public Type Type { get; }
+        public PerfTestType Type { get; }
         public string[] Namespace { get; }
-        public string Name { get; }
+
+        public string Name => Type.Name;
     }
 }

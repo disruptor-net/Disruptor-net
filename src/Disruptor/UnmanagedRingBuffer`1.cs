@@ -77,6 +77,11 @@ public sealed class UnmanagedRingBuffer<T> : UnmanagedRingBuffer, IValueRingBuff
         return $"UnmanagedRingBuffer {{Type={typeof(T).Name}, BufferSize={_bufferSize}, Sequencer={_sequencerDispatcher.Sequencer.GetType().Name}}}";
     }
 
+    IValueEventProcessor<T> IValueRingBuffer<T>.CreateEventProcessor(SequenceBarrier barrier, IValueEventHandler<T> eventHandler)
+    {
+        return EventProcessorFactory.Create(this, barrier, eventHandler);
+    }
+
     /// <summary>
     /// Increment the ring buffer sequence and return a scope that will publish the sequence on disposing.
     /// </summary>

@@ -297,7 +297,7 @@ public abstract class ValueTypeDisruptor<T> : IDisposable
 
             var sequenceWaiterOwner = SequenceWaiterOwner.EventHandler(eventHandler);
             var barrier = _ringBuffer.NewBarrier(sequenceWaiterOwner, barrierSequences);
-            var eventProcessor = EventProcessorFactory.Create(_ringBuffer, barrier, eventHandler);
+            var eventProcessor = _ringBuffer.CreateEventProcessor(barrier, eventHandler);
 
             eventProcessor.SetExceptionHandler(_exceptionHandler);
 

@@ -4,28 +4,28 @@ namespace Disruptor.PerfTests;
 
 public static class PerfTestFactory
 {
-    public static bool TryCreateLatencyTest(Type testType, ProgramOptions options, out ILatencyTest latencyTest)
+    public static bool TryCreateLatencyTest(PerfTestType testType, ProgramOptions options, out ILatencyTest latencyTest)
         => TryCreateTest(testType, options, out latencyTest);
 
-    public static bool TryCreateThroughputTest(Type testType, ProgramOptions options, out IThroughputTest throughputTest)
+    public static bool TryCreateThroughputTest(PerfTestType testType, ProgramOptions options, out IThroughputTest throughputTest)
         => TryCreateTest(testType, options, out throughputTest);
 
-    private static bool TryCreateTest<T>(Type testType, ProgramOptions options, out T test)
+    private static bool TryCreateTest<T>(PerfTestType testType, ProgramOptions options, out T test)
     {
-        if (!typeof(T).IsAssignableFrom(testType))
+        if (!typeof(T).IsAssignableFrom(testType.Type))
         {
             Console.Error.WriteLine($"Error: the test type is invalid, FullName: {testType.FullName}");
             test = default;
             return false;
         }
 
-        if (testType.GetConstructor([typeof(ProgramOptions)]) is { } constructor)
+        if (testType.Type.GetConstructor([typeof(ProgramOptions)]) is { } constructor)
         {
             test = (T)constructor.Invoke([options]);
             return true;
         }
 
-        test = (T)Activator.CreateInstance(testType);
+        test = (T)Activator.CreateInstance(testType.Type);
         return test != null;
     }
 

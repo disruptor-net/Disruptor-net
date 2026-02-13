@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -31,6 +32,7 @@ public class ProgramOptions
     public bool IncludeExternal { get; private set; }
     public bool IncludeLatency { get; private set; } = true;
     public bool IncludeThroughput { get; private set; } = true;
+    public string IpcPublisherPath { get; private set; }
 
     public int[] CpuSet
     {
@@ -177,6 +179,16 @@ public class ProgramOptions
                 continue;
             }
 
+            if (arg.Equals("--ipc-publisher-path", StringComparison.OrdinalIgnoreCase))
+            {
+                if (index + 1 == args.Length)
+                    return false;
+
+                options.IpcPublisherPath = args[index + 1];
+                index++;
+                continue;
+            }
+
             return false;
         }
 
@@ -202,6 +214,7 @@ public class ProgramOptions
         Console.WriteLine($"  --include-throughput <true|false>   Includes throughput tests. Default is {options.IncludeThroughput}.");
         Console.WriteLine($"  --cpus <cpu-set>                    The comma-separated list of CPUs to use for CPU affinity (not supported in all tests).");
         Console.WriteLine($"  --wait-strategy <type>              The disruptor wait strategy. Supported values: {string.Join(", ", ConfigurableWaitStrategies.Keys)}. (not supported in all tests).");
+        Console.WriteLine($"  --ipc-publisher-path <path>         Path of the IPC publisher executable.");
         Console.WriteLine();
     }
 
@@ -222,6 +235,12 @@ public class ProgramOptions
         if (HasCustomCpuSet && CpuSet.Except(DefaultCpuSet).Any())
         {
             Console.WriteLine($"Invalid cpus: [{string.Join(", ", CpuSet)}], available CPU range: [0-{Environment.ProcessorCount - 1}]");
+            return false;
+        }
+
+        if (IpcPublisherPath != null && !File.Exists(IpcPublisherPath))
+        {
+            Console.WriteLine($"Invalid IPC publisher path: [{IpcPublisherPath}]");
             return false;
         }
 

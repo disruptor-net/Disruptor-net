@@ -4,32 +4,37 @@ namespace Disruptor.Tests.IpcPublisher;
 
 public static class RemoteIpcPublisher
 {
-    public static Process Start(string command, string commandArguments)
+    public static Process Start(string command, string commandArguments, string? ipcPublisherPath = null)
     {
-        var dllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Disruptor.Tests.IpcPublisher.dll");
-        var arguments = $"{dllPath} {command} {commandArguments}";
+        var processStartInfo = CreateProcessStartInfo();
+        processStartInfo.RedirectStandardOutput = true;
+        processStartInfo.RedirectStandardError = true;
 
-        var process = Process.Start(new ProcessStartInfo("dotnet", arguments)
-        {
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
-        })!;
+        var process = Process.Start(processStartInfo)!;
 
         Forward(process.StandardOutput, Console.Out);
         Forward(process.StandardError, Console.Out);
 
         return process;
 
-        static void Forward(StreamReader reader, TextWriter writer)
+        ProcessStartInfo CreateProcessStartInfo()
         {
-            ForwardImpl(reader, writer).ContinueWith(t => Console.Error.WriteLine(t.Exception!.ToString()), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+            var publisherPath = ipcPublisherPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Disruptor.Tests.IpcPublisher.dll");
+            return Path.GetExtension(publisherPath).Equals(".dll", StringComparison.OrdinalIgnoreCase)
+                ? new ProcessStartInfo("dotnet", $"{publisherPath} {command} {commandArguments}")
+                : new ProcessStartInfo(publisherPath, $"{command} {commandArguments}");
+        }
+    }
 
-            static async Task ForwardImpl(StreamReader reader, TextWriter writer)
+    private static void Forward(StreamReader reader, TextWriter writer)
+    {
+        ForwardImpl(reader, writer).ContinueWith(t => Console.Error.WriteLine(t.Exception!.ToString()), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+
+        static async Task ForwardImpl(StreamReader reader, TextWriter writer)
+        {
+            while (await reader.ReadLineAsync() is { } s)
             {
-                while (await reader.ReadLineAsync() is { } s)
-                {
-                    await writer.WriteLineAsync(s);
-                }
+                await writer.WriteLineAsync(s);
             }
         }
     }
