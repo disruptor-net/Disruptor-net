@@ -135,7 +135,7 @@ public class EventProcessor<T, TPublishedSequenceReader, TEventHandler, TOnBatch
             }
             catch (Exception ex)
             {
-                var evt = dataAccessor[nextSequence];
+                var evt = _dataProvider[nextSequence];
                 _exceptionHandler.HandleEventException(ex, nextSequence, evt);
                 _sequence.SetValue(nextSequence);
                 nextSequence++;
