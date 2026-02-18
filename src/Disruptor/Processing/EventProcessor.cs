@@ -102,7 +102,7 @@ public class EventProcessor<T, TPublishedSequenceReader, TEventHandler, TOnBatch
     private void ProcessEvents(CancellationToken cancellationToken)
     {
         var nextSequence = _sequence.Value + 1L;
-
+        var dataAccessor = _dataProvider.GetAccessor();
         while (true)
         {
             try
@@ -122,7 +122,7 @@ public class EventProcessor<T, TPublishedSequenceReader, TEventHandler, TOnBatch
 
                 while (nextSequence <= availableSequence)
                 {
-                    var evt = _dataProvider[nextSequence];
+                    var evt = dataAccessor[nextSequence];
                     _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
                     nextSequence++;
                 }
@@ -135,7 +135,7 @@ public class EventProcessor<T, TPublishedSequenceReader, TEventHandler, TOnBatch
             }
             catch (Exception ex)
             {
-                var evt = _dataProvider[nextSequence];
+                var evt = dataAccessor[nextSequence];
                 _exceptionHandler.HandleEventException(ex, nextSequence, evt);
                 _sequence.SetValue(nextSequence);
                 nextSequence++;

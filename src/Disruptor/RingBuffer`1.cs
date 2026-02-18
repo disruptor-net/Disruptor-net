@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Disruptor.Dsl;
 using Disruptor.Processing;
 using Disruptor.Util;
@@ -538,5 +539,41 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Event(int index) => _ringBuffer[_startSequence + index];
+    }
+
+
+    internal RingBufferAccessor GetAccessor() => new RingBufferAccessor(_entries, _indexMask);
+
+    internal readonly ref struct RingBufferAccessor
+    {
+        private readonly long _indexMask;
+#if NET8_0_OR_GREATER
+        private readonly ref T _start;
+#else
+        private readonly object _entries;
+#endif
+
+        public RingBufferAccessor(object entries, long indexMask)
+        {
+            _indexMask = indexMask;
+#if NET8_0_OR_GREATER
+            _start = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Unsafe.As<T[]>(entries)), (uint)_bufferPadRef);
+#else
+            _entries = entries;
+#endif
+        }
+
+        public T this[long sequence]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+#if NET8_0_OR_GREATER
+                return Unsafe.Add(ref _start, (nint)(sequence & _indexMask));
+#else
+                return InternalUtil.Read<T>(_entries, _bufferPadRef + (int)(sequence & _indexMask));
+#endif
+            }
+        }
     }
 }
