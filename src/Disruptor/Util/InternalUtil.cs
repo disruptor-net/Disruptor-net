@@ -59,8 +59,8 @@ internal static class InternalUtil
         => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Unsafe.As<T[]>(array)), (nint)index);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<T> ReadSpan<T>(object array, int index, int length)
-        => MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Unsafe.As<T[]>(array)), (uint)index), length);
+    public static ReadOnlySpan<T> ReadSpan<T>(object? array, int index, int length)
+        => array is null ? default : MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Unsafe.As<T[]>(array)), (uint)index), length);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ref T ReadValue<T>(object array, int index)
