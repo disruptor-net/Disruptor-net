@@ -30,7 +30,7 @@ launchSettings.json
 _ReSharper*/
 *.resharper
 [Tt]est[Rr]esult*
-.vs/*
+.vs/
 .vscode/*
 .idea
 BenchmarkDotNet.Artifacts/
@@ -40,3 +40,4 @@ BenchmarkDotNet.Artifacts/
 #Custom
 /build/nuget/
 local-*
+
