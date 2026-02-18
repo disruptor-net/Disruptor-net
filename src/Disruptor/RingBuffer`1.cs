@@ -149,7 +149,11 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
+#if NET
+            return InternalUtil.Read<T>(_entries, (nint)(uint)_bufferPadRef + (sequence & _indexMask));
+#else
             return InternalUtil.Read<T>(_entries, _bufferPadRef + (int)(sequence & _indexMask));
+#endif
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 using Disruptor.Benchmarks.WaitStrategies;
 using ObjectLayoutInspector;
@@ -13,7 +14,7 @@ public static class Program
     {
         var benchmarkSwitcher = BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly);
         benchmarkSwitcher.Run(
-            config: DefaultConfig.Instance.WithOption(ConfigOptions.JoinSummary, true),
+            config: DefaultConfig.Instance.WithOption(ConfigOptions.JoinSummary, true).AddJob(Job.Default.WithEnvironmentVariables(new EnvironmentVariable("DOTNET_TieredPGO", "0"))),
             args: args
         );
     }

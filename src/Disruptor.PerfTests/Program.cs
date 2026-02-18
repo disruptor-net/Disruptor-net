@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace Disruptor.PerfTests;
@@ -7,6 +8,16 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        try
+        {
+            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
+        }
+        catch
+        {
+            ;
+        }
+
+
         if (!ProgramOptions.TryParse(args, out var options))
         {
             ProgramOptions.PrintUsage();

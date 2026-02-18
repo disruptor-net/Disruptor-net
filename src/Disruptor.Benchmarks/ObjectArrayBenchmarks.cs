@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 using Disruptor.Benchmarks.Util;
 using Disruptor.Util;
@@ -35,10 +37,22 @@ public class ObjectArrayBenchmarks
     }
 
     [Benchmark]
+    public Event ReadOneMemoryMarshal()
+    {
+        return ReadMemoryMarshal<Event>(_array, NextSequence());
+    }
+
+    [Benchmark]
     public ReadOnlySpan<Event> ReadSpanIL()
     {
         var sequence = NextSequence();
         return InternalUtil.ReadSpan<Event>(_array, sequence, sequence);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T ReadMemoryMarshal<T>(object array, int index)
+    {
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Unsafe.As<T[]>(array)), (nuint)(uint)index);
     }
 
     private int NextSequence() => _index++ & _mask;
