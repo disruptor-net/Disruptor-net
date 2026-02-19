@@ -27,8 +27,9 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
-    <PackageReference Include="System.Memory" Version="4.5.4"/>
+    <PackageReference Include="System.Memory" Version="4.6.3"/>
     <PackageReference Include="System.Reflection.Emit" Version="4.7.0"/>
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2"/>
   </ItemGroup>
 
   <ItemGroup>
