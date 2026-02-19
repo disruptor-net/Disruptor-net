@@ -539,16 +539,16 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
 
     internal readonly ref struct RingBufferAccessor
     {
-        private readonly long _indexMask;
+
 #if NET8_0_OR_GREATER
         private readonly ref T _start;
 #else
         private readonly object _entries;
 #endif
-
+        private readonly uint _indexMask;
         public RingBufferAccessor(object entries, long indexMask)
         {
-            _indexMask = indexMask;
+            _indexMask = (uint)indexMask;
 #if NET8_0_OR_GREATER
             _start = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Unsafe.As<T[]>(entries)), (uint)_bufferPadRef);
 #else
@@ -562,7 +562,7 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
             get
             {
 #if NET8_0_OR_GREATER
-                return Unsafe.Add(ref _start, (nint)(sequence & _indexMask));
+                return Unsafe.Add(ref _start, (uint)(sequence & _indexMask));
 #else
                 return InternalUtil.Read<T>(_entries, _bufferPadRef + (int)(sequence & _indexMask));
 #endif

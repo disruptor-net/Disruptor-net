@@ -13,7 +13,7 @@ public class OneWaySequencedLatencyTest : ILatencyTest, IDisposable
     private const int _bufferSize = 1024;
     private const long _iterations = 100 * 1000 * 10;
 
-    private static readonly long _pause = StopwatchUtil.GetTimestampFromMicroseconds(10);
+    private static readonly long _pause = StopwatchUtil.GetTimestampFromMicroseconds(1);
     private readonly ProgramOptions _options;
     private readonly Disruptor<PerfEvent> _disruptor;
     private readonly Handler _handler;

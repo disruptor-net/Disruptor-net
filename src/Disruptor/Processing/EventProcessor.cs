@@ -29,12 +29,15 @@ public class EventProcessor<T, TPublishedSequenceReader, TEventHandler, TOnBatch
 {
     private readonly RingBuffer<T> _dataProvider;
     private readonly SequenceBarrier _sequenceBarrier;
+
     // ReSharper disable FieldCanBeMadeReadOnly.Local (performance: the runtime type will be a struct)
     private TPublishedSequenceReader _publishedSequenceReader;
     private TEventHandler _eventHandler;
     private TOnBatchStartEvaluator _onBatchStartEvaluator;
+
     private TBatchSizeLimiter _batchSizeLimiter;
     // ReSharper restore FieldCanBeMadeReadOnly.Local
+
     private readonly Sequence _sequence = new();
     private readonly EventProcessorState _state;
     private IExceptionHandler<T> _exceptionHandler = new FatalExceptionHandler<T>();
@@ -102,7 +105,9 @@ public class EventProcessor<T, TPublishedSequenceReader, TEventHandler, TOnBatch
     private void ProcessEvents(CancellationToken cancellationToken)
     {
         var nextSequence = _sequence.Value + 1L;
-        var dataAccessor = _dataProvider.GetAccessor();
+        var dataProvider = _dataProvider;
+        TEventHandler eventHandler = _eventHandler;
+
         while (true)
         {
             try
@@ -118,12 +123,12 @@ public class EventProcessor<T, TPublishedSequenceReader, TEventHandler, TOnBatch
                 var availableSequence = _batchSizeLimiter.ApplyMaxBatchSize(publishedSequence, nextSequence);
 
                 if (_onBatchStartEvaluator.ShouldInvokeOnBatchStart(availableSequence, nextSequence))
-                    _eventHandler.OnBatchStart(availableSequence - nextSequence + 1);
+                    eventHandler.OnBatchStart(availableSequence - nextSequence + 1);
 
                 while (nextSequence <= availableSequence)
                 {
-                    var evt = dataAccessor[nextSequence];
-                    _eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
+                    var evt = dataProvider[nextSequence];
+                    eventHandler.OnEvent(evt, nextSequence, nextSequence == availableSequence);
                     nextSequence++;
                 }
 
@@ -135,7 +140,7 @@ public class EventProcessor<T, TPublishedSequenceReader, TEventHandler, TOnBatch
             }
             catch (Exception ex)
             {
-                var evt = _dataProvider[nextSequence];
+                var evt = dataProvider[nextSequence];
                 _exceptionHandler.HandleEventException(ex, nextSequence, evt);
                 _sequence.SetValue(nextSequence);
                 nextSequence++;

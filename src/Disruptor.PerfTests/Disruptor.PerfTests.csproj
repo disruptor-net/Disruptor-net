@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <OutputType>exe</OutputType>
     <SignAssembly>false</SignAssembly>
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <TieredCompilation>False</TieredCompilation>
-    <NoWarn>NU1903</NoWarn>
+    <NoWarn>NU1903;NU1510</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -15,10 +15,6 @@
 <!--    <StartupObject>Disruptor.PerfTests.PerfTestTypePrinter</StartupObject>-->
   </PropertyGroup>
 
-  <PropertyGroup>
-    <PublishAot>true</PublishAot>
-    <VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>
-  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Disruptor.Testing\Disruptor.Testing.csproj" />

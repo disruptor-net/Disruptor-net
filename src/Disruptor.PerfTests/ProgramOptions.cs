@@ -9,8 +9,8 @@ namespace Disruptor.PerfTests;
 
 public class ProgramOptions
 {
-    public static int DefaultRunCountForLatencyTest { get; } = 30;
-    public static int DefaultRunCountForThroughputTest { get; } = 30;
+    public static int DefaultRunCountForLatencyTest { get; } = 10;
+    public static int DefaultRunCountForThroughputTest { get; } = 10;
     public static int[] DefaultCpuSet { get; } = Enumerable.Range(0, Environment.ProcessorCount).ToArray();
 
     public static IReadOnlyDictionary<string, Func<IWaitStrategy>> ConfigurableWaitStrategies { get; } = new Dictionary<string, Func<IWaitStrategy>>(StringComparer.OrdinalIgnoreCase)
