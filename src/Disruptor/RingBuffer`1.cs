@@ -148,14 +148,7 @@ public sealed class RingBuffer<T> : RingBuffer, IDataProvider<T>, ISequenced
     public T this[long sequence]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get
-        {
-#if NET
-            return InternalUtil.Read<T>(_entries, (nint)(uint)_bufferPadRef + (sequence & _indexMask));
-#else
-            return InternalUtil.Read<T>(_entries, _bufferPadRef + (int)(sequence & _indexMask));
-#endif
-        }
+        get => InternalUtil.Read<T>(_entries, _bufferPadRef + (int)(sequence & _indexMask));
     }
 
     internal ReadOnlySpan<T> this[long lo, long hi]

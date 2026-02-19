@@ -49,29 +49,6 @@ internal static class InternalUtil
     }
 #pragma warning restore 618
 
-#if NET
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Read<T>(object array, int index)
-        => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Unsafe.As<T[]>(array)), (uint)index);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Read<T>(object array, long index)
-        => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Unsafe.As<T[]>(array)), (nint)index);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<T> ReadSpan<T>(object? array, int index, int length)
-        => array is null ? default : MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Unsafe.As<T[]>(array)), (uint)index), length);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ref T ReadValue<T>(object array, int index)
-        => ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Unsafe.As<T[]>(array)), (uint)index);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static unsafe ref T ReadValue<T>(IntPtr pointer, int index, int size)
-        where T : struct
-        => ref Unsafe.AddByteOffset(ref Unsafe.AsRef<T>((void*)pointer), (uint)(index * size));
-
-#else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Read<T>(object array, int index)
         where T : class
@@ -172,7 +149,6 @@ internal static class InternalUtil
 
         throw IL.Unreachable();
     }
-#endif
 
     public static int SizeOf<T>()
         where T : struct
