@@ -61,10 +61,10 @@ public class LatencyTestSessionResult
         if (_exception != null)
             return $"Run: FAILED: {_exception.Message}";
 
-        return $"Run: Duration: {Duration.TotalMilliseconds:N0} ms - GC: {Gen0} - {Gen1} - {Gen2} - Median: {PMS(50)} - P75: {PMS(75)} - P90: {PMS(90)} - P95: {PMS(95)} - P99: {PMS(99)}";
+        return $"Run: Duration: {Duration.TotalMilliseconds:N0} ms - GC: {Gen0} - {Gen1} - {Gen2} - Median: {PFmt(50)} - P75: {PFmt(75)} - P90: {PFmt(90)} - P95: {PFmt(95)} - P99: {PFmt(99)} - P99.9: {PFmt(99.9)} - P99.99: {PFmt(99.99)}";
 
-        string PMS(int percentile) => $"{P(percentile) / 1000.0:0.0} µs";
+        string PFmt(double percentile) => $"{P(percentile):N0} ns";
     }
 
-    public long P(int percentile) => Histogram.GetValueAtPercentile(percentile);
+    public long P(double percentile) => Histogram.GetValueAtPercentile(percentile);
 }

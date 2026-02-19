@@ -12,7 +12,7 @@ namespace Disruptor.PerfTests.Latency.PingPong;
 public class PingPongSequencedLatencyTest : ILatencyTest
 {
     private const int _bufferSize = 1024;
-    private const long _iterations = 100 * 1000 * 30;
+    private const long _iterations = 100 * 1000;
     private const long _pauseNanos = 1000;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////

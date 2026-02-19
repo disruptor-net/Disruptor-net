@@ -9,7 +9,7 @@ namespace Disruptor.PerfTests;
 
 public class ProgramOptions
 {
-    public static int DefaultRunCountForLatencyTest { get; } = 3;
+    public static int DefaultRunCountForLatencyTest { get; } = 30;
     public static int DefaultRunCountForThroughputTest { get; } = 30;
     public static int[] DefaultCpuSet { get; } = Enumerable.Range(0, Environment.ProcessorCount).ToArray();
 

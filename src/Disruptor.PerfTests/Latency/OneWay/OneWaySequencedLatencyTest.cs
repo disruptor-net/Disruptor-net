@@ -11,7 +11,7 @@ namespace Disruptor.PerfTests.Latency.OneWay;
 public class OneWaySequencedLatencyTest : ILatencyTest, IDisposable
 {
     private const int _bufferSize = 1024;
-    private const long _iterations = 100 * 1000 * 30;
+    private const long _iterations = 100 * 1000 * 10;
 
     private static readonly long _pause = StopwatchUtil.GetTimestampFromMicroseconds(10);
     private readonly ProgramOptions _options;
@@ -48,7 +48,7 @@ public class OneWaySequencedLatencyTest : ILatencyTest, IDisposable
             var now = Stopwatch.GetTimestamp();
             while (now < next)
             {
-                Thread.Yield();
+                Thread.SpinWait(1);
                 now = Stopwatch.GetTimestamp();
             }
 
