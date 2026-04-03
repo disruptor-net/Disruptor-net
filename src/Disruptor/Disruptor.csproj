@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net6.0;net8.0;net10.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>1701;1702;1591</NoWarn>
     <DebugType>pdbonly</DebugType>
@@ -22,13 +22,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fody" Version="6.6.4" PrivateAssets="all"/>
-    <PackageReference Include="InlineIL.Fody" Version="1.7.3" PrivateAssets="all"/>
+    <PackageReference Include="Fody" Version="6.9.3" PrivateAssets="all"/>
+    <PackageReference Include="InlineIL.Fody" Version="1.10.2 " PrivateAssets="all"/>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
-    <PackageReference Include="System.Memory" Version="4.5.4"/>
-    <PackageReference Include="System.Reflection.Emit" Version="4.7.0"/>
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.3"/>
   </ItemGroup>
 
   <ItemGroup>

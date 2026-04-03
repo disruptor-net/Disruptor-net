@@ -1,8 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net8.0;net10.0</TargetFrameworks>
     <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- net8.0 or later is required for AOT analysis support -->
+  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+    <IsAotCompatible>true</IsAotCompatible>
+    <VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>
   </PropertyGroup>
 
   <ItemGroup>

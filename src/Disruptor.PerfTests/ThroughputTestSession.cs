@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using BenchmarkDotNet.Environments;
 
 namespace Disruptor.PerfTests;
 
@@ -75,7 +74,7 @@ public class ThroughputTestSession : IDisposable
 
     private void Report(List<ThroughputTestSessionResult> results)
     {
-        var computerSpecifications = new ComputerSpecifications();
+        var computerSpecifications = ComputerSpecifications.GetCurrent();
 
         if (_options.PrintComputerSpecifications)
         {

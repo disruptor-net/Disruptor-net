@@ -73,7 +73,7 @@ public class LatencyTestSession : IDisposable
 
     public void Report(List<LatencyTestSessionResult> results)
     {
-        var computerSpecifications = new ComputerSpecifications();
+        var computerSpecifications = ComputerSpecifications.GetCurrent();
 
         if (_options.PrintComputerSpecifications)
         {

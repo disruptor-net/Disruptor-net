@@ -2,15 +2,10 @@
 
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net8.0;net10.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <OutputType>exe</OutputType>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Disruptor.Testing\Disruptor.Testing.csproj" />
-    <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
-  </ItemGroup>
 
   <!-- net8.0 or later is required for AOT analysis support -->
   <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
@@ -19,7 +14,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ConsoleAppFramework" Version="5.5.0" Condition="'$(TargetFramework)' == 'net8.0'">
+    <ProjectReference Include="..\Disruptor.Testing\Disruptor.Testing.csproj" />
+    <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ConsoleAppFramework" Version="5.5.0" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

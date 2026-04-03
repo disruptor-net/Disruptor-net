@@ -4,9 +4,9 @@ using System.Linq;
 
 namespace Disruptor.PerfTests;
 
+[RequiresUnreferencedCode("The type is not reachable with AOT")]
 public static class PerfTestTypePrinter
 {
-    [RequiresUnreferencedCode("")]
     public static void Main(string[] args)
     {
         var testTypes = typeof(Program).Assembly.GetTypes().Where(IsValidPerfTestType).ToList();

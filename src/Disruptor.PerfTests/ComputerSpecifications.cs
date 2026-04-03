@@ -1,21 +1,31 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
-using BenchmarkDotNet.Environments;
+using Hardware.Info;
 
 namespace Disruptor.PerfTests;
 
 public class ComputerSpecifications
 {
-    private readonly HostEnvironmentInfo _hostEnvironmentInfo;
+    private readonly HardwareInfo _hardwareInfo;
 
-    public ComputerSpecifications()
+    private ComputerSpecifications(HardwareInfo hardwareInfo)
     {
-        _hostEnvironmentInfo = HostEnvironmentInfo.GetCurrent();
+        _hardwareInfo = hardwareInfo;
     }
 
-    public int? PhysicalCoreCount => _hostEnvironmentInfo.CpuInfo.Value.PhysicalCoreCount;
-    public int? LogicalCoreCount => _hostEnvironmentInfo.CpuInfo.Value.LogicalCoreCount;
+    public static ComputerSpecifications GetCurrent()
+    {
+        var hardwareInfo = new HardwareInfo();
+        hardwareInfo.RefreshOperatingSystem();
+        hardwareInfo.RefreshCPUList();
+
+        return new ComputerSpecifications(hardwareInfo);
+    }
+
+    public int? PhysicalCoreCount => _hardwareInfo.CpuList.Count;
+    public int? LogicalCoreCount => _hardwareInfo.CpuList.Sum(x => x.CpuCoreList.Count);
     public bool IsHyperThreaded => LogicalCoreCount > PhysicalCoreCount;
 
     public override string ToString()
@@ -41,11 +51,30 @@ public class ComputerSpecifications
 
     private IEnumerable<string> GetLines()
     {
-        yield return "OS = " + _hostEnvironmentInfo.OsVersion.Value;
+        yield return $"OperatingSystem: {_hardwareInfo.OperatingSystem.Name} {RuntimeInformation.OSArchitecture} ({_hardwareInfo.OperatingSystem.VersionString})";
+        yield return $"Runtime: {RuntimeInformation.FrameworkDescription} ({RuntimeInformation.RuntimeIdentifier})";
 
-        foreach (var line in _hostEnvironmentInfo.ToFormattedString().Skip(1))
+        if (_hardwareInfo.CpuList.Count == 1)
         {
-            yield return line;
+            foreach (var cpuInfo in GetCpuInfos("", _hardwareInfo.CpuList[0]))
+            {
+                yield return cpuInfo;
+            }
+        }
+        else
+        {
+            foreach (var (index, cpu) in _hardwareInfo.CpuList.Index())
+            {
+                foreach (var cpuInfo in GetCpuInfos($" #{index}", cpu))
+                {
+                    yield return cpuInfo;
+                }
+            }
+        }
+
+        IEnumerable<string> GetCpuInfos(string suffix, CPU cpu)
+        {
+            yield return $"Processor{suffix}: {cpu.Name} ({cpu.NumberOfLogicalProcessors} logical cores, {cpu.NumberOfCores} physical cores)";
         }
     }
 }
