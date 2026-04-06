@@ -27,6 +27,7 @@ jobs:
             6.0.x
             8.0.x
             9.0.x
+            10.0.x
       - name: Restore
         run: dotnet restore src/Disruptor-net.sln
       - name: Build
@@ -51,6 +52,7 @@ jobs:
             6.0.x
             8.0.x
             9.0.x
+            10.0.x
       - name: Restore
         run: dotnet restore src/Disruptor-net.sln
       - name: Build
