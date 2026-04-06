@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>7.0.0-rc1</Version>
+    <Version>7.0.0-rc2</Version>
     <LastPortedJavaRevision>c871ca49826a6be7ada6957f6fbafcfecf7b1f87</LastPortedJavaRevision>
     <Product>Disruptor</Product>
     <Description>A High Performance Inter-Thread Messaging Library</Description>
