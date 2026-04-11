@@ -13,12 +13,14 @@ The Disruptor can be succinctly defined as a circular queue with a configurable 
 - Optionally lock-free.
 - Configurable [wait strategies](https://github.com/disruptor-net/Disruptor-net/wiki/Wait-Strategies).
 
-Since version 7, the Disruptor also supports inter-process communication using [IpcDisruptor](https://github.com/disruptor-net/Disruptor-net/wiki/IpcDisruptor).
+Since version 7, the Disruptor also supports:
+- Inter-process communication using [IpcDisruptor](https://github.com/disruptor-net/Disruptor-net/wiki/IpcDisruptor).
+- Native-AOT.
 
 ## Releases
 
 - Latest stable version is `6.0.1` ([package](https://www.nuget.org/packages/Disruptor/6.0.1), [changes](https://github.com/disruptor-net/Disruptor-net/releases?q=tag%3A6&expanded=true)).
-- Latest RC version is `7.0.0-rc1` ([package](https://www.nuget.org/packages/Disruptor/7.0.0-rc1), [changes](https://github.com/disruptor-net/Disruptor-net/releases/tag/7.0.0-rc1)).
+- Latest RC version is `7.0.0-rc2` ([package](https://www.nuget.org/packages/Disruptor/7.0.0-rc2), [changes](https://github.com/disruptor-net/Disruptor-net/releases?q=tag%3A7&expanded=true)).
 
 ## Supported runtimes
 
