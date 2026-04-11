@@ -18,5 +18,9 @@
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
     <PackageReference Include="ObjectLayoutInspector" Version="0.1.4" />
   </ItemGroup>
-
+  
+  <PropertyGroup>
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)\Disruptor.Tests.runsettings</RunSettingsFilePath>
+  </PropertyGroup>
+  
 </Project>

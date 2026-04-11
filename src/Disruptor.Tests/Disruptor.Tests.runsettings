@@ -1,0 +1,5 @@
+﻿<RunSettings>
+  <NUnit>
+    <DefaultTestNamePattern>{c}.{m}{a}</DefaultTestNamePattern>
+  </NUnit>
+</RunSettings>
